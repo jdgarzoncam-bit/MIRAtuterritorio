@@ -1,0 +1,4 @@
+# Datos privados: no subir al repositorio
+/datos_locales_privados/
+/electores*.json
+*.env

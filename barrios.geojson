@@ -1,0 +1,630 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3575396, 4.8200084] },
+      "properties": { "id_barrio": "FACA-001", "nombre": "Alamos", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.34563914, 4.80123878] },
+      "properties": { "id_barrio": "FACA-002", "nombre": "Altillos del Chicó", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3450566, 4.8095098] },
+      "properties": { "id_barrio": "FACA-003", "nombre": "Arboleda", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3553429, 4.8266726] },
+      "properties": { "id_barrio": "FACA-004", "nombre": "Atalaya Del Tunjo", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3611496, 4.824624] },
+      "properties": { "id_barrio": "FACA-005", "nombre": "Azaleas", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3660369, 4.8189072] },
+      "properties": { "id_barrio": "FACA-006", "nombre": "Brasilia", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3572644, 4.825866] },
+      "properties": { "id_barrio": "FACA-007", "nombre": "Buganvilleas", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3463942, 4.8015758] },
+      "properties": { "id_barrio": "FACA-008", "nombre": "Cadiz", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3532212, 4.8109799] },
+      "properties": { "id_barrio": "FACA-009", "nombre": "Centro", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3592615, 4.8224197] },
+      "properties": { "id_barrio": "FACA-010", "nombre": "Cerezos", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3507, 4.8113674] },
+      "properties": { "id_barrio": "FACA-011", "nombre": "Chapinero", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3445245, 4.8024567] },
+      "properties": { "id_barrio": "FACA-012", "nombre": "Chicó", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3556192, 4.8194952] },
+      "properties": { "id_barrio": "FACA-013", "nombre": "Copihue", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3529906, 4.8152937] },
+      "properties": { "id_barrio": "FACA-014", "nombre": "Daniel Ortega", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3549218, 4.8174212] },
+      "properties": { "id_barrio": "FACA-015", "nombre": "Diurba", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3491979, 4.8204547] },
+      "properties": { "id_barrio": "FACA-016", "nombre": "Dos Caminos", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3476208, 4.8193963] },
+      "properties": { "id_barrio": "FACA-017", "nombre": "El Bosque", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3438393, 4.79692305] },
+      "properties": { "id_barrio": "FACA-018", "nombre": "El Cóndor", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3512636, 4.8208913] },
+      "properties": { "id_barrio": "FACA-019", "nombre": "El Diamante", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3588914, 4.8109745] },
+      "properties": { "id_barrio": "FACA-020", "nombre": "El Eden", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3337339, 4.7922158] },
+      "properties": { "id_barrio": "FACA-021", "nombre": "El Jardín", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.35254, 4.82576] },
+      "properties": { "id_barrio": "FACA-022", "nombre": "El Llanito", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.347829, 4.8026705] },
+      "properties": { "id_barrio": "FACA-023", "nombre": "El Mirador", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3504049, 4.8033945] },
+      "properties": { "id_barrio": "FACA-024", "nombre": "El Paraiso", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3501669, 4.8211062] },
+      "properties": { "id_barrio": "FACA-025", "nombre": "El Triunfo", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3357185, 4.790773] },
+      "properties": { "id_barrio": "FACA-026", "nombre": "El Triángulo", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.35554037, 4.8280919] },
+      "properties": { "id_barrio": "FACA-027", "nombre": "Geranios Reservado", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3642307, 4.8191777] },
+      "properties": { "id_barrio": "FACA-028", "nombre": "Gibraltar", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3524216, 4.8034021] },
+      "properties": { "id_barrio": "FACA-029", "nombre": "Girardot", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.35664867, 4.82812041] },
+      "properties": { "id_barrio": "FACA-030", "nombre": "Girasoles Reservado", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3606593, 4.8235671] },
+      "properties": { "id_barrio": "FACA-031", "nombre": "Heliconias", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3427338, 4.807548] },
+      "properties": { "id_barrio": "FACA-032", "nombre": "Juan Pablo II", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3483986, 4.808414] },
+      "properties": { "id_barrio": "FACA-033", "nombre": "La Campiña", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3536558, 4.8229484] },
+      "properties": { "id_barrio": "FACA-034", "nombre": "La Concepción", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3511345, 4.8038008] },
+      "properties": { "id_barrio": "FACA-035", "nombre": "La Convención", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.353409, 4.8195166] },
+      "properties": { "id_barrio": "FACA-036", "nombre": "La Esmeralda", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3501904, 4.8199148] },
+      "properties": { "id_barrio": "FACA-037", "nombre": "La Esperanza", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3431549, 4.7958786] },
+      "properties": { "id_barrio": "FACA-038", "nombre": "La Florida", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3550505, 4.8074037] },
+      "properties": { "id_barrio": "FACA-039", "nombre": "La Paz", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3548574, 4.8064629] },
+      "properties": { "id_barrio": "FACA-040", "nombre": "La Pepita", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3676462, 4.8196663] },
+      "properties": { "id_barrio": "FACA-041", "nombre": "La Riviera", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3495413, 4.8221759] },
+      "properties": { "id_barrio": "FACA-042", "nombre": "Las Lajas", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3567028, 4.8078634] },
+      "properties": { "id_barrio": "FACA-043", "nombre": "Las Mercedes", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3496378, 4.8143716] },
+      "properties": { "id_barrio": "FACA-044", "nombre": "Las Piedras", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3648567, 4.8198052] },
+      "properties": { "id_barrio": "FACA-045", "nombre": "Las Quintas", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3592133, 4.8191745] },
+      "properties": { "id_barrio": "FACA-046", "nombre": "Laureles", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3554046, 4.8253431] },
+      "properties": { "id_barrio": "FACA-047", "nombre": "Llano del Tunjo", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3539884, 4.8270643] },
+      "properties": { "id_barrio": "FACA-048", "nombre": "Llano Popular", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.35858417, 4.82282087] },
+      "properties": { "id_barrio": "FACA-049", "nombre": "Los Cerezos", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.35939252, 4.82293196] },
+      "properties": { "id_barrio": "FACA-050", "nombre": "Los Cerezos casas", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3435546, 4.8108462] },
+      "properties": { "id_barrio": "FACA-051", "nombre": "Los Llaneros", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3395355, 4.8105563] },
+      "properties": { "id_barrio": "FACA-052", "nombre": "Los LLaneros II", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3618419, 4.8173036] },
+      "properties": { "id_barrio": "FACA-053", "nombre": "Los Molinos", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3582799, 4.809745] },
+      "properties": { "id_barrio": "FACA-054", "nombre": "Los Monarcas", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3527331, 4.8209919] },
+      "properties": { "id_barrio": "FACA-055", "nombre": "Los Olivos", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3628504, 4.8188858] },
+      "properties": { "id_barrio": "FACA-056", "nombre": "Los Robles", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.35757, 4.8251109] },
+      "properties": { "id_barrio": "FACA-057", "nombre": "Los Tulipanes", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3467239, 4.8026278] },
+      "properties": { "id_barrio": "FACA-058", "nombre": "Manablanca I", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3453275, 4.7996526] },
+      "properties": { "id_barrio": "FACA-059", "nombre": "Manablanca II", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3442171, 4.797338] },
+      "properties": { "id_barrio": "FACA-060", "nombre": "Manablanca III", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3402544, 4.7936471] },
+      "properties": { "id_barrio": "FACA-061", "nombre": "Manablanca IV", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3499135, 4.8234964] },
+      "properties": { "id_barrio": "FACA-062", "nombre": "Manantial", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3515596, 4.8204105] },
+      "properties": { "id_barrio": "FACA-063", "nombre": "Maria Angelica", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3586125, 4.8079276] },
+      "properties": { "id_barrio": "FACA-064", "nombre": "María Fernanda", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3619384, 4.8196663] },
+      "properties": { "id_barrio": "FACA-065", "nombre": "María Paula", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3458047, 4.8073548] },
+      "properties": { "id_barrio": "FACA-066", "nombre": "Mirador de La Arboleda", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.35991536, 4.81041055] },
+      "properties": { "id_barrio": "FACA-067", "nombre": "Monarkas", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3482475, 4.8117341] },
+      "properties": { "id_barrio": "FACA-068", "nombre": "Monteclaro", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3483289, 4.8221225] },
+      "properties": { "id_barrio": "FACA-069", "nombre": "Nueva Holanda", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3555762, 4.8218258] },
+      "properties": { "id_barrio": "FACA-070", "nombre": "Nuevo Copihue", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.35960863, 4.81753999] },
+      "properties": { "id_barrio": "FACA-071", "nombre": "Omnicentro", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3575503, 4.8215906] },
+      "properties": { "id_barrio": "FACA-072", "nombre": "Pensilvania", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3577327, 4.8073502] },
+      "properties": { "id_barrio": "FACA-073", "nombre": "Portal de los Sauces", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3391548, 4.8117661] },
+      "properties": { "id_barrio": "FACA-074", "nombre": "Portal de Maria", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3530513, 4.8056565] },
+      "properties": { "id_barrio": "FACA-075", "nombre": "Portofino", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3584194, 4.8216975] },
+      "properties": { "id_barrio": "FACA-076", "nombre": "Porvenir", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3502675, 4.8240216] },
+      "properties": { "id_barrio": "FACA-077", "nombre": "Quebrada", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3527438, 4.8220289] },
+      "properties": { "id_barrio": "FACA-078", "nombre": "Remanso del Cacique", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3481215, 4.8107987] },
+      "properties": { "id_barrio": "FACA-079", "nombre": "Resbalon", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3663694, 4.8173036] },
+      "properties": { "id_barrio": "FACA-080", "nombre": "Rincón de Facatativá", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3489478, 4.8075858] },
+      "properties": { "id_barrio": "FACA-081", "nombre": "San Agustin", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3417162, 4.7925846] },
+      "properties": { "id_barrio": "FACA-082", "nombre": "San Antonio", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3553002, 4.8046976] },
+      "properties": { "id_barrio": "FACA-083", "nombre": "San Benito", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3607153, 4.8122147] },
+      "properties": { "id_barrio": "FACA-084", "nombre": "San Carlos", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3623139, 4.8128561] },
+      "properties": { "id_barrio": "FACA-085", "nombre": "San Cristóbal", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3509473, 4.8206966] },
+      "properties": { "id_barrio": "FACA-086", "nombre": "San Jeronimo", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3521718, 4.8281683] },
+      "properties": { "id_barrio": "FACA-087", "nombre": "San Juan Berlin", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3588378, 4.820297] },
+      "properties": { "id_barrio": "FACA-088", "nombre": "San Pedro", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3484416, 4.8058802] },
+      "properties": { "id_barrio": "FACA-089", "nombre": "San Rafael", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3630844, 4.8240108] },
+      "properties": { "id_barrio": "FACA-090", "nombre": "San Rafael I", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.363889, 4.8233765] },
+      "properties": { "id_barrio": "FACA-091", "nombre": "San Rafael II", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3616352, 4.8198369] },
+      "properties": { "id_barrio": "FACA-092", "nombre": "Santa Clara", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3530904, 4.8278655] },
+      "properties": { "id_barrio": "FACA-093", "nombre": "Santa Helena", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3527116, 4.8241564] },
+      "properties": { "id_barrio": "FACA-094", "nombre": "Santa Isabel", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3571748, 4.8154327] },
+      "properties": { "id_barrio": "FACA-095", "nombre": "Santa Rita", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3514778, 4.8143529] },
+      "properties": { "id_barrio": "FACA-096", "nombre": "Santa Rosa", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3574235, 4.8070515] },
+      "properties": { "id_barrio": "FACA-097", "nombre": "Santo Domingo", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.359201, 4.809184] },
+      "properties": { "id_barrio": "FACA-098", "nombre": "Sauzalito", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3484577, 4.8177285] },
+      "properties": { "id_barrio": "FACA-099", "nombre": "Siete de Agosto", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3489161, 4.8094638] },
+      "properties": { "id_barrio": "FACA-100", "nombre": "Simon Bolivar", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3486587, 4.8092124] },
+      "properties": { "id_barrio": "FACA-101", "nombre": "Simón Bolívar", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.35839168, 4.82402428] },
+      "properties": { "id_barrio": "FACA-102", "nombre": "Terra Linda III", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3605574, 4.8251594] },
+      "properties": { "id_barrio": "FACA-103", "nombre": "Terra Nova", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3591652, 4.8241737] },
+      "properties": { "id_barrio": "FACA-104", "nombre": "Tierra Linda I", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3592112, 4.8238625] },
+      "properties": { "id_barrio": "FACA-105", "nombre": "Tierra Linda II", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3582754, 4.8239464] },
+      "properties": { "id_barrio": "FACA-106", "nombre": "Tierra Linda III", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3633616, 4.8180337] },
+      "properties": { "id_barrio": "FACA-107", "nombre": "Tisquesusa", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.35732349, 4.82515187] },
+      "properties": { "id_barrio": "FACA-108", "nombre": "Tulipanes", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3561449, 4.8128454] },
+      "properties": { "id_barrio": "FACA-109", "nombre": "Versalles", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3516864, 4.8044157] },
+      "properties": { "id_barrio": "FACA-110", "nombre": "Villa Alba", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3509187, 4.8211605] },
+      "properties": { "id_barrio": "FACA-111", "nombre": "Villa Andrea", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3415069, 4.7941242] },
+      "properties": { "id_barrio": "FACA-112", "nombre": "Villa Carlota", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3424485, 4.794914] },
+      "properties": { "id_barrio": "FACA-113", "nombre": "Villa Carolina", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3478837, 4.808136] },
+      "properties": { "id_barrio": "FACA-114", "nombre": "Villa del Prado", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3474867, 4.8078153] },
+      "properties": { "id_barrio": "FACA-115", "nombre": "Villa Ferroviaria", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3638872, 4.8229631] },
+      "properties": { "id_barrio": "FACA-116", "nombre": "Villa Olimpica", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3643634, 4.82268875] },
+      "properties": { "id_barrio": "FACA-117", "nombre": "Villa Olímpica", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3568381, 4.8066357] },
+      "properties": { "id_barrio": "FACA-118", "nombre": "Villa Riviera", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.356604, 4.8084796] },
+      "properties": { "id_barrio": "FACA-119", "nombre": "Villa Rosita", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3542673, 4.8181375] },
+      "properties": { "id_barrio": "FACA-120", "nombre": "Villa Sajonia", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.35187, 4.8211771] },
+      "properties": { "id_barrio": "FACA-121", "nombre": "Villa Valentina", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3575507, 4.8094192] },
+      "properties": { "id_barrio": "FACA-122", "nombre": "Villanueva", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.35318, 4.8024886] },
+      "properties": { "id_barrio": "FACA-123", "nombre": "Villas De Manjui", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.3624969, 4.819759] },
+      "properties": { "id_barrio": "FACA-124", "nombre": "Villas Del Norte", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.350877, 4.8161276] },
+      "properties": { "id_barrio": "FACA-125", "nombre": "Zambrano", "comuna_zona": "Facatativá", "poblacion_estimada": "Por definir", "adulto_mayor": true, "juventud": true, "religion": true, "jac_presidente": "Por registrar", "lider_zonal": "Por registrar", "infraestructura": "Equipamiento urbano", "puesto_votacion": "Por asignar" }
+    }
+  ]
+}

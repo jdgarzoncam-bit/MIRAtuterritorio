@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MIRA TU TERRITORIO — Inteligencia Electoral & Operativa</title>
+    
+    <!-- Tipografías Inter & Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+
+    <!-- SheetJS -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="theme-dark">
+    <div id="miraLocalTestBanner" class="mira-local-test-banner hidden" role="status">MODO DE PRUEBAS LOCAL · Datos ficticios · No es una sesión segura de producción</div>
+
+    <!-- Luces Ambientales -->
+    <div class="ambient-glow glow-1"></div>
+    <div class="ambient-glow glow-2"></div>
+    <div class="ambient-glow glow-3"></div>
+
+    <!-- BOTONES GLOBALES DE HEADER LANDING (TEMA + IDIOMA) -->
+    <div class="top-header-controls" id="landingHeaderControls">
+        <button id="landingLoginBtn" class="landing-login-btn" type="button">Ingresar <span aria-hidden="true">↗</span></button>
+    </div>
+
+
+    <!-- LANDING HERO PRINCIPAL -->
+    <div id="landing-hero-overlay">
+        <div class="landing-hero-container">
+            
+            <div class="landing-top-bar">
+                <div class="brand-pill">PLATAFORMA TERRITORIAL FACATATIVÁ</div>
+                <div class="live-status-pill"><span class="dot"></span> <span data-i18n="status_active">Sistema Activo</span></div>
+            </div>
+
+            <div class="landing-hero-content">
+                <p class="hero-subtitle">⚡ PLATAFORMA INTEGRAL DE AUDITORÍA & OPERACIONES</p>
+                <h1 class="hero-title">MIRA <span class="hero-title-cyan">TU TERRITORIO</span></h1>
+                <p class="hero-description" data-i18n="hero_desc">
+                    Gestión estratégica de datos, mapeo georreferenciado y transmisión en tiempo real de actas electorales para Facatativá.
+                </p>
+            </div>
+
+            <!-- MÓDULOS INICIALES -->
+            <div class="hero-modules-grid" id="heroModulesGrid">
+                
+                <!-- TARJETA 1: TESTIGOS ELECTORALES -->
+                <div class="hero-module-card" id="btnSelectTestigo">
+                    <div class="card-arrow-badge">↗</div>
+                    <div class="card-icon-glow">📱</div>
+                    <div class="card-text-block">
+                        <h3 data-i18n="mod_testigos_title">Testigos Electorales</h3>
+                        <p data-i18n="mod_testigos_desc">Transmisión rápida de actas E-14 desde puesto de votación sin contraseña.</p>
+                    </div>
+                </div>
+
+                <!-- TARJETA 2: ACTIVIDADES -->
+                <div class="hero-module-card" id="btnSelectActividades" role="button" tabindex="0" aria-label="Actividades">
+                    <div class="card-arrow-badge">↗</div>
+                    <div class="card-icon-glow">📋</div>
+                    <div class="card-text-block">
+                        <h3>Actividades</h3>
+                        <p>Registro, seguimiento y consulta de actividades de gestión territorial.</p>
+                    </div>
+                </div>
+
+                <!-- Capa modal de acceso: desenfoca toda la portada sin reemplazarla -->
+                <div id="adminLoginBackdrop" class="admin-login-backdrop hidden" aria-hidden="true"></div>
+
+                <!-- FORMULARIO ADMINISTRADOR: se conserva para reutilizar la autenticación existente -->
+                <div class="hero-module-card admin-login-modal hidden" id="adminCardContainer">
+                    <div id="adminCardDefaultView" class="hidden"></div>
+                    <div id="adminLoginFormInline" class="admin-inline-form">
+                        <div class="inline-form-header">
+                            <span class="inline-badge">ACCESO PMU</span>
+                            <button id="cancelAdminInlineBtn" class="inline-close-btn" type="button" title="Volver">✕</button>
+                        </div>
+                        <div class="form-group">
+                            <label for="username" data-i18n="lbl_user">Usuario Admin</label>
+                            <input type="text" id="username" placeholder="Ej. admin" autocomplete="username">
+                        </div>
+                        <div class="form-group">
+                            <label for="password" data-i18n="lbl_pass">Contraseña</label>
+                            <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
+                        </div>
+                        <button class="login-btn" id="loginBtn" type="button">
+                            <span data-i18n="btn_login">Ingresar al Sistema</span>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                        </button>
+                        <div class="account-secondary-actions">
+                            <button class="account-link-btn" id="createUserBtn" type="button">＋ Crear usuario</button>
+                            <button class="account-link-btn" id="forgotPasswordBtn" type="button">¿Olvidaste tu contraseña?</button>
+                        </div>
+                        <div id="accountActionNotice" class="account-action-notice hidden" role="status" aria-live="polite"></div>
+                        <div class="login-error" id="loginError" data-i18n="err_login" role="alert" aria-live="assertive">Acceso bloqueado hasta configurar la autenticación segura del servidor.</div>
+                        <button class="test-mode-btn hidden" id="localTestModeBtn" type="button">Entrar al modo de pruebas local</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+
+    <section id="activitiesPlaceholder" class="activities-workspace hidden" aria-labelledby="activitiesPlaceholderTitle">
+      <header class="activities-header">
+        <div><div class="brand-pill">MIRA TU TERRITORIO · GESTIÓN</div><h1 id="activitiesPlaceholderTitle">Módulo <span class="hero-title-cyan">Actividades</span></h1><p id="activityScreenSubtitle">Registro de participación territorial.</p></div>
+        <button class="top-control-btn" id="closeActivitiesPlaceholder" type="button" title="Volver al menú">✕</button>
+      </header>
+      <div id="activityRegistrationView" class="activity-view">
+        <div id="newActivityForm" class="activity-panel hidden"><h3>Crear actividad</h3><div class="activity-form-grid"><label>Nombre de la actividad<input id="activityName" placeholder="Ej. Jornada de participación juvenil" maxlength="120"></label><label>Fecha<input id="activityDate" type="date"></label><label>Lugar<input id="activityPlace" placeholder="Lugar de realización"></label></div><div class="activity-actions"><button id="saveActivityBtn" class="login-btn" type="button">Crear actividad</button><button id="cancelNewActivityBtn" class="activity-secondary-btn" type="button">Cancelar</button></div></div>
+        <div id="participantWorkspace" class="activity-panel activity-registration-card"><div class="activity-registration-heading"><span class="inline-badge">REGISTRO DE PARTICIPACIÓN</span><h2>Registrar participante</h2><p>Busca la ficha por cédula o completa los datos para registrar la asistencia.</p></div><div class="activity-form-grid"><label>Cédula<input id="participantCedula" inputmode="numeric" placeholder="Número de documento" autocomplete="off"></label><button id="lookupParticipantBtn" class="activity-secondary-btn activity-lookup-btn" type="button">⌕ Buscar ficha</button><label>Nombres<input id="participantNames" placeholder="Nombres" autocomplete="given-name"></label><label>Apellidos<input id="participantSurnames" placeholder="Apellidos" autocomplete="family-name"></label><label>Teléfono (opcional)<input id="participantPhone" type="tel" placeholder="Teléfono"></label><label>Actividad<select id="participantActivity"></select></label><label>InfoMIRA<select id="participantInfoMira"><option value="">Seleccionar Sí / No</option><option value="si">Sí</option><option value="no">No</option></select></label></div><div id="duplicateNotice" class="activity-notice hidden" role="status"></div><div class="activity-actions"><button id="saveParticipantBtn" class="login-btn" type="button">Guardar asistencia</button><button id="clearParticipantBtn" class="activity-secondary-btn" type="button">Limpiar</button><button id="goRecentFromForm" class="activity-secondary-btn" type="button">Ver registros recientes</button></div><p class="activity-local-warning">Los datos de prueba se guardan en este navegador.</p></div>
+      </div>
+      <div id="activityRecentPanel" class="activity-view activity-panel hidden"><div class="activity-toolbar"><div><span class="inline-badge">REGISTRO EN VIVO</span><h2>Registros recientes</h2><p>Todos los registros realizados desde el formulario de actividades.</p></div><input id="activitySearch" class="activity-search" placeholder="Buscar por cédula o nombre…"></div><div class="activity-live-summary"><span class="activity-live-dot"></span><strong id="liveActivityCount">0 registros</strong><small>Actualizado al guardar cada asistencia</small></div><div class="activity-table-wrap"><table class="activity-table"><thead><tr><th>Persona</th><th>Cédula</th><th>Actividad</th><th>InfoMIRA</th><th>Registro</th><th>Acciones</th></tr></thead><tbody id="activityParticipantsBody"><tr><td colspan="6">No hay registros recientes.</td></tr></tbody></table></div><div class="activity-actions activity-back-row"><button class="activity-secondary-btn" id="backToActivityRegistration" type="button">← Volver al registro</button></div></div>
+      <div id="activityAllView" class="activity-view activity-panel hidden"><div class="activity-toolbar"><div><span class="inline-badge">ARCHIVO DE ACTIVIDADES</span><h2>Todas las actividades</h2><p>Abre una carpeta para consultar sus registros o exportar su Excel.</p></div><button id="newActivityBtnAll" class="login-btn" type="button">＋ Nueva actividad</button></div><div id="activitiesFolders" class="activities-folders"></div><div class="activity-actions activity-back-row"><button class="activity-secondary-btn" id="backToActivityHomeFromAll" type="button">← Volver al registro</button></div></div>
+      <div id="activityDetailView" class="activity-view activity-panel hidden"><div class="activity-toolbar"><div><span class="inline-badge">CARPETA DE ACTIVIDAD</span><h2 id="activityDetailTitle">Actividad</h2><p id="activityDetailMeta"></p></div><button id="exportSingleActivityBtn" class="login-btn" type="button">⇩ Descargar Excel</button></div><div class="activity-table-wrap"><table class="activity-table"><thead><tr><th>Persona</th><th>Cédula</th><th>Teléfono</th><th>InfoMIRA</th><th>Fecha de registro</th></tr></thead><tbody id="activityDetailBody"></tbody></table></div><div class="activity-actions activity-back-row"><button class="activity-secondary-btn" id="backToAllActivities" type="button">← Todas las actividades</button></div></div>
+      <footer class="activities-footer"><button id="returnFromActivities" class="activity-secondary-btn" type="button">← Volver al menú principal</button></footer>
+    </section>
+
+    <!-- MÓDULO CONCEJAL: registros separados de las actividades generales del partido -->
+    <section id="concejalWorkspace" class="activities-workspace concejal-workspace hidden" aria-labelledby="concejalTitle">
+      <header class="activities-header">
+        <div><div class="brand-pill">MIRA TU TERRITORIO · GESTIÓN TERRITORIAL</div><h1 id="concejalTitle">Módulo <span class="hero-title-cyan">Concejal</span></h1><p>Registro e historial de actividades territoriales de la concejal.</p></div>
+        <button class="top-control-btn" id="closeConcejalModuleBtn" type="button" title="Volver al mapa" aria-label="Cerrar módulo Concejal">✕</button>
+      </header>
+      <nav class="concejal-view-nav" aria-label="Vistas de gestión">
+        <button type="button" class="concejal-view-tab is-active" data-concejal-view="register">Registrar gestión</button>
+        <button type="button" class="concejal-view-tab" data-concejal-view="history">Historial de actividades</button>
+        <button type="button" class="concejal-view-tab" data-concejal-view="management">Mi gestión e informes</button>
+      </nav>
+      <section id="concejalRegisterView" class="concejal-subview">
+        <div class="concejal-register-switch" role="tablist" aria-label="Tipo de registro">
+          <button type="button" class="concejal-register-choice is-active" data-register-kind="activity" role="tab" aria-selected="true">＋ Registrar actividad</button>
+          <button type="button" class="concejal-register-choice" data-register-kind="commitment" role="tab" aria-selected="false">＋ Registrar compromiso</button>
+        </div>
+        <div class="concejal-layout concejal-register-layout">
+          <div id="concejalActivityRegisterPane" class="concejal-register-pane">
+        <section class="activity-panel concejal-form-panel">
+          <span class="inline-badge">REGISTRO TERRITORIAL</span><h2 id="concejalFormTitle">Registrar actividad</h2>
+          <p class="concejal-muted">Elige un sector, describe la actividad y registra la fecha en que se realizó.</p>
+          <form id="concejalActivityForm">
+            <label class="concejal-field">Barrio o sector
+              <div class="mira-combobox-wrap">
+                <input id="concejalBarrioInput" autocomplete="off" aria-autocomplete="list" aria-expanded="false" aria-controls="concejalBarrioDropdown" placeholder="Buscar barrio o sector…" required>
+                <span class="mira-combobox-arrow" aria-hidden="true">▾</span>
+                <div id="concejalBarrioDropdown" class="mira-combobox-menu hidden" role="listbox" aria-label="Barrios disponibles"></div>
+              </div>
+              <datalist id="concejalBarriosOptions"></datalist>
+            </label>
+            <label class="concejal-field">Actividad desarrollada
+              <textarea id="concejalActivityDescription" rows="4" maxlength="500" placeholder="Describe brevemente la actividad realizada…" required></textarea>
+            </label>
+            <label class="concejal-field">Fecha de realización<input id="concejalActivityDate" type="date" required></label>
+            <div class="concejal-mini-map-wrap"><div class="concejal-mini-map-heading"><strong>Ubicación territorial</strong><span id="concejalMapSelectedName">Selecciona un barrio</span></div><div id="concejalMiniMap" role="img" aria-label="Mini mapa del barrio seleccionado"></div><p class="concejal-muted concejal-map-hint">El mapa resaltará el polígono elegido. La ubicación se basa en los límites cargados en el SIG.</p></div>
+            <div class="activity-actions"><button id="saveConcejalActivityBtn" class="login-btn" type="submit">Guardar actividad</button><button id="cancelEditConcejalBtn" class="activity-secondary-btn hidden" type="button">Cancelar edición</button></div>
+            <div id="concejalFormNotice" class="activity-notice hidden" role="status"></div>
+          </form>
+          <p class="activity-local-warning" id="concejalStorageNotice">Modo de prueba: los registros se guardan solo en este navegador. La base centralizada requiere integrar el servidor.</p>
+        </section>
+          </div>
+          <div id="concejalCommitmentRegisterPane" class="concejal-register-pane hidden">
+      <section class="activity-panel concejal-commitments-panel">
+        <div class="activity-toolbar"><div><span class="inline-badge">SEGUIMIENTO</span><h2>Compromisos de gestión</h2><p>Registra con quién se adquirió el compromiso, su estado y el resultado obtenido.</p></div></div>
+        <form id="concejalCommitmentForm" class="concejal-commitment-form">
+          <input id="concejalCommitmentId" type="hidden">
+          <label class="concejal-field">Barrio o sector<div class="mira-combobox-wrap"><input id="concejalCommitmentBarrio" autocomplete="off" placeholder="Barrio o sector…" required><span class="mira-combobox-arrow" aria-hidden="true">▾</span><div id="concejalCommitmentBarrioDropdown" class="mira-combobox-menu hidden" role="listbox" aria-label="Barrios para compromisos"></div></div></label>
+          <label class="concejal-field">Compromiso adquirido<input id="concejalCommitmentText" maxlength="500" placeholder="Ej. Gestionar mejoramiento de la vía…" required></label>
+          <label class="concejal-field">¿Con quién se adquirió?<input id="concejalCommitmentWith" maxlength="180" placeholder="Persona, comunidad o entidad" required></label>
+          <label class="concejal-field">Fecha del compromiso<input id="concejalCommitmentDate" type="date" required></label>
+          <label class="concejal-field">Fecha límite (opcional)<input id="concejalCommitmentDeadline" type="date"></label>
+          <label class="concejal-field">Estado<select id="concejalCommitmentStatus" required><option value="En gestión">En gestión</option><option value="Pendiente">Pendiente</option><option value="Cumplido">Cumplido</option><option value="Suspendido">Suspendido</option><option value="No viable">No viable</option></select></label>
+          <label class="concejal-field concejal-result-field">Resultado obtenido<textarea id="concejalCommitmentResult" rows="2" maxlength="700" placeholder="Describe el resultado, avance o motivo pendiente…"></textarea></label>
+          <label class="concejal-achieved-check"><input id="concejalCommitmentAchieved" type="checkbox"> <span><strong>Se logró</strong><small>Marcar solo cuando exista un resultado logrado que pueda describirse.</small></span></label>
+          <div class="concejal-commitment-actions"><button class="login-btn" id="saveConcejalCommitmentBtn" type="submit">Guardar compromiso</button><button class="activity-secondary-btn hidden" id="cancelConcejalCommitmentEditBtn" type="button">Cancelar edición</button></div>
+          <div id="concejalCommitmentNotice" class="activity-notice hidden" role="status"></div>
+        </form>
+          </section>
+          </div>
+        </div>
+      </section>
+      <section id="concejalHistoryView" class="concejal-subview hidden">
+        <section class="activity-panel concejal-history-panel" id="concejalHistoryPanel">
+          <div class="activity-toolbar"><div><span class="inline-badge">HISTORIAL</span><h2>Todas las actividades</h2><p>Busca y filtra las actividades registradas por barrio y fecha.</p></div><strong id="concejalHistoryCount">0 registros</strong></div>
+          <div class="concejal-filters"><input id="concejalHistorySearch" class="activity-search" placeholder="Buscar actividad o barrio…" aria-label="Buscar en historial"><input id="concejalFilterDateFrom" type="date" aria-label="Fecha inicial"><input id="concejalFilterDateTo" type="date" aria-label="Fecha final"><div class="mira-combobox-wrap concejal-filter-combobox"><input id="concejalFilterBarrio" autocomplete="off" aria-autocomplete="list" aria-expanded="false" aria-controls="concejalFilterBarrioDropdown" placeholder="Filtrar por barrio…" aria-label="Filtrar por barrio"><span class="mira-combobox-arrow" aria-hidden="true">▾</span><div id="concejalFilterBarrioDropdown" class="mira-combobox-menu hidden" role="listbox" aria-label="Filtrar barrios"></div></div><button id="resetConcejalFiltersBtn" class="activity-secondary-btn" type="button">Restablecer filtros</button></div>
+          <div id="concejalHistoryList" class="concejal-history-list"><div class="activity-empty-drive"><h3>Aún no hay actividades</h3><p>Los registros aparecerán aquí después de guardarlos.</p></div></div>
+          <div class="concejal-history-subheading"><div><span class="inline-badge">SEGUIMIENTO</span><h2>Historial de compromisos</h2><p>Los compromisos también aparecen aquí y respetan los filtros de búsqueda, fecha y barrio.</p></div><strong id="concejalHistoryCommitmentCount">0 compromisos</strong></div>
+          <div id="concejalHistoryCommitmentList" class="concejal-history-list"><div class="activity-empty-drive"><h3>Aún no hay compromisos</h3><p>Los compromisos registrados aparecerán aquí.</p></div></div>
+        </section>
+      </section>
+      <section id="concejalManagementView" class="concejal-subview hidden">
+      <section class="concejal-dashboard-grid" aria-label="Resumen de gestión de la concejal">
+        <article class="activity-panel concejal-dashboard-panel">
+          <div class="activity-toolbar"><div><span class="inline-badge">MI GESTIÓN</span><h2>Indicadores de gestión</h2><p>Resumen de las actividades y compromisos registrados en este navegador.</p></div></div>
+          <div class="concejal-kpi-grid">
+            <div class="concejal-kpi"><span>Actividades</span><strong id="concejalKpiActivities">0</strong></div>
+            <div class="concejal-kpi"><span>Compromisos</span><strong id="concejalKpiCommitments">0</strong></div>
+            <div class="concejal-kpi"><span>Compromisos cumplidos</span><strong id="concejalKpiCompleted">0</strong></div>
+            <div class="concejal-kpi"><span>Logros registrados</span><strong id="concejalKpiAchievements">0</strong></div>
+          </div>
+          <div class="concejal-progress-wrap"><div class="concejal-progress-label"><span>Avance de compromisos</span><strong id="concejalProgressText">0%</strong></div><div class="concejal-progress-track"><span id="concejalProgressBar"></span></div></div>
+        </article>
+        <article class="activity-panel concejal-report-panel">
+          <span class="inline-badge">INFORME MENSUAL</span><h2>Descargar gestión</h2>
+          <p class="concejal-muted">Genera un informe compatible con Microsoft Word con las actividades, compromisos, estados y resultados del mes seleccionado.</p>
+          <div class="concejal-report-controls"><label class="concejal-field">Mes del informe<input id="concejalReportMonth" type="month"></label></div>
+          <fieldset class="concejal-report-options"><legend>¿Qué deseas incluir?</legend><label><input id="concejalReportIncludeActivities" type="checkbox" checked> Actividades</label><label><input id="concejalReportIncludeCommitments" type="checkbox" checked> Compromisos y logros</label><p>Selecciona una opción o ambas para generar el informe.</p></fieldset>
+          <button id="downloadConcejalReportBtn" class="login-btn" type="button">Descargar informe Word</button>
+          <p class="concejal-muted" id="concejalReportHint">El informe se construye con los registros disponibles en este navegador. No incluye información que no se haya registrado.</p>
+        </article>
+      </section>
+        <section class="activity-panel concejal-commitments-panel">
+          <div class="activity-toolbar"><div><span class="inline-badge">SEGUIMIENTO</span><h2>Historial de compromisos</h2><p>Consulta y edita los compromisos registrados, sus estados y resultados.</p></div><strong id="concejalCommitmentCount">0 compromisos</strong></div>
+        <div class="concejal-commitment-list-toolbar"><h3>Historial de compromisos</h3><input id="concejalCommitmentSearch" class="activity-search" placeholder="Buscar compromiso, entidad o barrio…" aria-label="Buscar compromisos"></div>
+        <div id="concejalCommitmentList" class="concejal-history-list"><div class="activity-empty-drive"><h3>Aún no hay compromisos</h3><p>Los compromisos registrados aparecerán aquí.</p></div></div>
+      </section>
+        </section>
+      </section>
+    </section>
+
+    <!-- PORTAL DIRECTO EXCLUSIVO PARA TESTIGOS -->
+    <div id="testigoStandaloneContainer" class="hidden">
+        <div class="testigo-standalone-card">
+            <div class="testigo-standalone-header">
+                <div>
+                    <h2>📱 <span data-i18n="portal_testigo_title">Portal del Testigo Electoral</span></h2>
+                    <p>Facatativá — Reporte de Actas E-14</p>
+                </div>
+                <button id="logoutTestigoBtn" class="testigos-close-btn" title="Volver al Menú Principal">✕ <span data-i18n="btn_back">Volver</span></button>
+            </div>
+
+            <div class="testigos-form-grid" style="margin-top: 16px;">
+                <div class="custom-puesto-select-wrapper">
+                    <label class="mira-label" data-i18n="step_1">1. Escribe o Selecciona tu Puesto:</label>
+                    <div class="puesto-input-box">
+                        <input type="text" id="testigoPuestoInput" class="testigo-input-styled" placeholder="🔍 Escribe para buscar puesto..." autocomplete="off">
+                        <span class="puesto-dropdown-arrow">▾</span>
+                    </div>
+                    <div id="puestosDropdownList" class="puestos-dropdown-menu hidden"></div>
+                </div>
+
+                <div>
+                    <label class="mira-label" data-i18n="step_2">2. Número de Mesa(s) a Cargo:</label>
+                    <input type="text" id="testigoMesaInput" class="testigo-input-styled" placeholder="Ej. Mesa 3 o 1 al 4" autocomplete="off">
+                </div>
+            </div>
+
+            <div style="margin-top: 16px;">
+                <label class="mira-label" data-i18n="step_3">3. Observación o Novedad (Opcional):</label>
+                <input type="text" id="testigoNotaInput" class="testigo-input-styled" placeholder="Ej. Sin novedad / E-14 firmado" autocomplete="off">
+            </div>
+
+            <div style="margin-top: 20px;">
+                <label class="mira-label" style="font-size: 0.85rem; margin-bottom: 10px; display: block;" data-i18n="step_4">4. Elige cómo deseas subir la Foto del E-14:</label>
+                
+                <div class="testigo-media-buttons">
+                    <button type="button" class="media-btn camera-btn" id="btnTomarFotoCamara">
+                        <span>📸 <span data-i18n="btn_camera">Tomar Foto con Cámara</span></span>
+                    </button>
+                    <input type="file" id="testigoCameraInput" accept="image/*" capture="environment" class="hidden-file-input">
+
+                    <button type="button" class="media-btn gallery-btn" id="btnSubirGaleria">
+                        <span>🖼️ <span data-i18n="btn_gallery">Subir desde Galería</span></span>
+                    </button>
+                    <input type="file" id="testigoGalleryInput" accept="image/*" multiple class="hidden-file-input">
+                </div>
+            </div>
+
+            <div id="testigoPreviewContainer" class="testigo-preview-box hidden">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <span style="font-size: 0.82rem; color: var(--cyan-tactile); font-weight: 700;">
+                        <span data-i18n="lbl_photos_sel">Fotos Seleccionadas</span> (<span id="testigoFotosCount">0</span>):
+                    </span>
+                    <button type="button" id="btnLimpiarFotos" style="background: transparent; border: none; color: #f87171; font-size: 0.75rem; cursor: pointer; text-decoration: underline;" data-i18n="btn_clear">
+                        Quitar todas
+                    </button>
+                </div>
+                <div id="testigoThumbnailsGrid" class="testigo-thumbnails-grid"></div>
+            </div>
+
+            <button id="uploadEvidenciaBtn" class="excel-download-btn" style="margin-top: 20px; padding: 16px; font-size: 1rem; background: linear-gradient(135deg, #059669, #047857);" data-i18n="btn_transmit">
+                🚀 Transmitir Evidencia(s) al Centro de Operaciones
+            </button>
+        </div>
+    </div>
+
+    <!-- CONTENEDOR PRINCIPAL DEL SISTEMA (PMU / ADMIN) -->
+    <div id="app-container">
+        
+        <div id="mainSidebar" class="sidebar-wrapper-group">
+            
+            <sidebar class="neo-tactile-sidebar" aria-label="Menú principal de navegación">
+                <div class="sidebar-header">
+                    <button id="sidebarToggleBtn" title="Ocultar / Mostrar Menú" aria-label="Alternar menú lateral">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+                    </button>
+                    <button id="platformHomeBtn" class="platform-home-3d" type="button" title="Volver al inicio del mapa" aria-label="Volver al inicio del mapa">
+                        <svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true"><path d="M3 10.7 12 3l9 7.7v9.1a1.2 1.2 0 0 1-1.2 1.2h-4.9v-6.2H9.1V21H4.2A1.2 1.2 0 0 1 3 19.8z" fill="currentColor"/><path d="M14.5 8.2h2.2v4h-2.2z" fill="#fff"/></svg>
+                    </button>
+                    <div class="header-titles">
+                        <h1>Territorio Faca</h1>
+                        <p>Centro de Operaciones (PMU)</p>
+                    </div>
+                    
+                    <!-- Encabezado limpio: los controles de tema e idioma permanecen en la interfaz inicial. -->
+                    <div class="sidebar-header-right">
+                        <div class="neo-live-indicator" title="Sistema Activo" aria-label="Sistema activo"></div>
+                    </div>
+                </div>
+                
+                <div class="sidebar-content">
+
+                    <div class="section-title">Módulos de Gestión</div>
+
+                    <!-- MÓDULO 1: InfoMIRA -->
+                    <details class="custom-dropdown" id="dropdown-infomira">
+                        <summary>
+                            <span class="summary-title"><i class="neo-icon">💙</i> InfoMIRA (Red Cuidador/Líder)</span>
+                            <svg class="arrow-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+                        </summary>
+                        <div class="dropdown-content">
+                            <div class="mira-filter-box">
+                                <label for="cuidadorSearchInput" class="mira-label">Buscar Cuidador / Líder:</label>
+                                <div class="mira-input-group">
+                                    <input type="text" id="cuidadorSearchInput" placeholder="Nombre o Cédula..." autocomplete="off">
+                                    <button id="miraSearchBtn" title="Filtrar Red">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                                    </button>
+                                </div>
+
+                                <label for="miraEstadoSelect" class="mira-label" style="margin-top: 8px;">Filtrar por Estado / Rol:</label>
+
+<!-- Contenedor alineado horizontalmente con flexbox -->
+<div class="mira-select-group">
+    <select id="miraEstadoSelect" class="mira-select">
+        <option value="TODOS">-- Todos los Estados --</option>
+        <option value="LIDER">LÍDER / CUIDADOR</option>
+        <option value="REFERIDO">REFERIDO</option>
+        <option value="ACTIVO">ACTIVO</option>
+    </select>
+
+    <button id="miraResetBtn" class="mira-reset-btn" title="Restablecer Filtros">
+        ↺
+    </button>
+</div>
+                            </div>
+                            <div id="miraInternalResultsContainer" style="margin-top: 10px;"></div>
+                        </div>
+                    </details>
+
+                    <!-- MÓDULO 2: Logística y Transporte -->
+                    <details class="custom-dropdown" id="dropdown-logistica">
+                        <summary>
+                            <span class="summary-title"><i class="neo-icon">🚐</i> Logística & Transporte (Día D)</span>
+                            <svg class="arrow-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+                        </summary>
+                        <div class="dropdown-content">
+                            <div class="mira-filter-box" style="width: 100%; box-sizing: border-box;">
+                                <label class="mira-label">Filtrar Requerimiento Movilidad:</label>
+                                <select id="logisticaSelect" class="mira-select">
+                                    <option value="TODOS">-- Ver Todos --</option>
+                                    <option value="REQUIERE">Requiere Transporte / Ruta</option>
+                                    <option value="PROPIO">Vehículo Propio / Autónomo</option>
+                                </select>
+                                <button id="logisticaBtn" class="mira-reset-btn btn-logistica-fit">
+                                    🚐 Filtrar Mapa Logístico
+                                </button>
+                            </div>
+                        </div>
+                    </details>
+
+                    <!-- MÓDULO 3: Auditoría de Testigos -->
+                    <details class="custom-dropdown" id="dropdown-testigos">
+                        <summary>
+                            <span class="summary-title"><i class="neo-icon">🗳️</i> Auditoría Testigos (Actas E-14)</span>
+                            <svg class="arrow-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+                        </summary>
+                        <div class="dropdown-content">
+                            <div class="mira-filter-box" style="width: 100%; box-sizing: border-box;">
+                                <p style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.3;">Consola de auditoría de actas recibidas desde el campo.</p>
+                                <button id="openTestigosModalBtn" class="mira-reset-btn btn-auditoria-fit">
+                                    🖼️ Ver y Descargar Actas E-14
+                                </button>
+                            </div>
+                        </div>
+                    </details>
+
+                    <!-- MÓDULO 4: Info Electoral (Puestos) -->
+                    <details class="custom-dropdown" id="dropdown-puestos">
+                        <summary>
+                            <span class="summary-title"><i class="neo-icon">📍</i> Info Electoral (Puestos)</span>
+                            <svg class="arrow-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+                        </summary>
+                        <div class="dropdown-content">
+                            <div class="module-search-box puesto-search-row">
+                                <input type="text" id="puestosSearchInput" placeholder="🔍 Buscar puesto de votación..." autocomplete="off" aria-label="Buscar puesto de votación">
+                                <button type="button" id="resetPuestosFiltersBtn" class="territory-reset-icon-btn" title="Restablecer filtros de puestos y barrios" aria-label="Restablecer filtros">↺</button>
+                            </div>
+                            <div class="select-all-container">
+                                <label><input type="checkbox" id="select-all-puestos" checked> (Seleccionar todos)</label>
+                            </div>
+                            <div id="puestos-checkbox-container" class="filter-list"></div>
+                        </div>
+                    </details>
+
+                    <!-- MÓDULO 6: Actividades -->
+                    <details class="custom-dropdown" id="dropdown-actividades">
+                        <summary>
+                            <span class="summary-title"><i class="neo-icon">📋</i> Actividades</span>
+                            <svg class="arrow-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+                        </summary>
+                        <div class="dropdown-content activity-sidebar-content">
+                            <div class="activity-sidebar-shortcuts">
+                                <button class="activity-sidebar-tile" id="sideRecentActivitiesBtn" type="button"><span class="activity-side-icon">◷</span><span><strong>Registro en vivo</strong><small>Todos los registros</small></span><b>›</b></button>
+                                <button class="activity-sidebar-tile" id="sideAllActivitiesBtn" type="button"><span class="activity-side-icon">▦</span><span><strong>Todas las actividades</strong><small id="sideActivityCount">0 actividades</small></span><b>›</b></button>
+                            </div>
+                            <span class="hidden" id="sideActivityPeople">0</span><span class="hidden" id="sideActivityAttendances">0</span>
+                            <button class="hidden" id="sideOpenActivityModuleBtn" type="button">Abrir registro</button>
+                        </div>
+                    </details>
+
+                    <!-- MÓDULO CONCEJAL: seguimiento territorial independiente -->
+                    <details class="custom-dropdown" id="dropdown-concejal">
+                        <summary>
+                            <span class="summary-title"><i class="neo-icon">🗓️</i> Concejal · Gestión territorial</span>
+                            <svg class="arrow-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+                        </summary>
+                        <div class="dropdown-content concejal-sidebar-content">
+                            <p class="concejal-sidebar-description">Registro e historial exclusivo de la gestión territorial de la concejal.</p>
+                            <div class="activity-sidebar-shortcuts concejal-sidebar-shortcuts">
+                                <button class="activity-sidebar-tile" id="openConcejalRegisterBtn" type="button">
+                                    <span class="activity-side-icon">◷</span>
+                                    <span><strong>Registrar actividad</strong><small>Nuevo registro territorial</small></span>
+                                    <b>›</b>
+                                </button>
+                                <button class="activity-sidebar-tile" id="openConcejalHistoryBtn" type="button">
+                                    <span class="activity-side-icon">▦</span>
+                                    <span><strong>Historial de gestión</strong><small id="concejalSidebarHistoryCount">0 actividades</small></span>
+                                    <b>›</b>
+                                </button>
+                                <button class="activity-sidebar-tile" id="openConcejalManagementBtn" type="button">
+                                    <span class="activity-side-icon">▤</span>
+                                    <span><strong>Mi gestión e informes</strong><small>Indicadores y compromisos</small></span>
+                                    <b>›</b>
+                                </button>
+                            </div>
+                            <small id="concejalSidebarCount" class="concejal-sidebar-count">0 actividades registradas</small>
+                        </div>
+                    </details>
+
+                    <!-- MÓDULO 5: Barrios y Sectores -->
+                    <details class="custom-dropdown" id="dropdown-barrios">
+                        <summary>
+                            <span class="summary-title"><i class="neo-icon">🏘️</i> Polígonos territoriales (143)</span>
+                            <svg class="arrow-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+                        </summary>
+                        <div class="dropdown-content">
+                            <div class="territory-search-inline">
+                                <div class="module-search-box">
+                                    <input type="text" id="barriosSearchInput" placeholder="🔍 Buscar barrio o sector..." autocomplete="off" aria-label="Buscar barrios o sectores">
+                                </div>
+                                <button type="button" id="reset-barrios-filters" class="territory-reset-icon" title="Restablecer filtros territoriales" aria-label="Restablecer filtros territoriales">↺</button>
+                            </div>
+                            <div class="territory-filter-controls">
+                                <label class="territory-toggle-row"><input type="checkbox" id="toggle-poligonos-kml" checked> Mostrar polígonos del KML</label>
+                                <label class="territory-toggle-row"><input type="checkbox" id="select-all-barrios" checked> Seleccionar todos los sectores</label>
+                                <p class="polygon-warning">Pasa el cursor para ver el nombre. Selecciona un sector para aislarlo y abrir su ficha territorial.</p>
+                            </div>
+                            <div id="barrios-checkbox-container" class="filter-list">
+                                <p class="loading-text">Cargando sectores...</p>
+                            </div>
+                        </div>
+                    </details>
+
+                </div>
+            </sidebar>
+
+            <!-- DASHBOARD FLOTANTE (ESTILO TARJETAS IMAGEN 2: BPM / CALORIES / STEPS) -->
+            <div class="dashboard-floating-card" id="adminDashboardCard">
+                <div class="dash-footer-header">
+                    <span class="dash-footer-title"><i class="neo-pulse-dot"></i> Estadísticas & Metas Globales</span>
+                    <strong id="kpiMetaVal" class="text-cyan">0%</strong>
+                </div>
+                <div class="kpi-bar-bg" style="margin-bottom: 10px;">
+                    <div class="kpi-bar-fill" id="kpiBarFill" style="width: 0%;"></div>
+                </div>
+                <div class="dash-footer-row">
+                    <div class="dash-footer-mini">
+                        <span class="mini-icon">👤</span>
+                        <span>Líderes</span>
+                        <strong id="kpiLideres">0</strong>
+                    </div>
+                    <div class="dash-footer-mini">
+                        <span class="mini-icon">💧</span>
+                        <span>Activos</span>
+                        <strong id="kpiActivos">0</strong>
+                    </div>
+                    <div class="dash-footer-mini">
+                        <span class="mini-icon">👥</span>
+                        <span>Referidos</span>
+                        <strong id="kpiReferidos">0</strong>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- MODAL DE AUDITORÍA DE TESTIGOS -->
+        <div id="testigosModal" class="testigos-modal-overlay hidden">
+            <div class="testigos-modal-card">
+                <div class="testigos-modal-header">
+                    <h3>💻 Centro de Operaciones — Auditoría y Descarga de Actas E-14</h3>
+                    <button id="closeTestigosModalBtn" class="testigos-close-btn">✕</button>
+                </div>
+
+                <div class="testigos-modal-body">
+                    <div class="testigos-gallery-section">
+                        <div class="testigos-gallery-toolbar" style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px;">
+                            <h4 style="margin: 0;">🖼️ Actas E-14 Transmitidas en Tiempo Real</h4>
+                            <div class="testigos-gallery-actions">
+                                <label class="gallery-filter-label" for="filtroPuestoActas">Puesto
+                                    <select id="filtroPuestoActas" class="gallery-filter-select"><option value="">Todos los puestos</option></select>
+                                </label>
+                                <label class="gallery-filter-label" for="ordenMesasActas">Orden de mesas
+                                    <select id="ordenMesasActas" class="gallery-filter-select"><option value="asc">Menor a mayor</option><option value="desc">Mayor a menor</option></select>
+                                </label>
+                            </div>
+                            <button id="downloadAllEvidenciasBtn" class="excel-download-btn" style="width: auto; padding: 8px 14px; font-size: 0.78rem; background: var(--primary-blue);">
+                                📥 Descargar Reporte Excel Consolidado
+                            </button>
+                        </div>
+                        <div id="testigosGalleryGrid" class="testigos-gallery-grid">
+                            <p class="placeholder-text">No hay actas cargadas aún. Esperando transmisión de los testigos en campo...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TARJETA FLOTANTE PUESTO -->
+        <div id="floatingPuestoWidget" class="floating-puesto-card hidden">
+            <button id="closeFloatingWidget" class="floating-close-btn" title="Cerrar Ficha">✕</button>
+            <div id="floatingWidgetContent"></div>
+        </div>
+
+        <div id="map"></div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="app.js"></script>
+</body>
+</html>
