@@ -1689,9 +1689,7 @@ function inicializarSistemaMapa() {
     }
 
     function actualizarDashboardKPIs() {
-        const totalVotantes = baseVotantes.length;
-        const metaEsperada = 1000;
-        const porcentaje = Math.min(100, Math.round((totalVotantes / metaEsperada) * 100));
+        const metaEsperada = 1200;
 
         let lideresCount = 0;
         let activosCount = 0;
@@ -1704,7 +1702,11 @@ function inicializarSistemaMapa() {
             else referidosCount++;
         });
 
-        document.getElementById('kpiMetaVal').innerText = `${porcentaje}% (${totalVotantes} / ${metaEsperada})`;
+        // La meta global cuenta únicamente líderes + referidos; "Activos" se mantiene como indicador independiente.
+        const totalMeta = lideresCount + referidosCount;
+        const porcentaje = Math.min(100, Math.round((totalMeta / metaEsperada) * 100));
+
+        document.getElementById('kpiMetaVal').innerText = `${porcentaje}% (${totalMeta} / ${metaEsperada})`;
         document.getElementById('kpiBarFill').style.width = `${porcentaje}%`;
         document.getElementById('kpiLideres').innerText = lideresCount;
         document.getElementById('kpiActivos').innerText = activosCount;
