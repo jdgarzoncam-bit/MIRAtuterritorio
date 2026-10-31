@@ -979,6 +979,76 @@ function inicializarSistemaMapa() {
         colapsarPanelesDeFiltros();
     });
 
+    window.actualizarMapa = function() {
+        if (!datosOriginales || !map) return;
+        if (geojsonLayer && map.hasLayer(geojsonLayer)) map.removeLayer(geojsonLayer);
+        poligonosPorNombre = Object.create(null);
+
+        geojsonLayer = L.geoJSON(datosOriginales, {
+            filter: function(feature) {
+                const index = datosOriginales.features.indexOf(feature);
+                const nombre = obtenerNombreBarrio(feature, index);
+                return barriosFiltroEstado[nombre] !== false;
+            },
+            style: function(feature) {
+                const estilo = feature.properties?.estilo_kml || {};
+                const color = estilo.fill || estilo.line || '#0891B2';
+                const nombreFeature = obtenerNombreBarrio(feature, datosOriginales.features.indexOf(feature));
+                const seleccionado = nombreFeature === poligonoSeleccionadoNombre || poligonosCoincidenciaActiva.has(nombreFeature);
+                return {
+                    color: seleccionado ? '#FFFFFF' : (estilo.line || color),
+                    weight: seleccionado ? 3.5 : 1.65,
+                    opacity: Math.max(0.85, estilo.lineOpacity || 1),
+                    fillColor: color,
+                    fillOpacity: seleccionado ? 0.58 : Math.max(0.36, Math.min(0.52, (estilo.fillOpacity || 0.30) * 1.7)),
+                    lineJoin: 'round'
+                };
+            },
+            onEachFeature: function(feature, layer) {
+                const index = datosOriginales.features.indexOf(feature);
+                const nombre = obtenerNombreBarrio(feature, index);
+                const estilo = feature.properties?.estilo_kml || {};
+                const color = estilo.fill || estilo.line || '#0891B2';
+                poligonosPorNombre[nombre] = layer;
+                const construirFichaPopup = () => `
+                    <div style="min-width:240px;max-width:310px;font-family:system-ui,sans-serif;color:#172033">
+                      <strong style="display:block;font-size:14px;margin-bottom:9px">🏘️ ${escapeHtml(nombre)}</strong>
+                      <div style="font-size:12px;line-height:1.65">
+                        <div><b>Líder del barrio:</b> <span>${escapeHtml(feature.properties?.lider || feature.properties?.LIDER || 'Por registrar')}</span></div>
+                        <div><b>JAC:</b> <span>${escapeHtml(feature.properties?.jac || feature.properties?.JAC || 'Por registrar')}</span></div>
+                        <div style="margin-top:6px"><b>Actividad del partido:</b><br><span>${htmlResumenActividad(nombre, 'partido')}</span></div>
+                        <div style="margin-top:6px"><b>Actividad concejal:</b><br><span>${htmlResumenActividad(nombre, 'concejal')}</span></div>
+                      </div>
+                      <div style="font-size:10px;color:#64748b;margin-top:8px">Los registros del partido y de la concejal se mantienen separados.</div>
+                    </div>`;
+                layer.bindTooltip(nombre, { sticky: true, direction: 'top', opacity: 0.98, className: 'leaflet-tooltip-barrio' });
+                // La ficha completa se muestra en el panel lateral; no abrimos popup sobre el polígono.
+                layer.on('mouseover', function() {
+                    const isSelected = poligonoSeleccionadoNombre === nombre || poligonosCoincidenciaActiva.has(nombre);
+                    layer.setStyle({ color: '#FFFFFF', weight: isSelected ? 4 : 2.8, fillOpacity: isSelected ? 0.62 : 0.52 });
+                    if (layer.bringToFront) layer.bringToFront();
+                });
+                layer.on('mouseout', function() {
+                    const isSelected = poligonoSeleccionadoNombre === nombre || poligonosCoincidenciaActiva.has(nombre);
+                    layer.setStyle({
+                        color: isSelected ? '#FFFFFF' : (estilo.line || color),
+                        weight: isSelected ? 3.5 : 1.65,
+                        opacity: Math.max(0.85, estilo.lineOpacity || 1),
+                        fillColor: color,
+                        fillOpacity: isSelected ? 0.58 : Math.max(0.36, Math.min(0.52, (estilo.fillOpacity || 0.30) * 1.7)),
+                        lineJoin: 'round'
+                    });
+                });
+                layer.on('click', function() {
+                    seleccionarPoligonoTerritorial(nombre, false);
+                    mostrarFichaBarrio(feature, nombre);
+                });
+            }
+        });
+        if (poligonosKmlVisibles) geojsonLayer.addTo(map);
+    };
+
+
     // Selector de vistas del módulo unificado Barrios y puestos.
     const territoryModeBarrios = document.getElementById('territoryModeBarrios');
     const territoryModePuestos = document.getElementById('territoryModePuestos');
@@ -2477,74 +2547,6 @@ function inicializarSistemaMapa() {
         return `${escapeHtml(actividad.nombre)}${actividad.fecha ? ` · ${escapeHtml(actividad.fecha)}` : ''}`;
     }
 
-    window.actualizarMapa = function() {
-        if (!datosOriginales || !map) return;
-        if (geojsonLayer && map.hasLayer(geojsonLayer)) map.removeLayer(geojsonLayer);
-        poligonosPorNombre = Object.create(null);
-
-        geojsonLayer = L.geoJSON(datosOriginales, {
-            filter: function(feature) {
-                const index = datosOriginales.features.indexOf(feature);
-                const nombre = obtenerNombreBarrio(feature, index);
-                return barriosFiltroEstado[nombre] !== false;
-            },
-            style: function(feature) {
-                const estilo = feature.properties?.estilo_kml || {};
-                const color = estilo.fill || estilo.line || '#0891B2';
-                const nombreFeature = obtenerNombreBarrio(feature, datosOriginales.features.indexOf(feature));
-                const seleccionado = nombreFeature === poligonoSeleccionadoNombre || poligonosCoincidenciaActiva.has(nombreFeature);
-                return {
-                    color: seleccionado ? '#FFFFFF' : (estilo.line || color),
-                    weight: seleccionado ? 3.5 : 1.65,
-                    opacity: Math.max(0.85, estilo.lineOpacity || 1),
-                    fillColor: color,
-                    fillOpacity: seleccionado ? 0.58 : Math.max(0.36, Math.min(0.52, (estilo.fillOpacity || 0.30) * 1.7)),
-                    lineJoin: 'round'
-                };
-            },
-            onEachFeature: function(feature, layer) {
-                const index = datosOriginales.features.indexOf(feature);
-                const nombre = obtenerNombreBarrio(feature, index);
-                const estilo = feature.properties?.estilo_kml || {};
-                const color = estilo.fill || estilo.line || '#0891B2';
-                poligonosPorNombre[nombre] = layer;
-                const construirFichaPopup = () => `
-                    <div style="min-width:240px;max-width:310px;font-family:system-ui,sans-serif;color:#172033">
-                      <strong style="display:block;font-size:14px;margin-bottom:9px">🏘️ ${escapeHtml(nombre)}</strong>
-                      <div style="font-size:12px;line-height:1.65">
-                        <div><b>Líder del barrio:</b> <span>${escapeHtml(feature.properties?.lider || feature.properties?.LIDER || 'Por registrar')}</span></div>
-                        <div><b>JAC:</b> <span>${escapeHtml(feature.properties?.jac || feature.properties?.JAC || 'Por registrar')}</span></div>
-                        <div style="margin-top:6px"><b>Actividad del partido:</b><br><span>${htmlResumenActividad(nombre, 'partido')}</span></div>
-                        <div style="margin-top:6px"><b>Actividad concejal:</b><br><span>${htmlResumenActividad(nombre, 'concejal')}</span></div>
-                      </div>
-                      <div style="font-size:10px;color:#64748b;margin-top:8px">Los registros del partido y de la concejal se mantienen separados.</div>
-                    </div>`;
-                layer.bindTooltip(nombre, { sticky: true, direction: 'top', opacity: 0.98, className: 'leaflet-tooltip-barrio' });
-                // La ficha completa se muestra en el panel lateral; no abrimos popup sobre el polígono.
-                layer.on('mouseover', function() {
-                    const isSelected = poligonoSeleccionadoNombre === nombre || poligonosCoincidenciaActiva.has(nombre);
-                    layer.setStyle({ color: '#FFFFFF', weight: isSelected ? 4 : 2.8, fillOpacity: isSelected ? 0.62 : 0.52 });
-                    if (layer.bringToFront) layer.bringToFront();
-                });
-                layer.on('mouseout', function() {
-                    const isSelected = poligonoSeleccionadoNombre === nombre || poligonosCoincidenciaActiva.has(nombre);
-                    layer.setStyle({
-                        color: isSelected ? '#FFFFFF' : (estilo.line || color),
-                        weight: isSelected ? 3.5 : 1.65,
-                        opacity: Math.max(0.85, estilo.lineOpacity || 1),
-                        fillColor: color,
-                        fillOpacity: isSelected ? 0.58 : Math.max(0.36, Math.min(0.52, (estilo.fillOpacity || 0.30) * 1.7)),
-                        lineJoin: 'round'
-                    });
-                });
-                layer.on('click', function() {
-                    seleccionarPoligonoTerritorial(nombre, false);
-                    mostrarFichaBarrio(feature, nombre);
-                });
-            }
-        });
-        if (poligonosKmlVisibles) geojsonLayer.addTo(map);
-    };
 
     // Al volver a mostrar el mapa en móvil, Leaflet recalcula el viewport y
     // garantiza que la capa territorial siga montada si está habilitada.
