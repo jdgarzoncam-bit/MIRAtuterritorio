@@ -553,7 +553,7 @@ document.getElementById('saveParticipantBtn').addEventListener('click',async()=>
     clearParticipantForm();
     const notice=document.getElementById('duplicateNotice');
     if(notice){notice.textContent='Persona y asistencia guardadas correctamente en Neon.';notice.classList.remove('hidden');}
-    if(wasEditing&&returnToRecentAfterEdit){returnToRecentAfterEdit=false;showActivityView('recent');}
+    if(wasEditing&&returnToRecentAfterEdit){returnToRecentAfterEdit=false;openActivityFolder(detailActivityId);}
   }catch(error){console.error('[MIRA] Error guardando en Neon:',error);alert('No fue posible guardar en Neon: '+(error.message||'Error desconocido'));}
   finally{button.disabled=false;}
 });
