@@ -1958,6 +1958,105 @@ function inicializarSistemaMapa() {
 
         let ultimaConsulta = [];
 
+        // Sugerencias inteligentes del directorio centralizado.
+        const searchGroup = inputCuidador.closest('.mira-input-group');
+        const suggestions = document.createElement('div');
+        suggestions.id = 'miraSearchSuggestions';
+        suggestions.className = 'mira-search-suggestions';
+        suggestions.setAttribute('role','listbox');
+        suggestions.hidden = true;
+        if (searchGroup) searchGroup.insertAdjacentElement('afterend',suggestions);
+        let suggestionTimer = null;
+        let suggestionRequest = 0;
+        let activeSuggestion = -1;
+        let suggestionRows = [];
+        const closeSuggestions = () => {
+            suggestions.hidden = true;
+            suggestions.innerHTML = '';
+            activeSuggestion = -1;
+        };
+        const paintSuggestions = rows => {
+            suggestionRows = rows;
+            activeSuggestion = -1;
+            if (!rows.length) {
+                suggestions.innerHTML = '<div class="mira-suggestion-empty">No hay coincidencias con ese texto.</div>';
+                suggestions.hidden = false;
+                return;
+            }
+            suggestions.innerHTML = rows.map((row,index) => {
+                const person = Array.isArray(row.personas) ? row.personas[0] : row.personas;
+                const name = [person?.nombres,person?.apellidos].filter(Boolean).join(' ').trim() || row.nombre_original || 'Nombre sin registrar';
+                const doc = person?.cedula || row.cedula_original || '';
+                const caregiver = row.cuidador_nombre || '';
+                return '<button type="button" class="mira-suggestion-option" role="option" aria-selected="false" data-index="'+index+'">'+
+                    '<span class="mira-suggestion-avatar">⌕</span><span class="mira-suggestion-copy"><strong>'+escInfo(name)+'</strong>'+
+                    '<small>'+ (doc ? 'Documento: '+escInfo(doc) : 'Documento sin registrar')+
+                    (caregiver ? ' · Líder: '+escInfo(caregiver) : '')+'</small></span><span class="mira-suggestion-arrow">↗</span></button>';
+            }).join('');
+            suggestions.hidden = false;
+        };
+        const updateSuggestionHighlight = next => {
+            const options = [...suggestions.querySelectorAll('.mira-suggestion-option')];
+            if (!options.length) return;
+            activeSuggestion = (next + options.length) % options.length;
+            options.forEach((option,index) => {
+                option.classList.toggle('is-active',index === activeSuggestion);
+                option.setAttribute('aria-selected',String(index === activeSuggestion));
+            });
+        };
+        const chooseSuggestion = index => {
+            const row = suggestionRows[index];
+            if (!row) return;
+            const person = Array.isArray(row.personas) ? row.personas[0] : row.personas;
+            inputCuidador.value = [person?.nombres,person?.apellidos].filter(Boolean).join(' ').trim() || row.nombre_original || row.cedula_original || '';
+            closeSuggestions();
+            aplicarFiltroInfoMIRA();
+        };
+        inputCuidador.setAttribute('aria-autocomplete','list');
+        inputCuidador.setAttribute('aria-controls','miraSearchSuggestions');
+        inputCuidador.addEventListener('input',() => {
+            clearTimeout(suggestionTimer);
+            const term = inputCuidador.value.trim();
+            const requestId = ++suggestionRequest;
+            if (term.length < 2 || /^\\d+$/.test(term)) { closeSuggestions(); return; }
+            suggestions.innerHTML = '<div class="mira-suggestion-loading">Buscando coincidencias…</div>';
+            suggestions.hidden = false;
+            suggestionTimer = setTimeout(async () => {
+                try {
+                    const rows = await window.MIRA_DATA.listInfoMiraDirectory({search:term,limit:12});
+                    if (requestId !== suggestionRequest || inputCuidador.value.trim() !== term) return;
+                    const seen = new Set();
+                    const unique = (rows || []).filter(row => {
+                        const person = Array.isArray(row.personas) ? row.personas[0] : row.personas;
+                        const key = String(person?.cedula || row.cedula_original || row.nombre_original || '').toLowerCase();
+                        if (!key || seen.has(key)) return false;
+                        seen.add(key);
+                        return true;
+                    }).slice(0,8);
+                    paintSuggestions(unique);
+                } catch (error) {
+                    if (requestId !== suggestionRequest) return;
+                    suggestions.innerHTML = '<div class="mira-suggestion-empty">No se pudieron cargar sugerencias. Puedes presionar buscar.</div>';
+                    suggestions.hidden = false;
+                }
+            },280);
+        });
+        suggestions.addEventListener('click',event => {
+            const option = event.target.closest('.mira-suggestion-option');
+            if (option) chooseSuggestion(Number(option.dataset.index));
+        });
+        inputCuidador.addEventListener('keydown',event => {
+            if (suggestions.hidden) return;
+            if (event.key === 'ArrowDown') { event.preventDefault(); updateSuggestionHighlight(activeSuggestion+1); }
+            else if (event.key === 'ArrowUp') { event.preventDefault(); updateSuggestionHighlight(activeSuggestion<=0 ? suggestionRows.length-1 : activeSuggestion-1); }
+            else if (event.key === 'Enter' && activeSuggestion >= 0) { event.preventDefault(); chooseSuggestion(activeSuggestion); }
+            else if (event.key === 'Escape') closeSuggestions();
+        });
+        document.addEventListener('click',event => {
+            if (!suggestions.contains(event.target) && event.target !== inputCuidador) closeSuggestions();
+        });
+
+
         const escInfo = value => String(value ?? '').replace(/[&<>"']/g, char => ({
             '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
         })[char]);
@@ -2160,6 +2259,9 @@ function inicializarSistemaMapa() {
         });
         selectEstado.addEventListener('change',aplicarFiltroInfoMIRA);
         btnResetMira.addEventListener('click',() => {
+            clearTimeout(suggestionTimer);
+            suggestionRequest++;
+            closeSuggestions();
             inputCuidador.value = '';
             selectEstado.value = 'TODOS';
             ultimaConsulta = [];
