@@ -40,7 +40,7 @@ const cleanCedula = (value) => String(value || "").replace(/\D/g, "");
 
 export const MIRA_DATA = {
   async listPeople({cedula="", search="", limit=100}={}) {
-    const params = {select:"*",order:"updated_at.desc",limit:String(Math.min(Math.max(limit,1),100))};
+    const params = {select:"id,cedula,cedula_normalizada,nombres,apellidos,telefono,correo,info_mira,puesto_votacion,mesa_votacion,requiere_transporte,edad,tipo_participacion,activo,created_at,updated_at",order:"updated_at.desc",limit:String(Math.min(Math.max(limit,1),100))};
     if (cedula) params.cedula_normalizada = `eq.${cleanCedula(cedula)}`;
     else if (search.trim()) {
       const term = search.trim().replace(/[,*()]/g," ");
