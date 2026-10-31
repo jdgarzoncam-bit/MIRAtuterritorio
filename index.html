@@ -13,7 +13,7 @@
     <!-- SheetJS -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
-    <link rel="stylesheet" href="style.css?v=20261031-electoral-winners-1">
+    <link rel="stylesheet" href="style.css?v=20261031-pqrs-module-1">
 </head>
 <body class="theme-dark">
 
@@ -68,6 +68,11 @@
                     </div>
                 </div>
 
+                <!-- TARJETA 3: PQRS -->
+                <div class="hero-module-card" id="btnSelectPQRS" role="button" tabindex="0" aria-label="PQRS">
+                    <div class="card-arrow-badge">↗</div><div class="card-icon-glow">💬</div>
+                    <div class="card-text-block"><h3>PQRS</h3><p>Envía peticiones, quejas, reclamos y sugerencias sobre los módulos.</p></div>
+                </div>
                 <!-- Capa modal de acceso: desenfoca toda la portada sin reemplazarla -->
                 <div id="adminLoginBackdrop" class="admin-login-backdrop hidden" aria-hidden="true"></div>
 
@@ -157,6 +162,26 @@
       <footer class="activities-footer"><button id="returnFromActivities" class="activity-secondary-btn" type="button">← Volver al menú principal</button></footer>
     </section>
 
+    <section id="pqrsSubmitWorkspace" class="activities-workspace pqrs-workspace hidden" aria-labelledby="pqrsSubmitTitle">
+      <header class="activities-header"><div class="activities-header-copy"><div class="brand-pill">MIRA TU TERRITORIO · PARTICIPACIÓN</div><h1 id="pqrsSubmitTitle"><span class="hero-title-cyan">PQRS</span></h1><p>Envía una petición, queja, reclamo o sugerencia sobre el funcionamiento de la plataforma.</p></div><button class="top-control-btn" id="closePqrsSubmit" type="button" title="Volver al menú" aria-label="Cerrar módulo">✕</button></header>
+      <div class="activity-view pqrs-form-view"><div class="activity-panel pqrs-form-panel">
+        <div class="pqrs-intro"><span class="pqrs-intro-icon">💬</span><div><h2>Cuéntanos cómo podemos mejorar</h2><p>Tu comentario quedará registrado para revisión por el equipo administrador.</p></div></div>
+        <form id="pqrsSubmitForm"><div class="pqrs-form-grid">
+          <label>Tipo de solicitud<select id="pqrsType" required><option value="peticion">Petición</option><option value="queja">Queja</option><option value="reclamo">Reclamo</option><option value="sugerencia">Sugerencia</option></select></label>
+          <label>Módulo relacionado<select id="pqrsModule" required><option value="">Selecciona un módulo</option><option value="infomira">InfoMIRA</option><option value="logistica">Logística &amp; Transporte</option><option value="testigos">Auditoría Testigos</option><option value="info_electoral">Info Electoral</option><option value="barrios_puestos">Barrios y puestos</option><option value="actividades">Actividades</option><option value="concejal">Concejal · Gestión territorial</option><option value="centro_operaciones">Centro de Operaciones</option><option value="pqrs">PQRS</option><option value="otro">Otro / General</option></select></label>
+          <label class="pqrs-full-field">Asunto<input id="pqrsSubject" type="text" maxlength="160" minlength="4" placeholder="Resume el motivo de tu comentario" required></label>
+          <label class="pqrs-full-field">Descripción<textarea id="pqrsDescription" rows="7" minlength="10" maxlength="5000" placeholder="Describe tu petición, queja, reclamo o sugerencia con el mayor detalle posible…" required></textarea><small class="pqrs-field-help">Entre 10 y 5.000 caracteres. No incluyas contraseñas ni datos personales sensibles.</small></label>
+        </div><div id="pqrsSubmitNotice" class="activity-notice hidden" role="status" aria-live="polite"></div><div class="activity-actions"><button id="pqrsSendBtn" class="login-btn" type="submit">Enviar PQRS ↗</button><button id="pqrsClearBtn" class="activity-secondary-btn" type="reset">Limpiar formulario</button></div></form>
+      </div><div class="activity-panel pqrs-confirmation-panel"><strong>¿Qué sucede después?</strong><p>Tu registro queda almacenado en Neon con fecha y usuario de envío. El administrador podrá clasificarlo, revisarlo y actualizar su estado desde el Centro de Operaciones.</p></div></div>
+      <footer class="activities-footer"><button class="activity-secondary-btn" id="returnFromPqrsSubmit" type="button">← Volver al menú principal</button></footer>
+    </section>
+    <section id="pqrsAdminWorkspace" class="activities-workspace pqrs-workspace hidden" aria-labelledby="pqrsAdminTitle">
+      <header class="activities-header"><div class="activities-header-copy"><div class="brand-pill">CENTRO DE OPERACIONES · GESTIÓN INTERNA</div><h1 id="pqrsAdminTitle"><span class="hero-title-cyan">PQRS</span></h1><p>Consulta, clasifica y realiza seguimiento a las solicitudes recibidas.</p></div><button class="top-control-btn" id="closePqrsAdmin" type="button" title="Volver al mapa" aria-label="Cerrar módulo">✕</button></header>
+      <div class="activity-view"><div class="pqrs-admin-stats" id="pqrsAdminStats"></div>
+        <nav class="pqrs-filter-bar" aria-label="Filtrar PQRS"><button type="button" class="pqrs-filter is-active" data-pqrs-filter="todas">Todas <span id="pqrsCountAll">0</span></button><button type="button" class="pqrs-filter" data-pqrs-filter="peticion">Peticiones <span id="pqrsCountPeticion">0</span></button><button type="button" class="pqrs-filter" data-pqrs-filter="queja">Quejas <span id="pqrsCountQueja">0</span></button><button type="button" class="pqrs-filter" data-pqrs-filter="reclamo">Reclamos <span id="pqrsCountReclamo">0</span></button><button type="button" class="pqrs-filter" data-pqrs-filter="sugerencia">Sugerencias <span id="pqrsCountSugerencia">0</span></button></nav>
+        <div class="activity-panel pqrs-inbox-panel"><div class="activity-toolbar"><div><h2>Solicitudes recibidas</h2><p id="pqrsAdminSubtitle">Cargando registros desde Neon…</p></div><button class="activity-secondary-btn" id="pqrsRefreshBtn" type="button">↻ Actualizar</button></div><div id="pqrsAdminNotice" class="activity-notice hidden" role="status" aria-live="polite"></div><div id="pqrsAdminList" class="pqrs-admin-list"><div class="activity-empty-drive"><div>💬</div><h3>Consultando PQRS</h3><p>Un momento, por favor.</p></div></div></div>
+      </div><footer class="activities-footer"><button class="activity-secondary-btn" id="returnFromPqrsAdmin" type="button">← Volver al Centro de Operaciones</button></footer>
+    </section>
     <!-- MÓDULO CONCEJAL: registros separados de las actividades generales del partido -->
     <section id="concejalWorkspace" class="activities-workspace concejal-workspace hidden" aria-labelledby="concejalTitle">
       <header class="activities-header">
@@ -515,6 +540,13 @@
                         </div>
                     </details>
 
+                    <!-- MÓDULO PQRS: bandeja administrativa -->
+                    <details class="custom-dropdown hidden" id="dropdown-pqrs-admin">
+                        <summary><span class="summary-title"><i class="neo-icon">💬</i> PQRS</span><svg class="arrow-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></summary>
+                        <div class="dropdown-content pqrs-sidebar-content"><p class="concejal-sidebar-description">Bandeja de peticiones, quejas, reclamos y sugerencias recibidas.</p>
+                            <button class="activity-sidebar-tile" id="openPqrsAdminBtn" type="button"><span class="activity-side-icon">▤</span><span><strong>Gestionar PQRS</strong><small id="pqrsSidebarCount">Consultar solicitudes</small></span><b>›</b></button>
+                        </div>
+                    </details>
                     <!-- MÓDULO CONCEJAL: seguimiento territorial independiente -->
                     <details class="custom-dropdown" id="dropdown-concejal">
                         <summary>
@@ -658,10 +690,11 @@
             <footer class="admin-permissions-footer"><span>La cuenta administradora principal conserva todos sus privilegios.</span><span>Registro abierto · correo verificado · aprobación administrativa obligatoria.</span></footer>
         </div>
     </section>
-    <script type="module" src="mira-data.js?v=20261031-open-signup-approval-1"></script>
+    <script type="module" src="mira-data.js?v=20261031-pqrs-module-1"></script>
     <script type="module" src="mira-auth.js?v=20261031-open-signup-approval-1"></script>
     <script src="app.js?v=20261031-electoral-winners-1"></script>
     <script type="module" src="mira-admin.js?v=20261031-admin-approvals-4"></script>
+    <script type="module" src="pqrs.js?v=20261031-pqrs-module-1"></script>
     <script src="pmu-navigation.js?v=20261031-vertical-glass"></script>
     <script src="electoral-dashboard.js"></script>
     <script src="mobile-operations.js?v=20261031-mobile-map-panel-1"></script>

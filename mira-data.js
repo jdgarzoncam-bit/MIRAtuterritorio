@@ -147,6 +147,22 @@ export const MIRA_DATA = {
   setModulePermission(profileId,moduleKey,actionKey,allowed) {
     return miraRequest("module_permissions",{method:"POST",query:qs({on_conflict:"user_profile_id,module_key,action_key"}),prefer:"resolution=merge-duplicates,return=representation",body:{user_profile_id:profileId,module_key:moduleKey,action_key:actionKey,allowed:Boolean(allowed)}});
   },
+
+  async listPQRS({tipo="",limit=500}={}) {
+    const params={select:"id,tipo,modulo_key,asunto,descripcion,estado,created_by,created_at,updated_at",order:"created_at.desc",limit:String(Math.min(Math.max(limit,1),1000))};
+    if(tipo) params.tipo="eq."+tipo;
+    return miraRequest("pqrs",{query:qs(params)});
+  },
+  createPQRS(payload) {
+    if(!["peticion","queja","reclamo","sugerencia"].includes(payload.tipo)) throw new Error("Selecciona un tipo de PQRS válido.");
+    if(!payload.modulo_key?.trim()||!payload.asunto?.trim()||payload.asunto.trim().length<4||!payload.descripcion?.trim()||payload.descripcion.trim().length<10) throw new Error("Completa el módulo, asunto y descripción.");
+    return miraRequest("pqrs",{method:"POST",body:{tipo:payload.tipo,modulo_key:payload.modulo_key,asunto:payload.asunto.trim(),descripcion:payload.descripcion.trim()}});
+  },
+  updatePQRS(id,payload) {
+    const allowed={}; if(["recibida","en_revision","respondida","cerrada"].includes(payload.estado)) allowed.estado=payload.estado;
+    if(!Object.keys(allowed).length) throw new Error("No hay cambios válidos para guardar.");
+    return miraRequest("pqrs",{method:"PATCH",query:qs({id:"eq."+id}),body:allowed});
+  },
   async listAdminAudit({limit=30}={}) {
     return miraRequest("admin_audit_log",{query:qs({select:"id,actor_auth_user_id,target_auth_user_id,action_key,details,created_at",order:"created_at.desc",limit:String(Math.min(Math.max(limit,1),100))})});
   }
