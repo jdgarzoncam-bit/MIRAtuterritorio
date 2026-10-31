@@ -2542,7 +2542,13 @@ if(homeReturnButton){
   const concejalSyncInterval=setInterval(()=>{
     if(document.hidden||workspace.classList.contains('hidden')||!window.MIRA_CURRENT_USER||concejalLoading)return;
     const active=document.activeElement;
-    if((form&&form.contains(active))||(commitmentForm&&commitmentForm.contains(active)))return;
+    const isTyping=active&&(
+      active.tagName==='INPUT'||
+      active.tagName==='TEXTAREA'||
+      active.tagName==='SELECT'||
+      active.isContentEditable
+    );
+    if(isTyping&&((form&&form.contains(active))||(commitmentForm&&commitmentForm.contains(active))))return;
     loadConcejalFromNeon().catch(error=>console.warn('[MIRA Concejal] Sincronización automática pendiente:',error));
   },10000);
   document.addEventListener('visibilitychange',()=>{
