@@ -3940,3 +3940,175 @@ body.theme-light .admin-login-modal .password-recovery-view .form-group input {
   }
   #mainSidebar .dash-footer-mini strong { color: #fff !important; }
 }
+
+
+/* ===== PMU Compact Dark Glass — tarjetas al estilo de la ficha territorial ===== */
+#mainSidebar.sidebar-wrapper-group {
+  width: min(352px, calc(100vw - 28px)) !important;
+  max-width: 352px !important;
+  gap: 10px !important;
+  overflow: visible !important;
+}
+#mainSidebar .neo-tactile-sidebar {
+  max-height: min(650px, calc(100vh - 155px)) !important;
+  border: 1px solid rgba(255,255,255,.22) !important;
+  border-radius: 23px !important;
+  background: rgba(16,29,45,.78) !important;
+  -webkit-backdrop-filter: blur(26px) saturate(140%) !important;
+  backdrop-filter: blur(26px) saturate(140%) !important;
+  box-shadow: 0 22px 60px rgba(0,0,0,.36),inset 0 1px 0 rgba(255,255,255,.10) !important;
+}
+#mainSidebar .neo-tactile-sidebar::after { display:none !important; }
+#mainSidebar .sidebar-header {
+  min-height: 66px !important;
+  padding: 10px 12px !important;
+  gap: 8px !important;
+  background: rgba(255,255,255,.045) !important;
+  border-bottom: 1px solid rgba(255,255,255,.12) !important;
+  box-shadow: none !important;
+}
+#mainSidebar #sidebarToggleBtn,
+#mainSidebar .platform-home-3d {
+  width: 38px !important;
+  height: 38px !important;
+  flex: 0 0 38px !important;
+  border-radius: 12px !important;
+}
+#mainSidebar .header-titles h1 { font-size: 1.08rem !important; line-height:1.1 !important; }
+#mainSidebar .header-titles p { font-size: .70rem !important; margin-top:2px !important; }
+#mainSidebar .sidebar-content {
+  padding: 12px 12px 14px !important;
+  max-height: min(540px,calc(100vh - 235px)) !important;
+  background: transparent !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(120,220,240,.35) transparent !important;
+}
+#mainSidebar .section-title {
+  margin: 1px 4px 10px !important;
+  font-size: .70rem !important;
+  letter-spacing: 1.45px !important;
+  color: #7ee7ee !important;
+  text-shadow: none !important;
+}
+#mainSidebar details.custom-dropdown,
+#mainSidebar details.custom-dropdown[open] {
+  margin: 0 0 8px !important;
+  border: 1px solid rgba(255,255,255,.15) !important;
+  border-radius: 14px !important;
+  background: rgba(13,25,39,.76) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(135%) !important;
+  backdrop-filter: blur(18px) saturate(135%) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.055),0 5px 15px rgba(0,0,0,.15) !important;
+  transition: border-color .18s ease,background .18s ease,box-shadow .18s ease !important;
+}
+#mainSidebar details.custom-dropdown:hover,
+#mainSidebar details.custom-dropdown[open] {
+  border-color: rgba(75,220,206,.48) !important;
+  background: rgba(16,36,43,.86) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.07),0 6px 18px rgba(0,0,0,.20) !important;
+}
+#mainSidebar details.custom-dropdown summary {
+  min-height: 52px !important;
+  padding: 8px 11px !important;
+  gap: 8px !important;
+  color: #f4f7fa !important;
+  font-size: .82rem !important;
+  font-weight: 720 !important;
+  text-shadow: none !important;
+}
+#mainSidebar .summary-title { gap: 9px !important; min-width:0 !important; }
+#mainSidebar .neo-icon {
+  width: 31px !important;
+  height: 31px !important;
+  flex: 0 0 31px !important;
+  border-radius: 9px !important;
+  font-size: 1rem !important;
+  background: rgba(255,255,255,.085) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.10) !important;
+}
+#mainSidebar .arrow-icon { width:14px !important;height:14px !important;color:rgba(239,247,250,.82) !important; }
+#mainSidebar .dropdown-content {
+  padding: 10px 10px 11px !important;
+  max-height: min(40vh,300px) !important;
+  color: #eaf2f4 !important;
+  background: rgba(5,17,25,.35) !important;
+  border-top: 1px solid rgba(255,255,255,.10) !important;
+  box-shadow: none !important;
+}
+#mainSidebar .activity-sidebar-tile,
+#mainSidebar .concejal-sidebar-shortcuts .activity-sidebar-tile {
+  background: rgba(255,255,255,.055) !important;
+  border: 1px solid rgba(255,255,255,.14) !important;
+  border-radius: 11px !important;
+}
+#mainSidebar .activity-sidebar-tile:hover,
+#mainSidebar .concejal-sidebar-shortcuts .activity-sidebar-tile:hover {
+  background: rgba(35,105,103,.24) !important;
+  border-color: rgba(88,220,202,.45) !important;
+}
+#mainSidebar .activity-side-icon {
+  background: rgba(95,180,191,.15) !important;
+  border-radius: 8px !important;
+}
+#mainSidebar .concejal-sidebar-description,
+#mainSidebar .activity-sidebar-tile small { color: rgba(222,234,238,.68) !important; }
+
+/* Dashboard conserva su isla propia, también más pequeña y sobria. */
+#mainSidebar > #adminDashboardCard {
+  width: 100% !important;
+  max-width: 352px !important;
+  padding: 11px 12px !important;
+  border: 1px solid rgba(255,255,255,.22) !important;
+  border-radius: 18px !important;
+  background: rgba(16,29,45,.78) !important;
+  -webkit-backdrop-filter: blur(26px) saturate(140%) !important;
+  backdrop-filter: blur(26px) saturate(140%) !important;
+  box-shadow: 0 14px 34px rgba(0,0,0,.30),inset 0 1px 0 rgba(255,255,255,.10) !important;
+}
+#mainSidebar > #adminDashboardCard::after { display:none !important; }
+#mainSidebar .dash-footer-header { font-size:.72rem !important; margin-bottom:6px !important; }
+#mainSidebar .kpi-bar-bg { height:5px !important; margin-bottom:7px !important; }
+#mainSidebar .dash-footer-row { gap:6px !important; }
+#mainSidebar .dash-footer-mini {
+  padding:6px 4px !important;
+  border-radius:10px !important;
+  font-size:.60rem !important;
+  background:rgba(255,255,255,.055) !important;
+  border:1px solid rgba(255,255,255,.12) !important;
+}
+#mainSidebar .dash-footer-mini strong { font-size:.82rem !important; }
+#mainSidebar .dash-footer-mini .mini-icon { font-size:.78rem !important; }
+
+@media (min-width:721px) {
+  #mainSidebar.sidebar-wrapper-group {
+    left:18px !important;
+    top:18px !important;
+    width:352px !important;
+    max-width:352px !important;
+    max-height:calc(100vh - 36px) !important;
+  }
+  #mainSidebar .neo-tactile-sidebar { max-height:min(650px,calc(100vh - 155px)) !important; }
+  #mainSidebar .sidebar-content { max-height:min(540px,calc(100vh - 235px)) !important; }
+}
+@media (max-width:720px) {
+  #mainSidebar.sidebar-wrapper-group {
+    left:10px !important; right:auto !important;
+    width:min(340px,calc(100vw - 20px)) !important;
+    max-width:340px !important;
+    gap:8px !important;
+  }
+  #mainSidebar .neo-tactile-sidebar { max-height:calc(100dvh - 175px) !important; }
+  #mainSidebar .sidebar-content { max-height:none !important; }
+  #mainSidebar .sidebar-header { min-height:58px !important; padding:8px 10px !important; }
+  #mainSidebar #sidebarToggleBtn,#mainSidebar .platform-home-3d {
+    width:34px !important;height:34px !important;flex-basis:34px !important;
+  }
+  #mainSidebar details.custom-dropdown summary { min-height:48px !important; padding:7px 9px !important; font-size:.78rem !important; }
+  #mainSidebar .neo-icon { width:29px !important;height:29px !important;flex-basis:29px !important; }
+  #mainSidebar > #adminDashboardCard { max-height:140px !important; }
+}
+@media (max-width:380px) {
+  #mainSidebar.sidebar-wrapper-group { width:calc(100vw - 20px) !important; }
+  #mainSidebar details.custom-dropdown summary { min-height:45px !important; }
+  #mainSidebar .header-titles h1 { font-size:.98rem !important; }
+}
