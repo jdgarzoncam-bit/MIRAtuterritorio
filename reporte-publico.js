@@ -1,6 +1,6 @@
 import { createAuthClient } from "https://esm.sh/@neondatabase/auth@0.7.0-beta";
-const auth=createAuthClient("https://ep-lucky-smoke-b73q7rl0.neonauth.c-13.us-east-1.aws.neon.tech/neondb/auth",{allowAnonymous:true});
-const API="https://ep-lucky-smoke-b73q7rl0.apirest.c-13.us-east-1.aws.neon.tech/neondb/rest/v1";
+const auth=createAuthClient("https://ep-round-dawn-b7l3ya3h.neonauth.c-13.us-east-1.aws.neon.tech/neondb/auth",{allowAnonymous:true});
+const API="https://ep-round-dawn-b7l3ya3h.apirest.c-13.us-east-1.aws.neon.tech/neondb/rest/v1";
 const form=document.getElementById("publicReportForm"),status=document.getElementById("reportStatus"),button=document.getElementById("sendReportBtn");
 form.addEventListener("submit",async event=>{
  event.preventDefault(); if(!form.reportValidity()) return;
