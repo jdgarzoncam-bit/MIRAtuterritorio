@@ -126,7 +126,14 @@ export const MIRA_DATA = {
     return miraRequest("reportes_operativos",{method:"POST",body:allowed,anonymous:true});
   },
   async listUserProfiles() {
-    return miraRequest("user_profiles",{query:qs({select:"id,auth_user_id,email,display_name,role,active,created_at",order:"created_at.asc",limit:"500"})});
+    return miraRequest("user_profiles",{query:qs({select:"id,auth_user_id,email,display_name,role,active,email_verified,created_at",order:"created_at.asc",limit:"500"})});
+  },
+  updateUserProfile(profileId, changes) {
+    const allowed = {};
+    if (typeof changes.active === "boolean") allowed.active = changes.active;
+    if (["operator","viewer","witness"].includes(changes.role)) allowed.role = changes.role;
+    if (!Object.keys(allowed).length) throw new Error("No hay cambios de perfil válidos.");
+    return miraRequest("user_profiles",{method:"PATCH",query:qs({id:"eq."+profileId}),body:allowed,prefer:"return=representation"});
   },
   async listModuleCatalog() {
     return miraRequest("module_catalog",{query:qs({select:"module_key,module_name,description,sort_order,active",active:"eq.true",order:"sort_order.asc"})});

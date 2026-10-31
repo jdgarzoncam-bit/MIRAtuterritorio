@@ -5527,3 +5527,15 @@ a:hover {color:#E6EDFD;}
     grid-template-columns: 1fr !important;
   }
 }
+
+/* Registro abierto con verificación y aprobación manual */
+.admin-login-modal .account-secondary-actions{justify-content:space-between;gap:8px}
+.admin-login-modal #createUserBtn{font-weight:750}
+.admin-approval-card{display:grid;grid-template-columns:minmax(0,1fr) minmax(150px,.7fr);gap:12px;align-items:end;padding:15px;margin:0 0 14px;border:1px solid rgba(45,190,230,.32);border-radius:15px;background:linear-gradient(135deg,rgba(10,55,83,.48),rgba(8,24,48,.72))}
+.admin-approval-card>div{display:flex;flex-direction:column;gap:5px}.admin-approval-card>div strong{color:#e8f5ff}.admin-approval-card small{color:#a9bfd5;line-height:1.4}
+.admin-role-picker{display:flex;flex-direction:column;gap:5px;color:#a9c5e5;font-size:.75rem;font-weight:700}
+.admin-role-picker select{width:100%;min-height:40px;padding:8px 10px;border:1px solid rgba(65,170,220,.42);border-radius:10px;background:#07162c;color:#eef6ff;font:inherit}
+.admin-approval-button{grid-column:1/-1;min-height:42px;padding:10px 14px;border:1px solid rgba(61,190,235,.42);border-radius:11px;background:linear-gradient(110deg,#087de8,#174de0);color:white;font-weight:800;cursor:pointer}
+.admin-approval-button:disabled{opacity:.42;cursor:not-allowed}
+.admin-approval-divider{height:1px;margin:8px 0 14px;background:rgba(130,180,220,.18)}
+@media(max-width:680px){.admin-approval-card{grid-template-columns:1fr}.admin-approval-button{grid-column:auto}}

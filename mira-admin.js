@@ -56,7 +56,7 @@ function renderUsers(){
     const label=u.display_name||u.email||"Usuario";
     return '<button type="button" class="admin-user-row '+(selected?"is-selected":"")+'" data-profile-id="'+escapeHtml(u.id)+'" '+(u.role==="admin"?'data-is-admin="true"':'')+'>'+
       '<span class="admin-user-avatar">'+escapeHtml((label.trim()[0]||"U").toUpperCase())+'</span>'+
-      '<span class="admin-user-copy"><strong>'+escapeHtml(label)+'</strong><small>'+escapeHtml(u.email||"Sin correo")+'</small><em>'+(u.role==="admin"?"Administradora":u.role==="operator"?"Operador":u.role==="viewer"?"Consulta":escapeHtml(u.role||"Sin rol"))+' · '+(u.active?"Activo":"Inactivo")+'</em></span>'+
+      '<span class="admin-user-copy"><strong>'+escapeHtml(label)+'</strong><small>'+escapeHtml(u.email||"Sin correo")+'</small><em>'+(u.role==="admin"?"Administradora":u.role==="operator"?"Operador":u.role==="viewer"?"Consulta":escapeHtml(u.role||"Sin rol"))+' · '+(u.email_verified?(u.active?"Activo":"Pendiente de aprobación"):"Correo sin confirmar")+'</em></span>'+
       (u.role==="admin"?'<span class="admin-user-lock" title="Cuenta protegida">🔒</span>':'<span class="admin-user-arrow">›</span>')+'</button>';
   }).join("");
 }
@@ -64,7 +64,7 @@ async function selectUser(profileId,show=true){
   const user=users.find(u=>u.id===profileId);
   if(!user)return;
   selectedProfile=user;clearNotice();renderUsers();
-  $("adminSelectedUser").innerHTML='<strong>'+escapeHtml(user.display_name||user.email||"Usuario")+'</strong><span>'+escapeHtml(user.email||"")+' · '+(user.active?"Cuenta activa":"Cuenta inactiva")+'</span>';
+  $("adminSelectedUser").innerHTML='<strong>'+escapeHtml(user.display_name||user.email||"Usuario")+'</strong><span>'+escapeHtml(user.email||"")+' · '+(user.email_verified?"Correo confirmado":"Correo sin confirmar")+' · '+(user.active?"Cuenta activa":"Pendiente de aprobación")+'</span>';
   if(user.role==="admin"){
     $("adminPermissionsMatrix").innerHTML='<div class="admin-permissions-protected"><strong>🔒 Cuenta administradora protegida</strong><p>Esta cuenta conserva todos los permisos y no puede modificarse desde este panel.</p></div>';
     return;
@@ -77,10 +77,38 @@ async function selectUser(profileId,show=true){
     $("adminPermissionsMatrix").innerHTML='<p class="admin-permissions-error">'+escapeHtml(error.message||"No fue posible cargar los permisos.")+'</p>';
   }
 }
+function renderApprovalControls(user){
+  const roles=[["viewer","Consulta"],["operator","Operador"],["witness","Testigo"]];
+  const options=roles.map(([value,label])=>'<option value="'+value+'" '+(user.role===value?"selected":"")+'>'+label+'</option>').join("");
+  const canApprove=user.email_verified===true;
+  const action=user.active?"suspend":"activate";
+  const label=user.active?"Suspender cuenta":"Aprobar y activar";
+  const hint=canApprove?(user.active?"La cuenta puede ingresar según sus permisos.":"El correo está confirmado. Puedes aprobar la cuenta y asignar un rol."):"La persona debe confirmar su correo antes de que puedas activar la cuenta.";
+  return '<section class="admin-approval-card"><div><strong>Estado y aprobación</strong><small>'+hint+'</small></div><label class="admin-role-picker"><span>Rol de la cuenta</span><select id="adminRoleSelect">'+options+'</select></label><button type="button" class="admin-approval-button" data-profile-approval="'+action+'" '+(!canApprove&&!user.active?"disabled":"")+'>'+label+'</button></section><div class="admin-approval-divider"></div>';
+}
+async function changeUserApproval(button){
+  if(!isAdmin()||!selectedProfile||selectedProfile.role==="admin")return;
+  const activate=button.dataset.profileApproval==="activate";
+  if(activate&&!selectedProfile.email_verified){notice("No puedes activar una cuenta cuyo correo no está confirmado.",true);return;}
+  const role=$("adminRoleSelect")?.value||selectedProfile.role;
+  button.disabled=true;
+  try{
+    const updated=await window.MIRA_DATA.updateUserProfile(selectedProfile.id,{active:activate,role});
+    const row=Array.isArray(updated)?updated[0]:updated;
+    selectedProfile={...selectedProfile,...(row||{}),active:activate,role};
+    users=users.map(u=>u.id===selectedProfile.id?selectedProfile:u);
+    renderUsers();
+    $("adminSelectedUser").innerHTML='<strong>'+escapeHtml(selectedProfile.display_name||selectedProfile.email||"Usuario")+'</strong><span>'+escapeHtml(selectedProfile.email||"")+' · '+(selectedProfile.email_verified?"Correo confirmado":"Correo sin confirmar")+' · '+(selectedProfile.active?"Cuenta activa":"Pendiente de aprobación")+'</span>';
+    renderMatrix();
+    notice(activate?"Cuenta aprobada y activada. Ahora asigna los permisos de cada módulo.":"Cuenta suspendida. Sus permisos se conservan, pero no podrá ingresar.");
+  }catch(error){notice(error.message||"No fue posible actualizar el estado de la cuenta.",true);}
+  finally{button.disabled=false;}
+}
 function renderMatrix(){
   const allowed=new Set(permissionRows.filter(p=>p.allowed).map(p=>p.module_key+"::"+p.action_key));
   const visibleModules=modules.filter(m=>m.module_key!=="control_administrativo");
-  $("adminPermissionsMatrix").innerHTML=visibleModules.map(m=>{
+  const approval = selectedProfile && selectedProfile.role!=="admin" ? renderApprovalControls(selectedProfile) : "";
+  $("adminPermissionsMatrix").innerHTML=approval+visibleModules.map(m=>{
     return '<article class="admin-module-permission"><div class="admin-module-permission-title"><strong>'+escapeHtml(m.module_name)+'</strong><small>'+escapeHtml(m.description||"Permisos del módulo")+'</small></div><div class="admin-action-checks">'+ACTIONS.map(([key,label])=>{
       const checked=allowed.has(m.module_key+"::"+key);
       return '<label class="admin-action-check"><input type="checkbox" data-module="'+escapeHtml(m.module_key)+'" data-action="'+key+'" '+(checked?"checked":"")+'><span>'+label+'</span></label>';
@@ -137,6 +165,10 @@ function init(){
   $("adminUsersList")?.addEventListener("click",event=>{
     const button=event.target.closest("[data-profile-id]");
     if(button)selectUser(button.dataset.profileId);
+  });
+  $("adminPermissionsMatrix")?.addEventListener("click",event=>{
+    const button=event.target.closest("[data-profile-approval]");
+    if(button)changeUserApproval(button);
   });
   $("adminPermissionsMatrix")?.addEventListener("change",event=>{
     const input=event.target.closest('input[type="checkbox"][data-module]');

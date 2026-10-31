@@ -33,7 +33,12 @@ async function loginWithNeon() {
   if(button) button.disabled=true;
   try {
     const result=await auth.signIn.email({email,password});
-    if(result?.error) throw new Error("No fue posible iniciar sesión. Verifica tus credenciales.");
+    if(result?.error) {
+      const code=String(result.error.code||"").toUpperCase();
+      const status=Number(result.error.status||result.error.statusCode||0);
+      if(code.includes("EMAIL_NOT_VERIFIED")||status===403) throw new Error("Primero confirma tu correo electrónico. Revisa tu bandeja de entrada y Spam.");
+      throw new Error("No fue posible iniciar sesión. Verifica tus credenciales.");
+    }
     const token=await bearerToken();
     const profile=await getOwnProfile(token);
     if(!profile || profile.active!==true || !["admin","operator","viewer"].includes(profile.role)) {
