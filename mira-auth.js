@@ -62,8 +62,7 @@ document.addEventListener("DOMContentLoaded",()=>{
   const create=document.getElementById("createUserBtn");
   if(create) create.addEventListener("click",event=>{
     event.preventDefault();event.stopImmediatePropagation();
-    const notice=document.getElementById("accountActionNotice");
-    if(notice){notice.textContent="La creación abierta de cuentas está deshabilitada. El administrador debe crear la cuenta y asignar su rol.";notice.classList.remove("hidden");}
+    window.location.href="registro-usuario.html";
   },true);
   const logout=document.getElementById("platformHomeBtn");
   if(logout) logout.addEventListener("click",()=>{auth.signOut().catch(err=>console.warn("No se pudo cerrar la sesión remota",err));},true);
