@@ -192,6 +192,7 @@
         <button type="button" class="concejal-view-tab is-active" data-concejal-view="register">Registrar gestión</button>
         <button type="button" class="concejal-view-tab" data-concejal-view="history">Historial de actividades</button>
         <button type="button" class="concejal-view-tab" data-concejal-view="management">Mi gestión e informes</button>
+        <button type="button" class="concejal-view-tab" data-concejal-view="people">Base de datos Concejal</button>
       </nav>
       <section id="concejalRegisterView" class="concejal-subview">
         <div class="concejal-register-switch" role="tablist" aria-label="Tipo de registro">
@@ -278,6 +279,15 @@
         <div class="concejal-commitment-list-toolbar"><h3>Historial de compromisos</h3><input id="concejalCommitmentSearch" class="activity-search" placeholder="Buscar compromiso, entidad o barrio…" aria-label="Buscar compromisos"></div>
         <div id="concejalCommitmentList" class="concejal-history-list"><div class="activity-empty-drive"><h3>Aún no hay compromisos</h3><p>Los compromisos registrados aparecerán aquí.</p></div></div>
       </section>
+        </section>
+      </section>
+      <section id="concejalPeopleView" class="concejal-subview hidden">
+        <section class="activity-panel concejal-people-panel">
+          <div class="activity-toolbar"><div><span class="inline-badge">DIRECTORIO CENTRALIZADO</span><h2>Base de datos Concejal</h2><p>Consulta las personas registradas en la base central de MIRA TU TERRITORIO.</p></div><button type="button" id="refreshConcejalPeopleBtn" class="activity-secondary-btn">↻ Actualizar</button></div>
+          <div class="concejal-people-toolbar"><input id="concejalPeopleSearch" class="activity-search" type="search" placeholder="Buscar por cédula, nombre o apellido…" aria-label="Buscar personas"><strong id="concejalPeopleCount">0 personas</strong></div>
+          <div id="concejalPeopleNotice" class="activity-notice hidden" role="status" aria-live="polite"></div>
+          <div class="activity-table-wrap concejal-people-table-wrap"><table class="activity-table concejal-people-table"><thead><tr><th>Persona</th><th>Cédula</th><th>Teléfono</th><th>Participación</th><th>Puesto de votación</th><th>Mesa</th><th>Estado</th></tr></thead><tbody id="concejalPeopleBody"><tr><td colspan="7">Inicia sesión para consultar la base de personas.</td></tr></tbody></table></div>
+          <p class="concejal-muted concejal-people-footnote">Consulta de solo lectura conectada a la tabla centralizada de personas en Neon. Esta sección no modifica ni elimina registros.</p>
         </section>
       </section>
     </section>
@@ -569,6 +579,11 @@
                                 <button class="activity-sidebar-tile" id="openConcejalManagementBtn" type="button">
                                     <span class="activity-side-icon">▤</span>
                                     <span><strong>Mi gestión e informes</strong><small>Indicadores y compromisos</small></span>
+                                    <b>›</b>
+                                </button>
+                                <button class="activity-sidebar-tile" id="openConcejalPeopleBtn" type="button">
+                                    <span class="activity-side-icon">👥</span>
+                                    <span><strong>Base de datos Concejal</strong><small>Consultar personas registradas</small></span>
                                     <b>›</b>
                                 </button>
                             </div>
