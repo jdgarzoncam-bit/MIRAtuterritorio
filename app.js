@@ -1889,14 +1889,14 @@ function inicializarSistemaMapa() {
                     const driverOptions=drivers.map(d=>'<option value="'+escapeHtml(d.id)+'">'+escapeHtml(getName(d))+' · '+escapeHtml(d.barrio || 'Sin barrio')+'</option>').join('');
                     return '<article class="mira-db-person-card"><div class="mira-db-person-head"><div><small>RUTA '+(i+1)+'</small><h4>'+escapeHtml(g.barrio)+' → '+escapeHtml(g.puestoName || 'Puesto sin asignar')+'</h4></div><span class="mira-db-status">'+g.passengers.length+' pasajero(s)</span></div>'+
                         '<div class="mira-db-action-hint">Origen: centro geográfico del barrio · Destino: '+escapeHtml(place?.direccion || 'Dirección no localizada en el catálogo')+'</div>'+
-                        '<label class="mira-db-action-hint">Conductor disponible<select class="mira-select" data-driver-route="'+i+'"><option value="">Seleccionar conductor…</option>'+driverOptions+'</select></label><div data-driver-contact="'+i+'"></div>'+passengerHtml+
+                        '<label class="mira-db-action-hint">Seleccionar persona con vehículo propio (confirmar disponibilidad)<select class="mira-select" data-driver-route="'+i+'"><option value="">Seleccionar conductor…</option>'+driverOptions+'</select></label><div data-driver-contact="'+i+'"></div>'+passengerHtml+
                         (place&&origin?'<div class="mira-db-action-hint" data-route-state="'+i+'">Preparando trazado vial…</div>':'<div class="mira-db-action-hint">No se puede trazar: '+(!origin?'falta polígono del barrio. ':'')+(!place?'puesto sin coordenadas verificadas.':'')+'</div>')+
                         '</article>';
                 }).join('');
                 box.innerHTML='<section class="mira-db-results"><header class="mira-db-results-heading"><div><small>OPERACIÓN DÍA D · DATOS NEON</small><strong>🚐 Logística y Transporte</strong></div><span class="mira-db-count">'+shown.length+' registro(s)</span></header>'+
                     '<div class="mira-db-action-hint">Requieren transporte: <b>'+required.length+'</b> · Vehículo propio: <b>'+drivers.length+'</b> · Rutas agrupadas: <b>'+groupList.length+'</b></div>'+
                     (tipo==='REQUIERE'||tipo==='TODOS'?routeCards:'')+
-                    (tipo==='PROPIO'||tipo==='TODOS'?'<h4>Conductores / personas con vehículo propio</h4>'+driversHtml:'')+
+                    (tipo==='PROPIO'||tipo==='TODOS'?'<h4>Personas con vehículo propio (posibles conductores)</h4>'+driversHtml:'')+
                     '<button id="downloadExcelLogisticaBtn" class="mira-db-export" type="button">↧ Exportar reporte logístico</button>'+
                     '<p class="mira-db-action-hint">Los conductores se consideran disponibles para cualquier ruta. La asignación operativa debe confirmarse con cada conductor; aún no se guarda una asignación en la base de datos.</p></section>';
                 box.querySelectorAll('[data-driver-route]').forEach(select=>{
