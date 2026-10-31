@@ -97,8 +97,11 @@ async function changeUserApproval(button){
   button.disabled=true;
   try{
     const updated=await window.MIRA_DATA.updateUserProfile(selectedProfile.id,{active:nextActive,role});
-    const row=Array.isArray(updated)?updated[0]:updated;
-    selectedProfile={...selectedProfile,...(row||{}),active:nextActive,role};
+    const row=Array.isArray(updated)?updated[0]:null;
+    if(!row || row.id!==selectedProfile.id || row.active!==nextActive || row.role!==role) {
+      throw new Error("Neon no confirmó el estado y rol solicitados. No se mostrará el cambio como exitoso.");
+    }
+    selectedProfile={...selectedProfile,...row};
     users=users.map(u=>u.id===selectedProfile.id?selectedProfile:u);
     renderUsers();
     $("adminSelectedUser").innerHTML='<strong>'+escapeHtml(selectedProfile.display_name||selectedProfile.email||"Usuario")+'</strong><span>'+escapeHtml(selectedProfile.email||"")+' · '+(selectedProfile.email_verified?"Correo confirmado":"Correo sin confirmar")+' · '+(selectedProfile.active?"Cuenta activa":"Pendiente de aprobación")+'</span>';
@@ -123,11 +126,15 @@ async function changePermission(input){
   const moduleKey=input.dataset.module,actionKey=input.dataset.action;
   input.disabled=true;
   try{
-    await window.MIRA_DATA.setModulePermission(selectedProfile.id,moduleKey,actionKey,input.checked);
+    const saved=await window.MIRA_DATA.setModulePermission(selectedProfile.id,moduleKey,actionKey,input.checked);
+    const row=Array.isArray(saved)?saved[0]:null;
+    if(!row || row.user_profile_id!==selectedProfile.id || row.module_key!==moduleKey || row.action_key!==actionKey || row.allowed!==input.checked) {
+      throw new Error("Neon no confirmó el permiso solicitado. Se restaurará el estado anterior.");
+    }
     const existing=permissionRows.find(p=>p.module_key===moduleKey&&p.action_key===actionKey);
-    if(existing)existing.allowed=input.checked;
-    else permissionRows.push({user_profile_id:selectedProfile.id,module_key:moduleKey,action_key:actionKey,allowed:input.checked});
-    notice("Permiso actualizado: "+(input.checked?"habilitado":"retirado")+".");
+    if(existing)Object.assign(existing,row);
+    else permissionRows.push(row);
+    notice("Permiso actualizado y confirmado en la base de datos: "+(input.checked?"habilitado":"retirado")+".");
   }catch(error){
     input.checked=!input.checked;
     notice(error.message||"No fue posible guardar el permiso.",true);
