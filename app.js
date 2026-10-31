@@ -417,18 +417,44 @@ let activitiesState = loadActivitiesState();
 let editingParticipantId = null;
 let detailActivityId = null;
 let returnToRecentAfterEdit = false;
-function loadActivitiesState(){
-  const empty={activities:[],people:[],attendances:[],currentActivityId:null};
-  try { const d=JSON.parse(localStorage.getItem(ACTIVITY_STORE_KEY)); if(d&&Array.isArray(d.activities)&&Array.isArray(d.people)&&Array.isArray(d.attendances)) return d; } catch(e) { console.warn('No se pudo leer el almacenamiento de actividades.',e); }
-  return empty;
+let activitiesState = {activities:[],people:[],attendances:[],currentActivityId:null};
+let editingParticipantId = null;
+let detailActivityId = null;
+let returnToRecentAfterEdit = false;
+let activitiesBackendReady = false;
+let activitiesLoading = false;
+async function loadActivitiesFromNeon(){
+  if(activitiesLoading)return;
+  activitiesLoading=true;
+  try{
+    if(!window.MIRA_DATA)throw new Error('El cliente de Neon todavía no está disponible.');
+    const result=await Promise.all([
+      window.MIRA_DATA.listPeople({limit:1000}),
+      window.MIRA_DATA.listActivities({limit:100}),
+      window.MIRA_DATA.listAttendances({limit:1000})
+    ]);
+    activitiesState.people=(result[0]||[]).map(p=>({id:p.id,cedula:p.cedula||p.cedula_normalizada||'',names:p.nombres||'',surnames:p.apellidos||'',phone:p.telefono||'',infoMira:p.info_mira===true?'si':p.info_mira===false?'no':''}));
+    activitiesState.activities=(result[1]||[]).map(a=>({id:a.id,name:a.nombre,date:a.fecha,place:a.lugar||'',status:a.estado==='activa'?'active':a.estado==='finalizada'?'finished':a.estado,createdAt:a.created_at}));
+    activitiesState.attendances=(result[2]||[]).map(a=>({id:a.id,personId:a.persona_id,activityId:a.actividad_id,createdAt:a.fecha_registro||a.created_at}));
+    const active=activitiesState.activities.find(a=>a.status==='active');
+    activitiesState.currentActivityId=active?.id||activitiesState.activities[0]?.id||null;
+    activitiesBackendReady=true;
+    renderActivities();
+    console.info('[MIRA] Datos de Actividades cargados desde Neon:',{personas:activitiesState.people.length,actividades:activitiesState.activities.length,asistencias:activitiesState.attendances.length});
+  }catch(error){
+    activitiesBackendReady=false;
+    console.error('[MIRA] Error cargando datos desde Neon:',error);
+    const notice=document.getElementById('duplicateNotice');
+    if(notice){notice.textContent='No se pudieron cargar los datos desde Neon: '+(error.message||'Error de conexión');notice.classList.remove('hidden');}
+  }finally{activitiesLoading=false;}
 }
-function saveActivitiesState(){localStorage.setItem(ACTIVITY_STORE_KEY,JSON.stringify(activitiesState));renderActivities();}
+window.addEventListener('mira:authenticated',loadActivitiesFromNeon);
 function normActivityText(v){return (v||'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');}
 function normalizeCedula(v){return (v||'').replace(/\D/g,'');}
 function escapeActivityHtml(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function currentActivity(){return activitiesState.activities.find(a=>a.id===activitiesState.currentActivityId&&a.status==='active')||null;}
 let activitiesReturnContext = 'landing';
-function openActivities(view='registration'){activitiesReturnContext=(document.getElementById('landing-hero-overlay').style.display==='none')?'platform':'landing';activitiesPlaceholder.classList.remove('hidden');document.getElementById('landing-hero-overlay').style.display='none';document.getElementById('landingHeaderControls').style.display='none';renderActivities();showActivityView(view);}
+function openActivities(view='registration'){activitiesReturnContext=(document.getElementById('landing-hero-overlay').style.display==='none')?'platform':'landing';activitiesPlaceholder.classList.remove('hidden');document.getElementById('landing-hero-overlay').style.display='none';document.getElementById('landingHeaderControls').style.display='none';if(!activitiesBackendReady)loadActivitiesFromNeon();renderActivities();showActivityView(view);}
 function closeActivities(){activitiesPlaceholder.classList.add('hidden');if(activitiesReturnContext==='platform'){document.getElementById('landing-hero-overlay').style.display='none';document.getElementById('landingHeaderControls').style.display='none';}else{document.getElementById('landing-hero-overlay').style.display='flex';document.getElementById('landingHeaderControls').style.display='flex';}}
 function showActivityView(view){['activityRegistrationView','activityRecentPanel','activityAllView','activityDetailView'].forEach(id=>document.getElementById(id).classList.toggle('hidden',id!==({registration:'activityRegistrationView',recent:'activityRecentPanel',all:'activityAllView',detail:'activityDetailView'}[view]||'activityRegistrationView')));document.getElementById('activityScreenSubtitle').textContent=({registration:'Registro de participación territorial.',recent:'Consulta en vivo y rectificación de registros.',all:'Archivo de actividades y sus hojas de cálculo.',detail:'Registros guardados en esta actividad.'})[view]||'Registro de participación territorial.';}
 document.getElementById('btnSelectActividades').addEventListener('click',()=>openActivities('registration'));
@@ -444,13 +470,88 @@ document.getElementById('backToAllActivities').addEventListener('click',()=>show
 document.getElementById('cancelNewActivityBtn').addEventListener('click',()=>document.getElementById('newActivityForm').classList.add('hidden'));
 function showNewActivity(){document.getElementById('newActivityForm').classList.remove('hidden');document.getElementById('activityName').focus();}
 document.getElementById('newActivityBtnAll').addEventListener('click',()=>{showActivityView('registration');showNewActivity();});
-document.getElementById('saveActivityBtn').addEventListener('click',()=>{const name=document.getElementById('activityName').value.trim();if(!name){alert('Escribe el nombre de la actividad.');return;}activitiesState.activities.forEach(a=>{if(a.status==='active')a.status='finished';});const a={id:'act_'+Date.now(),name,date:document.getElementById('activityDate').value||new Date().toISOString().slice(0,10),place:document.getElementById('activityPlace').value.trim(),status:'active',createdAt:new Date().toISOString()};activitiesState.activities.push(a);activitiesState.currentActivityId=a.id;document.getElementById('newActivityForm').classList.add('hidden');['activityName','activityDate','activityPlace'].forEach(id=>document.getElementById(id).value='');saveActivitiesState();showActivityView('registration');});
+document.getElementById('saveActivityBtn').addEventListener('click',async()=>{
+  if(!activitiesBackendReady){alert('No hay conexión confirmada con Neon. No se guardó la actividad.');return;}
+  const name=document.getElementById('activityName').value.trim();
+  if(!name){alert('Escribe el nombre de la actividad.');return;}
+  const button=document.getElementById('saveActivityBtn');button.disabled=true;
+  try{
+    const date=document.getElementById('activityDate').value||new Date().toISOString().slice(0,10);
+    const place=document.getElementById('activityPlace').value.trim();
+    await Promise.all(activitiesState.activities.filter(a=>a.status==='active').map(a=>window.MIRA_DATA.updateActivity(a.id,{estado:'finalizada'})));
+    await window.MIRA_DATA.createActivity({nombre:name,fecha:date,lugar:place||null,estado:'activa',creado_por:window.MIRA_CURRENT_USER?.email||null});
+    await loadActivitiesFromNeon();
+    document.getElementById('newActivityForm').classList.add('hidden');
+    ['activityName','activityDate','activityPlace'].forEach(id=>document.getElementById(id).value='');
+    showActivityView('registration');
+  }catch(error){console.error(error);alert('No fue posible guardar la actividad en Neon: '+(error.message||'Error desconocido'));}
+  finally{button.disabled=false;}
+});
 function clearParticipantForm(){editingParticipantId=null;['participantCedula','participantNames','participantSurnames','participantPhone'].forEach(id=>document.getElementById(id).value='');document.getElementById('participantInfoMira').value='';document.getElementById('duplicateNotice').classList.add('hidden');document.getElementById('saveParticipantBtn').textContent='Guardar asistencia';}
 document.getElementById('clearParticipantBtn').addEventListener('click',clearParticipantForm);
-function lookupPerson(){const ced=normalizeCedula(document.getElementById('participantCedula').value);const notice=document.getElementById('duplicateNotice');notice.classList.add('hidden');if(!ced){notice.textContent='Introduce una cédula para buscar.';notice.classList.remove('hidden');return;}const found=activitiesState.people.find(p=>normalizeCedula(p.cedula)===ced);if(found){document.getElementById('participantNames').value=found.names;document.getElementById('participantSurnames').value=found.surnames;document.getElementById('participantPhone').value=found.phone||'';document.getElementById('participantInfoMira').value=found.infoMira||'';notice.textContent='Ficha encontrada. Se cargaron los datos existentes.';notice.classList.remove('hidden');}else{notice.textContent='No se encontró esa cédula. Completa los datos para crear una ficha nueva.';notice.classList.remove('hidden');}}
+async function lookupPerson(){
+  const ced=normalizeCedula(document.getElementById('participantCedula').value);
+  const notice=document.getElementById('duplicateNotice');notice.classList.add('hidden');
+  if(!ced){notice.textContent='Introduce una cédula para buscar.';notice.classList.remove('hidden');return;}
+  if(!activitiesBackendReady){notice.textContent='El módulo aún no ha conectado con Neon.';notice.classList.remove('hidden');return;}
+  try{
+    const rows=await window.MIRA_DATA.listPeople({cedula:ced,limit:1});
+    const found=rows?.[0];
+    if(found){
+      const person={id:found.id,cedula:found.cedula||found.cedula_normalizada||'',names:found.nombres||'',surnames:found.apellidos||'',phone:found.telefono||'',infoMira:found.info_mira===true?'si':found.info_mira===false?'no':''};
+      const i=activitiesState.people.findIndex(p=>p.id===person.id);if(i>=0)activitiesState.people[i]=person;else activitiesState.people.push(person);
+      document.getElementById('participantNames').value=person.names;
+      document.getElementById('participantSurnames').value=person.surnames;
+      document.getElementById('participantPhone').value=person.phone;
+      document.getElementById('participantInfoMira').value=person.infoMira;
+      notice.textContent='Ficha encontrada en Neon. Se cargaron los datos existentes.';
+    }else notice.textContent='No se encontró esa cédula en Neon. Completa los datos para crear una ficha nueva.';
+    notice.classList.remove('hidden');
+  }catch(error){notice.textContent='Error consultando Neon: '+(error.message||'No fue posible buscar.');notice.classList.remove('hidden');}
+}
 document.getElementById('lookupParticipantBtn').addEventListener('click',lookupPerson);
 document.getElementById('participantCedula').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();lookupPerson();}});
-document.getElementById('saveParticipantBtn').addEventListener('click',()=>{const wasEditing=!!editingParticipantId;const actId=document.getElementById('participantActivity').value||activitiesState.currentActivityId;const act=activitiesState.activities.find(a=>a.id===actId);if(!act){alert('Primero crea una actividad desde Todas las actividades.');return;}const ced=normalizeCedula(document.getElementById('participantCedula').value),names=document.getElementById('participantNames').value.trim(),surnames=document.getElementById('participantSurnames').value.trim(),info=document.getElementById('participantInfoMira').value;if(!ced||!names||!surnames||!info){alert('Completa cédula, nombres, apellidos e InfoMIRA.');return;}let person=activitiesState.people.find(p=>normalizeCedula(p.cedula)===ced);if(!person){const key=normActivityText(names+' '+surnames);const possible=activitiesState.people.find(p=>normActivityText(p.names+' '+p.surnames)===key);if(possible&&!confirm('Existe una ficha con el mismo nombre. ¿Confirmas que es otra persona?'))return;person={id:'per_'+Date.now(),cedula:ced,names,surnames,phone:document.getElementById('participantPhone').value.trim(),infoMira:info,createdAt:new Date().toISOString()};activitiesState.people.push(person);}else{person.names=names;person.surnames=surnames;person.phone=document.getElementById('participantPhone').value.trim();person.infoMira=info;}const duplicate=activitiesState.attendances.find(x=>x.personId===person.id&&x.activityId===act.id&&x.id!==editingParticipantId);if(duplicate){alert('Esta persona ya tiene un registro en esta actividad. No se creó un duplicado.');return;}if(editingParticipantId){const old=activitiesState.attendances.find(x=>x.id===editingParticipantId);if(old){old.personId=person.id;old.activityId=act.id;old.updatedAt=new Date().toISOString();}else activitiesState.attendances.push({id:'att_'+Date.now(),personId:person.id,activityId:act.id,createdAt:new Date().toISOString()});}else activitiesState.attendances.push({id:'att_'+Date.now(),personId:person.id,activityId:act.id,createdAt:new Date().toISOString()});saveActivitiesState();clearParticipantForm();if(wasEditing&&returnToRecentAfterEdit){returnToRecentAfterEdit=false;showActivityView('recent');}});
+document.getElementById('saveParticipantBtn').addEventListener('click',async()=>{
+  if(!activitiesBackendReady){alert('No hay conexión confirmada con Neon. No se guardó el registro.');return;}
+  const wasEditing=!!editingParticipantId;
+  const actId=document.getElementById('participantActivity').value||activitiesState.currentActivityId;
+  const act=activitiesState.activities.find(a=>a.id===actId);
+  if(!act){alert('Primero crea una actividad desde Todas las actividades.');return;}
+  const ced=normalizeCedula(document.getElementById('participantCedula').value);
+  const names=document.getElementById('participantNames').value.trim();
+  const surnames=document.getElementById('participantSurnames').value.trim();
+  const info=document.getElementById('participantInfoMira').value;
+  if(!ced||!names||!surnames||!info){alert('Completa cédula, nombres, apellidos e InfoMIRA.');return;}
+  const button=document.getElementById('saveParticipantBtn');button.disabled=true;
+  try{
+    const found=await window.MIRA_DATA.listPeople({cedula:ced,limit:1});
+    let personRow=found?.[0]||null;
+    const sameName=activitiesState.people.find(p=>normActivityText(p.names+' '+p.surnames)===normActivityText(names+' '+surnames)&&normalizeCedula(p.cedula)!==ced);
+    if(!personRow&&sameName&&!confirm('Existe una ficha con el mismo nombre y otra cédula. ¿Confirmas que es otra persona?'))return;
+    const payload={cedula:ced,nombres:names,apellidos:surnames,telefono:document.getElementById('participantPhone').value.trim()||null,info_mira:info==='si',actualizado_por:window.MIRA_CURRENT_USER?.email||null};
+    if(personRow){
+      const updated=await window.MIRA_DATA.updatePerson(personRow.id,payload);
+      personRow=updated?.[0]||{...personRow,...payload};
+    }else{
+      const created=await window.MIRA_DATA.createPerson({...payload,creado_por:window.MIRA_CURRENT_USER?.email||null});
+      personRow=created?.[0];
+      if(!personRow)throw new Error('Neon no devolvió la persona creada.');
+    }
+    const duplicate=activitiesState.attendances.find(x=>x.personId===personRow.id&&x.activityId===act.id&&x.id!==editingParticipantId);
+    if(duplicate)throw new Error('Esta persona ya tiene asistencia registrada en esta actividad.');
+    const attendancePayload={persona_id:personRow.id,actividad_id:act.id,registrado_por:window.MIRA_CURRENT_USER?.email||null};
+    if(editingParticipantId){
+      const updated=await window.MIRA_DATA.updateAttendance(editingParticipantId,attendancePayload);
+      if(!updated?.length)throw new Error('No se encontró la asistencia que intentas rectificar.');
+    }else await window.MIRA_DATA.createAttendance(attendancePayload);
+    await loadActivitiesFromNeon();
+    clearParticipantForm();
+    const notice=document.getElementById('duplicateNotice');
+    if(notice){notice.textContent='Persona y asistencia guardadas correctamente en Neon.';notice.classList.remove('hidden');}
+    if(wasEditing&&returnToRecentAfterEdit){returnToRecentAfterEdit=false;showActivityView('recent');}
+  }catch(error){console.error('[MIRA] Error guardando en Neon:',error);alert('No fue posible guardar en Neon: '+(error.message||'Error desconocido'));}
+  finally{button.disabled=false;}
+});
 document.getElementById('activitySearch').addEventListener('input',renderActivityTable);
 function activityRows(activityId=null,query=''){return activitiesState.attendances.slice().sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0)).map(a=>({a,p:activitiesState.people.find(p=>p.id===a.personId)||{},act:activitiesState.activities.find(x=>x.id===a.activityId)||{}})).filter(x=>(!activityId||x.a.activityId===activityId)&&(!query||normActivityText([x.p.names,x.p.surnames,x.p.cedula,x.act.name].join(' ')).includes(query)));}
 function editAttendance(id){returnToRecentAfterEdit=true;const a=activitiesState.attendances.find(x=>x.id===id),p=a&&activitiesState.people.find(x=>x.id===a.personId);if(!a||!p)return;editingParticipantId=a.id;document.getElementById('participantCedula').value=p.cedula;document.getElementById('participantNames').value=p.names;document.getElementById('participantSurnames').value=p.surnames;document.getElementById('participantPhone').value=p.phone||'';document.getElementById('participantInfoMira').value=p.infoMira||'';document.getElementById('participantActivity').value=a.activityId;document.getElementById('saveParticipantBtn').textContent='Guardar rectificación';showActivityView('registration');document.getElementById('participantWorkspace').scrollIntoView({behavior:'smooth',block:'start'});}
