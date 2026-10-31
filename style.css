@@ -5575,3 +5575,18 @@ a:hover {color:#E6EDFD;}
 
 @media(min-width:900px){.hero-modules-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.hero-module-card{min-width:0;padding:22px 17px}.card-text-block h3{font-size:1.08rem}.card-text-block p{font-size:.76rem}}
 @media(min-width:681px) and (max-width:899px){.hero-modules-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Formulario de censo externo del módulo Concejal */
+.concejal-person-form{margin:14px 0 18px;padding:16px;border:1px solid rgba(49,220,239,.28);border-radius:15px;background:rgba(8,22,38,.48)}
+.concejal-person-form-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:13px}
+.concejal-person-form-heading>div{display:flex;flex-direction:column;gap:4px}
+.concejal-person-form-heading strong{font-size:.95rem;color:var(--text-main)}
+.concejal-person-form-heading small{font-size:.72rem;color:var(--text-muted)}
+.concejal-person-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.concejal-person-fields label{display:flex;flex-direction:column;gap:5px;font-size:.75rem;font-weight:700;color:var(--text-main)}
+.concejal-person-fields input,.concejal-person-fields textarea{width:100%;min-width:0;padding:10px;border:1px solid var(--neo-border-subtle);border-radius:9px;background:rgba(2,8,23,.5);color:var(--text-main);font:inherit;font-size:.8rem}
+.concejal-person-full{grid-column:1/-1}
+.concejal-person-consent{display:flex;align-items:flex-start;gap:9px;margin:13px 0;color:var(--text-muted);font-size:.72rem;line-height:1.45}
+.concejal-person-consent input{margin-top:2px;flex:0 0 auto}
+@media(max-width:760px){.concejal-person-fields{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:480px){.concejal-person-fields{grid-template-columns:1fr}.concejal-person-form{padding:12px}}
