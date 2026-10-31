@@ -12,7 +12,7 @@ async function miraToken({anonymous=false}={}) {
   return token;
 }
 
-async function miraRequest(table, {method="GET", query="", body, anonymous=false, prefer}={}) {
+async function miraRequest(table, {method="GET", query="", body, anonymous=false, prefer, requireRows=false}={}) {
   const token = await miraToken({anonymous});
   const headers = new Headers({
     Authorization: `Bearer ${token}`,
@@ -31,6 +31,9 @@ async function miraRequest(table, {method="GET", query="", body, anonymous=false
   if (!response.ok) {
     const message = data?.message || data?.details || data?.hint || `Error HTTP ${response.status}`;
     throw new Error(message);
+  }
+  if (requireRows && (!Array.isArray(data) || data.length !== 1)) {
+    throw new Error("La base de datos no confirmó el cambio. No se actualizará la interfaz.");
   }
   return data;
 }
@@ -134,7 +137,7 @@ export const MIRA_DATA = {
     if (typeof changes.active === "boolean") allowed.active = changes.active;
     if (["operator","viewer","witness"].includes(changes.role)) allowed.role = changes.role;
     if (!Object.keys(allowed).length) throw new Error("No hay cambios de perfil válidos.");
-    return miraRequest("user_profiles",{method:"PATCH",query:qs({id:"eq."+profileId}),body:allowed,prefer:"return=representation"});
+    return miraRequest("user_profiles",{method:"PATCH",query:qs({id:"eq."+profileId}),body:allowed,prefer:"return=representation",requireRows:true});
   },
   async listModuleCatalog() {
     return miraRequest("module_catalog",{query:qs({select:"module_key,module_name,description,sort_order,active",active:"eq.true",order:"sort_order.asc"})});
@@ -146,7 +149,7 @@ export const MIRA_DATA = {
     return miraRequest("module_permissions",{query:qs({select:"module_key,action_key,allowed",limit:"500"})});
   },
   setModulePermission(profileId,moduleKey,actionKey,allowed) {
-    return miraRequest("module_permissions",{method:"POST",query:qs({on_conflict:"user_profile_id,module_key,action_key"}),prefer:"resolution=merge-duplicates,return=representation",body:{user_profile_id:profileId,module_key:moduleKey,action_key:actionKey,allowed:Boolean(allowed)}});
+    return miraRequest("module_permissions",{method:"POST",query:qs({on_conflict:"user_profile_id,module_key,action_key"}),prefer:"resolution=merge-duplicates,return=representation",requireRows:true,body:{user_profile_id:profileId,module_key:moduleKey,action_key:actionKey,allowed:Boolean(allowed)}});
   },
 
   async listPQRS({tipo="",limit=500}={}) {
