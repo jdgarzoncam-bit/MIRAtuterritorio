@@ -17,7 +17,6 @@ async function miraRequest(table, {method="GET", query="", body, anonymous=false
   const headers = new Headers({
     Authorization: `Bearer ${token}`,
     "Accept-Profile": "mira",
-    "Content-Profile": "mira",
     Accept: "application/json"
   });
   if (method !== "GET") headers.set("Content-Profile", "mira");
