@@ -352,6 +352,64 @@ cancelAdminBtn.addEventListener('click', function(e) { e.preventDefault(); e.sto
 adminLoginBackdrop.addEventListener('click', cerrarLoginAdmin);
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && adminCardContainer.classList.contains('is-open')) cerrarLoginAdmin(); });
 
+// RECUPERACIÓN DE CONTRASEÑA — interfaz visual únicamente.
+// La validación real y el cambio de credenciales requieren conectar el proveedor de autenticación.
+(function configurarInterfazRecuperacion() {
+    const loginView = document.getElementById('adminLoginFormInline');
+    const recoveryView = document.getElementById('passwordRecoveryView');
+    const forgotBtn = document.getElementById('forgotPasswordBtn');
+    const closeRecoveryBtn = document.getElementById('closePasswordRecoveryBtn');
+    const backBtn = document.getElementById('backToLoginBtn');
+    const continueBtn = document.getElementById('recoveryContinueBtn');
+    const notice = document.getElementById('recoveryActionNotice');
+
+    function showLogin() {
+        if (!loginView || !recoveryView) return;
+        recoveryView.classList.add('hidden');
+        loginView.classList.remove('hidden');
+        if (notice) { notice.classList.add('hidden'); notice.textContent = ''; }
+    }
+
+    function showRecovery() {
+        if (!loginView || !recoveryView) return;
+        loginView.classList.add('hidden');
+        recoveryView.classList.remove('hidden');
+        if (notice) { notice.classList.add('hidden'); notice.textContent = ''; }
+        const nameField = document.getElementById('recoveryFullName');
+        if (nameField) nameField.focus();
+    }
+
+    if (forgotBtn) forgotBtn.addEventListener('click', showRecovery);
+    if (closeRecoveryBtn) closeRecoveryBtn.addEventListener('click', showLogin);
+    if (backBtn) backBtn.addEventListener('click', showLogin);
+
+    if (continueBtn) continueBtn.addEventListener('click', () => {
+        const name = document.getElementById('recoveryFullName')?.value.trim() || '';
+        const email = document.getElementById('recoveryEmail')?.value.trim() || '';
+        const password = document.getElementById('recoveryNewPassword')?.value || '';
+        const confirmation = document.getElementById('recoveryConfirmPassword')?.value || '';
+        const emailValid = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email);
+
+        let message = '';
+        if (!name || !email || !password || !confirmation) {
+            message = 'Completa todos los campos para continuar.';
+        } else if (!emailValid) {
+            message = 'Escribe un correo electrónico válido.';
+        } else if (password.length < 8) {
+            message = 'La nueva contraseña debe tener al menos 8 caracteres.';
+        } else if (password !== confirmation) {
+            message = 'Las contraseñas no coinciden.';
+        } else {
+            message = 'La interfaz está lista. El cambio de contraseña aún no está conectado al servicio de autenticación, por lo que tus credenciales actuales no se han modificado.';
+        }
+
+        if (notice) {
+            notice.textContent = message;
+            notice.classList.remove('hidden');
+        }
+    });
+})();
+
 // MÓDULO ACTIVIDADES — registro compacto, vista en vivo y archivo tipo Drive.
 const activitiesPlaceholder = document.getElementById('activitiesPlaceholder');
 const ACTIVITY_STORE_KEY = 'mira_territorio_activities_v1';

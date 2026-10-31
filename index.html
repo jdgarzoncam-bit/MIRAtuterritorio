@@ -97,6 +97,38 @@
                         <div id="accountActionNotice" class="account-action-notice hidden" role="status" aria-live="polite"></div>
                         <div class="login-error" id="loginError" data-i18n="err_login" role="alert" aria-live="assertive">Ingresa con el correo electrónico y la contraseña de tu cuenta.</div>
                     </div>
+
+                    <!-- INTERFAZ VISUAL DE RECUPERACIÓN; no modifica credenciales todavía -->
+                    <section id="passwordRecoveryView" class="password-recovery-view hidden" aria-labelledby="passwordRecoveryTitle">
+                        <div class="inline-form-header">
+                            <span class="inline-badge">RECUPERAR ACCESO</span>
+                            <button id="closePasswordRecoveryBtn" class="inline-close-btn" type="button" title="Volver al ingreso" aria-label="Volver al ingreso">✕</button>
+                        </div>
+                        <div class="recovery-heading">
+                            <div class="recovery-icon" aria-hidden="true">🔐</div>
+                            <h2 id="passwordRecoveryTitle">Restablecer contraseña</h2>
+                            <p>Identifica tu cuenta y define una nueva contraseña.</p>
+                        </div>
+                        <div class="form-group">
+                            <label for="recoveryFullName">Nombre completo</label>
+                            <input type="text" id="recoveryFullName" placeholder="Nombre y apellidos" autocomplete="name">
+                        </div>
+                        <div class="form-group">
+                            <label for="recoveryEmail">Correo electrónico</label>
+                            <input type="email" id="recoveryEmail" placeholder="nombre@correo.com" autocomplete="email" inputmode="email">
+                        </div>
+                        <div class="form-group">
+                            <label for="recoveryNewPassword">Nueva contraseña</label>
+                            <input type="password" id="recoveryNewPassword" placeholder="Escribe una nueva contraseña" autocomplete="new-password">
+                        </div>
+                        <div class="form-group">
+                            <label for="recoveryConfirmPassword">Confirmar nueva contraseña</label>
+                            <input type="password" id="recoveryConfirmPassword" placeholder="Repite la nueva contraseña" autocomplete="new-password">
+                        </div>
+                        <button class="login-btn" id="recoveryContinueBtn" type="button">Continuar</button>
+                        <button class="account-link-btn recovery-back-link" id="backToLoginBtn" type="button">← Volver al inicio de sesión</button>
+                        <div id="recoveryActionNotice" class="account-action-notice hidden" role="status" aria-live="polite"></div>
+                    </section>
                 </div>
             </div>
 

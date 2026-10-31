@@ -2990,3 +2990,77 @@ body.pmu-neomorphic .leaflet-tile {
 .electoral-mesa-row small{color:var(--text-muted,#a8b7ca);font-size:.65rem}
 
 .electoral-year-label{display:flex;flex-direction:column;gap:5px;font-size:.75rem;color:var(--text-color,#eaf2ff);margin-top:8px}.electoral-year-label select{background:rgba(3,18,38,.9);color:inherit;border:1px solid rgba(34,211,238,.45);border-radius:9px;padding:8px}.electoral-year-result{border:1px solid rgba(34,211,238,.25);border-radius:10px;padding:9px;margin:8px 0}.electoral-year-result>summary{cursor:pointer;font-weight:700;color:var(--text-color,#eaf2ff);padding:4px}
+
+
+/* =====================================================================
+   INTERFAZ DE RECUPERACIÓN DE CONTRASEÑA (SOLO PRESENTACIÓN)
+   ===================================================================== */
+.admin-login-modal .password-recovery-view {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 13px;
+    width: 100%;
+}
+.admin-login-modal .password-recovery-view.hidden { display: none !important; }
+.admin-login-modal .recovery-heading { text-align: center; padding: 2px 0 5px; }
+.admin-login-modal .recovery-icon {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 10px;
+    display: grid;
+    place-items: center;
+    border-radius: 16px;
+    background: rgba(56,189,248,.12);
+    border: 1px solid var(--cyan-tactile);
+    font-size: 1.35rem;
+    box-shadow: 0 0 20px rgba(56,189,248,.16);
+}
+.admin-login-modal .recovery-heading h2 {
+    color: var(--text-main);
+    font-family: var(--font-title);
+    font-size: 1.35rem;
+    font-weight: 800;
+    margin-bottom: 5px;
+}
+.admin-login-modal .recovery-heading p {
+    color: var(--text-muted);
+    font-size: .82rem;
+    line-height: 1.45;
+}
+.admin-login-modal .password-recovery-view .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.admin-login-modal .password-recovery-view .form-group label {
+    color: var(--text-muted);
+    font-size: .78rem;
+    font-weight: 700;
+}
+.admin-login-modal .password-recovery-view .form-group input {
+    width: 100%;
+    min-height: 43px;
+    padding: 11px 13px;
+    border-radius: 13px;
+    color: var(--text-main);
+    background: rgba(3,14,32,.82);
+    border: 1px solid var(--neo-border-glow);
+    outline: none;
+}
+.admin-login-modal .password-recovery-view .form-group input:focus {
+    border-color: var(--cyan-tactile);
+    box-shadow: 0 0 0 3px rgba(56,189,248,.13);
+}
+.admin-login-modal .password-recovery-view .login-btn { width: 100%; justify-content: center; }
+.admin-login-modal .recovery-back-link { align-self: center; }
+.admin-login-modal .recovery-action-notice { margin-top: 0; }
+body.theme-light .admin-login-modal .recovery-heading h2 { color: #10263b; }
+body.theme-light .admin-login-modal .recovery-heading p,
+body.theme-light .admin-login-modal .password-recovery-view .form-group label { color: #52677d; }
+body.theme-light .admin-login-modal .password-recovery-view .form-group input {
+    color: #10263b;
+    background: rgba(255,255,255,.9);
+    border-color: rgba(76,135,160,.48);
+}
