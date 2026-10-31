@@ -64,9 +64,10 @@ export const MIRA_DATA = {
   createPerson(payload) {
     const cedula=cleanCedula(payload.cedula);
     if (!cedula || !payload.nombres?.trim() || !payload.apellidos?.trim()) throw new Error("Cédula, nombres y apellidos son obligatorios.");
-    return miraRequest("personas",{method:"POST",body:{...payload,cedula,cedula_normalizada:cedula}});
+    const {cedula_normalizada, ...personData} = payload;
+    return miraRequest("personas",{method:"POST",body:{...personData,cedula}});
   },
-  updatePerson(id,payload) { const cedula=payload.cedula===undefined?undefined:cleanCedula(payload.cedula); return miraRequest("personas",{method:"PATCH",query:qs({id:`eq.${id}`}),body:{...payload,...(cedula!==undefined?{cedula,cedula_normalizada:cedula}:{})}}); },
+  updatePerson(id,payload) { const {cedula_normalizada, ...personData} = payload; const cedula=personData.cedula===undefined?undefined:cleanCedula(personData.cedula); return miraRequest("personas",{method:"PATCH",query:qs({id:`eq.${id}`}),body:{...personData,...(cedula!==undefined?{cedula}:{})}}); },
   archivePerson(id) { return this.updatePerson(id,{activo:false}); },
   async listActivities({limit=100}={}) {
     return miraRequest("actividades",{query:qs({select:"*",order:"fecha.desc",limit:String(Math.min(Math.max(limit,1),100))})});
