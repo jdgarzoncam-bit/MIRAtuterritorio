@@ -45,3 +45,44 @@ El cliente `window.MIRA_DATA` ofrece:
 
 ## Nota
 Neon Data API es el backend REST administrado; no se expone conexión PostgreSQL desde el navegador. PostgreSQL RLS y grants controlan el acceso. Esta primera integración no habilita aún las fotos E-14 ni un registro público con datos identificables de testigos. Para recopilar datos personales de participantes/testigos se necesita definir finalidad, autorización, aviso de privacidad, retención y medidas de seguridad antes de abrir ese flujo.
+
+
+## Formularios públicos y acceso de usuarios
+- Registro público de testigos: `testigo-publico.html`. Recoge nombre, contacto, puesto, mesa y autorización expresa.
+- Reporte público no identificable: `reporte-publico.html`.
+- Las rutas públicas solo insertan. No pueden consultar registros ni listar testigos.
+- Módulo Actividades: `mira-activity-bridge.js` reemplaza la persistencia local de los botones de crear actividad, buscar cédula, guardar asistencia, editar asistencia, abrir carpetas y exportar Excel por operaciones de Neon.
+- Cliente de datos: `mira-data.js`. Cliente de autenticación: `mira-auth.js`.
+- Solicitud de cuenta: `registro-usuario.html`. Crear una cuenta NO le da acceso hasta que exista un perfil activo.
+
+## Primer administrador y alta de operadores
+1. Abre `registro-usuario.html` desde GitHub Pages y crea la cuenta que será el administrador inicial.
+2. En Neon SQL Editor, selecciona la rama `mira-crud-dev` y ejecuta el siguiente SQL sustituyendo el correo:
+```sql
+INSERT INTO mira.user_profiles (auth_user_id, email, display_name, role, active)
+SELECT id::text, email, name, 'admin', true
+FROM neon_auth."user"
+WHERE lower(email) = lower('CORREO_ADMINISTRADOR')
+ON CONFLICT (auth_user_id) DO UPDATE
+SET role = 'admin', active = true, email = EXCLUDED.email, display_name = EXCLUDED.display_name;
+```
+3. Los demás usuarios crean su cuenta en `registro-usuario.html`. El administrador los habilita con este patrón, cambiando correo y rol:
+```sql
+INSERT INTO mira.user_profiles (auth_user_id, email, display_name, role, active)
+SELECT id::text, email, name, 'operator', true
+FROM neon_auth."user"
+WHERE lower(email) = lower('CORREO_OPERADOR')
+ON CONFLICT (auth_user_id) DO UPDATE
+SET role = EXCLUDED.role, active = true, email = EXCLUDED.email, display_name = EXCLUDED.display_name;
+```
+Roles admitidos: `admin`, `operator`, `witness`, `viewer`. No asignes `admin` salvo a responsables autorizados.
+
+## Consentimiento y datos sensibles
+La condición de testigo electoral puede revelar participación u orientación política, que la Ley 1581 de 2012 incluye dentro de datos sensibles. El formulario informa el carácter voluntario de la autorización y solicita autorización expresa; el proceso responsable debe revisar y aprobar el aviso de privacidad, la finalidad, el periodo de conservación, el canal alternativo para quien no autorice y el procedimiento para ejercer derechos antes de publicarlo como canal institucional. Referencia: artículo 5 y 6 de la Ley 1581 de 2012.
+
+## Límites pendientes antes de producción
+- El acceso anónimo no tiene todavía un limitador de frecuencia/captcha en el borde. No distribuir ampliamente el formulario hasta añadir protección antiabuso y probarla.
+- El almacenamiento de fotografías E-14 todavía no se migró a Object Storage; la galería antigua sigue siendo local.
+- La rama GitHub `mira-crud-neon` aún no está desplegada en GitHub Pages por defecto. Las pruebas deben abrirse desde esa rama mediante Pages preview o un entorno local.
+- La Data API y RLS se configuraron en `mira-crud-dev`; no apuntar producción a esta URL.
+- Verificar JWT de usuario/anon, lectura denegada sin perfil, roles, duplicados y flujos de formulario antes de cambiar `main`.
