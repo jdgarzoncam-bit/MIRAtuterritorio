@@ -78,7 +78,7 @@ export const MIRA_DATA = {
   updateActivity(id,payload) { return miraRequest("actividades",{method:"PATCH",query:qs({id:`eq.${id}`}),body:payload}); },
   cancelActivity(id) { return this.updateActivity(id,{estado:"cancelada"}); },
   async listAttendances({activityId,limit=100}={}) {
-    const params={select:"*",order:"fecha_registro.desc",limit:String(Math.min(Math.max(limit,1),100))};
+    const params={select:"*",order:"fecha_registro.desc",limit:String(Math.min(Math.max(limit,1),1000))};
     if(activityId) params.actividad_id=`eq.${activityId}`;
     return miraRequest("asistencias",{query:qs(params)});
   },
