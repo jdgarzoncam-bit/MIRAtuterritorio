@@ -1008,6 +1008,12 @@ function inicializarSistemaMapa() {
     generarListaPuestos();
     cargarPuestosEnMapa(); // muestra los puestos conocidos incluso sin la base de personas
     inicializarModuloInfoMIRA();
+
+    // La cartografía territorial se agenda inmediatamente después de preparar
+    // el renderizador del mapa. Así no depende de que los módulos posteriores
+    // (Logística, Dashboard o Testigos) terminen su inicialización sin errores.
+    setTimeout(() => cargarPoligonosTerritoriales(), 0);
+
     inicializarModuloLogistica();
     actualizarDashboardKPIs();
     inicializarModuloTestigosPMU();
@@ -1101,8 +1107,6 @@ function inicializarSistemaMapa() {
             }
         }
     }
-    cargarPoligonosTerritoriales();
-
     function obtenerNombreBarrio(feature, index) {
         if (feature && feature.properties) {
             return feature.properties.nombre || feature.properties.Barrio || `Sector ${index + 1}`;
