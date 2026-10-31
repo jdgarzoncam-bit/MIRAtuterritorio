@@ -180,8 +180,21 @@ function init(){
   $("adminPermissionsPanel")?.addEventListener("click",event=>{if(event.target.id==="adminPermissionsPanel")closePanel();});
   document.addEventListener("keydown",event=>{if(event.key==="Escape"&&!$("adminPermissionsPanel")?.classList.contains("hidden"))closePanel();});
   const syncVisibility=()=>{
-    if(launch)launch.classList.toggle("hidden",!isAdmin());
-    if(!isAdmin())closePanel();
+    const authorized=isAdmin();
+    if(launch){
+      launch.classList.toggle("hidden",!authorized);
+      launch.setAttribute("aria-hidden",String(!authorized));
+      launch.toggleAttribute("data-admin-visible",authorized);
+      if(!authorized)launch.setAttribute("tabindex","-1");
+      else launch.removeAttribute("tabindex");
+    }
+    const panel=$("adminPermissionsPanel");
+    if(panel){
+      panel.classList.toggle("hidden",!authorized);
+      panel.setAttribute("aria-hidden",String(!authorized));
+      panel.toggleAttribute("data-admin-visible",authorized);
+      if(!authorized)closePanel();
+    }
   };
   window.addEventListener("mira:authenticated",()=>{syncVisibility();applyModuleAccess();});
   window.addEventListener("mira:signed-out",syncVisibility);

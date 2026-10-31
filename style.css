@@ -5539,3 +5539,8 @@ a:hover {color:#E6EDFD;}
 .admin-approval-button:disabled{opacity:.42;cursor:not-allowed}
 .admin-approval-divider{height:1px;margin:8px 0 14px;background:rgba(130,180,220,.18)}
 @media(max-width:680px){.admin-approval-card{grid-template-columns:1fr}.admin-approval-button{grid-column:auto}}
+
+/* Control Administrativo: visible únicamente para la cuenta administradora principal */
+#openAdminPermissionsBtn:not([data-admin-visible]),
+#adminPermissionsPanel:not([data-admin-visible]){display:none!important;visibility:hidden!important;pointer-events:none!important}
+#openAdminPermissionsBtn[aria-hidden="true"]{display:none!important}
