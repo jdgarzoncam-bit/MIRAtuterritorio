@@ -1802,8 +1802,8 @@ function inicializarSistemaMapa() {
         ) || null;
     }
     function logisticaCentroBarrio(nombre) {
-        if (!datosOriginales?.features?.length || !nombre) return null;
         const key=normalizarTexto(nombre);
+        if (!key || !datosOriginales?.features?.length) return null;
         const feature=datosOriginales.features.find(f=>{
             const p=f.properties||{};
             const n=p.nombre||p.name||p.Name||p.NOMBRE||'';
