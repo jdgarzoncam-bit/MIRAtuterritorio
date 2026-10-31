@@ -53,7 +53,7 @@ export const MIRA_DATA = {
     return miraRequest("infomira_red",{query:qs(params)});
   },
   async listPeople({cedula="", search="", limit=100}={}) {
-    const params = {select:"id,cedula,cedula_normalizada,nombres,apellidos,telefono,correo,info_mira,puesto_votacion,mesa_votacion,requiere_transporte,edad,tipo_participacion,activo,created_at,updated_at",order:"updated_at.desc",limit:String(Math.min(Math.max(limit,1),100))};
+    const params = {select:"id,cedula,cedula_normalizada,nombres,apellidos,telefono,correo,info_mira,puesto_votacion,mesa_votacion,requiere_transporte,edad,tipo_participacion,activo,created_at,updated_at",order:"updated_at.desc",limit:String(Math.min(Math.max(limit,1),1000))};
     if (cedula) params.cedula_normalizada = `eq.${cleanCedula(cedula)}`;
     else if (search.trim()) {
       const term = search.trim().replace(/[,*()]/g," ");
@@ -64,9 +64,9 @@ export const MIRA_DATA = {
   createPerson(payload) {
     const cedula=cleanCedula(payload.cedula);
     if (!cedula || !payload.nombres?.trim() || !payload.apellidos?.trim()) throw new Error("Cédula, nombres y apellidos son obligatorios.");
-    return miraRequest("personas",{method:"POST",body:{...payload,cedula}});
+    return miraRequest("personas",{method:"POST",body:{...payload,cedula,cedula_normalizada:cedula}});
   },
-  updatePerson(id,payload) { return miraRequest("personas",{method:"PATCH",query:qs({id:`eq.${id}`}),body:payload}); },
+  updatePerson(id,payload) { const cedula=payload.cedula===undefined?undefined:cleanCedula(payload.cedula); return miraRequest("personas",{method:"PATCH",query:qs({id:`eq.${id}`}),body:{...payload,...(cedula!==undefined?{cedula,cedula_normalizada:cedula}:{})}}); },
   archivePerson(id) { return this.updatePerson(id,{activo:false}); },
   async listActivities({limit=100}={}) {
     return miraRequest("actividades",{query:qs({select:"*",order:"fecha.desc",limit:String(Math.min(Math.max(limit,1),100))})});
@@ -78,7 +78,7 @@ export const MIRA_DATA = {
   updateActivity(id,payload) { return miraRequest("actividades",{method:"PATCH",query:qs({id:`eq.${id}`}),body:payload}); },
   cancelActivity(id) { return this.updateActivity(id,{estado:"cancelada"}); },
   async listAttendances({activityId,limit=100}={}) {
-    const params={select:"*",order:"fecha_registro.desc",limit:String(Math.min(Math.max(limit,1),100))};
+    const params={select:"*",order:"fecha_registro.desc",limit:String(Math.min(Math.max(limit,1),1000))};
     if(activityId) params.actividad_id=`eq.${activityId}`;
     return miraRequest("asistencias",{query:qs(params)});
   },
