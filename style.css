@@ -4756,3 +4756,121 @@ body.theme-light .admin-login-modal .password-recovery-view .form-group input {
   #mainSidebar .mira-db-field strong { font-size:9px !important; }
   #mainSidebar .mira-db-export,#mainSidebar .mira-db-wa { font-size:10px !important; padding:8px 6px !important; }
 }
+
+/* =====================================================================
+   PALETA INSTITUCIONAL HOLST · actualización cromática global
+   Referencia: #071039 #0F2270 #1A3BB0 #2E5DE6
+               #6E92F2 #AFC5F8 #E6EDFD
+   Se conservan estructura, dimensiones, tipografías y comportamiento.
+   ===================================================================== */
+:root {
+  --bg-main:#071039;
+  --bg-secondary:#0F2270;
+  --neo-glass-bg:rgba(15,34,112,.48);
+  --neo-surface-light:rgba(110,146,242,.09);
+  --neo-surface-pressed:rgba(7,16,57,.72);
+  --neo-border-glow:rgba(110,146,242,.42);
+  --neo-border-subtle:rgba(175,197,248,.16);
+  --primary-blue:#2E5DE6;
+  --deep-blue:#1A3BB0;
+  --cyan-glow:#6E92F2;
+  --cyan-tactile:#AFC5F8;
+  --text-main:#E6EDFD;
+  --text-muted:#AFC5F8;
+  --shadow-cyan-glow:0 0 26px rgba(110,146,242,.24);
+}
+body.theme-light {
+  --bg-main:#E6EDFD;
+  --bg-secondary:#AFC5F8;
+  --neo-glass-bg:rgba(230,237,253,.88);
+  --neo-surface-light:rgba(255,255,255,.72);
+  --neo-surface-pressed:rgba(175,197,248,.42);
+  --neo-border-glow:rgba(46,93,230,.28);
+  --neo-border-subtle:rgba(15,34,112,.14);
+  --primary-blue:#2E5DE6;
+  --deep-blue:#1A3BB0;
+  --cyan-glow:#2E5DE6;
+  --cyan-tactile:#1A3BB0;
+  --text-main:#071039 !important;
+  --text-muted:#0F2270 !important;
+  --shadow-cyan-glow:0 0 20px rgba(46,93,230,.16);
+}
+body {
+  background-color:var(--bg-main) !important;
+  color:var(--text-main) !important;
+}
+.ambient-glow .glow-1,.glow-1 {background:radial-gradient(circle,rgba(110,146,242,.22) 0%,rgba(7,16,57,0) 70%) !important;}
+.glow-2 {background:radial-gradient(circle,rgba(46,93,230,.22) 0%,rgba(7,16,57,0) 70%) !important;}
+.glow-3 {background:radial-gradient(circle,rgba(175,197,248,.12) 0%,rgba(7,16,57,0) 70%) !important;}
+/* Superficies principales, paneles, navegación y tarjetas */
+.neo-tactile-sidebar,.sidebar-header,.dropdown-content,.dashboard-card,
+.card,.modal-content,.panel,.module-card,.mira-filter-box,
+#mainSidebar .mira-db-person-card {
+  --neo-border-subtle:rgba(175,197,248,.15);
+}
+.neo-tactile-sidebar {background:linear-gradient(145deg,rgba(15,34,112,.66),rgba(7,16,57,.78)) !important;}
+.sidebar-header,.dropdown-content,.dashboard-card,.card,.modal-content,.panel,.module-card {
+  color:var(--text-main);
+}
+.section-title,.mira-label,.sidebar-content .section-title {color:var(--cyan-tactile) !important;}
+.custom-dropdown > summary,.mira-select,.mira-input-group input,
+input,select,textarea,.testigo-input-styled {
+  color:var(--text-main);
+}
+.custom-dropdown > summary:hover,.custom-dropdown[open] > summary,
+.custom-dropdown.pmu-module-active > summary {
+  background:linear-gradient(100deg,rgba(46,93,230,.24),rgba(110,146,242,.09)) !important;
+}
+.neo-icon {background:linear-gradient(145deg,rgba(110,146,242,.24),rgba(175,197,248,.08)) !important;}
+button:not(.leaflet-control-zoom-in):not(.leaflet-control-zoom-out),
+.excel-download-btn,.mira-input-group button {
+  --button-blue:#2E5DE6;
+}
+.mira-input-group input:focus,.mira-select:focus,
+input:focus,select:focus,textarea:focus {
+  border-color:#6E92F2 !important;
+  box-shadow:0 0 0 2px rgba(110,146,242,.16) !important;
+}
+.mira-input-group input,.mira-select,input,select,textarea {
+  background-color:rgba(7,16,57,.72);
+  border-color:rgba(175,197,248,.24);
+}
+.mira-input-group button,.mira-search-btn,.primary-btn {
+  background:linear-gradient(135deg,#2E5DE6,#1A3BB0) !important;
+  color:#E6EDFD !important;
+}
+a {color:#AFC5F8;}
+a:hover {color:#E6EDFD;}
+/* Recoloración de acentos cian/azules heredados sin alterar colores de estado. */
+[class*="cyan"],[class*="glow"],.arrow-icon,.neo-live-indicator {
+  --cyan-glow:#6E92F2;
+}
+
+/* Autocompletado InfoMIRA */
+#mainSidebar .mira-search-suggestions {
+  position:relative;z-index:80;margin:-2px 0 10px;border-radius:12px;
+  overflow:hidden;background:rgba(7,16,57,.97);
+  border:1px solid rgba(110,146,242,.32);
+  box-shadow:0 14px 30px rgba(3,8,35,.42);
+  max-height:260px;overflow-y:auto;
+}
+#mainSidebar .mira-search-suggestions[hidden] {display:none !important;}
+#mainSidebar .mira-suggestion-option {
+  width:100%;display:flex;align-items:center;gap:9px;padding:10px 11px;
+  text-align:left;border:0;border-bottom:1px solid rgba(175,197,248,.09);
+  background:transparent;color:#E6EDFD;cursor:pointer;transition:background .18s ease;
+}
+#mainSidebar .mira-suggestion-option:last-child {border-bottom:0;}
+#mainSidebar .mira-suggestion-option:hover,
+#mainSidebar .mira-suggestion-option.is-active {background:rgba(46,93,230,.24);}
+#mainSidebar .mira-suggestion-avatar {
+  width:29px;height:29px;flex:0 0 29px;border-radius:9px;
+  display:grid;place-items:center;color:#E6EDFD;background:rgba(110,146,242,.2);
+}
+#mainSidebar .mira-suggestion-copy {min-width:0;display:flex;flex-direction:column;gap:3px;}
+#mainSidebar .mira-suggestion-copy strong {font-size:.73rem;line-height:1.25;color:#E6EDFD;overflow-wrap:anywhere;}
+#mainSidebar .mira-suggestion-copy small {font-size:.62rem;line-height:1.3;color:#AFC5F8;overflow-wrap:anywhere;}
+#mainSidebar .mira-suggestion-arrow {margin-left:auto;color:#6E92F2;font-size:.9rem;}
+#mainSidebar .mira-suggestion-empty,#mainSidebar .mira-suggestion-loading {
+  padding:11px;color:#AFC5F8;font-size:.68rem;text-align:center;
+}
