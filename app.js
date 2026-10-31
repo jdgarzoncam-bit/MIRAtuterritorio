@@ -1912,7 +1912,7 @@ function inicializarSistemaMapa() {
         btnBuscarMira.dataset.neonBound = '1';
 
         const safe = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-        const normal = value => normalizarTexto(String(value || ''));
+        const normal = value => normalizarTexto(String(value || '')).toUpperCase();
         let searchSequence = 0;
 
         async function aplicarFiltroInfoMIRA() {
@@ -1937,26 +1937,26 @@ function inicializarSistemaMapa() {
                 return;
             }
 
-            miraInternalContainer.innerHTML = '<div class="activity-notice">Consultando el directorio central de personas…</div>';
+            miraInternalContainer.innerHTML = '<div class="activity-notice">Consultando la red InfoMIRA central…</div>';
             try {
                 const isDocument = /^\d+$/.test(term);
-                const records = await window.MIRA_DATA.listPeople({
+                const records = await window.MIRA_DATA.listInfoMiraDirectory({
                     cedula: isDocument ? term : '',
                     search: term && !isDocument ? term : '',
                     limit: 100
                 });
                 if (sequence !== searchSequence) return;
 
-                const filtered = (records || []).filter(person => {
-                    const participation = normal(person.tipo_participacion);
-                    if (estado === 'LIDER') return person.info_mira === true || participation.includes('LIDER') || participation.includes('CUIDADOR');
-                    if (estado === 'REFERIDO') return participation.includes('REFERIDO');
-                    if (estado === 'ACTIVO') return person.activo === true;
+                const filtered = (records || []).filter(row => {
+                    const status = normal(row.estado_original);
+                    if (estado === 'LIDER') return ['LÍDER','LIDER','LDIER','CUIDADOR'].includes(status);
+                    if (estado === 'REFERIDO') return status === 'REFERIDO';
+                    if (estado === 'ACTIVO') return status === 'ACTIVO';
                     return true;
                 });
 
                 if (!filtered.length) {
-                    miraInternalContainer.innerHTML = '<div style="font-size:.8rem;color:var(--text-muted);padding:12px;text-align:center;">No se encontraron personas con esos criterios en el directorio central.</div>';
+                    miraInternalContainer.innerHTML = '<div style="font-size:.8rem;color:var(--text-muted);padding:12px;text-align:center;">No se encontraron registros con esos criterios en la red InfoMIRA.</div>';
                     miraMarkersGroup.clearLayers();
                     if (map && !map.hasLayer(puestosLayerGroup)) map.addLayer(puestosLayerGroup);
                     return;
@@ -1964,8 +1964,8 @@ function inicializarSistemaMapa() {
 
                 miraMarkersGroup.clearLayers();
                 const byPollingPlace = new Map();
-                filtered.forEach(person => {
-                    const place = normal(person.puesto_votacion);
+                filtered.forEach(row => {
+                    const place = normal(row.puesto_votacion);
                     if (place) byPollingPlace.set(place, (byPollingPlace.get(place) || 0) + 1);
                 });
                 const bounds = [];
@@ -1975,7 +1975,7 @@ function inicializarSistemaMapa() {
                         if (!count) return;
                         const marker = L.circleMarker([puesto.lat, puesto.lon], {
                             radius: 9, color: '#38BDF8', weight: 2, fillColor: '#2563EB', fillOpacity: .9
-                        }).bindTooltip('InfoMIRA · ' + count + ' personas · ' + safe(puesto.nombre));
+                        }).bindTooltip('InfoMIRA · ' + count + ' registros · ' + safe(puesto.nombre));
                         miraMarkersGroup.addLayer(marker);
                         bounds.push([puesto.lat, puesto.lon]);
                     });
@@ -1984,45 +1984,45 @@ function inicializarSistemaMapa() {
                     if (bounds.length) map.fitBounds(bounds, {padding:[45,45],maxZoom:15});
                 }
 
-                const rows = filtered.map((person,index) => {
-                    const name = [person.nombres,person.apellidos].filter(Boolean).join(' ');
-                    const role = person.tipo_participacion || (person.info_mira ? 'LÍDER / CUIDADOR' : 'REFERIDO');
-                    const status = person.activo ? 'ACTIVO' : 'INACTIVO';
+                const rows = filtered.map((row,index) => {
+                    const name = row.nombre_original || 'Sin nombre';
+                    const status = row.estado_original || 'SIN ESTADO';
                     return `<article style="background:rgba(255,255,255,.035);border:1px solid var(--neo-border-subtle);border-radius:10px;padding:10px;margin:7px 0;">
                         <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;">
-                            <strong style="font-size:.82rem;color:var(--text-main);">${index+1}. ${safe(name || 'Sin nombre')}</strong>
+                            <strong style="font-size:.82rem;color:var(--text-main);">${index+1}. ${safe(name)}</strong>
                             <span style="font-size:.65rem;color:var(--cyan-glow);font-weight:700;">${safe(status)}</span>
                         </div>
                         <div style="font-size:.75rem;color:var(--text-muted);display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:7px;">
-                            <span><b>Cédula:</b> ${safe(person.cedula || '—')}</span>
-                            <span><b>Rol:</b> ${safe(role)}</span>
-                            <span><b>Teléfono:</b> ${safe(person.telefono || '—')}</span>
-                            <span><b>Puesto:</b> ${safe(person.puesto_votacion || 'Sin asignar')}</span>
-                            <span><b>Mesa:</b> ${safe(person.mesa_votacion || '—')}</span>
-                            <span><b>InfoMIRA:</b> ${person.info_mira === true ? 'Sí' : person.info_mira === false ? 'No' : 'Sin definir'}</span>
+                            <span><b>Cédula:</b> ${safe(row.cedula_original || '—')}</span>
+                            <span><b>Cuidador / líder:</b> ${safe(row.cuidador_nombre || 'Sin asignar')}</span>
+                            <span><b>Teléfono:</b> ${safe(row.telefono || '—')}</span>
+                            <span><b>Barrio:</b> ${safe(row.barrio || '—')}</span>
+                            <span><b>Puesto:</b> ${safe(row.puesto_votacion || 'Sin asignar')}</span>
+                            <span><b>Mesa:</b> ${safe(row.mesa_votacion || '—')}</span>
                         </div>
                     </article>`;
                 }).join('');
 
                 miraInternalContainer.innerHTML = `
                     <div style="border-top:1px solid var(--neo-border-subtle);padding-top:10px;margin-top:6px;">
-                        <div style="font-size:.85rem;color:var(--cyan-tactile);font-weight:700;margin-bottom:5px;">💙 Directorio central InfoMIRA</div>
-                        <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:8px;">${filtered.length} resultado(s) · Fuente: base central Neon</div>
+                        <div style="font-size:.85rem;color:var(--cyan-tactile);font-weight:700;margin-bottom:5px;">💙 Red InfoMIRA central</div>
+                        <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:8px;">${filtered.length} registro(s) · Fuente: base central Neon</div>
                         ${rows}
                         <button id="downloadExcelRedInternalBtn" class="excel-download-btn" style="margin-top:8px;">📥 Exportar Excel (${filtered.length})</button>
                     </div>`;
                 const exportButton = document.getElementById('downloadExcelRedInternalBtn');
                 if (exportButton) exportButton.addEventListener('click', () => {
                     if (!window.XLSX) { alert('No se pudo cargar la herramienta de Excel.'); return; }
-                    const exportRows = filtered.map(p => ({
-                        'Cédula':p.cedula || '', 'Nombres':p.nombres || '', 'Apellidos':p.apellidos || '',
-                        'Teléfono':p.telefono || '', 'Correo':p.correo || '', 'InfoMIRA':p.info_mira === true ? 'Sí' : p.info_mira === false ? 'No' : '',
-                        'Tipo de participación':p.tipo_participacion || '', 'Estado':p.activo ? 'Activo' : 'Inactivo',
-                        'Puesto de votación':p.puesto_votacion || '', 'Mesa':p.mesa_votacion || ''
+                    const exportRows = filtered.map(row => ({
+                        'Cédula':row.cedula_original || '', 'Nombre':row.nombre_original || '',
+                        'Teléfono':row.telefono || '', 'Estado original':row.estado_original || '',
+                        'Cuidador / líder':row.cuidador_nombre || '', 'Barrio':row.barrio || '',
+                        'Puesto de votación':row.puesto_votacion || '', 'Mesa':row.mesa_votacion || '',
+                        'Movilidad':row.movilidad || '', 'Asistencia':row.asistencia || ''
                     }));
                     const wb = XLSX.utils.book_new();
-                    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(exportRows), 'Directorio InfoMIRA');
-                    XLSX.writeFile(wb, 'Directorio_InfoMIRA.xlsx');
+                    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(exportRows), 'Red InfoMIRA');
+                    XLSX.writeFile(wb, 'Red_InfoMIRA.xlsx');
                 });
                 const dashCard = document.getElementById('adminDashboardCard');
                 if (dashCard) dashCard.classList.add('dashboard-compact');
@@ -2031,7 +2031,7 @@ function inicializarSistemaMapa() {
             } catch (error) {
                 console.error('[InfoMIRA] Error consultando Neon:', error);
                 if (sequence === searchSequence) {
-                    miraInternalContainer.innerHTML = '<div style="font-size:.78rem;color:#f87171;padding:10px;">No fue posible consultar el directorio central. Verifica que tu sesión esté activa y tenga permisos de consulta.</div>';
+                    miraInternalContainer.innerHTML = '<div style="font-size:.78rem;color:#f87171;padding:10px;">No fue posible consultar la red InfoMIRA. Verifica tu sesión y los permisos de acceso.</div>';
                 }
             }
         }
