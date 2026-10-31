@@ -5246,3 +5246,121 @@ a:hover {color:#E6EDFD;}
     -webkit-overflow-scrolling: touch;
   }
 }
+
+
+/* MTT MOBILE MAP PANELS — mapa arriba + controles del módulo abajo. */
+@media (max-width: 600px) {
+  #app-container.mobile-operations-map-panel-active {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: 100dvh !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    background: #030b1d !important;
+  }
+  #app-container.mobile-operations-map-panel-active #map {
+    display: block !important;
+    visibility: visible !important;
+    position: absolute !important;
+    inset: 0 0 auto 0 !important;
+    width: 100% !important;
+    height: 54dvh !important;
+    min-height: 250px !important;
+    max-height: 62dvh !important;
+    z-index: 1500 !important;
+    pointer-events: auto !important;
+  }
+  #app-container.mobile-operations-map-panel-active #mainSidebar {
+    display: flex !important;
+    position: absolute !important;
+    top: 54dvh !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 46dvh !important;
+    max-height: 46dvh !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 9px max(8px, env(safe-area-inset-bottom, 0px)) !important;
+    overflow: hidden !important;
+    z-index: 1800 !important;
+    box-sizing: border-box !important;
+    background: transparent !important;
+  }
+  #app-container.mobile-operations-map-panel-active #mainSidebar > .neo-tactile-sidebar {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    border: 1px solid rgba(91,174,255,.3) !important;
+    border-radius: 22px 22px 16px 16px !important;
+    background: linear-gradient(155deg,rgba(10,34,62,.98),rgba(3,13,31,.99)) !important;
+    box-shadow: 0 -12px 34px rgba(0,0,0,.32),0 0 24px rgba(0,112,255,.14),inset 0 1px 0 rgba(255,255,255,.12) !important;
+    -webkit-backdrop-filter: blur(22px) saturate(145%) !important;
+    backdrop-filter: blur(22px) saturate(145%) !important;
+  }
+  #app-container.mobile-operations-map-panel-active #mainSidebar .sidebar-header {
+    flex: 0 0 auto !important;
+    min-height: 54px !important;
+    padding: 7px 12px !important;
+  }
+  #app-container.mobile-operations-map-panel-active #mainSidebar .sidebar-content {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain !important;
+    padding: 8px 10px calc(12px + env(safe-area-inset-bottom,0px)) !important;
+    box-sizing: border-box !important;
+  }
+  #app-container.mobile-operations-map-panel-active #mainSidebar .sidebar-content > .section-title,
+  #app-container.mobile-operations-map-panel-active #mainSidebar .sidebar-content > details.custom-dropdown:not(.mobile-ops-selected-module) {
+    display: none !important;
+  }
+  #app-container.mobile-operations-map-panel-active #mainSidebar .sidebar-content > details.custom-dropdown.mobile-ops-selected-module {
+    display: block !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+  #app-container.mobile-operations-map-panel-active #mainSidebar .sidebar-content > details.custom-dropdown.mobile-ops-selected-module > summary {
+    display: none !important;
+  }
+  #app-container.mobile-operations-map-panel-active #mainSidebar .sidebar-content > details.custom-dropdown.mobile-ops-selected-module > .dropdown-content {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: none !important;
+    overflow: visible !important;
+    box-sizing: border-box !important;
+    padding: 2px 1px 8px !important;
+  }
+  #app-container.mobile-operations-map-panel-active #mainSidebar #adminDashboardCard {
+    display: none !important;
+  }
+  #app-container.mobile-operations-map-panel-active #mobileOpsBack {
+    position: fixed !important;
+    top: calc(env(safe-area-inset-top,0px) + 9px) !important;
+    left: 11px !important;
+    z-index: 6200 !important;
+  }
+  #app-container.mobile-operations-map-panel-active .leaflet-control-zoom {
+    margin-top: calc(env(safe-area-inset-top,0px) + 58px) !important;
+  }
+}
+@media (max-width: 380px) {
+  #app-container.mobile-operations-map-panel-active #map { height: 51dvh !important; }
+  #app-container.mobile-operations-map-panel-active #mainSidebar {
+    top: 51dvh !important;
+    height: 49dvh !important;
+    max-height: 49dvh !important;
+  }
+}

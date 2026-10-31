@@ -2,11 +2,11 @@
 (()=> {
  const MQ='(max-width:600px)';
  const cards=[
-  {id:'dropdown-infomira',icon:'💙',title:'InfoMIRA',desc:'Red de cuidadores y líderes',tone:'blue'},
+  {id:'dropdown-infomira',icon:'💙',title:'InfoMIRA',desc:'Red de cuidadores y líderes',tone:'blue',mapPanel:true},
   {id:'dropdown-logistica',icon:'🚐',title:'Logística',desc:'Transporte y operación Día D',tone:'orange'},
   {id:'dropdown-testigos',icon:'🗳️',title:'Auditoría de testigos',desc:'Actas y evidencias E-14',tone:'violet'},
   {id:'dropdown-puestos',icon:'📊',title:'Info Electoral',desc:'Resultados y estadísticas',tone:'cyan'},
-  {id:'dropdown-barrios-puestos',icon:'🏘️',title:'Barrios y puestos',desc:'Consulta territorial',tone:'green'},
+  {id:'dropdown-barrios-puestos',icon:'🏘️',title:'Barrios y puestos',desc:'Consulta territorial',tone:'green',mapPanel:true},
   {id:'dropdown-actividades',icon:'📋',title:'Actividades',desc:'Registro y participación',tone:'gold',workspace:'activities'},
   {id:'dropdown-concejal',icon:'🗓️',title:'Concejal',desc:'Gestión y compromisos',tone:'pink',workspace:'concejal'},
   {id:'mobile-map',icon:'🗺️',title:'Mapa',desc:'Explorar el territorio en pantalla completa',tone:'map',map:true}
@@ -29,11 +29,12 @@
   const resizeMap=()=>requestAnimationFrame(()=>requestAnimationFrame(()=>{window.dispatchEvent(new Event('resize'));window.dispatchEvent(new CustomEvent('mira:mobile-map-visible'))}));
   const closeWorkspace=()=>{if(workspaceMode==='activities')document.getElementById('closeActivitiesPlaceholder')?.click();if(workspaceMode==='concejal')document.getElementById('closeConcejalModuleBtn')?.click();workspaceMode=null};
   const open=card=>{
-   if(!mobile())return;home.hidden=true;app.classList.remove('mobile-operations-home-active','mobile-operations-map-active','mobile-operations-module-active','mobile-operations-workspace-active');
+   if(!mobile())return;home.hidden=true;app.classList.remove('mobile-operations-home-active','mobile-operations-map-active','mobile-operations-module-active','mobile-operations-map-panel-active','mobile-operations-workspace-active');
    if(card.map){sidebar.hidden=true;app.classList.add('mobile-operations-map-active');back.classList.add('is-visible');document.getElementById('floatingPuestoWidget')?.classList.add('hidden');resizeMap();return}
    sidebar.hidden=false;document.querySelectorAll('#mainSidebar details.custom-dropdown').forEach(d=>{const yes=d.id===card.id;d.open=yes;d.classList.toggle('mobile-ops-selected-module',yes);d.querySelector(':scope > summary')?.setAttribute('aria-expanded',String(yes));d.setAttribute('aria-hidden',String(!yes));});
    back.classList.add('is-visible');
    if(card.workspace){workspaceMode=card.workspace;app.classList.add('mobile-operations-workspace-active');requestAnimationFrame(()=>{if(card.workspace==='activities')document.getElementById('sideOpenActivityModuleBtn')?.click();else document.getElementById('openConcejalRegisterBtn')?.click()});return}
+   if(card.mapPanel){app.classList.add('mobile-operations-map-panel-active');const side=sidebar.querySelector('.neo-tactile-sidebar');if(side)side.scrollTop=0;resizeMap();return}
    app.classList.add('mobile-operations-module-active');const side=sidebar.querySelector('.neo-tactile-sidebar');if(side)side.scrollTop=0;resizeMap();
   };
   els.forEach((el,i)=>el.addEventListener('click',()=>{const r=el.getBoundingClientRect(),mid=carousel.getBoundingClientRect().left+carousel.clientWidth/2;if(Math.abs(r.left+r.width/2-mid)>Math.max(24,r.width*.16)){go(i);return}setActive(i);open(cards[i])}));
@@ -41,8 +42,8 @@
   home.querySelector('.mobile-ops-prev').addEventListener('click',()=>go(centered()-1));home.querySelector('.mobile-ops-next').addEventListener('click',()=>go(centered()+1));
   carousel.addEventListener('scroll',()=>{clearTimeout(timer);timer=setTimeout(()=>setActive(centered()),100)},{passive:true});carousel.addEventListener('scrollend',()=>setActive(centered()),{passive:true});
   carousel.addEventListener('keydown',e=>{if(e.key==='ArrowRight'){e.preventDefault();go(centered()+1)}if(e.key==='ArrowLeft'){e.preventDefault();go(centered()-1)}if(e.key==='Enter'){e.preventDefault();open(cards[centered()])}});
-  back.addEventListener('click',()=>{closeWorkspace();app.classList.remove('mobile-operations-module-active','mobile-operations-map-active','mobile-operations-workspace-active');sidebar.hidden=false;home.hidden=false;back.classList.remove('is-visible');document.querySelectorAll('#mainSidebar details.custom-dropdown').forEach(d=>{d.open=false;d.classList.remove('mobile-ops-selected-module');d.removeAttribute('aria-hidden');d.querySelector(':scope > summary')?.setAttribute('aria-expanded','false')});resizeMap()});
-  const viewport=()=>{if(mobile()){if(!app.classList.contains('mobile-operations-module-active')&&!app.classList.contains('mobile-operations-map-active')&&!app.classList.contains('mobile-operations-workspace-active')){home.hidden=false;sidebar.hidden=true;app.classList.add('mobile-operations-home-active')}}else{app.classList.remove('mobile-operations-home-active','mobile-operations-module-active','mobile-operations-map-active','mobile-operations-workspace-active');home.hidden=true;sidebar.hidden=false;back.classList.remove('is-visible');document.querySelectorAll('#mainSidebar details.custom-dropdown').forEach(d=>{d.open=false;d.classList.remove('mobile-ops-selected-module');d.removeAttribute('aria-hidden')})}};
+  back.addEventListener('click',()=>{closeWorkspace();app.classList.remove('mobile-operations-module-active','mobile-operations-map-active','mobile-operations-map-panel-active','mobile-operations-workspace-active');sidebar.hidden=false;home.hidden=false;back.classList.remove('is-visible');document.querySelectorAll('#mainSidebar details.custom-dropdown').forEach(d=>{d.open=false;d.classList.remove('mobile-ops-selected-module');d.removeAttribute('aria-hidden');d.querySelector(':scope > summary')?.setAttribute('aria-expanded','false')});resizeMap()});
+  const viewport=()=>{if(mobile()){if(!app.classList.contains('mobile-operations-module-active')&&!app.classList.contains('mobile-operations-map-active')&&!app.classList.contains('mobile-operations-map-panel-active')&&!app.classList.contains('mobile-operations-workspace-active')){home.hidden=false;sidebar.hidden=true;app.classList.add('mobile-operations-home-active')}}else{app.classList.remove('mobile-operations-home-active','mobile-operations-module-active','mobile-operations-map-active','mobile-operations-map-panel-active','mobile-operations-workspace-active');home.hidden=true;sidebar.hidden=false;back.classList.remove('is-visible');document.querySelectorAll('#mainSidebar details.custom-dropdown').forEach(d=>{d.open=false;d.classList.remove('mobile-ops-selected-module');d.removeAttribute('aria-hidden')})}};
   window.addEventListener('resize',viewport,{passive:true});setActive(0);viewport();
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
