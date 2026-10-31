@@ -10,7 +10,7 @@ form.addEventListener("submit",async e=>{
  try{
   const tokenResult=await auth.getAnonymousToken(),token=tokenResult?.data?.token;
   if(!token)throw new Error("No se pudo iniciar el envío.");
-  const payload={nombres:form.elements.nombres.value.trim(),apellidos:form.elements.apellidos.value.trim(),telefono:form.elements.telefono.value.trim()||null,correo:form.elements.correo.value.trim()||null,puesto_votacion:form.elements.puesto_votacion.value.trim(),mesa_votacion:form.elements.mesa_votacion.value.trim()||null,consentimiento_datos:true};
+  const payload={nombres:form.elements.nombres.value.trim(),apellidos:form.elements.apellidos.value.trim(),telefono:form.elements.telefono.value.trim()||null,correo:form.elements.correo.value.trim()||null,puesto_votacion:form.elements.puesto_votacion.value.trim(),mesa_votacion:form.elements.mesa_votacion.value.trim()||null,consentimiento_datos:true,consentimiento_version:"2026-10-30-v1"};
   const response=await fetch(API+"/testigos_publicos",{method:"POST",headers:{Authorization:"Bearer "+token,"Content-Type":"application/json","Content-Profile":"mira",Prefer:"return=minimal"},body:JSON.stringify(payload)});
   if(!response.ok){const err=await response.json().catch(()=>({}));throw new Error(err.message||"No se pudo guardar el registro.");}
   form.reset();status.textContent="Registro recibido. Quedó pendiente de validación por el equipo autorizado.";
