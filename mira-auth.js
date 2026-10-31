@@ -13,8 +13,9 @@ async function bearerToken() {
   if(!token) throw new Error("No se recibió el token de acceso.");
   return token;
 }
-async function getOwnProfile(token) {
-  const response=await fetch(`${DATA_API_URL}/user_profiles?select=auth_user_id,role,active,email_verified,email,display_name&limit=1`,{
+async function getOwnProfile(token,authUserId) {
+  if(!authUserId) throw new Error("No fue posible identificar la cuenta autenticada.");
+  const response=await fetch(`${DATA_API_URL}/user_profiles?select=auth_user_id,role,active,email_verified,email,display_name&auth_user_id=eq.${encodeURIComponent(authUserId)}&limit=1`,{
     headers:{Authorization:`Bearer ${token}`,"Accept-Profile":"mira"}
   });
   if(!response.ok) throw new Error("No fue posible validar los permisos de esta cuenta.");
@@ -39,8 +40,10 @@ async function loginWithNeon() {
       if(code.includes("EMAIL_NOT_VERIFIED")||status===403) throw new Error("Primero confirma tu correo electrónico. Revisa tu bandeja de entrada y Spam.");
       throw new Error("No fue posible iniciar sesión. Verifica tus credenciales.");
     }
+    const authUserId=result?.data?.user?.id;
+    if(!authUserId) throw new Error("El proveedor de identidad no devolvió el identificador de la sesión.");
     const token=await bearerToken();
-    const profile=await getOwnProfile(token);
+    const profile=await getOwnProfile(token,authUserId);
     if(!profile || profile.active!==true || profile.email_verified!==true || !["admin","operator","viewer","witness"].includes(profile.role)) {
       await auth.signOut();
       throw new Error("Tu cuenta todavía no tiene permisos asignados. Solicita al administrador que habilite tu perfil.");
