@@ -1083,7 +1083,7 @@ function inicializarSistemaMapa() {
 
         try {
             generarListaBarrios();
-            actualizarMapa();
+            window.actualizarMapa();
             if (!window.__MIRA_INITIAL_TERRITORY_FIT_DONE && map && geojsonLayer) {
                 const initialBounds = geojsonLayer.getBounds();
                 if (initialBounds && initialBounds.isValid()) {
