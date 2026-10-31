@@ -1886,8 +1886,10 @@ function inicializarSistemaMapa() {
                     const place=buscarPuestoLogistica(g.puestoName);
                     const origin=centroGeograficoBarrio(g.barrio);
                     const passengerHtml=g.passengers.map(p=>'<div class="mira-db-field"><small>Pasajero · Mesa '+escapeHtml(p.mesa_votacion || 'S/N')+'</small><strong>'+escapeHtml(getName(p))+'</strong>'+botonesContactoLogistica(getPhone(p),getName(p))+'</div>').join('');
+                    const driverOptions=drivers.map(d=>'<option value="'+escapeHtml(d.id)+'">'+escapeHtml(getName(d))+' · '+escapeHtml(d.barrio || 'Sin barrio')+'</option>').join('');
                     return '<article class="mira-db-person-card"><div class="mira-db-person-head"><div><small>RUTA '+(i+1)+'</small><h4>'+escapeHtml(g.barrio)+' → '+escapeHtml(g.puestoName || 'Puesto sin asignar')+'</h4></div><span class="mira-db-status">'+g.passengers.length+' pasajero(s)</span></div>'+
-                        '<div class="mira-db-action-hint">Origen: centro geográfico del barrio · Destino: '+escapeHtml(place?.direccion || 'Dirección no localizada en el catálogo')+'</div>'+passengerHtml+
+                        '<div class="mira-db-action-hint">Origen: centro geográfico del barrio · Destino: '+escapeHtml(place?.direccion || 'Dirección no localizada en el catálogo')+'</div>'+
+                        '<label class="mira-db-action-hint">Conductor disponible<select class="mira-select" data-driver-route="'+i+'"><option value="">Seleccionar conductor…</option>'+driverOptions+'</select></label><div data-driver-contact="'+i+'"></div>'+passengerHtml+
                         (place&&origin?'<div class="mira-db-action-hint" data-route-state="'+i+'">Preparando trazado vial…</div>':'<div class="mira-db-action-hint">No se puede trazar: '+(!origin?'falta polígono del barrio. ':'')+(!place?'puesto sin coordenadas verificadas.':'')+'</div>')+
                         '</article>';
                 }).join('');
@@ -1897,6 +1899,13 @@ function inicializarSistemaMapa() {
                     (tipo==='PROPIO'||tipo==='TODOS'?'<h4>Conductores / personas con vehículo propio</h4>'+driversHtml:'')+
                     '<button id="downloadExcelLogisticaBtn" class="mira-db-export" type="button">↧ Exportar reporte logístico</button>'+
                     '<p class="mira-db-action-hint">Los conductores se consideran disponibles para cualquier ruta. La asignación operativa debe confirmarse con cada conductor; aún no se guarda una asignación en la base de datos.</p></section>';
+                box.querySelectorAll('[data-driver-route]').forEach(select=>{
+                    select.addEventListener('change',()=>{
+                        const driver=drivers.find(d=>String(d.id)===select.value);
+                        const target=box.querySelector('[data-driver-contact="'+select.dataset.driverRoute+'"]');
+                        if(target) target.innerHTML=driver?'<div class="mira-db-action-hint">Conductor seleccionado: '+escapeHtml(getName(driver))+'</div>'+botonesContactoLogistica(getPhone(driver),getName(driver)):'';
+                    });
+                });
                 groupList.forEach(async(g,i)=>{
                     const place=buscarPuestoLogistica(g.puestoName), origin=centroGeograficoBarrio(g.barrio);
                     if(place&&origin){
