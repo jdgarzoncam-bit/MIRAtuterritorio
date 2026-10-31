@@ -430,7 +430,7 @@ async function loadActivitiesFromNeon(){
       window.MIRA_DATA.listActivities({limit:100}),
       window.MIRA_DATA.listAttendances({limit:1000})
     ]);
-    activitiesState.people=(result[0]||[]).map(p=>{const parsed=splitLegacyPersonName(p.nombres,p.apellidos);return {id:p.id,cedula:p.cedula||p.cedula_normalizada||'',names:parsed.names,surnames:parsed.surnames,phone:p.telefono||'',infoMira:p.info_mira===true?'si':p.info_mira===false?'no':''};});
+    activitiesState.people=(result[0]||[]).map(p=>{const parsed=splitLegacyPersonName(p.nombres,p.apellidos);return {id:p.id,cedula:p.cedula||p.cedula_normalizada||'',names:parsed.names,surnames:parsed.surnames,phone:p.telefono||'',infoMira:p.info_mira===true?'si':p.info_mira===false?'no':'',type:p.tipo_participacion||''};});
     activitiesState.activities=(result[1]||[]).map(a=>({id:a.id,name:a.nombre,date:a.fecha,place:a.lugar||'',status:a.estado==='activa'?'active':a.estado==='finalizada'?'finished':a.estado,createdAt:a.created_at}));
     activitiesState.attendances=(result[2]||[]).map(a=>({id:a.id,personId:a.persona_id,activityId:a.actividad_id,createdAt:a.fecha_registro||a.created_at}));
     const active=activitiesState.activities.find(a=>a.status==='active');
@@ -493,7 +493,7 @@ document.getElementById('saveActivityBtn').addEventListener('click',async()=>{
   }catch(error){console.error(error);alert('No fue posible guardar la actividad en Neon: '+(error.message||'Error desconocido'));}
   finally{button.disabled=false;}
 });
-function clearParticipantForm(){editingParticipantId=null;editingPersonId=null;['participantCedula','participantNames','participantSurnames','participantPhone'].forEach(id=>document.getElementById(id).value='');document.getElementById('participantInfoMira').value='';document.getElementById('duplicateNotice').classList.add('hidden');document.getElementById('saveParticipantBtn').textContent='Guardar asistencia';const title=document.getElementById('participantFormTitle');if(title)title.textContent='Registrar participante';}
+function clearParticipantForm(){editingParticipantId=null;editingPersonId=null;['participantCedula','participantNames','participantSurnames','participantPhone'].forEach(id=>document.getElementById(id).value='');document.getElementById('participantInfoMira').value='';document.getElementById('participantType').value='';document.getElementById('duplicateNotice').classList.add('hidden');document.getElementById('saveParticipantBtn').textContent='Guardar asistencia';const title=document.getElementById('participantFormTitle');if(title)title.textContent='Registrar participante';}
 document.getElementById('clearParticipantBtn').addEventListener('click',clearParticipantForm);
 async function lookupPerson(){
   const ced=normalizeCedula(document.getElementById('participantCedula').value);
@@ -505,12 +505,13 @@ async function lookupPerson(){
     const found=rows?.[0];
     if(found){
       const parsed=splitLegacyPersonName(found.nombres,found.apellidos);
-      const person={id:found.id,cedula:found.cedula||found.cedula_normalizada||'',names:parsed.names,surnames:parsed.surnames,phone:found.telefono||'',infoMira:found.info_mira===true?'si':found.info_mira===false?'no':''};
+      const person={id:found.id,cedula:found.cedula||found.cedula_normalizada||'',names:parsed.names,surnames:parsed.surnames,phone:found.telefono||'',infoMira:found.info_mira===true?'si':found.info_mira===false?'no':'',type:found.tipo_participacion||''};
       const i=activitiesState.people.findIndex(p=>p.id===person.id);if(i>=0)activitiesState.people[i]=person;else activitiesState.people.push(person);
       document.getElementById('participantNames').value=person.names;
       document.getElementById('participantSurnames').value=person.surnames;
       document.getElementById('participantPhone').value=person.phone;
       document.getElementById('participantInfoMira').value=person.infoMira;
+      document.getElementById('participantType').value=found.tipo_participacion||'';
       notice.textContent='Ficha encontrada en Neon. Se cargaron los datos existentes.';
     }else notice.textContent='No se encontró esa cédula en Neon. Completa los datos para crear una ficha nueva.';
     notice.classList.remove('hidden');
@@ -528,14 +529,15 @@ document.getElementById('saveParticipantBtn').addEventListener('click',async()=>
   const names=document.getElementById('participantNames').value.trim();
   const surnames=document.getElementById('participantSurnames').value.trim();
   const info=document.getElementById('participantInfoMira').value;
-  if(!ced||!names||!surnames||!info){alert('Completa cédula, nombres, apellidos e InfoMIRA.');return;}
+  const participantType=document.getElementById('participantType').value;
+  if(!ced||!names||!surnames||!info||!participantType){alert('Completa cédula, nombres, apellidos, InfoMIRA y tipo de participante.');return;}
   const button=document.getElementById('saveParticipantBtn');button.disabled=true;
   try{
     const found=editingPersonId?[]:await window.MIRA_DATA.listPeople({cedula:ced,limit:1});
     let personRow=editingPersonId?activitiesState.people.find(p=>p.id===editingPersonId)||null:found?.[0]||null;
     const sameName=activitiesState.people.find(p=>normActivityText(p.names+' '+p.surnames)===normActivityText(names+' '+surnames)&&normalizeCedula(p.cedula)!==ced&&p.id!==editingPersonId);
     if(!personRow&&sameName&&!confirm('Existe una ficha con el mismo nombre y otra cédula. ¿Confirmas que es otra persona?'))return;
-    const payload={cedula:ced,nombres:names,apellidos:surnames,telefono:document.getElementById('participantPhone').value.trim()||null,info_mira:info==='si',actualizado_por:window.MIRA_CURRENT_USER?.email||null};
+    const payload={cedula:ced,nombres,apellidos:surnames,telefono:document.getElementById('participantPhone').value.trim()||null,info_mira:info==='si',tipo_participacion:participantType,actualizado_por:window.MIRA_CURRENT_USER?.email||null};
     if(personRow){
       const updated=await window.MIRA_DATA.updatePerson(personRow.id,payload);
       personRow=updated?.[0]||{...personRow,...payload,cedula};
@@ -561,7 +563,7 @@ document.getElementById('saveParticipantBtn').addEventListener('click',async()=>
 });
 document.getElementById('activitySearch').addEventListener('input',renderActivityTable);
 function activityRows(activityId=null,query=''){return activitiesState.attendances.slice().sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0)).map(a=>({a,p:activitiesState.people.find(p=>p.id===a.personId)||{},act:activitiesState.activities.find(x=>x.id===a.activityId)||{}})).filter(x=>(!activityId||x.a.activityId===activityId)&&(!query||normActivityText([x.p.names,x.p.surnames,x.p.cedula,x.act.name].join(' ')).includes(query)));}
-function editAttendance(id){returnToRecentAfterEdit=true;const a=activitiesState.attendances.find(x=>x.id===id),p=a&&activitiesState.people.find(x=>x.id===a.personId);if(!a||!p)return;editingParticipantId=a.id;editingPersonId=p.id;document.getElementById('participantCedula').value=p.cedula;document.getElementById('participantNames').value=p.names;document.getElementById('participantSurnames').value=p.surnames;document.getElementById('participantPhone').value=p.phone||'';document.getElementById('participantInfoMira').value=p.infoMira||'';document.getElementById('participantActivity').value=a.activityId;document.getElementById('saveParticipantBtn').textContent='Guardar cambios';const title=document.getElementById('participantFormTitle');if(title)title.textContent='Editar participante';const notice=document.getElementById('duplicateNotice');notice.textContent='Estás editando una asistencia existente. Los cambios se actualizarán en Neon.';notice.classList.remove('hidden');showActivityView('registration');document.getElementById('participantWorkspace').scrollIntoView({behavior:'smooth',block:'start'});}
+function editAttendance(id){returnToRecentAfterEdit=true;const a=activitiesState.attendances.find(x=>x.id===id),p=a&&activitiesState.people.find(x=>x.id===a.personId);if(!a||!p)return;editingParticipantId=a.id;editingPersonId=p.id;document.getElementById('participantCedula').value=p.cedula;document.getElementById('participantNames').value=p.names;document.getElementById('participantSurnames').value=p.surnames;document.getElementById('participantPhone').value=p.phone||'';document.getElementById('participantInfoMira').value=p.infoMira||'';document.getElementById('participantType').value=p.type||'';document.getElementById('participantActivity').value=a.activityId;document.getElementById('saveParticipantBtn').textContent='Guardar cambios';const title=document.getElementById('participantFormTitle');if(title)title.textContent='Editar participante';const notice=document.getElementById('duplicateNotice');notice.textContent='Estás editando una asistencia existente. Los cambios se actualizarán en Neon.';notice.classList.remove('hidden');showActivityView('registration');document.getElementById('participantWorkspace').scrollIntoView({behavior:'smooth',block:'start'});}
 function renderActivityTable(){const body=document.getElementById('activityParticipantsBody');const q=normActivityText(document.getElementById('activitySearch').value);const allRows=activityRows(null,q);const rows=allRows.slice(0,10);document.getElementById('liveActivityCount').textContent='Mostrando '+rows.length+' de '+activitiesState.attendances.length+' registros';body.innerHTML=rows.length?rows.map(({a,p,act})=>`<tr><td>${escapeActivityHtml((p.names||'')+' '+(p.surnames||''))}</td><td>${escapeActivityHtml(p.cedula||'')}</td><td>${escapeActivityHtml(act.name||'—')}</td><td>${p.infoMira==='si'?'Sí':'No'}</td><td>${a.createdAt?new Date(a.createdAt).toLocaleString('es-CO'):''}</td><td><button class="activity-row-btn" data-edit="${a.id}" type="button">Editar</button></td></tr>`).join(''):'<tr><td colspan="6">No hay registros recientes para mostrar.</td></tr>';body.querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',()=>editAttendance(b.dataset.edit)));}
 function exportActivityExcel(activityId){if(!window.XLSX){alert('No se pudo cargar la herramienta de Excel.');return;}const rows=activityRows(activityId).map(({a,p,act})=>({'Actividad':act.name||'','Fecha actividad':act.date||'','Lugar':act.place||'','Cédula':p.cedula||'','Nombres':p.names||'','Apellidos':p.surnames||'','Teléfono':p.phone||'','InfoMIRA':p.infoMira==='si'?'Sí':'No','Fecha registro':a.createdAt||''}));const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),'Registros');const act=activitiesState.activities.find(a=>a.id===activityId);XLSX.writeFile(wb,(act?act.name:'Mira_Tu_Territorio').replace(/[^a-z0-9_-]/gi,'_')+'.xlsx');}
 document.getElementById('exportSingleActivityBtn').addEventListener('click',()=>exportActivityExcel(detailActivityId));
@@ -2813,11 +2815,12 @@ if(homeReturnButton){
   renderCommitments();renderDashboard();
 
   function setConcejalView(view){
-    const views={register:document.getElementById('concejalRegisterView'),history:document.getElementById('concejalHistoryView'),management:document.getElementById('concejalManagementView')};
+    const views={register:document.getElementById('concejalRegisterView'),history:document.getElementById('concejalHistoryView'),management:document.getElementById('concejalManagementView'),people:document.getElementById('concejalPeopleView')};
     Object.entries(views).forEach(([key,node])=>{if(node)node.classList.toggle('hidden',key!==view)});
     document.querySelectorAll('#concejalWorkspace [data-concejal-view]').forEach(btn=>{const active=btn.dataset.concejalView===view;btn.classList.toggle('is-active',active);btn.setAttribute('aria-current',active?'page':'false')});
     if(view==='history'){renderHistory();const f=document.getElementById('concejalHistorySearch');if(f)setTimeout(()=>f.focus({preventScroll:true}),80)}
     if(view==='management'){renderDashboard();renderCommitments()}
+    if(view==='people'){loadConcejalPeople()}
     if(view==='register'){const kind=document.querySelector('#concejalWorkspace [data-register-kind].is-active')?.dataset.registerKind||'activity';setRegisterKind(kind);}
     if(miniMap)setTimeout(()=>miniMap.invalidateSize(),120);
   }
@@ -2829,10 +2832,131 @@ if(homeReturnButton){
     if(!activity){renderCommitmentSuggestions();setTimeout(()=>commitmentBarrio.focus({preventScroll:true}),50)}
     else if(miniMap)setTimeout(()=>miniMap.invalidateSize(),120);
   }
+  let concejalPeopleCache=[];
+  let concejalPeopleRequest=0;
+  function concejalPersonNotice(message,isError=false){
+    const notice=document.getElementById('concejalPeopleNotice');
+    if(!notice)return;
+    notice.textContent=message;
+    notice.classList.remove('hidden');
+    notice.style.borderColor=isError?'#fb7185':'#2dd4bf';
+  }
+  function renderConcejalPeople(query=''){
+    const body=document.getElementById('concejalPeopleBody');
+    const count=document.getElementById('concejalPeopleCount');
+    if(!body||!count)return;
+    const term=String(query||'').trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+    const rows=concejalPeopleCache.filter(p=>{
+      const full=[p.nombres,p.apellidos,p.cedula,p.telefono,p.puesto_votacion,p.mesa_votacion].join(' ').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+      return !term||full.includes(term);
+    });
+    count.textContent=rows.length+' personas externas';
+    body.innerHTML=rows.length?rows.map(p=>{
+      const name=[p.nombres,p.apellidos].filter(Boolean).join(' ')||'Sin nombre';
+      return '<tr><td>'+esc(name)+'</td><td>'+esc(p.cedula||'—')+'</td><td>'+esc(p.telefono||'—')+'</td><td>'+esc(p.puesto_votacion||'—')+'</td><td>'+esc(p.mesa_votacion||'—')+'</td><td>'+(p.activo===false?'Inactivo':'Activo')+'</td><td><button type="button" class="activity-row-btn" data-concejal-person-edit="'+esc(p.id)+'">Editar</button></td></tr>';
+    }).join(''):'<tr><td colspan="7">No hay personas externas que coincidan con la búsqueda.</td></tr>';
+    body.querySelectorAll('[data-concejal-person-edit]').forEach(btn=>btn.addEventListener('click',()=>editConcejalPerson(btn.dataset.concejalPersonEdit)));
+  }
+  async function loadConcejalPeople(){
+    const body=document.getElementById('concejalPeopleBody');
+    const search=document.getElementById('concejalPeopleSearch');
+    const request=++concejalPeopleRequest;
+    try{
+      if(!window.MIRA_DATA||typeof window.MIRA_DATA.listPeople!=='function')throw new Error('La conexión con la base central de personas no está disponible.');
+      if(body)body.innerHTML='<tr><td colspan="7">Consultando censo…</td></tr>';
+      concejalPeopleNotice('Consultando la base centralizada…');
+      const rows=await window.MIRA_DATA.listPeople({limit:1000,tipoParticipacion:'externo'});
+      if(request!==concejalPeopleRequest)return;
+      concejalPeopleCache=Array.isArray(rows)?rows:[];
+      renderConcejalPeople(search?.value||'');
+      document.getElementById('concejalPeopleNotice').classList.add('hidden');
+    }catch(error){
+      if(request!==concejalPeopleRequest)return;
+      if(body)body.innerHTML='<tr><td colspan="7">No fue posible consultar el censo.</td></tr>';
+      concejalPersonNotice('Error al consultar Neon: '+(error.message||'Error desconocido'),true);
+      console.error('[MIRA Concejal] Error consultando censo:',error);
+    }
+  }
+  function resetConcejalPersonForm(){
+    const form=document.getElementById('concejalPersonForm');
+    if(form)form.reset();
+    document.getElementById('concejalPersonId').value='';
+    document.getElementById('concejalPersonFormTitle').textContent='Registrar persona externa';
+    document.getElementById('saveConcejalPersonBtn').textContent='Guardar persona externa';
+    document.getElementById('cancelConcejalPersonEditBtn').classList.add('hidden');
+  }
+  function editConcejalPerson(id){
+    const p=concejalPeopleCache.find(x=>x.id===id);
+    if(!p)return;
+    document.getElementById('concejalPersonId').value=p.id;
+    document.getElementById('concejalPersonCedula').value=p.cedula||'';
+    document.getElementById('concejalPersonNames').value=p.nombres||'';
+    document.getElementById('concejalPersonSurnames').value=p.apellidos||'';
+    document.getElementById('concejalPersonPhone').value=p.telefono||'';
+    document.getElementById('concejalPersonEmail').value=p.correo||'';
+    document.getElementById('concejalPersonAge').value=p.edad??'';
+    document.getElementById('concejalPersonPollingPlace').value=p.puesto_votacion||'';
+    document.getElementById('concejalPersonPollingTable').value=p.mesa_votacion||'';
+    document.getElementById('concejalPersonTransport').value=p.requiere_transporte===true?'si':p.requiere_transporte===false?'no':'';
+    document.getElementById('concejalPersonNotes').value=p.observaciones||'';
+    document.getElementById('concejalPersonConsent').checked=true;
+    document.getElementById('concejalPersonFormTitle').textContent='Editar persona externa';
+    document.getElementById('saveConcejalPersonBtn').textContent='Guardar cambios';
+    document.getElementById('cancelConcejalPersonEditBtn').classList.remove('hidden');
+    document.getElementById('concejalPersonForm').scrollIntoView({behavior:'smooth',block:'start'});
+  }
+  const concejalPersonForm=document.getElementById('concejalPersonForm');
+  if(concejalPersonForm)concejalPersonForm.addEventListener('submit',async event=>{
+    event.preventDefault();
+    const button=document.getElementById('saveConcejalPersonBtn');
+    if(!document.getElementById('concejalPersonConsent').checked){concejalPersonNotice('Debes confirmar la autorización de tratamiento de datos antes de guardar.',true);return;}
+    const id=document.getElementById('concejalPersonId').value;
+    const cedula=document.getElementById('concejalPersonCedula').value.replace(/\D/g,'');
+    const names=document.getElementById('concejalPersonNames').value.trim();
+    const surnames=document.getElementById('concejalPersonSurnames').value.trim();
+    if(!cedula||!names||!surnames){concejalPersonNotice('Cédula, nombres y apellidos son obligatorios.',true);return;}
+    button.disabled=true;
+    try{
+      const found=await window.MIRA_DATA.listPeople({cedula,limit:1});
+      const existing=found?.[0];
+      const payload={
+        cedula,nombres:names,apellidos:surnames,
+        telefono:document.getElementById('concejalPersonPhone').value.trim()||null,
+        correo:document.getElementById('concejalPersonEmail').value.trim()||null,
+        edad:document.getElementById('concejalPersonAge').value?Number(document.getElementById('concejalPersonAge').value):null,
+        puesto_votacion:document.getElementById('concejalPersonPollingPlace').value.trim()||null,
+        mesa_votacion:document.getElementById('concejalPersonPollingTable').value.trim()||null,
+        requiere_transporte:document.getElementById('concejalPersonTransport').value===''?null:document.getElementById('concejalPersonTransport').value==='si',
+        tipo_participacion:'externo',
+        observaciones:document.getElementById('concejalPersonNotes').value.trim()||null,
+        actualizado_por:window.MIRA_CURRENT_USER?.email||null,
+        activo:true
+      };
+      if(id){
+        await window.MIRA_DATA.updatePerson(id,payload);
+      }else if(existing){
+        if(!confirm('Esta cédula ya existe en la base central. ¿Deseas actualizar esa ficha y clasificarla como EXTERNA para incluirla en el censo?'))return;
+        await window.MIRA_DATA.updatePerson(existing.id,payload);
+      }else{
+        await window.MIRA_DATA.createPerson({...payload,creado_por:window.MIRA_CURRENT_USER?.email||null});
+      }
+      resetConcejalPersonForm();
+      await loadConcejalPeople();
+      concejalPersonNotice('La persona externa quedó guardada en la base centralizada.');
+    }catch(error){
+      concejalPersonNotice('No fue posible guardar la persona: '+(error.message||'Error desconocido'),true);
+      console.error('[MIRA Concejal] Error guardando persona:',error);
+    }finally{button.disabled=false;}
+  });
+  document.getElementById('cancelConcejalPersonEditBtn').addEventListener('click',resetConcejalPersonForm);
+  document.getElementById('clearConcejalPersonFormBtn').addEventListener('click',resetConcejalPersonForm);
+  document.getElementById('concejalPeopleSearch').addEventListener('input',()=>renderConcejalPeople(document.getElementById('concejalPeopleSearch').value));
+  document.getElementById('refreshConcejalPeopleBtn').addEventListener('click',loadConcejalPeople);
   async function openConcejalView(view){await openModule();setConcejalView(view);setTimeout(()=>{if(view==='register'&&document.querySelector('#concejalWorkspace [data-register-kind].is-active')?.dataset.registerKind==='activity'){const field=document.getElementById('concejalBarrioInput');if(field)field.focus({preventScroll:true});}if(miniMap)miniMap.invalidateSize();},180)}
   document.getElementById('openConcejalRegisterBtn').addEventListener('click',()=>openConcejalView('register'));
   document.getElementById('openConcejalHistoryBtn').addEventListener('click',()=>openConcejalView('history'));
   document.getElementById('openConcejalManagementBtn').addEventListener('click',()=>openConcejalView('management'));
+  document.getElementById('openConcejalPeopleBtn').addEventListener('click',()=>openConcejalView('people'));
   document.querySelectorAll('#concejalWorkspace [data-concejal-view]').forEach(btn=>btn.addEventListener('click',()=>setConcejalView(btn.dataset.concejalView)));
   document.querySelectorAll('#concejalWorkspace [data-register-kind]').forEach(btn=>btn.addEventListener('click',()=>setRegisterKind(btn.dataset.registerKind)));
   setConcejalView('register'); setRegisterKind('activity');
