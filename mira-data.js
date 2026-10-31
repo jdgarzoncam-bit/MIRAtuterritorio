@@ -20,6 +20,7 @@ async function miraRequest(table, {method="GET", query="", body, anonymous=false
     "Content-Profile": "mira",
     Accept: "application/json"
   });
+  if (method !== "GET") headers.set("Content-Profile", "mira");
   if (body !== undefined) headers.set("Content-Type", "application/json");
   if (method !== "GET") headers.set("Prefer", "return=representation");
   const response = await fetch(`${MIRA_DATA_API_URL}/${table}${query ? `?${query}` : ""}`, {
@@ -77,6 +78,11 @@ export const MIRA_DATA = {
   deleteAttendance(id) { return miraRequest("asistencias",{method:"DELETE",query:qs({id:`eq.${id}`})}); },
   async listOperationalReports({limit=100}={}) {
     return miraRequest("reportes_operativos",{query:qs({select:"*",order:"created_at.desc",limit:String(Math.min(Math.max(limit,1),100))})});
+  },
+  async listPublicWitnesses({limit=100}={}) {
+    return miraRequest("testigos_publicos",{query:qs({select:"*",order:"created_at.desc",limit:String(Math.min(Math.max(limit,1),100))})});
+  },
+  updatePublicWitness(id,payload) { return miraRequest("testigos_publicos",{method:"PATCH",query:qs({id:`eq.${id}`}),body:payload});
   },
   submitPublicReport(payload) {
     const allowed={puesto_votacion:String(payload.puesto_votacion||"").trim(),mesa_votacion:String(payload.mesa_votacion||"").trim(),tipo_reporte:payload.tipo_reporte,descripcion:String(payload.descripcion||"").trim()};
