@@ -51,3 +51,7 @@ USING (EXISTS (SELECT 1 FROM mira.user_profiles u WHERE u.auth_user_id = auth.us
 CREATE POLICY testigos_staff_update ON mira.testigos_publicos FOR UPDATE TO authenticated
 USING (EXISTS (SELECT 1 FROM mira.user_profiles u WHERE u.auth_user_id = auth.user_id()::text AND u.active = true AND u.role IN ('admin','operator')))
 WITH CHECK (EXISTS (SELECT 1 FROM mira.user_profiles u WHERE u.auth_user_id = auth.user_id()::text AND u.active = true AND u.role IN ('admin','operator')));
+
+-- Defensa adicional: estas tablas aún no se exponen a roles de la Data API.
+ALTER TABLE mira.audit_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE mira.evidencias ENABLE ROW LEVEL SECURITY;
