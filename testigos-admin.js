@@ -1,5 +1,4 @@
 import {createAuthClient} from "https://esm.sh/@neondatabase/auth@0.7.0-beta";
-import {createClient} from "https://esm.sh/@neondatabase/postgrest-js@0.1.0";
 const AUTH_URL="https://ep-lucky-smoke-b73q7rl0.neonauth.c-13.us-east-1.aws.neon.tech/neondb/auth";
 const auth=createAuthClient(AUTH_URL);window.MIRA_AUTH=auth;
 const API="https://ep-lucky-smoke-b73q7rl0.apirest.c-13.us-east-1.aws.neon.tech/neondb/rest/v1";
