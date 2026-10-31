@@ -1039,7 +1039,8 @@ function inicializarSistemaMapa() {
             if (!window.__MIRA_INITIAL_TERRITORY_FIT_DONE && map && geojsonLayer) {
                 const initialBounds = geojsonLayer.getBounds();
                 if (initialBounds && initialBounds.isValid()) {
-                    map.fitBounds(initialBounds, { paddingTopLeft: [410, 45], paddingBottomRight: [45, 45], maxZoom: 14 });
+                    const mobileMap = window.matchMedia('(max-width: 600px)').matches;
+                    map.fitBounds(initialBounds, mobileMap ? { padding: [22, 22], maxZoom: 14 } : { paddingTopLeft: [410, 45], paddingBottomRight: [45, 45], maxZoom: 14 });
                     window.__MIRA_INITIAL_TERRITORY_FIT_DONE = true;
                 }
             }
@@ -1151,7 +1152,8 @@ function inicializarSistemaMapa() {
                     });
                     if (bounds.isValid()) {
                         const isSingle = poligonosCoincidenciaActiva.size === 1;
-                        map.fitBounds(bounds, { paddingTopLeft: [410, 55], paddingBottomRight: [55, 55], maxZoom: isSingle ? 17 : 16 });
+                        const mobileMap = window.matchMedia('(max-width: 600px)').matches;
+                        map.fitBounds(bounds, mobileMap ? { padding: [22, 64], maxZoom: isSingle ? 17 : 16 } : { paddingTopLeft: [410, 55], paddingBottomRight: [55, 55], maxZoom: isSingle ? 17 : 16 });
                     }
                 }
             });
