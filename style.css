@@ -3250,3 +3250,227 @@ body.theme-light .admin-login-modal .password-recovery-view .form-group input {
     box-shadow: 0 6px 18px rgba(0,0,0,.2), inset 0 1px 0 rgba(255,255,255,.15);
   }
 }
+
+
+/* ===== MTT Mobile V2: escala compacta y gesto pull-to-refresh ===== */
+@media (max-width: 600px) {
+  html, body {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+  body { overscroll-behavior-y: auto; }
+  /* Pantallas de módulo: márgenes y paneles proporcionados al ancho real del teléfono. */
+  .activities-workspace,
+  #concejalWorkspace.concejal-workspace {
+    padding: 10px 10px calc(18px + env(safe-area-inset-bottom)) !important;
+    gap: 10px !important;
+  }
+  .activities-header,
+  .activities-workspace:not(#concejalWorkspace) .activity-view,
+  #concejalWorkspace .activity-panel {
+    border-radius: 16px !important;
+  }
+  .activities-header {
+    padding: 15px 15px 13px !important;
+    margin-bottom: 12px !important;
+    gap: 10px !important;
+  }
+  .activities-header h1,
+  #activitiesPlaceholderTitle,
+  #concejalTitle {
+    font-size: clamp(1.45rem, 6.2vw, 1.85rem) !important;
+    line-height: 1.12 !important;
+    margin: 5px 0 !important;
+  }
+  .activities-header p,
+  #activityScreenSubtitle,
+  #concejalWorkspace .activities-header p {
+    font-size: .82rem !important;
+    line-height: 1.4 !important;
+  }
+  .activities-workspace:not(#concejalWorkspace) .activity-view {
+    padding: 12px !important;
+  }
+  .activity-panel,
+  .activity-registration-card,
+  .activities-workspace:not(#concejalWorkspace) .activity-panel,
+  #concejalWorkspace .activity-panel {
+    padding: 14px !important;
+    margin: 10px 0 !important;
+    border-radius: 15px !important;
+  }
+  .activity-registration-heading h2,
+  .activity-toolbar h2,
+  .activity-panel h2,
+  #concejalWorkspace .activity-panel h2 {
+    font-size: 1.15rem !important;
+    line-height: 1.2 !important;
+    margin: 6px 0 !important;
+  }
+  .activity-registration-heading p,
+  .activity-toolbar p {
+    font-size: .78rem !important;
+    line-height: 1.4 !important;
+  }
+  .activity-form-grid,
+  .activity-registration-card .activity-form-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 11px !important;
+    margin: 12px 0 !important;
+  }
+  .activity-form-grid label,
+  .activity-registration-card .activity-form-grid label,
+  #concejalWorkspace .concejal-field {
+    font-size: .78rem !important;
+    gap: 5px !important;
+  }
+  .activity-form-grid input,
+  .activity-form-grid select,
+  .activity-search,
+  #concejalWorkspace input:not([type=checkbox]):not([type=radio]),
+  #concejalWorkspace select,
+  #concejalWorkspace textarea {
+    min-height: 43px !important;
+    padding: 10px 11px !important;
+    border-radius: 11px !important;
+    font-size: .88rem !important;
+  }
+  .activity-actions { gap: 8px !important; }
+  .activity-actions button,
+  .activity-registration-card .activity-actions .login-btn,
+  .activity-secondary-btn,
+  .login-btn {
+    min-height: 43px !important;
+    padding: 10px 13px !important;
+    border-radius: 12px !important;
+    font-size: .82rem !important;
+  }
+  .activity-registration-card .activity-actions .login-btn {
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+  .activity-sidebar-shortcuts { gap: 8px !important; }
+  .activity-sidebar-shortcuts .activity-sidebar-tile {
+    min-height: 76px !important;
+    padding: 10px !important;
+    border-radius: 13px !important;
+    gap: 7px !important;
+  }
+  .activity-sidebar-shortcuts .activity-sidebar-tile strong,
+  .activity-sidebar-shortcuts .activity-sidebar-tile b {
+    font-size: .78rem !important;
+    line-height: 1.2 !important;
+  }
+  .activities-folders {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 9px !important;
+  }
+  .activity-folder,
+  .activity-file-card {
+    min-height: 128px !important;
+    padding: 11px !important;
+    border-radius: 13px !important;
+  }
+  .activity-folder .folder-icon { font-size: 1.75rem !important; }
+  .activity-folder h3 { font-size: .88rem !important; line-height: 1.2 !important; }
+  .activity-folder p { font-size: .72rem !important; line-height: 1.3 !important; }
+  .activity-stats-section { padding: 12px !important; margin-top: 14px !important; }
+  .activity-stats-row { gap: 8px !important; }
+  .activity-stat-card { min-height: 88px !important; padding: 10px !important; border-radius: 12px !important; }
+  .activity-stat-card strong { font-size: 1.35rem !important; }
+  .activity-stat-card>span:last-child { font-size: .7rem !important; line-height: 1.25 !important; }
+
+  /* Portal de Testigos: tarjeta más compacta, manteniendo botones táctiles cómodos. */
+  #testigoStandaloneContainer {
+    align-items: flex-start !important;
+    justify-content: center !important;
+    padding: 10px !important;
+    padding-top: max(10px, env(safe-area-inset-top)) !important;
+    padding-bottom: max(12px, env(safe-area-inset-bottom)) !important;
+    overflow-y: auto !important;
+  }
+  .testigo-standalone-card {
+    width: 100% !important;
+    max-width: 520px !important;
+    max-height: calc(100dvh - 20px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
+    padding: 16px 14px !important;
+    border-radius: 19px !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+  }
+  .testigo-standalone-header {
+    gap: 10px !important;
+    padding-bottom: 10px !important;
+  }
+  .testigo-standalone-header h2 {
+    font-size: 1.12rem !important;
+    line-height: 1.18 !important;
+    margin: 0 0 4px !important;
+  }
+  .testigo-standalone-header p {
+    font-size: .76rem !important;
+    line-height: 1.3 !important;
+    margin: 0 !important;
+  }
+  .testigo-standalone-card h3,
+  .testigo-standalone-card h4,
+  .testigo-standalone-card .mira-label {
+    font-size: .88rem !important;
+    line-height: 1.3 !important;
+  }
+  .testigos-form-grid,
+  .testigo-media-buttons {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 9px !important;
+  }
+  .testigo-standalone-card input:not([type=file]),
+  .testigo-standalone-card select,
+  .testigo-standalone-card textarea,
+  .testigo-input-styled {
+    min-height: 46px !important;
+    padding: 10px 12px !important;
+    border-radius: 12px !important;
+    font-size: .9rem !important;
+  }
+  .testigo-standalone-card label { margin-bottom: 5px !important; }
+  .media-btn,
+  .testigo-standalone-card button:not(.testigos-close-btn) {
+    min-height: 48px !important;
+    padding: 11px 12px !important;
+    border-radius: 13px !important;
+    font-size: .84rem !important;
+    line-height: 1.25 !important;
+  }
+  .testigo-standalone-card .testigo-preview-box { padding: 10px !important; }
+  .testigo-standalone-card .testigo-thumbnails-grid { gap: 7px !important; }
+
+  /* Modal de auditoría y ventanas secundarias. */
+  .testigos-modal-overlay {
+    align-items: flex-start !important;
+    padding: 10px !important;
+    padding-top: max(10px, env(safe-area-inset-top)) !important;
+  }
+  .testigos-modal-card {
+    width: 100% !important;
+    max-width: 540px !important;
+    max-height: calc(100dvh - 20px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
+    border-radius: 17px !important;
+  }
+  .testigos-modal-header { padding: 12px 14px !important; }
+  .testigos-modal-header h3 { font-size: .95rem !important; }
+  .testigos-modal-body { padding: 13px !important; gap: 12px !important; }
+  .testigos-gallery-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 9px !important; }
+
+  /* Mapas: no deben ser aplastados por las reglas de formularios compactos. */
+  #concejalWorkspace #concejalMiniMap { min-height: 155px !important; }
+}
+
+/* El gesto de recarga se gestiona por JavaScript en zonas de contenido, no dentro de campos. */
+@media (max-width: 600px) {
+  #landing-hero-overlay,
+  .activities-workspace,
+  #testigoStandaloneContainer,
+  .testigos-modal-body {
+    overscroll-behavior-y: auto;
+  }
+}
