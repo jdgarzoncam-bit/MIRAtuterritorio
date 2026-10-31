@@ -36,7 +36,7 @@ async function loginWithNeon() {
     if(result?.error) throw new Error("No fue posible iniciar sesión. Verifica tus credenciales.");
     const token=await bearerToken();
     const profile=await getOwnProfile(token);
-    if(!profile || profile.active!==true) {
+    if(!profile || profile.active!==true || !["admin","operator","viewer"].includes(profile.role)) {
       await auth.signOut();
       throw new Error("Tu cuenta todavía no tiene permisos asignados. Solicita al administrador que habilite tu perfil.");
     }
