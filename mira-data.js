@@ -134,6 +134,9 @@ export const MIRA_DATA = {
   async listModulePermissions(profileId) {
     return miraRequest("module_permissions",{query:qs({select:"id,user_profile_id,module_key,action_key,allowed",user_profile_id:"eq."+profileId,limit:"500"})});
   },
+  async listMyModulePermissions() {
+    return miraRequest("module_permissions",{query:qs({select:"module_key,action_key,allowed",limit:"500"})});
+  },
   setModulePermission(profileId,moduleKey,actionKey,allowed) {
     return miraRequest("module_permissions",{method:"POST",query:qs({on_conflict:"user_profile_id,module_key,action_key"}),prefer:"resolution=merge-duplicates,return=representation",body:{user_profile_id:profileId,module_key:moduleKey,action_key:actionKey,allowed:Boolean(allowed)}});
   },

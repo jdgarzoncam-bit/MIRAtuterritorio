@@ -102,6 +102,33 @@ async function changePermission(input){
     notice(error.message||"No fue posible guardar el permiso.",true);
   }finally{input.disabled=false;}
 }
+const MODULE_TARGETS = {
+  infomira:["dropdown-infomira"],
+  logistica:["dropdown-logistica"],
+  testigos:["dropdown-testigos"],
+  centro_operaciones:["dropdown-puestos","dropdown-barrios-puestos"],
+  actividades:["dropdown-actividades"],
+  concejal:["dropdown-concejal"]
+};
+async function applyModuleAccess(){
+  const current=window.MIRA_CURRENT_USER;
+  if(!current)return;
+  const allTargets=Object.values(MODULE_TARGETS).flat();
+  if(current.role==="admin"){
+    allTargets.forEach(id=>$(id)?.classList.remove("hidden"));
+    return;
+  }
+  allTargets.forEach(id=>$(id)?.classList.add("hidden"));
+  try{
+    const rows=await window.MIRA_DATA.listMyModulePermissions();
+    const canView=new Set((rows||[]).filter(p=>p.allowed&&p.action_key==="view").map(p=>p.module_key));
+    Object.entries(MODULE_TARGETS).forEach(([moduleKey,ids])=>{
+      if(canView.has(moduleKey))ids.forEach(id=>$(id)?.classList.remove("hidden"));
+    });
+  }catch(error){
+    console.warn("[MIRA permisos] No fue posible cargar permisos de módulos; se mantiene acceso cerrado.",error);
+  }
+}
 function init(){
   const launch=$("openAdminPermissionsBtn");
   if(launch)launch.addEventListener("click",openPanel);
@@ -121,8 +148,9 @@ function init(){
     if(launch)launch.classList.toggle("hidden",!isAdmin());
     if(!isAdmin())closePanel();
   };
-  window.addEventListener("mira:authenticated",syncVisibility);
+  window.addEventListener("mira:authenticated",()=>{syncVisibility();applyModuleAccess();});
   window.addEventListener("mira:signed-out",syncVisibility);
   syncVisibility();
+  applyModuleAccess();
 }
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init,{once:true});else init();
