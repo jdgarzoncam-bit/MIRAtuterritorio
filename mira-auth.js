@@ -53,11 +53,11 @@ async function loginWithNeon() {
 }
 
 document.addEventListener("DOMContentLoaded",()=>{
-  const button=document.getElementById("loginBtn");
-  if(button) button.addEventListener("click",event=>{event.preventDefault();event.stopImmediatePropagation();loginWithNeon();},true);
-  const password=document.getElementById("password");
-  if(password) password.addEventListener("keydown",event=>{
-    if(event.key==="Enter"){event.preventDefault();event.stopImmediatePropagation();loginWithNeon();}
+  const loginForm=document.getElementById("adminLoginFormInline");
+  if(loginForm) loginForm.addEventListener("submit",event=>{
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    loginWithNeon();
   },true);
   const reset=document.getElementById("forgotPasswordBtn");
   if(reset) reset.addEventListener("click",async event=>{
