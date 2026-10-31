@@ -1793,6 +1793,7 @@ function inicializarSistemaMapa() {
         const p=logisticaPersona(row);
         const value=p?.puesto_votacion || row.puesto_votacion || row.puesto_original || '';
         const key=normalizarTexto(value);
+        if (!key) return null;
         return listaPuestosVotacion.find(item =>
             normalizarTexto(item.nombre)===key ||
             normalizarTexto(item.matchName)===key ||
