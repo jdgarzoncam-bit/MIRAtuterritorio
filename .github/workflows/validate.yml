@@ -1,0 +1,23 @@
+name: Validar JavaScript de MIRA
+
+on:
+  push:
+    branches:
+      - integracion-neon-personas-actividades
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  validar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Comprobar sintaxis JavaScript
+        run: |
+          node --check app.js
+          node --check mira-data.js
+          node --check mira-auth.js
