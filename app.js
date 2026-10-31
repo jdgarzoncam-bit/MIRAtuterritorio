@@ -502,7 +502,8 @@ async function lookupPerson(){
     const rows=await window.MIRA_DATA.listPeople({cedula:ced,limit:1});
     const found=rows?.[0];
     if(found){
-      const parsed=splitLegacyPersonName(found.nombres,found.apellidos);\n      const person={id:found.id,cedula:found.cedula||found.cedula_normalizada||'',names:parsed.names,surnames:parsed.surnames,phone:found.telefono||'',infoMira:found.info_mira===true?'si':found.info_mira===false?'no':''};
+      const parsed=splitLegacyPersonName(found.nombres,found.apellidos);
+      const person={id:found.id,cedula:found.cedula||found.cedula_normalizada||'',names:parsed.names,surnames:parsed.surnames,phone:found.telefono||'',infoMira:found.info_mira===true?'si':found.info_mira===false?'no':''};
       const i=activitiesState.people.findIndex(p=>p.id===person.id);if(i>=0)activitiesState.people[i]=person;else activitiesState.people.push(person);
       document.getElementById('participantNames').value=person.names;
       document.getElementById('participantSurnames').value=person.surnames;
