@@ -1813,10 +1813,20 @@ function inicializarSistemaMapa() {
     }
     function buscarPuestoLogistica(nombre) {
         const target=normalizarTexto(nombre);
-        return listaPuestosVotacion.find(p=>{
+        const exact=listaPuestosVotacion.find(p=>{
             const n=normalizarTexto(p.nombre), m=normalizarTexto(p.matchName);
             return target && (target===n || target===m || target.includes(n) || n.includes(target) || target.includes(m) || m.includes(target));
-        }) || null;
+        });
+        if(exact) return exact;
+        const tokens=target.split(/\\s+/).filter(t=>t.length>3 && !['COLEGIO','ESCUELA','PUESTO','VOTACION','INSTITUTO','SEDE'].includes(t));
+        let best=null,score=0;
+        listaPuestosVotacion.forEach(p=>{
+            const candidate=normalizarTexto(p.nombre+' '+p.matchName).split(/\\s+/);
+            const overlap=tokens.filter(t=>candidate.some(c=>c.includes(t)||t.includes(c))).length;
+            const ratio=overlap/Math.max(1,Math.min(tokens.length,candidate.length));
+            if(overlap>=2 && ratio>score){score=ratio;best=p;}
+        });
+        return score>=0.5?best:null;
     }
     async function dibujarRutaLogistica(origen,destino,grupo) {
         if(!origen || !destino) return;
