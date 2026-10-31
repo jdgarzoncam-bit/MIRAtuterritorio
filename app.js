@@ -431,7 +431,7 @@ function cerrarCapaAccesoPMU() {
 function activarPMUAutenticado() {
     // Retirar primero el backdrop del login: no debe cubrir ni desenfocar el PMU.
     cerrarCapaAccesoPMU();
-    // Transición visual del portal al PMU tras validar el acceso local.
+    // Transición visual del portal al PMU tras validar la sesión de Neon Auth.
     document.body.classList.add('pmu-neomorphic');
     const overlay = document.getElementById('landing-hero-overlay');
     const controls = document.getElementById('landingHeaderControls');
@@ -462,132 +462,14 @@ function activarPMUAutenticado() {
     }
 }
 
-// AUTENTICACIÓN LOCAL INDEPENDIENTE.
-// Aviso: es una barrera de acceso local para uso en este navegador; no sustituye
-// autenticación de servidor ni protege datos frente a alguien con acceso al equipo.
-const MTT_LOCAL_AUTH_KEY = 'mtt_local_admin_v1';
-const MTT_LOCAL_SESSION_KEY = 'mtt_local_session_v1';
-
-// Cuenta temporal solicitada para habilitar el Centro de Operaciones.
-// Se inicializa una sola vez en el navegador; no es autenticación de servidor.
-(function inicializarAccesoTemporalMIRA() {
-    const TEMP_SETUP_KEY = 'mtt_temp_admin_initialized_v1';
-    if (localStorage.getItem(TEMP_SETUP_KEY) === '1') return;
-    const salt = 'mtt-temporary-admin-2026-facatativa';
-    const passwordHash = '518e662c910a37dc414952142634a521f8a610039ff56df1ffe3a49b014e436b';
-    localStorage.setItem(MTT_LOCAL_AUTH_KEY, JSON.stringify({
-        username: 'admin',
-        salt,
-        passwordHash,
-        createdAt: new Date().toISOString(),
-        temporary: true
-    }));
-    localStorage.setItem(TEMP_SETUP_KEY, '1');
-})();
-
-function mttBytesToHex(buffer) {
-    return Array.from(new Uint8Array(buffer), b => b.toString(16).padStart(2, '0')).join('');
+// La autenticación y autorización se gestionan exclusivamente mediante Neon Auth.
+// Se limpian únicamente las claves de sesión/credencial del acceso temporal anterior;
+// no se toca ningún registro de personas, actividades ni otros datos de la plataforma.
+try {
+    ['mtt_local_admin_v1','mtt_temp_admin_initialized_v1'].forEach(key => localStorage.removeItem(key));
+} catch (error) {
+    console.warn('[MIRA TU TERRITORIO] No se pudieron limpiar las claves antiguas de acceso local.', error);
 }
-async function mttHashLocalPassword(password, salt) {
-    if (!window.crypto || !crypto.subtle || !window.TextEncoder) {
-        throw new Error('Abre el proyecto desde localhost (por ejemplo, Live Server) para configurar el acceso local.');
-    }
-    const bytes = new TextEncoder().encode(salt + ':' + password);
-    return mttBytesToHex(await crypto.subtle.digest('SHA-256', bytes));
-}
-function mttGetLocalAdmin() {
-    try { return JSON.parse(localStorage.getItem(MTT_LOCAL_AUTH_KEY) || 'null'); }
-    catch (_) { return null; }
-}
-function mttCreateLocalToken() {
-    const bytes = new Uint8Array(24);
-    crypto.getRandomValues(bytes);
-    return mttBytesToHex(bytes);
-}
-
-async function validarAccesoAdmin() {
-    const userInput = document.getElementById('username');
-    const passInput = document.getElementById('password');
-    const errorMsg = document.getElementById('loginError');
-    const loginBtn = document.getElementById('loginBtn');
-    const showError = message => {
-        if (errorMsg) { errorMsg.textContent = message; errorMsg.style.display = 'block'; errorMsg.setAttribute('role', 'alert'); }
-    };
-    const username = userInput ? userInput.value.trim() : '';
-    const password = passInput ? passInput.value : '';
-    if (!username || !password) { showError('Escribe tu usuario y contraseña.'); return; }
-    const admin = mttGetLocalAdmin();
-    if (!admin) { showError('Todavía no existe un usuario local. Pulsa «Crear usuario» para configurar el primer acceso.'); return; }
-    if (loginBtn) loginBtn.disabled = true;
-    showError('Verificando acceso local…');
-    try {
-        const hash = await mttHashLocalPassword(password, admin.salt);
-        if (username.toLowerCase() !== String(admin.username).toLowerCase() || hash !== admin.passwordHash) {
-            showError('Usuario o contraseña incorrectos.');
-            if (passInput) passInput.value = '';
-            return;
-        }
-        const token = mttCreateLocalToken();
-        sessionStorage.setItem(MTT_LOCAL_SESSION_KEY, token);
-        sessionStorage.setItem('mtt_session_user', admin.username);
-        if (passInput) passInput.value = '';
-        if (errorMsg) errorMsg.style.display = 'none';
-        activarPMUAutenticado();
-    } catch (error) {
-        showError(error && error.message ? error.message : 'No fue posible validar el acceso local.');
-    } finally {
-        if (loginBtn) loginBtn.disabled = false;
-    }
-}
-
-document.getElementById('loginBtn').addEventListener('click', function(e) {
-    e.stopPropagation();
-    validarAccesoAdmin();
-});
-
-document.getElementById('password').addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') validarAccesoAdmin();
-});
-
-// El primer usuario se configura y permanece en este navegador.
-const accountActionNotice = document.getElementById('accountActionNotice');
-function mostrarAvisoCuenta(message) {
-    if (!accountActionNotice) return;
-    accountActionNotice.textContent = message;
-    accountActionNotice.classList.remove('hidden');
-    accountActionNotice.setAttribute('role', 'status');
-}
-const createUserBtn = document.getElementById('createUserBtn');
-if (createUserBtn) createUserBtn.style.display = 'none';
-const forgotPasswordBtn = document.getElementById('forgotPasswordBtn');
-if (createUserBtn) createUserBtn.addEventListener('click', async () => {
-    if (mttGetLocalAdmin()) {
-        mostrarAvisoCuenta('Ya existe un usuario local en este navegador. Para cambiarlo, utiliza «Restablecer acceso local» en la configuración del proyecto.');
-        return;
-    }
-    const username = (window.prompt('Crea el nombre del usuario administrador:') || '').trim();
-    if (!username) return;
-    if (username.length < 3 || username.length > 40) { mostrarAvisoCuenta('El usuario debe tener entre 3 y 40 caracteres.'); return; }
-    const password = window.prompt('Crea una contraseña de al menos 10 caracteres:') || '';
-    if (password.length < 10) { mostrarAvisoCuenta('La contraseña debe tener al menos 10 caracteres. No se creó el usuario.'); return; }
-    const confirmation = window.prompt('Confirma la contraseña:') || '';
-    if (password !== confirmation) { mostrarAvisoCuenta('Las contraseñas no coinciden. No se creó el usuario.'); return; }
-    try {
-        const saltBytes = new Uint8Array(16);
-        crypto.getRandomValues(saltBytes);
-        const salt = mttBytesToHex(saltBytes);
-        const passwordHash = await mttHashLocalPassword(password, salt);
-        localStorage.setItem(MTT_LOCAL_AUTH_KEY, JSON.stringify({ username, salt, passwordHash, createdAt: new Date().toISOString() }));
-        mostrarAvisoCuenta('Usuario local creado en este navegador. Ya puedes ingresar con esas credenciales.');
-        const userInput = document.getElementById('username');
-        if (userInput) userInput.value = username;
-    } catch (error) {
-        mostrarAvisoCuenta(error && error.message ? error.message : 'No fue posible crear el usuario local.');
-    }
-});
-if (forgotPasswordBtn) forgotPasswordBtn.addEventListener('click', () => {
-    mostrarAvisoCuenta('El acceso es local a este navegador. Si olvidas la contraseña, el administrador del proyecto debe borrar la clave mtt_local_admin_v1 del almacenamiento local y configurar un nuevo usuario.');
-});
 
 // PUESTOS DE VOTACIÓN: DESPLEGABLE PERSONALIZADO EN GLASSMORPHISM
 function inicializarDropdownPuestosCustom() {
@@ -2304,8 +2186,7 @@ function limpiarEstadoVisualPMU(){
 }
 
 function volverAInterfazInicial(){
-  // Cierre de sesión local.
-  ['mtt_local_session_v1','mtt_session_user','mtt_session_expiry','mtt_session_token'].forEach(k=>sessionStorage.removeItem(k));
+  // La sesión remota se cierra desde Neon Auth (mira-auth.js).
   limpiarEstadoVisualPMU();
 }
 const homeReturnButton = document.getElementById('platformHomeBtn');
