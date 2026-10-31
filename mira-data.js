@@ -12,7 +12,7 @@ async function miraToken({anonymous=false}={}) {
   return token;
 }
 
-async function miraRequest(table, {method="GET", query="", body, anonymous=false}={}) {
+async function miraRequest(table, {method="GET", query="", body, anonymous=false, prefer}={}) {
   const token = await miraToken({anonymous});
   const headers = new Headers({
     Authorization: `Bearer ${token}`,
@@ -21,7 +21,7 @@ async function miraRequest(table, {method="GET", query="", body, anonymous=false
   });
   if (method !== "GET") headers.set("Content-Profile", "mira");
   if (body !== undefined) headers.set("Content-Type", "application/json");
-  if (method !== "GET") headers.set("Prefer", "return=representation");
+  if (method !== "GET") headers.set("Prefer", prefer || "return=representation");
   const response = await fetch(`${MIRA_DATA_API_URL}/${table}${query ? `?${query}` : ""}`, {
     method, headers, body: body === undefined ? undefined : JSON.stringify(body)
   });
@@ -124,6 +124,21 @@ export const MIRA_DATA = {
     const allowed={puesto_votacion:String(payload.puesto_votacion||"").trim(),mesa_votacion:String(payload.mesa_votacion||"").trim(),tipo_reporte:payload.tipo_reporte,descripcion:String(payload.descripcion||"").trim()};
     if(allowed.puesto_votacion.length<3 || allowed.mesa_votacion.length<1 || allowed.descripcion.length<5) throw new Error("Completa puesto, mesa y descripción.");
     return miraRequest("reportes_operativos",{method:"POST",body:allowed,anonymous:true});
+  },
+  async listUserProfiles() {
+    return miraRequest("user_profiles",{query:qs({select:"id,auth_user_id,email,display_name,role,active,created_at",order:"created_at.asc",limit:"500"})});
+  },
+  async listModuleCatalog() {
+    return miraRequest("module_catalog",{query:qs({select:"module_key,module_name,description,sort_order,active",active:"eq.true",order:"sort_order.asc"})});
+  },
+  async listModulePermissions(profileId) {
+    return miraRequest("module_permissions",{query:qs({select:"id,user_profile_id,module_key,action_key,allowed",user_profile_id:"eq."+profileId,limit:"500"})});
+  },
+  setModulePermission(profileId,moduleKey,actionKey,allowed) {
+    return miraRequest("module_permissions",{method:"POST",query:qs({on_conflict:"user_profile_id,module_key,action_key"}),prefer:"resolution=merge-duplicates,return=representation",body:{user_profile_id:profileId,module_key:moduleKey,action_key:actionKey,allowed:Boolean(allowed)}});
+  },
+  async listAdminAudit({limit=30}={}) {
+    return miraRequest("admin_audit_log",{query:qs({select:"id,actor_auth_user_id,target_auth_user_id,action_key,details,created_at",order:"created_at.desc",limit:String(Math.min(Math.max(limit,1),100))})});
   }
 };
 window.MIRA_DATA = MIRA_DATA;

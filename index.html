@@ -538,6 +538,11 @@
                         </div>
                     </details>
 
+                    <button type="button" id="openAdminPermissionsBtn" class="admin-permissions-launch hidden">
+                        <span class="admin-permissions-launch-icon">⚙</span>
+                        <span><strong>Control Administrativo</strong><small>Usuarios y permisos por módulo</small></span>
+                        <b>›</b>
+                    </button>
 
                 </div>
             </sidebar>
@@ -623,9 +628,33 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script src="electoral_2019.js"></script>
     <script src="electoral_2023.js"></script>
+ 
+    <section id="adminPermissionsPanel" class="admin-permissions-overlay hidden" aria-hidden="true">
+        <div class="admin-permissions-dialog" role="dialog" aria-modal="true" aria-labelledby="adminPermissionsTitle">
+            <header class="admin-permissions-header">
+                <div><span class="admin-permissions-eyebrow">MIRA TU TERRITORIO · SEGURIDAD</span><h2 id="adminPermissionsTitle">Control Administrativo</h2><p>Gestiona los permisos de acceso de las cuentas existentes.</p></div>
+                <button type="button" id="closeAdminPermissionsBtn" class="admin-permissions-close" aria-label="Cerrar">✕</button>
+            </header>
+            <div class="admin-permissions-body">
+                <aside class="admin-users-pane">
+                    <div class="admin-pane-heading"><strong>Usuarios registrados</strong><button type="button" id="refreshAdminUsersBtn" title="Actualizar">↻</button></div>
+                    <p class="admin-pane-hint">Solo aparecen cuentas que ya tienen un perfil vinculado en MIRA.</p>
+                    <div id="adminUsersList" class="admin-users-list"><p class="admin-permissions-loading">Cargando usuarios…</p></div>
+                </aside>
+                <section class="admin-matrix-pane">
+                    <div id="adminSelectedUser" class="admin-selected-user"><strong>Selecciona un usuario</strong><span>Sus permisos aparecerán aquí.</span></div>
+                    <div class="admin-permissions-legend"><span>Marca las acciones autorizadas para cada módulo.</span><span>Los cambios se guardan al instante.</span></div>
+                    <div id="adminPermissionsMatrix" class="admin-permissions-matrix"><p class="admin-permissions-empty">Selecciona un usuario para consultar sus permisos.</p></div>
+                    <div id="adminPermissionsNotice" class="admin-permissions-notice hidden" role="status" aria-live="polite"></div>
+                </section>
+            </div>
+            <footer class="admin-permissions-footer"><span>La cuenta administradora principal conserva todos sus privilegios.</span><span>Creación de usuarios: proceso actual sin cambios.</span></footer>
+        </div>
+    </section>
     <script type="module" src="mira-data.js?v=20261031-logistica-neon-routes"></script>
     <script type="module" src="mira-auth.js"></script>
     <script src="app.js?v=20261031-territory-scope-3"></script>
+    <script type="module" src="mira-admin.js?v=20261031-permissions-1"></script>
     <script src="pmu-navigation.js?v=20261031-vertical-glass"></script>
     <script src="electoral-dashboard.js"></script>
     <script src="mobile-operations.js?v=20261031-mobile-v2"></script>
