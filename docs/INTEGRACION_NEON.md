@@ -2,13 +2,13 @@
 
 ## Entorno aislado
 - GitHub: rama `mira-crud-neon` (no modificar `main` hasta aprobar pruebas).
-- Neon: proyecto `my-first-project`, rama `mira-crud-dev`, base `neondb`.
+- Neon: proyecto `my-first-project`, rama `production`, base `neondb`.
 - Neon Auth: Better Auth administrado.
 - Neon Data API: REST/PostgREST habilitado para el esquema `mira`.
 
 ## Servicios
-- Auth URL: `https://ep-lucky-smoke-b73q7rl0.neonauth.c-13.us-east-1.aws.neon.tech/neondb/auth`
-- Data API URL: `https://ep-lucky-smoke-b73q7rl0.apirest.c-13.us-east-1.aws.neon.tech/neondb/rest/v1`
+- Auth URL: `https://ep-round-dawn-b7l3ya3h.neonauth.c-13.us-east-1.aws.neon.tech/neondb/auth`
+- Data API URL: `https://ep-round-dawn-b7l3ya3h.apirest.c-13.us-east-1.aws.neon.tech/neondb/rest/v1`
 - Cliente de autenticación: `mira-auth.js`.
 - Cliente de datos CRUD: `mira-data.js`.
 - Formulario público de reportes: `reporte-publico.html`.
@@ -58,7 +58,7 @@ Neon Data API es el backend REST administrado; no se expone conexión PostgreSQL
 
 ## Primer administrador y alta de operadores
 1. Abre `registro-usuario.html` desde GitHub Pages y crea la cuenta que será el administrador inicial.
-2. En Neon SQL Editor, selecciona la rama `mira-crud-dev` y ejecuta el siguiente SQL sustituyendo el correo:
+2. En Neon SQL Editor, selecciona la rama `production` y ejecuta el siguiente SQL sustituyendo el correo:
 ```sql
 INSERT INTO mira.user_profiles (auth_user_id, email, display_name, role, active)
 SELECT id::text, email, name, 'admin', true
@@ -85,5 +85,5 @@ La condición de testigo electoral puede revelar participación u orientación p
 - El acceso anónimo no tiene todavía un limitador de frecuencia/captcha en el borde. No distribuir ampliamente el formulario hasta añadir protección antiabuso y probarla.
 - El almacenamiento de fotografías E-14 todavía no se migró a Object Storage; la galería antigua sigue siendo local.
 - La rama GitHub `mira-crud-neon` aún no está desplegada en GitHub Pages por defecto. Las pruebas deben abrirse desde esa rama mediante Pages preview o un entorno local.
-- La Data API y RLS se configuraron en `mira-crud-dev`; no apuntar producción a esta URL.
+- La Data API y RLS se configuraron en `production`; no apuntar producción a esta URL.
 - Verificar JWT de usuario/anon, lectura denegada sin perfil, roles, duplicados y flujos de formulario antes de cambiar `main`.
