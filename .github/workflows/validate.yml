@@ -1,9 +1,6 @@
 name: Validar JavaScript de MIRA
 
 on:
-  push:
-    branches:
-      - integracion-neon-personas-actividades
   pull_request:
     branches:
       - main
