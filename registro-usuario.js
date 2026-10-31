@@ -1,5 +1,5 @@
 import {createAuthClient} from "https://esm.sh/@neondatabase/auth@0.7.0-beta";
-const auth=createAuthClient("https://ep-lucky-smoke-b73q7rl0.neonauth.c-13.us-east-1.aws.neon.tech/neondb/auth");
+const auth=createAuthClient("https://ep-round-dawn-b7l3ya3h.neonauth.c-13.us-east-1.aws.neon.tech/neondb/auth");
 const form=document.getElementById("signupForm"),status=document.getElementById("status"),button=document.getElementById("signupBtn");
 form.addEventListener("submit",async e=>{
  e.preventDefault();if(!form.reportValidity())return;
