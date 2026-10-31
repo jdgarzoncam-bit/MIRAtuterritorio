@@ -41,6 +41,7 @@ async function loginWithNeon() {
       throw new Error("Tu cuenta todavía no tiene permisos asignados. Solicita al administrador que habilite tu perfil.");
     }
     window.MIRA_CURRENT_USER={role:profile.role,displayName:profile.display_name||email,email};
+    window.dispatchEvent(new Event("mira:authenticated"));
     const error=document.getElementById("loginError");
     if(error) error.style.display="none";
     const pass=document.getElementById("password"); if(pass) pass.value="";
