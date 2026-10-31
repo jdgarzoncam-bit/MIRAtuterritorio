@@ -467,7 +467,7 @@ document.getElementById('btnSelectActividades').addEventListener('keydown',e=>{i
 document.getElementById('closeActivitiesPlaceholder').addEventListener('click',closeActivities);document.getElementById('returnFromActivities').addEventListener('click',closeActivities);
 
 document.getElementById('sideAllActivitiesBtn').addEventListener('click',()=>openActivities('all'));
-document.getElementById('sideOpenActivityModuleBtn').addEventListener('click',()=>openActivities('registration'));
+document.getElementById('sideOpenActivityModuleBtn').addEventListener('click',()=>{openActivities('registration');showNewActivity();});
 
 document.getElementById('backToActivityRegistration')?.addEventListener('click',()=>showActivityView('registration'));
 document.getElementById('backToActivityHomeFromAll').addEventListener('click',()=>showActivityView('registration'));
