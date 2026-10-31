@@ -1,7 +1,7 @@
 import {createAuthClient} from "https://esm.sh/@neondatabase/auth@0.7.0-beta";
-const AUTH_URL="https://ep-lucky-smoke-b73q7rl0.neonauth.c-13.us-east-1.aws.neon.tech/neondb/auth";
+const AUTH_URL="https://ep-round-dawn-b7l3ya3h.neonauth.c-13.us-east-1.aws.neon.tech/neondb/auth";
 const auth=createAuthClient(AUTH_URL);window.MIRA_AUTH=auth;
-const API="https://ep-lucky-smoke-b73q7rl0.apirest.c-13.us-east-1.aws.neon.tech/neondb/rest/v1";
+const API="https://ep-round-dawn-b7l3ya3h.apirest.c-13.us-east-1.aws.neon.tech/neondb/rest/v1";
 const $=id=>document.getElementById(id),esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 async function token(){const r=await auth.token();if(r?.error||!r?.data?.token)throw new Error("Sesión no válida.");return r.data.token;}
 async function profile(t){const r=await fetch(API+"/user_profiles?select=role,active&limit=1",{headers:{Authorization:"Bearer "+t,"Accept-Profile":"mira"}});if(!r.ok)throw new Error("No se pudieron verificar los permisos.");const rows=await r.json();return rows[0]||null;}
