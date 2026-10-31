@@ -13,7 +13,9 @@ permissions:
 
 concurrency:
   group: github-pages
-  cancel-in-progress: true
+  # No cancelar una publicación activa: deploy-pages puede mantenerla en curso
+  # y rechazar la siguiente solicitud. GitHub conservará la última ejecución pendiente.
+  cancel-in-progress: false
 
 jobs:
   publicar:
@@ -27,6 +29,18 @@ jobs:
 
       - name: Configurar GitHub Pages
         uses: actions/configure-pages@v5
+
+      - name: Preparar entorno de validación
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Validar sintaxis antes de publicar
+        run: |
+          node --check app.js
+          node --check mira-data.js
+          node --check mira-auth.js
+          node --check pmu-navigation.js
 
       - name: Preparar archivos del sitio
         uses: actions/upload-pages-artifact@v3
