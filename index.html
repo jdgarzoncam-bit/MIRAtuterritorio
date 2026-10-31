@@ -13,7 +13,7 @@
     <!-- SheetJS -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
-    <link rel="stylesheet" href="style.css?v=20261031-mobile-map-panel-1">
+    <link rel="stylesheet" href="style.css?v=20261031-activity-mobile-views-1">
 </head>
 <body class="theme-dark">
 
@@ -138,9 +138,14 @@
 
     <section id="activitiesPlaceholder" class="activities-workspace hidden" aria-labelledby="activitiesPlaceholderTitle">
       <header class="activities-header">
-        <div><div class="brand-pill">MIRA TU TERRITORIO · GESTIÓN</div><h1 id="activitiesPlaceholderTitle">Módulo <span class="hero-title-cyan">Actividades</span></h1><p id="activityScreenSubtitle">Registro de participación territorial.</p></div>
-        <button class="top-control-btn" id="closeActivitiesPlaceholder" type="button" title="Volver al menú">✕</button>
+        <div class="activities-header-copy"><div class="brand-pill">MIRA TU TERRITORIO</div><h1 id="activitiesPlaceholderTitle"><span class="hero-title-cyan">Actividades</span></h1><p id="activityScreenSubtitle">Registro de participación territorial.</p></div>
+        <button class="top-control-btn" id="closeActivitiesPlaceholder" type="button" title="Volver al menú" aria-label="Cerrar módulo">✕</button>
       </header>
+      <nav class="activity-mobile-nav" aria-label="Secciones de actividades">
+        <button type="button" class="activity-mobile-tab is-active" data-activity-view="registration">＋ Registrar</button>
+        <button type="button" class="activity-mobile-tab" data-activity-view="recent">◉ Registro en vivo</button>
+        <button type="button" class="activity-mobile-tab" data-activity-view="all">▦ Todas</button>
+      </nav>
       <div id="activityRegistrationView" class="activity-view">
         <div id="newActivityForm" class="activity-panel hidden"><h3>Crear actividad</h3><div class="activity-form-grid"><label>Nombre de la actividad<input id="activityName" placeholder="Ej. Jornada de participación juvenil" maxlength="120"></label><label>Fecha<input id="activityDate" type="date"></label><label>Lugar<input id="activityPlace" placeholder="Lugar de realización"></label></div><div class="activity-actions"><button id="saveActivityBtn" class="login-btn" type="button">Crear actividad</button><button id="cancelNewActivityBtn" class="activity-secondary-btn" type="button">Cancelar</button></div></div>
         <div id="participantWorkspace" class="activity-panel activity-registration-card"><div class="activity-registration-heading"><span class="inline-badge">REGISTRO DE PARTICIPACIÓN</span><h2 id="participantFormTitle">Registrar participante</h2><p>Busca la ficha por cédula o completa los datos para registrar la asistencia.</p></div><div class="activity-form-grid"><label>Cédula<input id="participantCedula" inputmode="numeric" placeholder="Número de documento" autocomplete="off"></label><button id="lookupParticipantBtn" class="activity-secondary-btn activity-lookup-btn" type="button">⌕ Buscar ficha</button><label>Nombres<input id="participantNames" placeholder="Nombres" autocomplete="given-name"></label><label>Apellidos<input id="participantSurnames" placeholder="Apellidos" autocomplete="family-name"></label><label>Teléfono (opcional)<input id="participantPhone" type="tel" placeholder="Teléfono"></label><label>Actividad<select id="participantActivity"></select></label><label>InfoMIRA<select id="participantInfoMira"><option value="">Seleccionar Sí / No</option><option value="si">Sí</option><option value="no">No</option></select></label></div><div id="duplicateNotice" class="activity-notice hidden" role="status"></div><div class="activity-actions"><button id="saveParticipantBtn" class="login-btn" type="button">Guardar asistencia</button><button id="clearParticipantBtn" class="activity-secondary-btn" type="button">Limpiar</button></div><p class="activity-local-warning">Los registros se guardan de forma centralizada en Neon.</p></div>
