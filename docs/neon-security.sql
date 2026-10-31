@@ -38,3 +38,16 @@ USING (EXISTS (SELECT 1 FROM mira.user_profiles u WHERE u.auth_user_id = auth.us
 
 CREATE POLICY profile_self_read ON mira.user_profiles FOR SELECT TO authenticated
 USING (auth_user_id = auth.user_id()::text);
+
+
+-- Formulario público de testigos: solo inserción anónima, lectura/actualización interna.
+GRANT INSERT ON mira.testigos_publicos TO anonymous;
+GRANT SELECT, UPDATE ON mira.testigos_publicos TO authenticated;
+ALTER TABLE mira.testigos_publicos ENABLE ROW LEVEL SECURITY;
+CREATE POLICY testigos_public_insert ON mira.testigos_publicos FOR INSERT TO anonymous
+WITH CHECK (consentimiento_datos = true AND length(trim(nombres)) BETWEEN 2 AND 100 AND length(trim(apellidos)) BETWEEN 2 AND 100 AND length(trim(puesto_votacion)) BETWEEN 3 AND 160);
+CREATE POLICY testigos_staff_read ON mira.testigos_publicos FOR SELECT TO authenticated
+USING (EXISTS (SELECT 1 FROM mira.user_profiles u WHERE u.auth_user_id = auth.user_id()::text AND u.active = true AND u.role IN ('admin','operator','viewer')));
+CREATE POLICY testigos_staff_update ON mira.testigos_publicos FOR UPDATE TO authenticated
+USING (EXISTS (SELECT 1 FROM mira.user_profiles u WHERE u.auth_user_id = auth.user_id()::text AND u.active = true AND u.role IN ('admin','operator')))
+WITH CHECK (EXISTS (SELECT 1 FROM mira.user_profiles u WHERE u.auth_user_id = auth.user_id()::text AND u.active = true AND u.role IN ('admin','operator')));
