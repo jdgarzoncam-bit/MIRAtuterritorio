@@ -4447,3 +4447,69 @@ body.theme-light .admin-login-modal .password-recovery-view .form-group input {
     transition:none !important;
   }
 }
+
+
+/* ===== PMU · altura adaptable para desplegar módulos completos ===== */
+/* El menú exterior limita su altura, pero el contenido interior puede crecer
+   y desplazarse; los desplegables ya no tienen un tope artificial de 38vh. */
+#mainSidebar .neo-tactile-sidebar {
+  display:flex !important;
+  flex-direction:column !important;
+  min-height:0 !important;
+  max-height:calc(100dvh - 150px) !important;
+}
+#mainSidebar .sidebar-content {
+  flex:1 1 auto !important;
+  min-height:0 !important;
+  max-height:none !important;
+  overflow-x:hidden !important;
+  overflow-y:auto !important;
+  overscroll-behavior:contain;
+  scrollbar-width:thin;
+  scrollbar-color:rgba(110,220,216,.35) transparent;
+  padding-bottom:18px !important;
+}
+#mainSidebar .sidebar-content > details.custom-dropdown {
+  flex:0 0 auto !important;
+  overflow:visible !important;
+}
+#mainSidebar .sidebar-content > details.custom-dropdown > .dropdown-content {
+  max-height:none !important;
+  height:auto !important;
+  min-height:0 !important;
+  overflow:visible !important;
+  contain:layout style;
+}
+#mainSidebar .sidebar-content > details.custom-dropdown[open] {
+  flex:0 0 auto !important;
+}
+#mainSidebar .sidebar-content > details.custom-dropdown[open] > .dropdown-content {
+  display:block !important;
+}
+#mainSidebar .activity-sidebar-shortcuts,
+#mainSidebar .concejal-sidebar-shortcuts {
+  min-width:0;
+  grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+}
+#mainSidebar .activity-sidebar-tile {
+  min-width:0 !important;
+  min-height:76px;
+}
+@media(max-width:720px) {
+  #mainSidebar .neo-tactile-sidebar {
+    max-height:calc(100dvh - 145px) !important;
+  }
+  #mainSidebar .sidebar-content {
+    max-height:none !important;
+    overflow-y:auto !important;
+    padding-bottom:22px !important;
+  }
+  #mainSidebar .sidebar-content > details.custom-dropdown > .dropdown-content {
+    max-height:none !important;
+    overflow:visible !important;
+  }
+}
+@media(max-height:560px) {
+  #mainSidebar .neo-tactile-sidebar {max-height:calc(100dvh - 112px) !important}
+  #mainSidebar .sidebar-content {max-height:none !important}
+}
