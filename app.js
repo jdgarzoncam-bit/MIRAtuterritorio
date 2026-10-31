@@ -1764,7 +1764,7 @@ function inicializarSistemaMapa() {
     let directorioLogisticaPromise = null;
 
     function normalizarTelefonoLogistica(value) {
-        const digits = String(value || '').replace(/\\D/g, '');
+        const digits = String(value || '').replace(/\D/g, '');
         return digits.length === 10 && digits.startsWith('3') ? digits : '';
     }
     function botonesContactoLogistica(phone, name='contacto') {
@@ -1818,10 +1818,10 @@ function inicializarSistemaMapa() {
             return target && (target===n || target===m || target.includes(n) || n.includes(target) || target.includes(m) || m.includes(target));
         });
         if(exact) return exact;
-        const tokens=target.split(/\\s+/).filter(t=>t.length>3 && !['COLEGIO','ESCUELA','PUESTO','VOTACION','INSTITUTO','SEDE'].includes(t));
+        const tokens=target.split(/\s+/).filter(t=>t.length>3 && !['COLEGIO','ESCUELA','PUESTO','VOTACION','INSTITUTO','SEDE'].includes(t));
         let best=null,score=0;
         listaPuestosVotacion.forEach(p=>{
-            const candidate=normalizarTexto(p.nombre+' '+p.matchName).split(/\\s+/);
+            const candidate=normalizarTexto(p.nombre+' '+p.matchName).split(/\s+/);
             const overlap=tokens.filter(t=>candidate.some(c=>c.includes(t)||t.includes(c))).length;
             const ratio=overlap/Math.max(1,Math.min(tokens.length,candidate.length));
             if(overlap>=2 && ratio>score){score=ratio;best=p;}
