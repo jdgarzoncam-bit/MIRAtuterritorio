@@ -1954,211 +1954,199 @@ function inicializarSistemaMapa() {
         const selectEstado = document.getElementById('miraEstadoSelect');
         const btnResetMira = document.getElementById('miraResetBtn');
         const miraInternalContainer = document.getElementById('miraInternalResultsContainer');
+        if (!inputCuidador || !btnBuscarMira || !selectEstado || !btnResetMira || !miraInternalContainer) return;
 
-        function aplicarFiltroInfoMIRA() {
-            const queryCuidador = inputCuidador.value.trim().toLowerCase();
-            const estadoFiltro = selectEstado.value.toUpperCase();
+        let ultimaConsulta = [];
 
-            if (!queryCuidador && estadoFiltro === 'TODOS') {
-                miraMarkersGroup.clearLayers();
-                if (!map.hasLayer(puestosLayerGroup)) map.addLayer(puestosLayerGroup);
-                if (miraInternalContainer) miraInternalContainer.innerHTML = '';
-                
-                const dashCard = document.getElementById('adminDashboardCard');
-                if (dashCard) dashCard.classList.remove('dashboard-compact');
-                const dropdownMira = document.getElementById('dropdown-infomira');
-                if (dropdownMira) dropdownMira.classList.remove('dropdown-expanded-full');
+        const escInfo = value => String(value ?? '').replace(/[&<>"']/g, char => ({
+            '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+        })[char]);
+        const mostrarValor = value => value === null || value === undefined || String(value).trim() === ''
+            ? 'Sin registrar' : escInfo(value);
+        const personaDe = row => Array.isArray(row.personas) ? (row.personas[0] || null) : (row.personas || null);
 
-                return;
-            }
-
-            const redEncontrada = baseVotantes.filter(v => {
-                const cuidador = (v.cuidador || v.CUIDADOR || v.LIDER || '').toString().toLowerCase();
-                const docCuidador = (v.cedula_cuidador || v.DOC_CUIDADOR || '').toString().toLowerCase();
-                const nombrePropio = (v.NOMBRE || '').toString().toLowerCase();
-                const docPropio = (v.Documento || v.CEDULA || '').toString().toLowerCase();
-                const estadoVal = (v.Estado || v.ESTADO || v.ROL || 'REFERIDO').toString().toUpperCase();
-
-                const coincideCuidador = !queryCuidador || 
-                    cuidador.includes(queryCuidador) || 
-                    docCuidador.includes(queryCuidador) ||
-                    nombrePropio.includes(queryCuidador) ||
-                    docPropio.includes(queryCuidador);
-
-                const coincideEstado = (estadoFiltro === 'TODOS') || estadoVal.includes(estadoFiltro);
-
-                return coincideCuidador && coincideEstado;
-            });
-
-            if (redEncontrada.length === 0) {
-                if (miraInternalContainer) {
-                    miraInternalContainer.innerHTML = `<div style="font-size: 0.78rem; color: #f87171; padding: 8px; text-align: center;">No se encontraron registros para la red.</div>`;
-                }
-                return;
-            }
-
-            puestosLayerGroup.remove();
+        function actualizarMapaInfoMira(rows) {
             miraMarkersGroup.clearLayers();
-
-            let puestosAfectados = {};
-            redEncontrada.forEach(v => {
-                const pNombre = normalizarTexto(v['PUESTO DE VOTACION']);
-                if (!puestosAfectados[pNombre]) puestosAfectados[pNombre] = [];
-                puestosAfectados[pNombre].push(v);
+            if (!rows.length) {
+                if (!map.hasLayer(puestosLayerGroup)) puestosLayerGroup.addTo(map);
+                return;
+            }
+            const agrupados = new Map();
+            rows.forEach(row => {
+                const nombrePuesto = row.puesto_votacion || row.puesto_original || personaDe(row)?.puesto_votacion || '';
+                const clave = normalizarTexto(nombrePuesto);
+                if (clave) agrupados.set(clave, (agrupados.get(clave) || 0) + 1);
             });
-
-            let bounds = [];
-
+            const bounds = [];
             listaPuestosVotacion.forEach(puesto => {
-                const votantesRedPuesto = puestosAfectados[normalizarTexto(puesto.matchName)] || [];
-                if (votantesRedPuesto.length > 0) {
-                    bounds.push([puesto.lat, puesto.lon]);
-
-                    const pinMiraIcon = L.divIcon({
-                        className: 'custom-pin-mira-wrapper',
-                        html: `
-                            <div style="position: relative; width: 46px; height: 54px; display: flex; align-items: center; justify-content: center; cursor: pointer; filter: drop-shadow(0px 8px 18px rgba(56, 189, 248, 0.9));">
-                                <svg width="46" height="54" viewBox="0 0 100 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M50 0 C22.4 0 0 22.4 0 50 C0 80 50 120 50 120 C50 120 100 80 100 50 C100 22.4 77.6 0 50 0 Z" fill="#2563EB"/>
-                                    <circle cx="50" cy="46" r="32" fill="#050817" stroke="#38BDF8" stroke-width="4"/>
-                                </svg>
-                                <span style="position: absolute; top: 12px; font-size: 16px;">💙</span>
-                            </div>
-                        `,
-                        iconSize: [46, 54],
-                        iconAnchor: [23, 54]
-                    });
-
-                    const marker = L.marker([puesto.lat, puesto.lon], { icon: pinMiraIcon });
-                    marker.bindTooltip(`Red InfoMIRA: ${votantesRedPuesto.length} asignados en ${puesto.nombre}`, {
-                        permanent: false, direction: 'top', className: 'leaflet-tooltip-barrio'
-                    });
-
-                    marker.on('click', function() {
-                        map.setView([puesto.lat, puesto.lon], 16);
-                        mostrarFichaPuesto(puesto, votantesRedPuesto);
-                    });
-
-                    miraMarkersGroup.addLayer(marker);
-                }
+                const cantidad = agrupados.get(normalizarTexto(puesto.matchName)) || agrupados.get(normalizarTexto(puesto.nombre)) || 0;
+                if (!cantidad) return;
+                bounds.push([puesto.lat, puesto.lon]);
+                const icon = L.divIcon({
+                    className: 'custom-pin-mira-wrapper',
+                    html: '<div style="width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#102c3a;border:2px solid #63e4dc;box-shadow:0 4px 16px rgba(0,0,0,.35);font-size:16px">💙</div>',
+                    iconSize:[34,34],iconAnchor:[17,17]
+                });
+                const marker = L.marker([puesto.lat,puesto.lon],{icon});
+                marker.bindTooltip('InfoMIRA · '+cantidad+' registro(s) · '+escInfo(puesto.nombre),{direction:'top',className:'leaflet-tooltip-barrio'});
+                marker.on('click',()=>map.setView([puesto.lat,puesto.lon],16));
+                miraMarkersGroup.addLayer(marker);
             });
+            if (bounds.length) {
+                if (map.hasLayer(puestosLayerGroup)) puestosLayerGroup.remove();
+                if (!map.hasLayer(miraMarkersGroup)) miraMarkersGroup.addTo(map);
+                if (bounds.length === 1) map.setView(bounds[0],16);
+                else map.fitBounds(bounds,{padding:[45,45],maxZoom:15});
+            } else if (!map.hasLayer(puestosLayerGroup)) {
+                puestosLayerGroup.addTo(map);
+            }
+        }
 
-            if (bounds.length > 0) {
-                map.fitBounds(bounds, { padding: [50, 50] });
+        function renderizarFichaInfoMira(rows, query, estado) {
+            if (!rows.length) {
+                miraInternalContainer.innerHTML = '<div class="mira-db-empty">No se encontraron coincidencias en el directorio InfoMIRA de Neon.</div>';
+                return;
+            }
+            const total = rows.length;
+            const cards = rows.map((row,index) => {
+                const person = personaDe(row);
+                const nombre = [person?.nombres,person?.apellidos].filter(Boolean).join(' ').trim() || row.nombre_original || 'Nombre sin registrar';
+                const cedula = person?.cedula || row.cedula_original || 'Sin documento';
+                const telefono = person?.telefono || row.telefono;
+                const estadoRed = row.estado_original || person?.tipo_participacion || 'Sin estado';
+                const cuidador = row.cuidador_nombre || 'Sin cuidador/líder asociado';
+                const infoMira = person?.info_mira === true ? 'Sí' : person?.info_mira === false ? 'No' : 'Sin configurar';
+                const activo = person?.activo === true ? 'Activo' : person?.activo === false ? 'Inactivo' : 'Sin configurar';
+                const puesto = person?.puesto_votacion || row.puesto_votacion || row.puesto_original;
+                const mesa = person?.mesa_votacion || row.mesa_votacion;
+                const barrio = row.barrio;
+                const movilidad = row.movilidad;
+                const asistencia = row.asistencia;
+                const extras = [
+                    person?.edad !== null && person?.edad !== undefined ? '<span><b>Edad:</b> '+mostrarValor(person.edad)+'</span>' : '',
+                    person?.tipo_participacion ? '<span><b>Participación:</b> '+mostrarValor(person.tipo_participacion)+'</span>' : '',
+                    person?.requiere_transporte !== null && person?.requiere_transporte !== undefined ? '<span><b>Requiere transporte:</b> '+(person.requiere_transporte ? 'Sí' : 'No')+'</span>' : ''
+                ].filter(Boolean).join('');
+                const phoneDigits = String(telefono || '').replace(/\D/g,'');
+                const waNumber = phoneDigits.length === 10 ? '57'+phoneDigits : phoneDigits;
+                const wa = waNumber ? '<a class="mira-db-wa" href="https://wa.me/'+escInfo(waNumber)+'" target="_blank" rel="noopener noreferrer">WhatsApp</a>' : '';
+                return '<article class="mira-db-person-card">'+
+                    '<div class="mira-db-person-head"><div><small>PERSONA '+(index+1)+' · INFO MIRA</small><h4>'+escInfo(nombre)+'</h4></div><span class="mira-db-status">'+escInfo(estadoRed)+'</span></div>'+
+                    '<div class="mira-db-person-grid">'+
+                    '<span><b>Documento:</b> '+escInfo(cedula)+'</span>'+
+                    '<span><b>Teléfono:</b> '+mostrarValor(telefono)+'</span>'+
+                    '<span><b>Cuidador / líder:</b> '+escInfo(cuidador)+'</span>'+
+                    '<span><b>Estado de ficha:</b> '+escInfo(activo)+'</span>'+
+                    '<span><b>InfoMIRA:</b> '+escInfo(infoMira)+'</span>'+
+                    '<span><b>Barrio:</b> '+mostrarValor(barrio)+'</span>'+
+                    '<span><b>Puesto:</b> '+mostrarValor(puesto)+'</span>'+
+                    '<span><b>Mesa:</b> '+mostrarValor(mesa)+'</span>'+
+                    '<span><b>Movilidad:</b> '+mostrarValor(movilidad)+'</span>'+
+                    '<span><b>Asistencia:</b> '+mostrarValor(asistencia)+'</span>'+extras+
+                    '</div><div class="mira-db-card-actions">'+wa+'</div></article>';
+            }).join('');
+
+            miraInternalContainer.innerHTML =
+                '<section class="mira-db-results"><header class="mira-db-results-heading">'+
+                '<div><small>CONSULTA CENTRALIZADA · NEON</small><strong>💙 Red InfoMIRA</strong></div>'+
+                '<span>'+total+' resultado(s)</span></header>'+
+                (query ? '<p class="mira-db-query">Búsqueda: '+escInfo(query)+'</p>' : '')+
+                cards+
+                '<div class="mira-db-export-row"><button id="downloadExcelRedInternalBtn" class="excel-download-btn" type="button">📥 Exportar resultados</button></div></section>';
+
+            const exportBtn = document.getElementById('downloadExcelRedInternalBtn');
+            if (exportBtn) exportBtn.addEventListener('click',() => {
+                if (!window.XLSX) { alert('No se pudo cargar la herramienta de Excel.'); return; }
+                const exportRows = rows.map(row => {
+                    const p = personaDe(row) || {};
+                    return {
+                        'Nombre': [p.nombres,p.apellidos].filter(Boolean).join(' ') || row.nombre_original || '',
+                        'Documento': p.cedula || row.cedula_original || '',
+                        'Teléfono': p.telefono || row.telefono || '',
+                        'Estado / rol': row.estado_original || p.tipo_participacion || '',
+                        'Cuidador / líder': row.cuidador_nombre || '',
+                        'Barrio': row.barrio || '',
+                        'Puesto de votación': p.puesto_votacion || row.puesto_votacion || row.puesto_original || '',
+                        'Mesa': p.mesa_votacion || row.mesa_votacion || '',
+                        'InfoMIRA': p.info_mira === true ? 'Sí' : p.info_mira === false ? 'No' : '',
+                        'Activo': p.activo === true ? 'Sí' : p.activo === false ? 'No' : '',
+                        'Movilidad': row.movilidad || '',
+                        'Asistencia': row.asistencia || '',
+                        'Edad': p.edad ?? '',
+                        'Tipo de participación': p.tipo_participacion || '',
+                        'Requiere transporte': p.requiere_transporte === true ? 'Sí' : p.requiere_transporte === false ? 'No' : ''
+                    };
+                });
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(exportRows),'InfoMIRA');
+                XLSX.writeFile(wb,'Consulta_InfoMIRA.xlsx');
+            });
+        }
+
+        async function aplicarFiltroInfoMIRA() {
+            const query = inputCuidador.value.trim();
+            const estadoFiltro = selectEstado.value.toUpperCase();
+            if (!query && estadoFiltro === 'TODOS') {
+                miraMarkersGroup.clearLayers();
+                if (!map.hasLayer(puestosLayerGroup)) puestosLayerGroup.addTo(map);
+                miraInternalContainer.innerHTML = '';
+                document.getElementById('adminDashboardCard')?.classList.remove('dashboard-compact');
+                document.getElementById('dropdown-infomira')?.classList.remove('dropdown-expanded-full');
+                return;
+            }
+            if (!window.MIRA_DATA?.listInfoMiraDirectory) {
+                miraInternalContainer.innerHTML = '<div class="mira-db-empty">El cliente de Neon todavía no está disponible. Recarga la plataforma e inténtalo de nuevo.</div>';
+                return;
             }
 
-            mostrarResultadosEnModuloInfoMIRA(queryCuidador, estadoFiltro, redEncontrada, puestosAfectados);
+            const buttonHtml = btnBuscarMira.innerHTML;
+            btnBuscarMira.disabled = true;
+            btnBuscarMira.setAttribute('aria-busy','true');
+            miraInternalContainer.innerHTML = '<div class="mira-db-loading"><span></span> Consultando el directorio centralizado…</div>';
+            try {
+                const isCedula = /^\d+$/.test(query);
+                const rows = await window.MIRA_DATA.listInfoMiraDirectory({
+                    cedula: isCedula ? query : '',
+                    search: query && !isCedula ? query : '',
+                    limit: 100
+                });
+                const rowsFiltered = (rows || []).filter(row => {
+                    if (estadoFiltro === 'TODOS') return true;
+                    const person = personaDe(row);
+                    const role = String(row.estado_original || person?.tipo_participacion || '').toUpperCase();
+                    if (estadoFiltro === 'ACTIVO') return person?.activo === true || role.includes('ACTIVO');
+                    return role.includes(estadoFiltro);
+                });
+                ultimaConsulta = rowsFiltered;
+                renderizarFichaInfoMira(rowsFiltered,query,estadoFiltro);
+                actualizarMapaInfoMira(rowsFiltered);
+                document.getElementById('adminDashboardCard')?.classList.toggle('dashboard-compact',rowsFiltered.length > 0);
+                document.getElementById('dropdown-infomira')?.classList.toggle('dropdown-expanded-full',rowsFiltered.length > 0);
+            } catch (error) {
+                console.error('[InfoMIRA] Error consultando Neon:',error);
+                miraInternalContainer.innerHTML = '<div class="mira-db-error">No fue posible consultar Neon: '+escInfo(error.message || 'Error de conexión o permisos')+'</div>';
+            } finally {
+                btnBuscarMira.disabled = false;
+                btnBuscarMira.removeAttribute('aria-busy');
+                if (buttonHtml) btnBuscarMira.innerHTML = buttonHtml;
+            }
         }
 
-        function mostrarResultadosEnModuloInfoMIRA(query, estado, redTotal, puestosAfectados) {
-            if (!miraInternalContainer) return;
-            const nombreLider = query ? query.toUpperCase() : "GENERAL";
-            const numPuestos = Object.keys(puestosAfectados).length;
-
-            const dashCard = document.getElementById('adminDashboardCard');
-            if (dashCard) dashCard.classList.add('dashboard-compact');
-
-            const dropdownMira = document.getElementById('dropdown-infomira');
-            if (dropdownMira) dropdownMira.classList.add('dropdown-expanded-full');
-
-            let htmlDetalleIntegrantes = redTotal.map((v, i) => `
-                <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--neo-border-subtle); border-radius: 10px; padding: 10px; margin-bottom: 8px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                        <span style="font-weight: 700; color: var(--text-main); font-size: 0.85rem;">${i + 1}. ${v.NOMBRE || 'Sin Nombre'}</span>
-                        <span style="font-size: 0.68rem; padding: 2px 6px; background: rgba(56, 189, 248, 0.15); color: var(--cyan-glow); border-radius: 4px; font-weight: 600;">
-                            ${v.Estado || v.ESTADO || v.ROL || 'REFERIDO'}
-                        </span>
-                    </div>
-                    <div style="font-size: 0.78rem; color: var(--text-muted); display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 4px;">
-                        <div><strong>Doc:</strong> ${v.Documento || v.CEDULA || 'N/A'}</div>
-                        <div><strong>Tel:</strong> ${v['Teléfono / s'] || v.Teléfono || 'N/A'}</div>
-                        <div><strong>Puesto:</strong> ${v['PUESTO DE VOTACION'] || 'Sin Asignar'}</div>
-                        <div><strong>Mesa:</strong> ${v.MESA || 'S/N'}</div>
-                    </div>
-                </div>
-            `).join('');
-
-            // Reemplaza la generación del botón de WhatsApp en app.js dentro de mostrarResultadosEnModuloInfoMIRA:
-
-let btnWhatsappHTML = "";
-if (query && redTotal.length > 0) {
-    const personaPrincipal = redTotal[0];
-    const rawTel = personaPrincipal['Teléfono / s'] || personaPrincipal.Teléfono || personaPrincipal.telefono || "";
-    const cleanTel = rawTel.toString().replace(/\D/g, '');
-
-    if (cleanTel) {
-        const fullNumber = cleanTel.length === 10 ? `57${cleanTel}` : cleanTel;
-        const mensajeWa = encodeURIComponent(`Hola ${personaPrincipal.NOMBRE || ''}, te contacto desde el Centro de Operaciones PMU MIRA tu territorio.`);
-        
-        btnWhatsappHTML = `
-            <a href="https://wa.me/${fullNumber}?text=${mensajeWa}" target="_blank" class="whatsapp-btn-action" title="Abrir chat de WhatsApp">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="margin-right: 6px;">
-                    <path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984 0 1.763.459 3.486 1.332 5.003L2 22l5.133-1.337a9.92 9.92 0 004.872 1.282h.005c5.505 0 9.988-4.478 9.989-9.984 0-2.668-1.037-5.176-2.925-7.062A9.914 9.914 0 0012.012 2zm0 18.156h-.004a8.267 8.267 0 01-4.221-1.155l-.303-.18-3.136.818.835-3.048-.198-.314a8.257 8.257 0 01-1.266-4.473c0-4.561 3.711-8.272 8.277-8.272 2.21 0 4.288.86 5.852 2.426a8.23 8.23 0 012.42 5.852c0 4.562-3.712 8.273-8.272 8.273zm4.536-6.195c-.249-.124-1.472-.726-1.7-.809-.228-.083-.394-.124-.56.124-.165.249-.643.809-.788.975-.145.166-.29.187-.539.062a6.793 6.793 0 01-2.001-1.233 7.488 7.488 0 01-1.385-1.724c-.145-.249-.015-.384.109-.508.112-.112.249-.29.373-.435.125-.145.166-.249.249-.415.083-.166.042-.311-.021-.435-.062-.125-.56-1.349-.767-1.847-.202-.486-.407-.42-.56-.428l-.477-.008c-.166 0-.435.062-.663.311-.228.249-.871.851-.871 2.075 0 1.224.892 2.406 1.016 2.572.124.166 1.756 2.682 4.254 3.761.594.257 1.058.411 1.42.526.597.19 1.14.163 1.569.099.478-.071 1.472-.602 1.679-1.183.207-.581.207-1.079.145-1.183-.062-.104-.228-.187-.477-.311z"/>
-                </svg>
-                WhatsApp
-            </a>
-        `;
-    }
-}
-
-            miraInternalContainer.innerHTML = `
-                <div style="border-top: 1px solid var(--neo-border-subtle); padding-top: 10px; margin-top: 6px;">
-                    <div style="font-size: 0.85rem; color: var(--cyan-tactile); font-weight: 700; margin-bottom: 4px;">💙 Red InfoMIRA — ${nombreLider}</div>
-                    <div style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 8px;">
-                        <div><strong>Estado:</strong> ${estado} | <strong>Integrantes:</strong> ${redTotal.length}</div>
-                        <div><strong>Puestos Cubiertos:</strong> ${numPuestos}</div>
-                    </div>
-                    <div style="margin-bottom: 8px;">
-                        ${htmlDetalleIntegrantes}
-                    </div>
-                    <div class="mira-actions-container">
-                        <button id="downloadExcelRedInternalBtn" class="excel-download-btn" style="margin-top:0;">
-                            📥 Exportar Excel (${redTotal.length})
-                        </button>
-                        ${btnWhatsappHTML}
-                    </div>
-                </div>
-            `;
-
-            document.getElementById('downloadExcelRedInternalBtn').addEventListener('click', function() {
-                const datosExportar = redTotal.map((v, index) => ({
-                    "N.º": index + 1,
-                    "Documento": v.Documento || v.CEDULA || "",
-                    "Nombre Completo": v.NOMBRE || "",
-                    "Cuidador / Líder": v.cuidador || v.CUIDADOR || v.LIDER || nombreLider,
-                    "Estado / Rol": v.Estado || v.ESTADO || v.ROL || "REFERIDO",
-                    "Puesto de Votación": v['PUESTO DE VOTACION'] || "",
-                    "Mesa": v.MESA || "S/N",
-                    "Barrio": v.Barrio || "",
-                    "Teléfono": v['Teléfono / s'] || v.Teléfono || ""
-                }));
-
-                const worksheet = XLSX.utils.json_to_sheet(datosExportar);
-                const workbook = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(workbook, worksheet, "Red InfoMIRA");
-                XLSX.writeFile(workbook, `Red_InfoMIRA_${nombreLider.replace(/\s+/g, '_')}.xlsx`);
-            });
-        }
-
-        btnBuscarMira.addEventListener('click', aplicarFiltroInfoMIRA);
-        inputCuidador.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') aplicarFiltroInfoMIRA();
+        btnBuscarMira.addEventListener('click',aplicarFiltroInfoMIRA);
+        inputCuidador.addEventListener('keydown',event => {
+            if (event.key === 'Enter') { event.preventDefault(); aplicarFiltroInfoMIRA(); }
         });
-        selectEstado.addEventListener('change', aplicarFiltroInfoMIRA);
-
-        btnResetMira.addEventListener('click', function() {
+        selectEstado.addEventListener('change',aplicarFiltroInfoMIRA);
+        btnResetMira.addEventListener('click',() => {
             inputCuidador.value = '';
             selectEstado.value = 'TODOS';
+            ultimaConsulta = [];
             miraMarkersGroup.clearLayers();
-            if (!map.hasLayer(puestosLayerGroup)) map.addLayer(puestosLayerGroup);
-            if (miraInternalContainer) miraInternalContainer.innerHTML = '';
-            
-            const dashCard = document.getElementById('adminDashboardCard');
-            if (dashCard) dashCard.classList.remove('dashboard-compact');
-            const dropdownMira = document.getElementById('dropdown-infomira');
-            if (dropdownMira) dropdownMira.classList.remove('dropdown-expanded-full');
-
-            map.setView([4.8123, -74.3542], 14);
+            if (!map.hasLayer(puestosLayerGroup)) puestosLayerGroup.addTo(map);
+            miraInternalContainer.innerHTML = '';
+            document.getElementById('adminDashboardCard')?.classList.remove('dashboard-compact');
+            document.getElementById('dropdown-infomira')?.classList.remove('dropdown-expanded-full');
+            map.setView([4.8123,-74.3542],14);
         });
     }
 
