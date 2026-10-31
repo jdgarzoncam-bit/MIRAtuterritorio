@@ -59,6 +59,24 @@ document.addEventListener("DOMContentLoaded",()=>{
   if(password) password.addEventListener("keydown",event=>{
     if(event.key==="Enter"){event.preventDefault();event.stopImmediatePropagation();loginWithNeon();}
   },true);
+  const reset=document.getElementById("forgotPasswordBtn");
+  if(reset) reset.addEventListener("click",async event=>{
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    const email=document.getElementById("username")?.value.trim();
+    if(!email){showLoginError("Escribe primero tu correo electrónico.");return;}
+    reset.disabled=true;
+    try{
+      const result=await auth.requestPasswordReset({
+        email,
+        redirectTo:"https://jdgarzoncam-bit.github.io/reset-password.html"
+      });
+      if(result?.error) throw new Error(result.error.message||"No fue posible solicitar el restablecimiento.");
+      showLoginError("Si el correo está registrado, Neon Auth enviará un enlace para crear una contraseña nueva. Revisa también Spam.");
+    }catch(error){
+      showLoginError(error?.message||"No fue posible enviar el enlace de recuperación.");
+    }finally{reset.disabled=false;}
+  },true);
   const create=document.getElementById("createUserBtn");
   if(create) create.addEventListener("click",event=>{
     event.preventDefault();event.stopImmediatePropagation();
