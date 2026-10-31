@@ -3796,3 +3796,147 @@ body.theme-light .admin-login-modal .password-recovery-view .form-group input {
   #mainSidebar .neo-icon { width: 31px !important; height: 31px !important; flex-basis: 31px !important; }
   #mainSidebar > #adminDashboardCard { max-height: 148px !important; padding: 10px !important; }
 }
+
+
+/* ===== PMU Glassmorphism universal: panel principal + dashboard en isla ===== */
+@media (min-width: 721px) {
+  #mainSidebar.sidebar-wrapper-group {
+    width: min(410px, calc(100vw - 40px)) !important;
+    max-width: 410px !important;
+    max-height: calc(100vh - 40px) !important;
+    gap: 15px !important;
+    overflow: visible !important;
+  }
+  #mainSidebar .neo-tactile-sidebar {
+    background:
+      radial-gradient(ellipse at 12% 0%, rgba(231,250,255,.40), transparent 52%),
+      linear-gradient(145deg, rgba(177,224,244,.48), rgba(64,139,176,.58) 52%, rgba(13,62,91,.68)) !important;
+    border: 1.5px solid rgba(235,250,255,.78) !important;
+    border-radius: 30px !important;
+    -webkit-backdrop-filter: blur(30px) saturate(175%) !important;
+    backdrop-filter: blur(30px) saturate(175%) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.72),
+      inset 0 -1px 0 rgba(255,255,255,.15),
+      0 18px 46px rgba(0,18,38,.30),
+      0 0 26px rgba(113,218,255,.20) !important;
+  }
+  #mainSidebar .neo-tactile-sidebar::after {
+    display: block !important;
+    bottom: -31px !important;
+    height: 62px !important;
+    border-top: 2px solid rgba(157,235,255,.88) !important;
+    box-shadow: 0 -5px 18px rgba(76,190,255,.35),0 -16px 34px rgba(72,153,255,.17) !important;
+    background: radial-gradient(ellipse at 50% 0%,rgba(180,235,255,.24),transparent 70%) !important;
+  }
+  #mainSidebar .sidebar-header {
+    min-height: 86px !important;
+    padding: 17px 18px !important;
+    gap: 11px !important;
+    background: linear-gradient(110deg,rgba(235,250,255,.26),rgba(135,204,232,.14)) !important;
+    border-bottom: 1px solid rgba(235,250,255,.42) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.34) !important;
+  }
+  #mainSidebar #sidebarToggleBtn {
+    width: 48px !important; height: 48px !important;
+    border-radius: 50% !important;
+    background: linear-gradient(145deg,#65baff,#347ce7) !important;
+    border: 1px solid rgba(255,255,255,.88) !important;
+    box-shadow: 0 5px 20px rgba(0,100,220,.32),inset 0 1px 0 rgba(255,255,255,.7) !important;
+  }
+  #mainSidebar .platform-home-3d {
+    width: 48px !important; height: 48px !important; flex-basis: 48px !important;
+    border-radius: 15px !important;
+    color: #fff !important;
+    background: linear-gradient(145deg,rgba(225,247,255,.42),rgba(82,166,207,.28)) !important;
+    border: 1px solid rgba(245,252,255,.5) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.42) !important;
+  }
+  #mainSidebar .header-titles h1 {
+    color: #f8fdff !important;
+    font-size: 1.32rem !important;
+    font-weight: 850 !important;
+    text-shadow: 0 2px 9px rgba(0,40,70,.30) !important;
+  }
+  #mainSidebar .header-titles p { color: rgba(245,252,255,.92) !important; font-size: .86rem !important; }
+  #mainSidebar .sidebar-header-right .neo-live-indicator { box-shadow: 0 0 0 6px rgba(82,235,255,.12),0 0 18px rgba(82,235,255,.75) !important; }
+  #mainSidebar .sidebar-content {
+    padding: 19px 18px 20px !important;
+    background: linear-gradient(180deg,rgba(14,72,105,.08),rgba(4,43,72,.10)) !important;
+    scrollbar-color: rgba(231,249,255,.55) transparent !important;
+  }
+  #mainSidebar .section-title {
+    margin: 2px 5px 15px !important;
+    color: #aaf3ff !important;
+    font-size: .84rem !important;
+    letter-spacing: 2px !important;
+    text-shadow: 0 1px 10px rgba(0,77,120,.35) !important;
+  }
+  #mainSidebar details.custom-dropdown,
+  #mainSidebar details.custom-dropdown[open] {
+    margin: 0 0 11px !important;
+    overflow: hidden !important;
+    border: 1px solid rgba(237,251,255,.43) !important;
+    border-radius: 22px !important;
+    background: linear-gradient(115deg,rgba(221,246,255,.25),rgba(165,218,241,.17)) !important;
+    -webkit-backdrop-filter: blur(18px) saturate(155%) !important;
+    backdrop-filter: blur(18px) saturate(155%) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.38),0 8px 20px rgba(0,31,60,.15) !important;
+  }
+  #mainSidebar details.custom-dropdown[open] {
+    border-color: rgba(222,249,255,.76) !important;
+    background: linear-gradient(115deg,rgba(225,248,255,.32),rgba(130,198,228,.24)) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.46),0 10px 25px rgba(0,34,65,.21) !important;
+  }
+  #mainSidebar details.custom-dropdown summary {
+    min-height: 70px !important;
+    padding: 13px 17px !important;
+    color: #f8fdff !important;
+    font-size: .98rem !important;
+    font-weight: 760 !important;
+    text-shadow: 0 1px 7px rgba(0,30,55,.28) !important;
+  }
+  #mainSidebar .neo-icon {
+    width: 39px !important; height: 39px !important; flex-basis: 39px !important;
+    border-radius: 13px !important;
+    background: linear-gradient(145deg,rgba(225,248,255,.34),rgba(94,174,211,.23)) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.4),0 4px 11px rgba(0,39,69,.14) !important;
+  }
+  #mainSidebar .arrow-icon { color: rgba(248,253,255,.98) !important; }
+  #mainSidebar .dropdown-content {
+    padding: 15px 15px 16px !important;
+    color: #f3fbff !important;
+    background: linear-gradient(180deg,rgba(6,51,80,.48),rgba(4,35,61,.56)) !important;
+    border-top: 1px solid rgba(235,250,255,.30) !important;
+  }
+
+  /* Isla del dashboard: separada físicamente del panel de navegación. */
+  #mainSidebar > #adminDashboardCard {
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    max-width: 410px !important;
+    margin: 0 !important;
+    padding: 17px 17px 16px !important;
+    border: 1.5px solid rgba(238,251,255,.80) !important;
+    border-radius: 26px !important;
+    background:
+      radial-gradient(ellipse at 8% 0%,rgba(229,249,255,.34),transparent 52%),
+      linear-gradient(145deg,rgba(155,215,240,.48),rgba(40,119,158,.60)) !important;
+    -webkit-backdrop-filter: blur(30px) saturate(180%) !important;
+    backdrop-filter: blur(30px) saturate(180%) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.70),0 14px 34px rgba(0,15,36,.30),0 0 22px rgba(100,211,255,.17) !important;
+  }
+  #mainSidebar > #adminDashboardCard::after {
+    display: none !important;
+  }
+  #mainSidebar .dash-footer-header { color: #f8fdff !important; font-size: .88rem !important; }
+  #mainSidebar .kpi-bar-bg { background: rgba(5,45,75,.30) !important; }
+  #mainSidebar .dash-footer-mini {
+    color: #f7fcff !important;
+    background: linear-gradient(145deg,rgba(225,246,255,.24),rgba(102,177,211,.20)) !important;
+    border: 1px solid rgba(236,250,255,.36) !important;
+    border-radius: 16px !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.28) !important;
+  }
+  #mainSidebar .dash-footer-mini strong { color: #fff !important; }
+}
