@@ -2563,3 +2563,41 @@ if(homeReturnButton){
 
 // V25: la casita es el único control para volver a la interfaz inicial.
 
+/* ===== MTT Mobile: gesto pull-to-refresh cuando el contenedor está arriba ===== */
+(function initMobilePullToRefresh(){
+  if(window.__MTT_PULL_REFRESH_BOUND)return;
+  window.__MTT_PULL_REFRESH_BOUND=true;
+  if(!('ontouchstart' in window))return;
+  let startX=0,startY=0,startAt=0,startTarget=null;
+  const ignored='input,textarea,select,button,a,[contenteditable="true"],.leaflet-container,.leaflet-control,.testigo-media-buttons,.hidden-file-input';
+  function scrollContainerAtTop(target){
+    let node=target instanceof Element?target:null;
+    while(node&&node!==document.body&&node!==document.documentElement){
+      const style=getComputedStyle(node);
+      const canScrollY=/(auto|scroll|overlay)/.test(style.overflowY)&&node.scrollHeight>node.clientHeight+2;
+      if(canScrollY)return node.scrollTop<=2;
+      node=node.parentElement;
+    }
+    const root=document.scrollingElement||document.documentElement;
+    return root.scrollTop<=2;
+  }
+  document.addEventListener('touchstart',event=>{
+    if(event.touches.length!==1)return;
+    const touch=event.touches[0];
+    startX=touch.clientX;startY=touch.clientY;startAt=Date.now();startTarget=event.target;
+  },{passive:true,capture:true});
+  document.addEventListener('touchend',event=>{
+    if(!startTarget||event.changedTouches.length!==1)return;
+    const touch=event.changedTouches[0];
+    const dy=touch.clientY-startY,dx=Math.abs(touch.clientX-startX),elapsed=Date.now()-startAt;
+    const target=startTarget;
+    startTarget=null;
+    if(dy<105||dx>55||elapsed>1400)return;
+    if(target instanceof Element&&target.closest(ignored))return;
+    if(!scrollContainerAtTop(target))return;
+    const active=document.activeElement;
+    if(active&&active.matches('input,textarea,select,[contenteditable="true"]'))return;
+    window.location.reload();
+  },{passive:true,capture:true});
+  document.addEventListener('touchcancel',()=>{startTarget=null;},{passive:true,capture:true});
+})();
