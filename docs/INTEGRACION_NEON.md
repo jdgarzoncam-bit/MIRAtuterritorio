@@ -49,6 +49,7 @@ Neon Data API es el backend REST administrado; no se expone conexión PostgreSQL
 
 ## Formularios públicos y acceso de usuarios
 - Registro público de testigos: `testigo-publico.html`. Recoge nombre, contacto, puesto, mesa y autorización expresa.
+- Panel interno de validación de testigos: `testigos-admin.html`. Roles admin/operator pueden cambiar el estado; viewer solo consulta.
 - Reporte público no identificable: `reporte-publico.html`.
 - Las rutas públicas solo insertan. No pueden consultar registros ni listar testigos.
 - Módulo Actividades: `mira-activity-bridge.js` reemplaza la persistencia local de los botones de crear actividad, buscar cédula, guardar asistencia, editar asistencia, abrir carpetas y exportar Excel por operaciones de Neon.
