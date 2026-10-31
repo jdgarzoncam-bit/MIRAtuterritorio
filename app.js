@@ -2537,7 +2537,20 @@ if(homeReturnButton){
   ['concejalHistorySearch','concejalFilterDateFrom','concejalFilterDateTo','concejalFilterBarrio'].forEach(id=>document.getElementById(id).addEventListener('input',renderHistory));document.getElementById('resetConcejalFiltersBtn').addEventListener('click',()=>{['concejalHistorySearch','concejalFilterDateFrom','concejalFilterDateTo','concejalFilterBarrio'].forEach(id=>document.getElementById(id).value='');renderHistory()});
   // Expose a read-only accessor for the territorial popup to read the latest activity.
   window.MiraConcejalActivities={getLatestForBarrio:function(name){return records.filter(r=>norm(r.barrio)===norm(name)).sort((a,b)=>(b.date||'').localeCompare(a.date||''))[0]||null;},getAll:function(){return records.slice()}};
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden&& !workspace.classList.contains('hidden'))miniMap&&miniMap.invalidateSize()});
+  // Sincronización entre dispositivos: consulta Neon periódicamente mientras el módulo está abierto.
+  // Evita repintar los formularios si el usuario está escribiendo o editando un registro.
+  const concejalSyncInterval=setInterval(()=>{
+    if(document.hidden||workspace.classList.contains('hidden')||!window.MIRA_CURRENT_USER||concejalLoading)return;
+    const active=document.activeElement;
+    if((form&&form.contains(active))||(commitmentForm&&commitmentForm.contains(active)))return;
+    loadConcejalFromNeon().catch(error=>console.warn('[MIRA Concejal] Sincronización automática pendiente:',error));
+  },10000);
+  document.addEventListener('visibilitychange',()=>{
+    if(!document.hidden&&!workspace.classList.contains('hidden')){
+      if(miniMap)miniMap.invalidateSize();
+      if(window.MIRA_CURRENT_USER&&!concejalLoading)loadConcejalFromNeon().catch(error=>console.warn('[MIRA Concejal] No se pudo actualizar al volver a la pestaña:',error));
+    }
+  });
   document.getElementById('concejalActivityDate').value=new Date().toISOString().slice(0,10);populateNames();renderHistory();renderCommitments();renderDashboard();
 })();
 
