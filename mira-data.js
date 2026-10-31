@@ -39,11 +39,12 @@ const qs = (params) => new URLSearchParams(params).toString();
 const cleanCedula = (value) => String(value || "").replace(/\D/g, "");
 
 export const MIRA_DATA = {
-  async listInfoMiraDirectory({cedula="", search="", limit=100}={}) {
+  async listInfoMiraDirectory({cedula="", search="", limit=100, offset=0}={}) {
     const params = {
       select:"id,fila_origen,cedula_original,nombre_original,telefono,barrio,estado_original,cuidador_nombre,puesto_votacion,puesto_original,mesa_votacion,movilidad,asistencia,persona_id,personas(id,cedula,nombres,apellidos,telefono,correo,info_mira,puesto_votacion,mesa_votacion,requiere_transporte,edad,tipo_participacion,activo)",
       order:"fila_origen.asc",
-      limit:String(Math.min(Math.max(limit,1),100))
+      limit:String(Math.min(Math.max(limit,1),1000)),
+      offset:String(Math.max(0,offset))
     };
     if (cedula) params.cedula_original = `eq.${cleanCedula(cedula)}`;
     else if (search.trim()) {
