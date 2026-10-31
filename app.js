@@ -1759,98 +1759,232 @@ function inicializarSistemaMapa() {
         XLSX.writeFile(workbook, `Reporte_Votantes_${puesto.nombre.replace(/\s+/g, '_')}.xlsx`);
     }
 
-    function actualizarConteoLogistica() {
-        const result = document.getElementById('logisticaResultsContainer');
-        if (result) {
-            const total = baseVotantes.filter(v => {
-                const mov = (v.movilidad || v.MOVILIDAD || v['¿Necesita transporte?'] || '').toString().toUpperCase();
-                return mov.includes('REQUIERE') || mov.includes('TRANSPORTE') || mov.includes('RUTA') || mov === 'SI' || mov === 'SÍ';
-            }).length;
-            const node = result.querySelector('[data-logistica-total]');
-            if (node) node.textContent = total;
+    let logisticaDirectoryCache = null;
+    let logisticaRoutesLayer = null;
+    let logisticaLastGroups = [];
+
+    function logisticaPersona(row) {
+        return Array.isArray(row.personas) ? (row.personas[0] || null) : (row.personas || null);
+    }
+    function logisticaNombre(row) {
+        const p = logisticaPersona(row);
+        return [p?.nombres,p?.apellidos].filter(Boolean).join(' ').trim() || row.nombre_original || 'Nombre sin registrar';
+    }
+    function logisticaTelefono(row) {
+        const p = logisticaPersona(row);
+        return String(p?.telefono || row.telefono || '').trim();
+    }
+    function logisticaTelefonoMovil(row) {
+        const digits = logisticaTelefono(row).replace(/\D/g,'');
+        return /^3\d{9}$/.test(digits) ? digits : '';
+    }
+    function logisticaWhatsApp(row) {
+        const digits = logisticaTelefono(row).replace(/\D/g,'');
+        if (!digits) return '';
+        return digits.length === 10 ? '57'+digits : (digits.startsWith('57') && digits.length === 12 ? digits : '');
+    }
+    function logisticaEsc(value) {
+        return String(value ?? '').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+    }
+    function logisticaMovilidad(row) {
+        return String(row.movilidad || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().trim();
+    }
+    function logisticaPuesto(row) {
+        const p=logisticaPersona(row);
+        const value=p?.puesto_votacion || row.puesto_votacion || row.puesto_original || '';
+        const key=normalizarTexto(value);
+        if (!key) return null;
+        return listaPuestosVotacion.find(item =>
+            normalizarTexto(item.nombre)===key ||
+            normalizarTexto(item.matchName)===key ||
+            key.includes(normalizarTexto(item.nombre)) ||
+            normalizarTexto(item.nombre).includes(key)
+        ) || null;
+    }
+    function logisticaCentroBarrio(nombre) {
+        const key=normalizarTexto(nombre);
+        if (!key || !datosOriginales?.features?.length) return null;
+        const feature=datosOriginales.features.find(f=>{
+            const p=f.properties||{};
+            const n=p.nombre||p.name||p.Name||p.NOMBRE||'';
+            return normalizarTexto(n)===key || normalizarTexto(n).includes(key) || key.includes(normalizarTexto(n));
+        });
+        if (!feature?.geometry) return null;
+        const rings=[];
+        const geometry=feature.geometry;
+        if (geometry.type==='Polygon') rings.push(geometry.coordinates?.[0]||[]);
+        else if (geometry.type==='MultiPolygon') geometry.coordinates.forEach(poly=>rings.push(poly?.[0]||[]));
+        let best=null,bestArea=-1;
+        rings.forEach(ring=>{
+            if (!ring || ring.length<3) return;
+            let area2=0,cx=0,cy=0;
+            for(let i=0;i<ring.length-1;i++){
+                const [x1,y1]=ring[i],[x2,y2]=ring[i+1];
+                const cross=x1*y2-x2*y1;
+                area2+=cross;cx+=(x1+x2)*cross;cy+=(y1+y2)*cross;
+            }
+            const area=Math.abs(area2);
+            if(area<1e-12)return;
+            const point=[cx/(3*area2),cy/(3*area2)];
+            if(area>bestArea){bestArea=area;best={lat:point[1],lon:point[0]};}
+        });
+        return best ? {...best,barrio:feature.properties?.nombre||nombre,feature} : null;
+    }
+    function actualizarConteoLogistica(total) {
+        const node=document.querySelector('#logisticaResultsContainer [data-logistica-total]');
+        if(node && Number.isFinite(total)) node.textContent=String(total);
+    }
+    function limpiarRutasLogistica() {
+        if(logisticaRoutesLayer && map) {
+            map.removeLayer(logisticaRoutesLayer);
+            logisticaRoutesLayer=null;
         }
     }
-
-    function inicializarModuloLogistica() {
-        const btnLogistica = document.getElementById('logisticaBtn');
-        const selectLogistica = document.getElementById('logisticaSelect');
-        const dropdownLogistica = document.getElementById('dropdown-logistica');
-        if (!btnLogistica || !selectLogistica || !dropdownLogistica) return;
-
-        let logisticaResultsBox = document.getElementById('logisticaResultsContainer');
-        if (!logisticaResultsBox) {
-            logisticaResultsBox = document.createElement('div');
-            logisticaResultsBox.id = 'logisticaResultsContainer';
-            const dropdownContent = dropdownLogistica.querySelector('.dropdown-content');
-            if (dropdownContent) dropdownContent.appendChild(logisticaResultsBox);
+    function logisticaContactoHtml(row) {
+        const phone=logisticaTelefono(row);
+        const wa=logisticaWhatsApp(row);
+        const mobile=logisticaTelefonoMovil(row);
+        return '<div class="logistica-contact-actions">'+
+            (wa?'<a class="logistica-contact-btn logistica-wa" href="https://wa.me/'+wa+'" target="_blank" rel="noopener noreferrer">WhatsApp</a>':'')+
+            (mobile?'<a class="logistica-contact-btn logistica-call" href="tel:+57'+mobile+'">Llamar</a>':'')+
+            (!wa && !mobile?'<span class="logistica-no-contact">'+(phone?'Número no válido para contacto móvil':'Sin teléfono')+'</span>':'')+
+            '</div>';
+    }
+    function logisticaRenderizarLista(rows,tipo,drivers,groups) {
+        const box=document.getElementById('logisticaResultsContainer');
+        if(!box)return;
+        const count=rows.length;
+        const passengerCount=rows.filter(r=>logisticaMovilidad(r).includes('REQUIERE')).length;
+        const driverCount=rows.filter(r=>logisticaMovilidad(r).includes('PROPIO')||logisticaMovilidad(r).includes('AUTONOMO')).length;
+        const groupsHtml=groups.map((group,index)=>{
+            const passengerHtml=group.passengers.map(row=>
+                '<div class="logistica-person-row"><div class="logistica-person-meta"><strong>'+logisticaEsc(logisticaNombre(row))+'</strong><small>Documento: '+logisticaEsc(logisticaPersona(row)?.cedula||row.cedula_original||'Sin registrar')+' · Mesa '+logisticaEsc(logisticaPersona(row)?.mesa_votacion||row.mesa_votacion||'S/D')+'</small></div>'+logisticaContactoHtml(row)+'</div>'
+            ).join('');
+            const options=drivers.map(driver=>{
+                const id=String(driver.persona_id||logisticaPersona(driver)?.id||driver.id);
+                return '<option value="'+logisticaEsc(id)+'">'+logisticaEsc(logisticaNombre(driver))+' · '+logisticaEsc(logisticaTelefono(driver)||'sin teléfono')+'</option>';
+            }).join('');
+            return '<article class="logistica-route-card" data-route-index="'+index+'">'+
+                '<div class="logistica-route-title"><span>RUTA '+(index+1)+'</span><strong>'+logisticaEsc(group.barrio)+'</strong></div>'+
+                '<div class="logistica-route-destination"><b>Destino:</b> '+logisticaEsc(group.puesto.nombre)+'<small>'+logisticaEsc(group.puesto.direccion)+'</small></div>'+
+                '<div class="logistica-route-summary">'+group.passengers.length+' pasajero(s) · Recogida aproximada en el centro del barrio</div>'+
+                '<div class="logistica-route-passengers">'+passengerHtml+'</div>'+
+                '<label class="logistica-driver-label">Conductor disponible</label>'+
+                '<select class="logistica-driver-select" data-route-driver="'+index+'"><option value="">Seleccionar conductor…</option>'+options+'</select>'+
+                '<button type="button" class="logistica-draw-route" data-draw-route="'+index+'">Trazar ruta en el mapa</button>'+
+                '<p class="logistica-route-note">Capacidad del vehículo no registrada: confirma los cupos antes de asignar pasajeros.</p>'+
+                '</article>';
+        }).join('');
+        const driversHtml=drivers.map(row=>
+            '<div class="logistica-person-row"><div class="logistica-person-meta"><strong>'+logisticaEsc(logisticaNombre(row))+'</strong><small>Vehículo propio · '+logisticaEsc(logisticaTelefono(row)||'Sin teléfono')+'</small></div>'+logisticaContactoHtml(row)+'</div>'
+        ).join('');
+        box.innerHTML='<section class="logistica-dashboard">'+
+            '<header class="logistica-dashboard-head"><div><small>DIRECTORIO CENTRALIZADO · NEON</small><strong>🚐 Operación logística Día D</strong></div><span>'+count+' registros</span></header>'+
+            '<div class="logistica-kpis"><div><strong>'+passengerCount+'</strong><small>Requieren apoyo</small></div><div><strong>'+driverCount+'</strong><small>Vehículo propio</small></div><div><strong>'+groups.length+'</strong><small>Rutas agrupadas</small></div></div>'+
+            (tipo==='PROPIO'?'<h4 class="logistica-section-title">Conductores disponibles para cualquier ruta</h4><div class="logistica-driver-list">'+(driversHtml||'<p>No hay conductores disponibles.</p>')+'</div>':'')+
+            (tipo==='REQUIERE'||tipo==='TODOS'?'<h4 class="logistica-section-title">Pasajeros y rutas sugeridas</h4>'+(groupsHtml||'<p class="logistica-empty">No hay pasajeros con barrio y puesto suficientes para proponer una ruta.</p>'):'')+
+            '<button id="downloadExcelLogisticaBtn" class="excel-download-btn" type="button">📥 Exportar listado logístico</button>'+
+            '<p class="logistica-route-disclaimer">Las rutas se trazan desde el centroide aproximado del barrio hasta las coordenadas del puesto de votación. La ubicación de recogida no es una dirección domiciliaria. Las asignaciones de conductor son temporales en esta sesión.</p>'+
+            '</section>';
+        box.querySelectorAll('[data-draw-route]').forEach(button=>button.addEventListener('click',()=> {
+            const index=Number(button.dataset.drawRoute);
+            const card=button.closest('.logistica-route-card');
+            const driverId=card?.querySelector('[data-route-driver]')?.value;
+            if(!driverId){alert('Selecciona un conductor disponible para esta ruta.');return;}
+            const used=[...box.querySelectorAll('[data-route-driver]')].filter(el=>el.value && el!==card.querySelector('[data-route-driver]')).map(el=>el.value);
+            if(used.includes(driverId)){alert('Ese conductor ya está asignado a otra ruta en esta sesión.');return;}
+            trazarRutaLogistica(groups[index],button);
+        }));
+        const exportBtn=document.getElementById('downloadExcelLogisticaBtn');
+        if(exportBtn) exportBtn.addEventListener('click',()=>{
+            if(!window.XLSX){alert('No se pudo cargar la herramienta de Excel.');return;}
+            const exportRows=rows.map((row,i)=>{
+                const p=logisticaPersona(row)||{},mov=logisticaMovilidad(row);
+                return {'N.º':i+1,'Nombre':logisticaNombre(row),'Documento':p.cedula||row.cedula_original||'','Teléfono':logisticaTelefono(row),'Movilidad':row.movilidad||'','Barrio':row.barrio||'','Puesto':p.puesto_votacion||row.puesto_votacion||row.puesto_original||'','Dirección puesto':logisticaPuesto(row)?.direccion||'','Mesa':p.mesa_votacion||row.mesa_votacion||'','Cuidador/líder':row.cuidador_nombre||'','Tipo':mov.includes('PROPIO')?'Conductor disponible':mov.includes('REQUIERE')?'Requiere transporte':'Otro'};
+            });
+            const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(exportRows),'Logistica Día D');XLSX.writeFile(wb,'MIRA_Logistica_Dia_D.xlsx');
+        });
+    }
+    async function trazarRutaLogistica(group,button) {
+        const origin=logisticaCentroBarrio(group.barrio);
+        if(!origin){alert('No se encontró el polígono del barrio para calcular el punto de recogida aproximado.');return;}
+        const destination=group.puesto;
+        button.disabled=true;button.textContent='Calculando recorrido…';
+        try{
+            const coordinates=origin.lon+','+origin.lat+';'+destination.lon+','+destination.lat;
+            const url='https://router.project-osrm.org/route/v1/driving/'+coordinates+'?overview=full&geometries=geojson&steps=true';
+            const response=await fetch(url);
+            if(!response.ok)throw new Error('El servicio de rutas no respondió (HTTP '+response.status+').');
+            const result=await response.json();
+            if(result.code!=='Ok'||!result.routes?.length)throw new Error('No se encontró un recorrido vial entre los puntos.');
+            if(!logisticaRoutesLayer){logisticaRoutesLayer=L.layerGroup().addTo(map);} 
+            const route=result.routes[0];
+            const line=L.geoJSON(route.geometry,{style:{color:'#2E5DE6',weight:5,opacity:.9,dashArray:'9 5'}}).addTo(logisticaRoutesLayer);
+            const pickup=L.circleMarker([origin.lat,origin.lon],{radius:8,color:'#E6EDFD',weight:2,fillColor:'#6E92F2',fillOpacity:1}).bindPopup('<b>Recogida aproximada</b><br>'+logisticaEsc(origin.barrio));
+            const destinationMarker=L.marker([destination.lat,destination.lon]).bindPopup('<b>'+logisticaEsc(destination.nombre)+'</b><br>'+logisticaEsc(destination.direccion));
+            logisticaRoutesLayer.addLayer(pickup);logisticaRoutesLayer.addLayer(destinationMarker);
+            const bounds=line.getBounds();bounds.extend(pickup.getLatLng());bounds.extend(destinationMarker.getLatLng());map.fitBounds(bounds,{padding:[60,60],maxZoom:16});
+            button.textContent='Ruta trazada · '+(route.distance/1000).toFixed(1)+' km · '+Math.round(route.duration/60)+' min';
+        }catch(error){
+            console.error('[Logística] No fue posible trazar la ruta:',error);
+            alert('No fue posible trazar la ruta: '+error.message);
+            button.textContent='Reintentar trazado';
+        }finally{button.disabled=false;}
+    }
+    async function cargarDirectorioLogistica() {
+        if(!window.MIRA_DATA?.listInfoMiraDirectory)throw new Error('El servicio de Neon no está disponible.');
+        // La tabla tiene más de 100 filas; el cliente pagina para traer el censo completo.
+        const all=[];let offset=0,batch=100;
+        while(true){
+            const chunk=await window.MIRA_DATA.listInfoMiraDirectory({limit:batch,offset});
+            all.push(...(chunk||[]));
+            if(!chunk||chunk.length<batch)break;
+            offset+=batch;
+            if(offset>=2000)break;
         }
-
-        btnLogistica.addEventListener('click', function() {
-            const tipo = selectLogistica.value.toUpperCase();
-            
-            const filtrados = baseVotantes.filter(v => {
-                const mov = (v.movilidad || v.MOVILIDAD || '').toString().toUpperCase();
-                if (tipo === 'TODOS') return true;
-                if (tipo === 'REQUIERE') return mov.includes('REQUIERE') || mov.includes('TRANSPORTE') || mov.includes('RUTA');
-                if (tipo === 'PROPIO') return mov.includes('PROPIO') || mov.includes('AUTONOMO');
-                return true;
-            });
-
-            let puestosAgrupados = {};
-            filtrados.forEach(v => {
-                const pNombre = (v['PUESTO DE VOTACION'] || v.PuestoOriginal || 'SIN ASIGNAR').trim();
-                puestosAgrupados[pNombre] = (puestosAgrupados[pNombre] || 0) + 1;
-            });
-
-            const topPuestos = Object.entries(puestosAgrupados)
-                .sort((a, b) => b[1] - a[1])
-                .slice(0, 4);
-
-            const htmlTop = topPuestos.map(([nombre, cant]) => `
-                <div style="display:flex; justify-content:space-between; font-size:0.75rem; padding:4px 0; border-bottom:1px solid rgba(255,255,255,0.06);">
-                    <span style="color:var(--text-main); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px;">${nombre}</span>
-                    <strong style="color:var(--cyan-glow);">${cant}</strong>
-                </div>
-            `).join('');
-
-            logisticaResultsBox.innerHTML = `
-                <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--neo-border-subtle); border-radius: 8px; padding: 10px; margin-top: 8px;">
-                    <div style="font-size:0.8rem; font-weight:700; color:var(--cyan-glow); margin-bottom:4px;">
-                        🚐 Movilidad: ${tipo === 'TODOS' ? 'Todos los Registros' : tipo}
-                    </div>
-                    <div style="font-size:0.76rem; color:var(--text-muted); margin-bottom:6px;">
-                        Total electores: <strong style="color:var(--text-main);">${filtrados.length}</strong>
-                    </div>
-                    <div style="margin-bottom:8px;">
-                        <small style="font-size:0.7rem; color:var(--text-muted); display:block; margin-bottom:4px; font-weight:600;">Puestos con mayor requerimiento:</small>
-                        ${htmlTop || '<span style="font-size:0.72rem; color:var(--text-muted);">Sin registros</span>'}
-                    </div>
-                    <button id="downloadExcelLogisticaBtn" class="excel-download-btn" style="padding:8px 10px; font-size:0.78rem; margin-top:6px;">
-                        📥 Exportar Reporte Día D (${filtrados.length})
-                    </button>
-                </div>
-            `;
-
-            const dlBtn = document.getElementById('downloadExcelLogisticaBtn');
-            if (dlBtn) {
-                dlBtn.addEventListener('click', function() {
-                    const datosExportar = filtrados.map((v, index) => ({
-                        "N.º": index + 1,
-                        "Documento": v.Documento || v.CEDULA || "",
-                        "Nombre Completo": v.NOMBRE || "",
-                        "Puesto de Votación": v['PUESTO DE VOTACION'] || v.PuestoOriginal || "",
-                        "Mesa": v.MESA || "S/N",
-                        "Barrio": v.Barrio || "",
-                        "Requerimiento Movilidad": v.movilidad || v.MOVILIDAD || "PROPIO",
-                        "Cuidador / Líder": v.cuidador || v.CUIDADOR || v.LIDER || "",
-                        "Teléfono": v['Teléfono / s'] || v.Teléfono || ""
-                    }));
-
-                    const worksheet = XLSX.utils.json_to_sheet(datosExportar);
-                    const workbook = XLSX.utils.book_new();
-                    XLSX.utils.book_append_sheet(workbook, worksheet, "Logistica Transporte");
-                    XLSX.writeFile(workbook, `Reporte_Logistica_Dia_D_${tipo}.xlsx`);
+        logisticaDirectoryCache=all;
+        return all;
+    }
+    function inicializarModuloLogistica() {
+        const btnLogistica=document.getElementById('logisticaBtn');
+        const selectLogistica=document.getElementById('logisticaSelect');
+        const dropdownLogistica=document.getElementById('dropdown-logistica');
+        if(!btnLogistica||!selectLogistica||!dropdownLogistica)return;
+        let box=document.getElementById('logisticaResultsContainer');
+        if(!box){box=document.createElement('div');box.id='logisticaResultsContainer';dropdownLogistica.querySelector('.dropdown-content')?.appendChild(box);}
+        btnLogistica.addEventListener('click',async()=>{
+            const tipo=selectLogistica.value.toUpperCase();
+            btnLogistica.disabled=true;btnLogistica.textContent='Consultando Neon…';
+            box.innerHTML='<div class="logistica-loading">Consultando el directorio centralizado…</div>';
+            limpiarRutasLogistica();
+            try{
+                const all=await cargarDirectorioLogistica();
+                const filtered=all.filter(row=>{
+                    const mov=logisticaMovilidad(row);
+                    if(tipo==='REQUIERE')return mov.includes('REQUIERE')||mov.includes('TRANSPORTE')||mov.includes('RUTA');
+                    if(tipo==='PROPIO')return mov.includes('PROPIO')||mov.includes('AUTONOMO');
+                    return true;
                 });
+                const drivers=all.filter(row=>{const mov=logisticaMovilidad(row);return mov.includes('PROPIO')||mov.includes('AUTONOMO');});
+                const passengers=filtered.filter(row=>{const mov=logisticaMovilidad(row);return mov.includes('REQUIERE')||mov.includes('TRANSPORTE')||mov.includes('RUTA');});
+                const groupsMap=new Map();
+                passengers.forEach(row=>{
+                    const puesto=logisticaPuesto(row);
+                    const barrio=String(row.barrio||'').trim();
+                    if(!puesto||!barrio)return;
+                    const key=normalizarTexto(barrio)+'|'+puesto.id;
+                    if(!groupsMap.has(key))groupsMap.set(key,{barrio,puesto,passengers:[]});
+                    groupsMap.get(key).passengers.push(row);
+                });
+                const groups=[...groupsMap.values()];
+                logisticaLastGroups=groups;
+                logisticaRenderizarLista(filtered,tipo,drivers,groups);
+                actualizarConteoLogistica(passengers.length);
+            }catch(error){
+                console.error('[Logística] Error consultando Neon:',error);
+                box.innerHTML='<div class="logistica-error">No fue posible consultar el directorio: '+logisticaEsc(error.message||'Error desconocido')+'</div>';
+            }finally{
+                btnLogistica.disabled=false;btnLogistica.innerHTML='🚐 Filtrar Mapa Logístico';
             }
         });
     }
@@ -2159,6 +2293,10 @@ function inicializarSistemaMapa() {
             const waButton = waNumber
                 ? '<a class="mira-db-wa" href="https://wa.me/'+escInfo(waNumber)+'" target="_blank" rel="noopener noreferrer" aria-label="Abrir WhatsApp de '+escInfo(waName)+'"><span aria-hidden="true">◉</span> WhatsApp</a>'
                 : '';
+            const mobileNumber = /^3\d{9}$/.test(digits) ? digits : '';
+            const callButton = mobileNumber
+                ? '<a class="mira-db-call" href="tel:+57'+mobileNumber+'" aria-label="Llamar a '+escInfo(waName)+'"><span aria-hidden="true">☎</span> Llamar</a>'
+                : '';
 
             miraInternalContainer.innerHTML =
                 '<section class="mira-db-results">'+
@@ -2171,6 +2309,7 @@ function inicializarSistemaMapa() {
                   '<div class="mira-db-actions">'+
                     '<button id="downloadExcelRedInternalBtn" class="mira-db-export" type="button"><span aria-hidden="true">↧</span> Exportar</button>'+
                     waButton+
+                    callButton+
                   '</div>'+
                   (total > 1 ? '<p class="mira-db-action-hint">WhatsApp aparece al consultar una sola persona.</p>' : '')+
                 '</section>';
