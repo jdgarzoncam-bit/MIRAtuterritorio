@@ -84,8 +84,8 @@
                             <button id="cancelAdminInlineBtn" class="inline-close-btn" type="button" title="Volver">✕</button>
                         </div>
                         <div class="form-group">
-                            <label for="username" data-i18n="lbl_user">Usuario Admin</label>
-                            <input type="text" id="username" placeholder="Ej. admin" autocomplete="username">
+                            <label for="username" data-i18n="lbl_user">Correo electrónico</label>
+                            <input type="email" id="username" placeholder="correo@institucion.gov.co" autocomplete="username">
                         </div>
                         <div class="form-group">
                             <label for="password" data-i18n="lbl_pass">Contraseña</label>
@@ -98,6 +98,11 @@
                         <div class="account-secondary-actions">
                             <button class="account-link-btn" id="createUserBtn" type="button">＋ Crear usuario</button>
                             <button class="account-link-btn" id="forgotPasswordBtn" type="button">¿Olvidaste tu contraseña?</button>
+                        </div>
+                        <div class="account-secondary-actions">
+                            <a class="account-link-btn" href="testigo-publico.html">Registro público de testigos</a>
+                            <a class="account-link-btn" href="testigos-admin.html">Panel interno de testigos</a>
+                            <a class="account-link-btn" href="reporte-publico.html">Formulario público de reportes</a>
                         </div>
                         <div id="accountActionNotice" class="account-action-notice hidden" role="status" aria-live="polite"></div>
                         <div class="login-error" id="loginError" data-i18n="err_login" role="alert" aria-live="assertive">Acceso bloqueado hasta configurar la autenticación segura del servidor.</div>
@@ -556,5 +561,8 @@
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script src="app.js"></script>
+    <script type="module" src="mira-data.js"></script>
+    <script type="module" src="mira-activity-bridge.js"></script>
+    <script type="module" src="mira-auth.js"></script>
 </body>
 </html>
