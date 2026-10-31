@@ -1100,9 +1100,44 @@ function inicializarSistemaMapa() {
                 fuente: fuenteCargada
             });
         } catch (error) {
-            console.error('[MIRA] El GeoJSON se descargó, pero no se pudo renderizar:', error);
+            console.error('[MIRA] El GeoJSON se descargó, pero falló el renderizado avanzado:', error);
+
+            // Recuperación de producción: si falla la lista o el renderizador avanzado,
+            // dibujar la geometría con el estilo nativo mínimo de Leaflet para no dejar
+            // el mapa sin barrios.
+            let fallbackRendered = false;
+            try {
+                if (geojsonLayer && map && map.hasLayer(geojsonLayer)) map.removeLayer(geojsonLayer);
+                geojsonLayer = L.geoJSON(data, {
+                    style: () => ({
+                        color: '#8B5CF6',
+                        weight: 1.7,
+                        opacity: 0.95,
+                        fillColor: '#8B5CF6',
+                        fillOpacity: 0.28
+                    })
+                });
+                if (poligonosKmlVisibles) geojsonLayer.addTo(map);
+                const fallbackBounds = geojsonLayer.getBounds();
+                if (fallbackBounds && fallbackBounds.isValid()) {
+                    map.fitBounds(fallbackBounds, window.matchMedia('(max-width: 600px)').matches
+                        ? { padding: [22, 22], maxZoom: 14 }
+                        : { paddingTopLeft: [410, 45], paddingBottomRight: [45, 45], maxZoom: 14 });
+                }
+                fallbackRendered = true;
+                console.warn('[MIRA] Se activó el renderizado territorial de recuperación.');
+            } catch (fallbackError) {
+                console.error('[MIRA] También falló el renderizado territorial de recuperación:', fallbackError);
+            }
+
             if (container) {
-                container.innerHTML = '<div class="loading-text" role="alert"><strong>Los barrios se descargaron, pero hubo un error al mostrarlos.</strong><p>La geometría está disponible; revisaremos el error de visualización.</p><button type="button" id="retryTerritoryGeoJSON" class="territory-reset-icon">Reintentar carga</button></div>';
+                const detail = error && error.message ? error.message : String(error || 'Error desconocido');
+                container.innerHTML = '<div class="territory-load-error" role="alert"><strong>' +
+                    (fallbackRendered ? 'Los barrios ya están visibles en el mapa, pero falló la lista o el estilo avanzado.' : 'Los barrios se descargaron, pero no fue posible dibujarlos.') +
+                    '</strong><p>' + (fallbackRendered ? 'Puedes seguir usando el mapa. El detalle del problema queda registrado para corregirlo.' : 'La geometría está disponible; revisaremos el error de visualización.') +
+                    '</p><code class="territory-error-detail"></code><button type="button" id="retryTerritoryGeoJSON" class="territory-retry-button">Reintentar carga</button></div>';
+                const detailNode = container.querySelector('.territory-error-detail');
+                if (detailNode) detailNode.textContent = detail;
                 document.getElementById('retryTerritoryGeoJSON')?.addEventListener('click', cargarPoligonosTerritoriales);
             }
         }
