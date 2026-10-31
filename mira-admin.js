@@ -56,7 +56,7 @@ function renderUsers(){
     const label=u.display_name||u.email||"Usuario";
     return '<button type="button" class="admin-user-row '+(selected?"is-selected":"")+'" data-profile-id="'+escapeHtml(u.id)+'" '+(u.role==="admin"?'data-is-admin="true"':'')+'>'+
       '<span class="admin-user-avatar">'+escapeHtml((label.trim()[0]||"U").toUpperCase())+'</span>'+
-      '<span class="admin-user-copy"><strong>'+escapeHtml(label)+'</strong><small>'+escapeHtml(u.email||"Sin correo")+'</small><em>'+(u.role==="admin"?"Administradora":u.role==="operator"?"Operador":u.role==="viewer"?"Consulta":escapeHtml(u.role||"Sin rol"))+' · '+(u.email_verified?(u.active?"Activo":"Pendiente de aprobación"):"Correo sin confirmar")+'</em></span>'+
+      '<span class="admin-user-copy"><strong>'+escapeHtml(label)+'</strong><small>'+escapeHtml(u.email||"Sin correo")+'</small><em>'+(u.role==="admin"?"Administradora":u.role==="operator"?"Operador":u.role==="viewer"?"Consulta":u.role==="witness"?"Testigo":escapeHtml(u.role||"Sin rol"))+' · '+(u.email_verified?(u.active?"Activo":"Pendiente de aprobación"):"Correo sin confirmar")+'</em></span>'+
       (u.role==="admin"?'<span class="admin-user-lock" title="Cuenta protegida">🔒</span>':'<span class="admin-user-arrow">›</span>')+'</button>';
   }).join("");
 }
@@ -84,23 +84,25 @@ function renderApprovalControls(user){
   const action=user.active?"suspend":"activate";
   const label=user.active?"Suspender cuenta":"Aprobar y activar";
   const hint=canApprove?(user.active?"La cuenta puede ingresar según sus permisos.":"El correo está confirmado. Puedes aprobar la cuenta y asignar un rol."):"La persona debe confirmar su correo antes de que puedas activar la cuenta.";
-  return '<section class="admin-approval-card"><div><strong>Estado y aprobación</strong><small>'+hint+'</small></div><label class="admin-role-picker"><span>Rol de la cuenta</span><select id="adminRoleSelect">'+options+'</select></label><button type="button" class="admin-approval-button" data-profile-approval="'+action+'" '+(!canApprove&&!user.active?"disabled":"")+'>'+label+'</button></section><div class="admin-approval-divider"></div>';
+  return '<section class="admin-approval-card"><div><strong>Estado y aprobación</strong><small>'+hint+'</small></div><label class="admin-role-picker"><span>Rol de la cuenta</span><select id="adminRoleSelect">'+options+'</select></label><button type="button" class="admin-approval-button" data-profile-approval="'+action+'" '+(!canApprove&&!user.active?"disabled":"")+'>'+label+'</button><button type="button" class="admin-approval-button admin-role-save" data-profile-approval="save-role">Guardar rol</button></section><div class="admin-approval-divider"></div>';
 }
 async function changeUserApproval(button){
   if(!isAdmin()||!selectedProfile||selectedProfile.role==="admin")return;
-  const activate=button.dataset.profileApproval==="activate";
+  const action=button.dataset.profileApproval;
+  const activate=action==="activate";
   if(activate&&!selectedProfile.email_verified){notice("No puedes activar una cuenta cuyo correo no está confirmado.",true);return;}
+  const nextActive=action==="save-role"?selectedProfile.active:activate;
   const role=$("adminRoleSelect")?.value||selectedProfile.role;
   button.disabled=true;
   try{
-    const updated=await window.MIRA_DATA.updateUserProfile(selectedProfile.id,{active:activate,role});
+    const updated=await window.MIRA_DATA.updateUserProfile(selectedProfile.id,{active:nextActive,role});
     const row=Array.isArray(updated)?updated[0]:updated;
-    selectedProfile={...selectedProfile,...(row||{}),active:activate,role};
+    selectedProfile={...selectedProfile,...(row||{}),active:nextActive,role};
     users=users.map(u=>u.id===selectedProfile.id?selectedProfile:u);
     renderUsers();
     $("adminSelectedUser").innerHTML='<strong>'+escapeHtml(selectedProfile.display_name||selectedProfile.email||"Usuario")+'</strong><span>'+escapeHtml(selectedProfile.email||"")+' · '+(selectedProfile.email_verified?"Correo confirmado":"Correo sin confirmar")+' · '+(selectedProfile.active?"Cuenta activa":"Pendiente de aprobación")+'</span>';
     renderMatrix();
-    notice(activate?"Cuenta aprobada y activada. Ahora asigna los permisos de cada módulo.":"Cuenta suspendida. Sus permisos se conservan, pero no podrá ingresar.");
+    notice(action==="save-role"?"Rol actualizado. Los permisos de los módulos se conservan.":activate?"Cuenta aprobada y activada. Ahora asigna los permisos de cada módulo.":"Cuenta suspendida. Sus permisos se conservan, pero no podrá ingresar.");
   }catch(error){notice(error.message||"No fue posible actualizar el estado de la cuenta.",true);}
   finally{button.disabled=false;}
 }
