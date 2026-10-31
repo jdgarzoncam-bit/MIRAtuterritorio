@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MIRA TU TERRITORIO | Reporte público</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.public-report-wrap{max-width:760px;margin:5vh auto;padding:24px}.public-report-card{background:rgba(20,28,42,.94);border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:28px;box-shadow:0 18px 60px #0005}.public-report-card h1{margin-top:0}.public-report-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.public-report-card label{display:block;margin:12px 0;font-weight:600}.public-report-card input,.public-report-card select,.public-report-card textarea{width:100%;padding:12px;margin-top:6px;border-radius:9px;border:1px solid #526078;background:#111a29;color:#fff}.public-report-card textarea{min-height:130px;resize:vertical}.public-report-card button{padding:12px 20px;border:0;border-radius:9px;cursor:pointer}.public-report-status{margin-top:14px}.hp-field{position:absolute;left:-10000px}@media(max-width:600px){.public-report-grid{grid-template-columns:1fr}.public-report-wrap{padding:12px}}
+</style>
+</head>
+<body>
+<main class="public-report-wrap"><section class="public-report-card">
+<p class="brand-pill">MIRA TU TERRITORIO · CANAL PÚBLICO</p>
+<h1>Reporte de jornada electoral</h1>
+<p>Registra una novedad relacionada con un puesto o mesa. Este formulario no solicita nombres, cédulas, afiliación política ni datos de contacto. No permite consultar reportes ni acceder a la base de datos.</p>
+<form id="publicReportForm">
+<div class="public-report-grid">
+<label>Puesto de votación<input name="puesto_votacion" maxlength="160" required></label>
+<label>Mesa<input name="mesa_votacion" maxlength="40" required></label>
+</div>
+<label>Tipo de reporte<select name="tipo_reporte" required><option value="">Selecciona</option><option value="novedad">Novedad</option><option value="acta">Información de acta</option><option value="logistica">Logística</option><option value="otro">Otro</option></select></label>
+<label>Descripción<textarea name="descripcion" minlength="5" maxlength="1500" required placeholder="Describe los hechos de forma objetiva. No incluyas datos personales."></textarea></label>
+<label class="hp-field" aria-hidden="true">Deja este campo vacío<input name="website" tabindex="-1" autocomplete="off"></label>
+<label><input type="checkbox" id="privacyAck" required style="width:auto"> Confirmo que no estoy incluyendo datos personales ni información sensible de terceros.</label>
+<button type="submit" class="login-btn" id="sendReportBtn">Enviar reporte</button>
+<p id="reportStatus" class="public-report-status" role="status" aria-live="polite"></p>
+</form></section></main>
+<script type="module" src="reporte-publico.js"></script>
+</body></html>
