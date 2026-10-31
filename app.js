@@ -2023,36 +2023,58 @@ function inicializarSistemaMapa() {
                 const movilidad = row.movilidad;
                 const asistencia = row.asistencia;
                 const extras = [
-                    person?.edad !== null && person?.edad !== undefined ? '<span><b>Edad:</b> '+mostrarValor(person.edad)+'</span>' : '',
-                    person?.tipo_participacion ? '<span><b>Participación:</b> '+mostrarValor(person.tipo_participacion)+'</span>' : '',
-                    person?.requiere_transporte !== null && person?.requiere_transporte !== undefined ? '<span><b>Requiere transporte:</b> '+(person.requiere_transporte ? 'Sí' : 'No')+'</span>' : ''
-                ].filter(Boolean).join('');
-                const phoneDigits = String(telefono || '').replace(/\D/g,'');
-                const waNumber = phoneDigits.length === 10 ? '57'+phoneDigits : phoneDigits;
-                const wa = waNumber ? '<a class="mira-db-wa" href="https://wa.me/'+escInfo(waNumber)+'" target="_blank" rel="noopener noreferrer">WhatsApp</a>' : '';
+                    person?.edad !== null && person?.edad !== undefined ? ['Edad',person.edad] : null,
+                    person?.tipo_participacion ? ['Tipo de participación',person.tipo_participacion] : null,
+                    person?.requiere_transporte !== null && person?.requiere_transporte !== undefined ? ['Requiere transporte',person.requiere_transporte ? 'Sí' : 'No'] : null
+                ].filter(Boolean);
+                const fields = [
+                    ['Documento',cedula],
+                    ['Teléfono',telefono],
+                    ['Cuidador / líder',cuidador],
+                    ['Estado de ficha',activo],
+                    ['InfoMIRA',infoMira],
+                    ['Barrio',barrio],
+                    ['Puesto de votación',puesto],
+                    ['Mesa',mesa],
+                    ['Movilidad',movilidad],
+                    ['Asistencia',asistencia],
+                    ...extras
+                ].map(([label,value]) =>
+                    '<div class="mira-db-field"><small>'+escInfo(label)+'</small><strong>'+mostrarValor(value)+'</strong></div>'
+                ).join('');
                 return '<article class="mira-db-person-card">'+
-                    '<div class="mira-db-person-head"><div><small>PERSONA '+(index+1)+' · INFO MIRA</small><h4>'+escInfo(nombre)+'</h4></div><span class="mira-db-status">'+escInfo(estadoRed)+'</span></div>'+
-                    '<div class="mira-db-person-grid">'+
-                    '<span><b>Documento:</b> '+escInfo(cedula)+'</span>'+
-                    '<span><b>Teléfono:</b> '+mostrarValor(telefono)+'</span>'+
-                    '<span><b>Cuidador / líder:</b> '+escInfo(cuidador)+'</span>'+
-                    '<span><b>Estado de ficha:</b> '+escInfo(activo)+'</span>'+
-                    '<span><b>InfoMIRA:</b> '+escInfo(infoMira)+'</span>'+
-                    '<span><b>Barrio:</b> '+mostrarValor(barrio)+'</span>'+
-                    '<span><b>Puesto:</b> '+mostrarValor(puesto)+'</span>'+
-                    '<span><b>Mesa:</b> '+mostrarValor(mesa)+'</span>'+
-                    '<span><b>Movilidad:</b> '+mostrarValor(movilidad)+'</span>'+
-                    '<span><b>Asistencia:</b> '+mostrarValor(asistencia)+'</span>'+extras+
-                    '</div><div class="mira-db-card-actions">'+wa+'</div></article>';
+                    '<div class="mira-db-person-head">'+
+                      '<div class="mira-db-person-title"><small>PERSONA '+(index+1)+' · INFO MIRA</small><h4>'+escInfo(nombre)+'</h4></div>'+
+                      '<span class="mira-db-status">'+escInfo(estadoRed)+'</span>'+
+                    '</div>'+
+                    '<div class="mira-db-person-grid">'+fields+'</div>'+
+                '</article>';
             }).join('');
 
+            const first = rows.length === 1 ? rows[0] : null;
+            const firstPerson = first ? personaDe(first) : null;
+            const phone = firstPerson?.telefono || first?.telefono || '';
+            const digits = String(phone).replace(/\D/g,'');
+            const waNumber = digits.length === 10 ? '57'+digits : digits;
+            const waName = [firstPerson?.nombres,firstPerson?.apellidos].filter(Boolean).join(' ') || first?.nombre_original || 'contacto';
+            const waButton = waNumber
+                ? '<a class="mira-db-wa" href="https://wa.me/'+escInfo(waNumber)+'" target="_blank" rel="noopener noreferrer" aria-label="Abrir WhatsApp de '+escInfo(waName)+'"><span aria-hidden="true">◉</span> WhatsApp</a>'
+                : '';
+
             miraInternalContainer.innerHTML =
-                '<section class="mira-db-results"><header class="mira-db-results-heading">'+
-                '<div><small>CONSULTA CENTRALIZADA · NEON</small><strong>💙 Red InfoMIRA</strong></div>'+
-                '<span>'+total+' resultado(s)</span></header>'+
-                (query ? '<p class="mira-db-query">Búsqueda: '+escInfo(query)+'</p>' : '')+
-                cards+
-                '<div class="mira-db-export-row"><button id="downloadExcelRedInternalBtn" class="excel-download-btn" type="button">📥 Exportar resultados</button></div></section>';
+                '<section class="mira-db-results">'+
+                  '<header class="mira-db-results-heading">'+
+                    '<div><small>CONSULTA CENTRALIZADA · NEON</small><strong><span aria-hidden="true">💙</span> Red InfoMIRA</strong></div>'+
+                    '<span class="mira-db-count">'+total+' resultado(s)</span>'+
+                  '</header>'+
+                  (query ? '<p class="mira-db-query"><span>Búsqueda</span><strong>'+escInfo(query)+'</strong></p>' : '')+
+                  cards+
+                  '<div class="mira-db-actions">'+
+                    '<button id="downloadExcelRedInternalBtn" class="mira-db-export" type="button"><span aria-hidden="true">↧</span> Exportar</button>'+
+                    waButton+
+                  '</div>'+
+                  (total > 1 ? '<p class="mira-db-action-hint">WhatsApp aparece al consultar una sola persona.</p>' : '')+
+                '</section>';
 
             const exportBtn = document.getElementById('downloadExcelRedInternalBtn');
             if (exportBtn) exportBtn.addEventListener('click',() => {
