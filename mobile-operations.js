@@ -77,7 +77,7 @@
         back.querySelector('b').textContent='Volver a módulos';
         const floating=document.getElementById('floatingPuestoWidget');
         if(floating) floating.classList.add('hidden');
-        requestAnimationFrame(()=>{if(window.map && typeof window.map.invalidateSize==='function')window.map.invalidateSize({pan:false,animate:false});});
+        requestAnimationFrame(()=>{window.dispatchEvent(new Event('resize'));});
         return;
       }
       sidebar.hidden=false;
@@ -91,7 +91,7 @@
       back.querySelector('b').textContent='Volver a módulos';
       const moduleTop=sidebar.querySelector('.neo-tactile-sidebar');
       if(moduleTop) moduleTop.scrollTop=0;
-      requestAnimationFrame(()=>{if(window.map && typeof window.map.invalidateSize==='function')window.map.invalidateSize({pan:false,animate:false});});
+      requestAnimationFrame(()=>{window.dispatchEvent(new Event('resize'));});
     };
     cardEls.forEach((el,i)=>{
       el.addEventListener('click',()=>{
@@ -120,7 +120,7 @@
       home.hidden=false;
       back.classList.remove('is-visible');
       document.querySelectorAll('#mainSidebar details.custom-dropdown').forEach(d=>{d.open=false;d.querySelector(':scope > summary')?.setAttribute('aria-expanded','false');});
-      requestAnimationFrame(()=>{if(window.map && typeof window.map.invalidateSize==='function')window.map.invalidateSize({pan:false,animate:false});});
+      requestAnimationFrame(()=>{window.dispatchEvent(new Event('resize'));});
     });
     const applyViewport=()=>{
       if(isMobile()){
