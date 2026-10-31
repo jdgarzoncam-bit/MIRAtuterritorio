@@ -2452,6 +2452,18 @@ function inicializarSistemaMapa() {
         if (poligonosKmlVisibles) geojsonLayer.addTo(map);
     };
 
+    // Al volver a mostrar el mapa en móvil, Leaflet recalcula el viewport y
+    // garantiza que la capa territorial siga montada si está habilitada.
+    window.addEventListener('mira:mobile-map-visible', () => {
+        if (!map) return;
+        setTimeout(() => {
+            map.invalidateSize({ pan: false });
+            if (poligonosKmlVisibles && geojsonLayer && !map.hasLayer(geojsonLayer)) {
+                geojsonLayer.addTo(map);
+            }
+        }, 90);
+    });
+
     function mostrarFichaBarrio(feature, nombre) {
         colapsarPanelesDeFiltros();
         const widget = document.getElementById('floatingPuestoWidget');
