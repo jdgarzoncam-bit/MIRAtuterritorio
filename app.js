@@ -429,7 +429,7 @@ async function loadActivitiesFromNeon(){
       window.MIRA_DATA.listActivities({limit:100}),
       window.MIRA_DATA.listAttendances({limit:1000})
     ]);
-    activitiesState.people=(result[0]||[]).map(p=>({id:p.id,cedula:p.cedula||p.cedula_normalizada||'',names:p.nombres||'',surnames:p.apellidos||'',phone:p.telefono||'',infoMira:p.info_mira===true?'si':p.info_mira===false?'no':''}));
+    activitiesState.people=(result[0]||[]).map(p=>{const parsed=splitLegacyPersonName(p.nombres,p.apellidos);return {id:p.id,cedula:p.cedula||p.cedula_normalizada||'',names:parsed.names,surnames:parsed.surnames,phone:p.telefono||'',infoMira:p.info_mira===true?'si':p.info_mira===false?'no':''};});
     activitiesState.activities=(result[1]||[]).map(a=>({id:a.id,name:a.nombre,date:a.fecha,place:a.lugar||'',status:a.estado==='activa'?'active':a.estado==='finalizada'?'finished':a.estado,createdAt:a.created_at}));
     activitiesState.attendances=(result[2]||[]).map(a=>({id:a.id,personId:a.persona_id,activityId:a.actividad_id,createdAt:a.fecha_registro||a.created_at}));
     const active=activitiesState.activities.find(a=>a.status==='active');
@@ -447,6 +447,14 @@ async function loadActivitiesFromNeon(){
 window.addEventListener('mira:authenticated',loadActivitiesFromNeon);
 function normActivityText(v){return (v||'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');}
 function normalizeCedula(v){return (v||'').replace(/\D/g,'');}
+function splitLegacyPersonName(nombres,apellidos){
+  const full=String(nombres||'').trim();
+  const surnames=String(apellidos||'').trim();
+  if(surnames || !full.includes(' ')) return {names:full,surnames};
+  const parts=full.split(/\s+/).filter(Boolean);
+  if(parts.length>=3) return {names:parts.slice(0,-2).join(' '),surnames:parts.slice(-2).join(' ')};
+  return {names:full,surnames:''};
+}
 function escapeActivityHtml(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function currentActivity(){return activitiesState.activities.find(a=>a.id===activitiesState.currentActivityId&&a.status==='active')||null;}
 let activitiesReturnContext = 'landing';
@@ -494,7 +502,8 @@ async function lookupPerson(){
     const rows=await window.MIRA_DATA.listPeople({cedula:ced,limit:1});
     const found=rows?.[0];
     if(found){
-      const person={id:found.id,cedula:found.cedula||found.cedula_normalizada||'',names:found.nombres||'',surnames:found.apellidos||'',phone:found.telefono||'',infoMira:found.info_mira===true?'si':found.info_mira===false?'no':''};
+      const parsed=splitLegacyPersonName(found.nombres,found.apellidos);
+      const person={id:found.id,cedula:found.cedula||found.cedula_normalizada||'',names:parsed.names,surnames:parsed.surnames,phone:found.telefono||'',infoMira:found.info_mira===true?'si':found.info_mira===false?'no':''};
       const i=activitiesState.people.findIndex(p=>p.id===person.id);if(i>=0)activitiesState.people[i]=person;else activitiesState.people.push(person);
       document.getElementById('participantNames').value=person.names;
       document.getElementById('participantSurnames').value=person.surnames;
