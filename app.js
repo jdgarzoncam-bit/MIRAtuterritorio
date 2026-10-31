@@ -413,10 +413,6 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && adminCardC
 // MÓDULO ACTIVIDADES — registro compacto, vista en vivo y archivo tipo Drive.
 const activitiesPlaceholder = document.getElementById('activitiesPlaceholder');
 const ACTIVITY_STORE_KEY = 'mira_territorio_activities_v1';
-let activitiesState = loadActivitiesState();
-let editingParticipantId = null;
-let detailActivityId = null;
-let returnToRecentAfterEdit = false;
 let activitiesState = {activities:[],people:[],attendances:[],currentActivityId:null};
 let editingParticipantId = null;
 let detailActivityId = null;
