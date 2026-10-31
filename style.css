@@ -5049,3 +5049,12 @@ a:hover {color:#E6EDFD;}
  body:has(#app-container.mobile-operations-workspace-active) #activitiesPlaceholder:not(.hidden),body:has(#app-container.mobile-operations-workspace-active) #concejalWorkspace:not(.hidden){position:fixed!important;inset:0!important;z-index:5500!important;display:flex!important;flex-direction:column!important;width:100vw!important;height:100dvh!important;max-height:100dvh!important;overflow-y:auto!important;margin:0!important;padding:calc(env(safe-area-inset-top,0px) + 58px) 12px calc(env(safe-area-inset-bottom,0px) + 18px)!important;border-radius:0!important}
  #mobileOpsBack{position:fixed!important;top:calc(env(safe-area-inset-top,0px) + 9px)!important;left:12px!important;z-index:6000!important}
 }
+
+
+/* Recuperación territorial: mensaje legible y botón de reintento sin desbordamiento. */
+.territory-load-error { display:flex; flex-direction:column; align-items:stretch; gap:7px; padding:10px 9px; color:var(--text-main,#e5edf5); font-size:.78rem; line-height:1.35; overflow-wrap:anywhere; }
+.territory-load-error strong { font-size:.8rem; line-height:1.35; }
+.territory-load-error p { margin:0; color:var(--text-muted,#a9b7c8); }
+.territory-error-detail { display:block; max-width:100%; padding:6px 7px; border-radius:7px; background:rgba(2,8,23,.62); color:#fbbf24; white-space:pre-wrap; overflow-wrap:anywhere; font-size:.68rem; }
+.territory-retry-button { align-self:flex-start; min-height:32px; max-width:100%; padding:6px 11px; border:1px solid rgba(56,189,248,.48); border-radius:8px; background:rgba(8,145,178,.16); color:var(--text-main,#f8fafc); font:600 .74rem/1.2 inherit; cursor:pointer; white-space:normal; }
+.territory-retry-button:hover { background:rgba(8,145,178,.3); border-color:var(--cyan-tactile,#22d3ee); }
