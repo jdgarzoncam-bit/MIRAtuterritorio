@@ -1017,36 +1017,91 @@ function inicializarSistemaMapa() {
     baseVotantes = [];
     actualizarConteoLogistica();
 
-    // La capa territorial principal ahora usa los polígonos del KML.
-    // Se dejan de dibujar los antiguos puntos de barrios para reducir el ruido visual.
-    fetch('./barrios_poligonos_kml_aportado.geojson')
-        .then(response => {
-            if (!response.ok) throw new Error('Archivo de polígonos KML no disponible');
-            return response.json();
-        })
-        .then(data => {
-            datosOriginales = data;
-            // Inicializar todos los sectores como visibles y sin selección implícita.
-            barriosFiltroEstado = Object.create(null);
-            (data.features || []).forEach((feature, index) => {
-                barriosFiltroEstado[obtenerNombreBarrio(feature, index)] = true;
-            });
-            poligonoSeleccionadoNombre = null;
-            poligonosCoincidenciaActiva = new Set();
+    // Carga robusta de la cartografía territorial. El archivo contiene los
+    // polígonos y coordenadas oficiales aportados; no se generan coordenadas
+    // aproximadas ni se sustituye la geometría por marcadores.
+    async function cargarPoligonosTerritoriales() {
+        const container = document.getElementById('barrios-checkbox-container');
+        if (container) container.innerHTML = '<p class="loading-text">Cargando sectores y geometrías territoriales…</p>';
+
+        const fuentes = [
+            new URL('./barrios_poligonos_kml_aportado.geojson?v=20261031-geojson-recovery', document.baseURI).href,
+            'https://raw.githubusercontent.com/jdgarzoncam-bit/MIRAtuterritorio/main/barrios_poligonos_kml_aportado.geojson'
+        ];
+        const errores = [];
+        let data = null;
+        let fuenteCargada = '';
+
+        for (const url of fuentes) {
+            try {
+                const response = await fetch(url, { cache: 'no-store' });
+                if (!response.ok) throw new Error('HTTP ' + response.status);
+                const candidate = await response.json();
+                if (!candidate || candidate.type !== 'FeatureCollection' || !Array.isArray(candidate.features) || !candidate.features.length) {
+                    throw new Error('El archivo no contiene un FeatureCollection válido');
+                }
+                const validFeatures = candidate.features.filter(feature =>
+                    feature && feature.geometry && Array.isArray(feature.geometry.coordinates) &&
+                    feature.geometry.coordinates.length && feature.properties
+                );
+                if (!validFeatures.length) throw new Error('No se encontraron geometrías con coordenadas');
+                if (validFeatures.length !== candidate.features.length) {
+                    console.warn('[MIRA] Hay sectores sin geometría válida:', candidate.features.length - validFeatures.length);
+                }
+                data = { ...candidate, features: validFeatures };
+                fuenteCargada = url;
+                break;
+            } catch (error) {
+                errores.push(url + ' → ' + (error.message || error));
+                console.warn('[MIRA] Fuente territorial no disponible:', url, error);
+            }
+        }
+
+        if (!data) {
+            const detail = errores.join(' | ');
+            console.error('[MIRA] No fue posible cargar la cartografía territorial:', detail);
+            if (container) {
+                container.innerHTML = '<div class="loading-text" role="alert"><strong>No se pudieron cargar los barrios.</strong><p>La cartografía no se ha eliminado. Comprueba la conexión y vuelve a intentarlo.</p><button type="button" id="retryTerritoryGeoJSON" class="territory-reset-icon">Reintentar carga</button></div>';
+                document.getElementById('retryTerritoryGeoJSON')?.addEventListener('click', cargarPoligonosTerritoriales);
+            }
+            return;
+        }
+
+        datosOriginales = data;
+        barriosFiltroEstado = Object.create(null);
+        data.features.forEach((feature, index) => {
+            barriosFiltroEstado[obtenerNombreBarrio(feature, index)] = true;
+        });
+        poligonoSeleccionadoNombre = null;
+        poligonosCoincidenciaActiva = new Set();
+
+        try {
             generarListaBarrios();
             actualizarMapa();
-            // Primer encuadre: mostrar la extensión territorial completa, no un sector arbitrario.
             if (!window.__MIRA_INITIAL_TERRITORY_FIT_DONE && map && geojsonLayer) {
                 const initialBounds = geojsonLayer.getBounds();
                 if (initialBounds && initialBounds.isValid()) {
                     const mobileMap = window.matchMedia('(max-width: 600px)').matches;
-                    map.fitBounds(initialBounds, mobileMap ? { padding: [22, 22], maxZoom: 14 } : { paddingTopLeft: [410, 45], paddingBottomRight: [45, 45], maxZoom: 14 });
+                    map.fitBounds(initialBounds, mobileMap
+                        ? { padding: [22, 22], maxZoom: 14 }
+                        : { paddingTopLeft: [410, 45], paddingBottomRight: [45, 45], maxZoom: 14 });
                     window.__MIRA_INITIAL_TERRITORY_FIT_DONE = true;
                 }
             }
-            console.info(`[MIRA] Polígonos territoriales cargados: ${data.features?.length || 0}`);
-        })
-        .catch(err => console.warn('[MIRA] No se pudo cargar la capa territorial KML:', err));
+            console.info('[MIRA] Cartografía territorial cargada:', {
+                sectores: data.features.length,
+                geometrias: data.features.filter(f => f.geometry && f.geometry.coordinates?.length).length,
+                fuente: fuenteCargada
+            });
+        } catch (error) {
+            console.error('[MIRA] El GeoJSON se descargó, pero no se pudo renderizar:', error);
+            if (container) {
+                container.innerHTML = '<div class="loading-text" role="alert"><strong>Los barrios se descargaron, pero hubo un error al mostrarlos.</strong><p>La geometría está disponible; revisaremos el error de visualización.</p><button type="button" id="retryTerritoryGeoJSON" class="territory-reset-icon">Reintentar carga</button></div>';
+                document.getElementById('retryTerritoryGeoJSON')?.addEventListener('click', cargarPoligonosTerritoriales);
+            }
+        }
+    }
+    cargarPoligonosTerritoriales();
 
     function obtenerNombreBarrio(feature, index) {
         if (feature && feature.properties) {
