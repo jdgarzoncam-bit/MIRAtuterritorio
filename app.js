@@ -2018,7 +2018,7 @@ function inicializarSistemaMapa() {
             clearTimeout(suggestionTimer);
             const term = inputCuidador.value.trim();
             const requestId = ++suggestionRequest;
-            if (term.length < 2 || /^\\d+$/.test(term)) { closeSuggestions(); return; }
+            if (term.length < 2 || /^\d+$/.test(term)) { closeSuggestions(); return; }
             suggestions.innerHTML = '<div class="mira-suggestion-loading">Buscando coincidencias…</div>';
             suggestions.hidden = false;
             suggestionTimer = setTimeout(async () => {
