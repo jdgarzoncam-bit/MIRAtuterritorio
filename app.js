@@ -1856,8 +1856,9 @@ function inicializarSistemaMapa() {
             try{
                 if(!window.MIRA_DATA?.listInfoMiraDirectory) throw new Error('El cliente de Neon aún no está disponible.');
                 const all=await obtenerDirectorioLogistica();
-                const getPhone=r=>personaDe(r)?.telefono || r.telefono || '';
-                const getName=r=>[personaDe(r)?.nombres,personaDe(r)?.apellidos].filter(Boolean).join(' ') || r.nombre_original || 'Sin nombre';
+                const personOf=r=>Array.isArray(r.personas)?(r.personas[0]||null):(r.personas||null);
+                const getPhone=r=>personOf(r)?.telefono || r.telefono || '';
+                const getName=r=>[personOf(r)?.nombres,personOf(r)?.apellidos].filter(Boolean).join(' ') || r.nombre_original || 'Sin nombre';
                 const required=all.filter(r=>normalizarTexto(r.movilidad)==='REQUIERE');
                 const drivers=all.filter(r=>normalizarTexto(r.movilidad)==='PROPIO');
                 const shown=tipo==='TODOS'?all:tipo==='REQUIERE'?required:tipo==='PROPIO'?drivers:[];
