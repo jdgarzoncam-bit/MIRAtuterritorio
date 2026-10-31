@@ -80,8 +80,8 @@
                             <button id="cancelAdminInlineBtn" class="inline-close-btn" type="button" title="Volver">✕</button>
                         </div>
                         <div class="form-group">
-                            <label for="username" data-i18n="lbl_user">Usuario administrador</label>
-                            <input type="text" id="username" placeholder="Ej. admin" autocomplete="username" value="admin">
+                            <label for="username">Correo electrónico</label>
+                            <input type="email" id="username" placeholder="nombre@correo.com" autocomplete="username" inputmode="email" required>
                         </div>
                         <div class="form-group">
                             <label for="password" data-i18n="lbl_pass">Contraseña</label>
@@ -92,11 +92,10 @@
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                         </button>
                         <div class="account-secondary-actions">
-                            <button class="account-link-btn" id="createUserBtn" type="button">＋ Crear usuario local</button>
-                            <button class="account-link-btn" id="forgotPasswordBtn" type="button">¿Olvidaste tu contraseña?</button>
+                            <span class="account-link-btn" aria-hidden="true">Acceso protegido por Neon Auth</span>
                         </div>
                         <div id="accountActionNotice" class="account-action-notice hidden" role="status" aria-live="polite"></div>
-                        <div class="login-error" id="loginError" data-i18n="err_login" role="alert" aria-live="assertive">Ingresa con el usuario local configurado en este navegador.</div>
+                        <div class="login-error" id="loginError" data-i18n="err_login" role="alert" aria-live="assertive">Ingresa con el correo electrónico y la contraseña de tu cuenta.</div>
                     </div>
                 </div>
             </div>
