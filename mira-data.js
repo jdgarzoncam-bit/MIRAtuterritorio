@@ -39,6 +39,19 @@ const qs = (params) => new URLSearchParams(params).toString();
 const cleanCedula = (value) => String(value || "").replace(/\D/g, "");
 
 export const MIRA_DATA = {
+  async listInfoMiraDirectory({cedula="", search="", limit=100}={}) {
+    const params = {
+      select:"id,fila_origen,cedula_original,nombre_original,telefono,barrio,estado_original,cuidador_nombre,puesto_votacion,puesto_original,mesa_votacion,movilidad,asistencia,persona_id,personas(id,cedula,nombres,apellidos,telefono,info_mira,puesto_votacion,mesa_votacion,activo)",
+      order:"fila_origen.asc",
+      limit:String(Math.min(Math.max(limit,1),100))
+    };
+    if (cedula) params.cedula_original = `eq.${cleanCedula(cedula)}`;
+    else if (search.trim()) {
+      const term = search.trim().replace(/[,*()]/g," ");
+      params.or = `(nombre_original.ilike.*${term}*,cuidador_nombre.ilike.*${term}*,cedula_original.eq.${cleanCedula(term) || term})`;
+    }
+    return miraRequest("infomira_red",{query:qs(params)});
+  },
   async listPeople({cedula="", search="", limit=100}={}) {
     const params = {select:"id,cedula,cedula_normalizada,nombres,apellidos,telefono,correo,info_mira,puesto_votacion,mesa_votacion,requiere_transporte,edad,tipo_participacion,activo,created_at,updated_at",order:"updated_at.desc",limit:String(Math.min(Math.max(limit,1),100))};
     if (cedula) params.cedula_normalizada = `eq.${cleanCedula(cedula)}`;
