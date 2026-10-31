@@ -82,6 +82,29 @@ export const MIRA_DATA = {
     return miraRequest("testigos_publicos",{query:qs({select:"*",order:"created_at.desc",limit:String(Math.min(Math.max(limit,1),100))})});
   },
   updatePublicWitness(id,payload) { return miraRequest("testigos_publicos",{method:"PATCH",query:qs({id:`eq.${id}`}),body:payload}); },
+  async listConcejalActivities({limit=500}={}) {
+    return miraRequest("concejal_actividades",{query:qs({select:"*",order:"fecha.desc,created_at.desc",limit:String(Math.min(Math.max(limit,1),500))})});
+  },
+  createConcejalActivity(payload) {
+    if(!payload.barrio?.trim()||!payload.descripcion?.trim()||!payload.fecha) throw new Error("Barrio, descripción y fecha son obligatorios.");
+    return miraRequest("concejal_actividades",{method:"POST",body:payload});
+  },
+  updateConcejalActivity(id,payload) { return miraRequest("concejal_actividades",{method:"PATCH",query:qs({id:`eq.${id}`}),body:payload}); },
+  deleteConcejalActivity(id) { return miraRequest("concejal_actividades",{method:"DELETE",query:qs({id:`eq.${id}`})}); },
+  async listConcejalCommitments({limit=500}={}) {
+    return miraRequest("concejal_compromisos",{query:qs({select:"*",order:"fecha.desc,created_at.desc",limit:String(Math.min(Math.max(limit,1),500))})});
+  },
+  createConcejalCommitment(payload) {
+    if(!payload.barrio?.trim()||!payload.compromiso?.trim()||!payload.adquirido_con?.trim()||!payload.fecha) throw new Error("Completa barrio, compromiso, con quién y fecha.");
+    return miraRequest("concejal_compromisos",{method:"POST",body:payload});
+  },
+  updateConcejalCommitment(id,payload) { return miraRequest("concejal_compromisos",{method:"PATCH",query:qs({id:`eq.${id}`}),body:payload}); },
+  deleteConcejalCommitment(id) { return miraRequest("concejal_compromisos",{method:"DELETE",query:qs({id:`eq.${id}`})}); },
+  async listWitnessFiles({witnessId,limit=100}={}) {
+    const params={select:"*",order:"created_at.desc",limit:String(Math.min(Math.max(limit,1),100))};
+    if(witnessId) params.testigo_id=`eq.${witnessId}`;
+    return miraRequest("testigo_archivos",{query:qs(params)});
+  },
   submitPublicReport(payload) {
     const allowed={puesto_votacion:String(payload.puesto_votacion||"").trim(),mesa_votacion:String(payload.mesa_votacion||"").trim(),tipo_reporte:payload.tipo_reporte,descripcion:String(payload.descripcion||"").trim()};
     if(allowed.puesto_votacion.length<3 || allowed.mesa_votacion.length<1 || allowed.descripcion.length<5) throw new Error("Completa puesto, mesa y descripción.");
@@ -89,3 +112,4 @@ export const MIRA_DATA = {
   }
 };
 window.MIRA_DATA = MIRA_DATA;
+window.dispatchEvent(new Event("mira:data-ready"));
