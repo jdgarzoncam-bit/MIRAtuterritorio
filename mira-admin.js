@@ -18,7 +18,8 @@ function notice(message, error=false) {
   node.classList.add(error?"is-error":"is-success");
 }
 function clearNotice(){const n=$("adminPermissionsNotice");if(n){n.textContent="";n.classList.add("hidden");}}
-function isAdmin(){return window.MIRA_CURRENT_USER?.role==="admin";}
+const PRIMARY_ADMIN_AUTH_ID="beef5bf3-82a8-4c35-a12c-17771be59da1";
+function isAdmin(){const user=window.MIRA_CURRENT_USER;return user?.role==="admin"&&user?.authUserId===PRIMARY_ADMIN_AUTH_ID;}
 function openPanel(){
   if(!isAdmin())return;
   $("adminPermissionsPanel")?.classList.remove("hidden");
@@ -82,8 +83,8 @@ function renderApprovalControls(user){
   const options=roles.map(([value,label])=>'<option value="'+value+'" '+(user.role===value?"selected":"")+'>'+label+'</option>').join("");
   const canApprove=user.email_verified===true;
   const action=user.active?"suspend":"activate";
-  const label=user.active?"Suspender cuenta":"Aprobar y activar";
-  const hint=canApprove?(user.active?"La cuenta puede ingresar según sus permisos.":"El correo está confirmado. Puedes aprobar la cuenta y asignar un rol."):"La persona debe confirmar su correo antes de que puedas activar la cuenta.";
+  const label=user.active?"Desaprobar cuenta":"Aprobar cuenta";
+  const hint=canApprove?(user.active?"La cuenta está aprobada. Puedes desaprobarla para retirar su acceso.":"El correo está confirmado. Puedes aprobar la cuenta y asignar un rol."):"La persona debe confirmar su correo antes de que puedas activar la cuenta.";
   return '<section class="admin-approval-card"><div><strong>Estado y aprobación</strong><small>'+hint+'</small></div><label class="admin-role-picker"><span>Rol de la cuenta</span><select id="adminRoleSelect">'+options+'</select></label><button type="button" class="admin-approval-button" data-profile-approval="'+action+'" '+(!canApprove&&!user.active?"disabled":"")+'>'+label+'</button><button type="button" class="admin-approval-button admin-role-save" data-profile-approval="save-role">Guardar rol</button></section><div class="admin-approval-divider"></div>';
 }
 async function changeUserApproval(button){
@@ -102,7 +103,7 @@ async function changeUserApproval(button){
     renderUsers();
     $("adminSelectedUser").innerHTML='<strong>'+escapeHtml(selectedProfile.display_name||selectedProfile.email||"Usuario")+'</strong><span>'+escapeHtml(selectedProfile.email||"")+' · '+(selectedProfile.email_verified?"Correo confirmado":"Correo sin confirmar")+' · '+(selectedProfile.active?"Cuenta activa":"Pendiente de aprobación")+'</span>';
     renderMatrix();
-    notice(action==="save-role"?"Rol actualizado. Los permisos de los módulos se conservan.":activate?"Cuenta aprobada y activada. Ahora asigna los permisos de cada módulo.":"Cuenta suspendida. Sus permisos se conservan, pero no podrá ingresar.");
+    notice(action==="save-role"?"Rol actualizado. Los permisos de los módulos se conservan.":activate?"Cuenta aprobada y activada. Ahora asigna los permisos de cada módulo.":"Cuenta desaprobada. Sus permisos se conservan, pero el acceso queda bloqueado.");
   }catch(error){notice(error.message||"No fue posible actualizar el estado de la cuenta.",true);}
   finally{button.disabled=false;}
 }

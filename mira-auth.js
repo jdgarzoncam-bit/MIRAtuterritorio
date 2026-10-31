@@ -14,7 +14,7 @@ async function bearerToken() {
   return token;
 }
 async function getOwnProfile(token) {
-  const response=await fetch(`${DATA_API_URL}/user_profiles?select=role,active,email,display_name&limit=1`,{
+  const response=await fetch(`${DATA_API_URL}/user_profiles?select=auth_user_id,role,active,email_verified,email,display_name&limit=1`,{
     headers:{Authorization:`Bearer ${token}`,"Accept-Profile":"mira"}
   });
   if(!response.ok) throw new Error("No fue posible validar los permisos de esta cuenta.");
@@ -41,11 +41,11 @@ async function loginWithNeon() {
     }
     const token=await bearerToken();
     const profile=await getOwnProfile(token);
-    if(!profile || profile.active!==true || !["admin","operator","viewer"].includes(profile.role)) {
+    if(!profile || profile.active!==true || profile.email_verified!==true || !["admin","operator","viewer","witness"].includes(profile.role)) {
       await auth.signOut();
       throw new Error("Tu cuenta todavía no tiene permisos asignados. Solicita al administrador que habilite tu perfil.");
     }
-    window.MIRA_CURRENT_USER={role:profile.role,displayName:profile.display_name||email,email};
+    window.MIRA_CURRENT_USER={role:profile.role,authUserId:profile.auth_user_id,displayName:profile.display_name||email,email};
     window.dispatchEvent(new Event("mira:authenticated"));
     const error=document.getElementById("loginError");
     if(error) error.style.display="none";
