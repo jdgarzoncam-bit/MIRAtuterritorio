@@ -1967,7 +1967,10 @@ function inicializarSistemaMapa() {
 
         function actualizarMapaInfoMira(rows) {
             miraMarkersGroup.clearLayers();
-            if (!rows.length) return;
+            if (!rows.length) {
+                if (!map.hasLayer(puestosLayerGroup)) puestosLayerGroup.addTo(map);
+                return;
+            }
             const agrupados = new Map();
             rows.forEach(row => {
                 const nombrePuesto = row.puesto_votacion || row.puesto_original || personaDe(row)?.puesto_votacion || '';
