@@ -69,7 +69,7 @@ document.addEventListener("DOMContentLoaded",()=>{
     try{
       const result=await auth.requestPasswordReset({
         email,
-        redirectTo:"https://jdgarzoncam-bit.github.io/reset-password.html"
+        redirectTo:"https://jdgarzoncam-bit.github.io/MIRAtuterritorio/reset-password.html"
       });
       if(result?.error) throw new Error(result.error.message||"No fue posible solicitar el restablecimiento.");
       showLoginError("Si el correo está registrado, Neon Auth enviará un enlace para crear una contraseña nueva. Revisa también Spam.");
