@@ -53,8 +53,9 @@ export const MIRA_DATA = {
     }
     return miraRequest("infomira_red",{query:qs(params)});
   },
-  async listPeople({cedula="", search="", limit=100}={}) {
-    const params = {select:"id,cedula,cedula_normalizada,nombres,apellidos,telefono,correo,info_mira,puesto_votacion,mesa_votacion,requiere_transporte,edad,tipo_participacion,activo,created_at,updated_at",order:"updated_at.desc",limit:String(Math.min(Math.max(limit,1),1000))};
+  async listPeople({cedula="", search="", limit=100, tipoParticipacion=""}={}) {
+    const params = {select:"id,cedula,cedula_normalizada,nombres,apellidos,telefono,correo,info_mira,puesto_votacion,mesa_votacion,requiere_transporte,edad,tipo_participacion,observaciones,activo,created_at,updated_at",order:"updated_at.desc",limit:String(Math.min(Math.max(limit,1),1000))};
+    if (tipoParticipacion) params.tipo_participacion = `eq.${tipoParticipacion}`;
     if (cedula) params.cedula_normalizada = `eq.${cleanCedula(cedula)}`;
     else if (search.trim()) {
       const term = search.trim().replace(/[,*()]/g," ");
