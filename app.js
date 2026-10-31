@@ -1758,7 +1758,8 @@ function inicializarSistemaMapa() {
         });
     }
 
-    function mostrarFichaPuesto(puesto, votantes) {
+    async function mostrarFichaPuesto(puesto, votantes) {
+        if (window.MTT_ELECTORAL_WINNERS_READY) { try { await window.MTT_ELECTORAL_WINNERS_READY; } catch (error) { console.warn('No se pudo cargar el detalle electoral:', error); } }
         colapsarPanelesDeFiltros();
         let mesasCount = {};
         votantes.forEach(v => {
@@ -1797,22 +1798,22 @@ function inicializarSistemaMapa() {
         const datosElectorales2019 = buscarDatosElectorales(window.MTT_ELECTORAL_2019);
         const datosElectorales2023 = buscarDatosElectorales(window.MTT_ELECTORAL_2023);
         const fmtVotos = n => Number(n || 0).toLocaleString('es-CO');
-        const renderBloqueElectoral = (datos, anio) => datos ? `
-            <details class="electoral-year-result">
-              <summary>🗳️ Resultados electorales ${anio} · Concejo</summary>
-              <div class="electoral-post-kpis">
-                <div><strong>${fmtVotos(datos.votosNulos)}</strong><small>Votos nulos</small></div>
-                <div><strong>${fmtVotos(datos.votosBlanco)}</strong><small>Votos en blanco</small></div>
-                <div><strong>${fmtVotos(datos.votosNoMarcados)}</strong><small>No marcados</small></div>
-                <div><strong>${fmtVotos(datos.votosDiana)}</strong><small>Diana Marcela Morales Gutiérrez</small></div>
-                <div class="total"><strong>${fmtVotos(datos.votosTotales)}</strong><small>Total de votos</small></div>
-              </div>
-              <details class="electoral-mesa-details">
-                <summary>Ver resultados por mesa (${datos.mesas})</summary>
-                <div class="electoral-mesa-list">${Object.entries(datos.detalleMesas).map(([mesa,v]) => `
-                  <div class="electoral-mesa-row"><strong>Mesa ${mesa}</strong><span>Total: ${fmtVotos(v.votosTotales)}</span><small>Nulos ${fmtVotos(v.votosNulos)} · Blanco ${fmtVotos(v.votosBlanco)} · No marcados ${fmtVotos(v.votosNoMarcados)} · Diana ${fmtVotos(v.votosDiana)}</small></div>`).join('')}</div>
-              </details>
-            </details>` : `<p class="placeholder-text">No hay resultados de ${anio} asociados a este código de zona y puesto.</p>`;
+        const renderGanadores = items => (!items || !items.length) ? '<span class="placeholder-text">Sin registro</span>' : items.map(item => '<span class="electoral-winner-name">' + escapeHtml(item.nombre) + ' <b>' + fmtVotos(item.votos) + ' votos</b></span>').join('');
+        const renderBloqueElectoral = (datos, anio) => {
+            if (!datos) return '<p class="placeholder-text">No hay resultados de ' + anio + ' asociados a este código de zona y puesto.</p>';
+            const winnerPost = window.MTT_ELECTORAL_WINNERS?.[String(anio)]?.puestos?.[puesto.zona + '-' + puesto.numero];
+            const resumenGanadores = winnerPost
+                ? '<div class="electoral-winners-grid"><div class="electoral-winner-card"><small>🏆 Candidato más votado del puesto</small>' + renderGanadores(winnerPost.candidato) + '</div><div class="electoral-winner-card"><small>🏛️ Partido más votado del puesto</small>' + renderGanadores(winnerPost.partido) + '</div></div>'
+                : '<p class="placeholder-text">No se encontró el detalle de candidatos y partidos para este puesto.</p>';
+            const filasMesas = Object.entries(datos.detalleMesas || {}).map(([mesa,v]) => {
+                const winnerMesa = winnerPost?.mesas?.[String(mesa)];
+                const ganadoresMesa = winnerMesa ? '<div class="electoral-mesa-winners"><span><b>Candidato:</b> ' + renderGanadores(winnerMesa.candidato) + '</span><span><b>Partido:</b> ' + renderGanadores(winnerMesa.partido) + '</span></div>' : '';
+                return '<div class="electoral-mesa-row"><strong>Mesa ' + escapeHtml(mesa) + '</strong><span>Total: ' + fmtVotos(v.votosTotales) + '</span><small>Nulos ' + fmtVotos(v.votosNulos) + ' · Blanco ' + fmtVotos(v.votosBlanco) + ' · No marcados ' + fmtVotos(v.votosNoMarcados) + ' · Diana ' + fmtVotos(v.votosDiana) + '</small>' + ganadoresMesa + '</div>';
+            }).join('');
+            return '<details class="electoral-year-result"><summary>🗳️ Resultados electorales ' + anio + ' · Concejo</summary>' + resumenGanadores +
+              '<div class="electoral-post-kpis"><div><strong>' + fmtVotos(datos.votosNulos) + '</strong><small>Votos nulos</small></div><div><strong>' + fmtVotos(datos.votosBlanco) + '</strong><small>Votos en blanco</small></div><div><strong>' + fmtVotos(datos.votosNoMarcados) + '</strong><small>No marcados</small></div><div><strong>' + fmtVotos(datos.votosDiana) + '</strong><small>Diana Marcela Morales Gutiérrez</small></div><div class="total"><strong>' + fmtVotos(datos.votosTotales) + '</strong><small>Total de votos</small></div></div>' +
+              '<details class="electoral-mesa-details"><summary>Ver resultados por mesa (' + (datos.mesas || Object.keys(datos.detalleMesas || {}).length) + ')</summary><div class="electoral-mesa-list">' + filasMesas + '</div></details></details>';
+        };
         const bloqueElectoral = datosElectorales2019 || datosElectorales2023 ? `
             <div class="dash-divider"></div><div class="dash-section-title">🗳️ Historial de resultados electorales · Concejo</div>
             ${renderBloqueElectoral(datosElectorales2019,2019)}

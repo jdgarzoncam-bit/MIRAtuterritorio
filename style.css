@@ -5544,3 +5544,14 @@ a:hover {color:#E6EDFD;}
 #openAdminPermissionsBtn:not([data-admin-visible]),
 #adminPermissionsPanel:not([data-admin-visible]){display:none!important;visibility:hidden!important;pointer-events:none!important}
 #openAdminPermissionsBtn[aria-hidden="true"]{display:none!important}
+
+/* Ganadores por puesto y mesa desde la base electoral unificada */
+.electoral-winners-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 12px}
+.electoral-winner-card{min-width:0;padding:10px;border:1px solid rgba(56,189,248,.28);border-radius:12px;background:rgba(15,23,42,.38);display:flex;flex-direction:column;gap:6px}
+.electoral-winner-card>small{color:var(--cyan-tactile);font-size:.7rem;font-weight:800;line-height:1.35}
+.electoral-winner-name{display:block;font-size:.75rem;line-height:1.4;overflow-wrap:anywhere;color:var(--text-main)}
+.electoral-winner-name b{display:block;color:var(--cyan-tactile);font-size:.7rem}
+.electoral-mesa-winners{display:grid;gap:5px;margin-top:7px;padding-top:7px;border-top:1px solid var(--neo-border-subtle)}
+.electoral-mesa-winners>span{font-size:.7rem;line-height:1.4;overflow-wrap:anywhere}
+.electoral-mesa-winners .electoral-winner-name{padding-left:8px}
+@media(max-width:420px){.electoral-winners-grid{grid-template-columns:1fr}}
