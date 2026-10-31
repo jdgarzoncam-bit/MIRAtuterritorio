@@ -519,7 +519,31 @@ body.theme-light #testigoStandaloneContainer {
     background: #dc2626;
 }
 
-#app-container { display: none; width: 100%; height: 100%; position: relative; z-index: 10; }
+#app-container {
+    display: none;
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    z-index: 10;
+}
+
+/* Leaflet debe ocupar toda el área disponible, incluso después de mostrar
+   el PMU desde una pantalla de acceso que inicialmente está oculta. */
+#app-container > #map {
+    position: absolute !important;
+    inset: 0 !important;
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+}
 
 .sidebar-wrapper-group {
     position: absolute; top: 20px; left: 20px; width: 390px;
@@ -1364,12 +1388,6 @@ body.theme-light .leaflet-tile-pane {
 .account-link-btn { appearance:none; border:0; background:transparent; color:var(--cyan-tactile, #40e3f3); font:inherit; font-size:.78rem; cursor:pointer; padding:7px 2px; text-decoration:underline; text-underline-offset:3px; }
 .account-link-btn:focus-visible { outline:2px solid var(--cyan-tactile, #40e3f3); outline-offset:3px; border-radius:4px; }
 .account-action-notice { margin-top:10px; padding:10px 12px; border:1px solid rgba(64,227,243,.4); border-radius:10px; color:var(--text-primary, #eef6ff); background:rgba(8,25,40,.82); font-size:.78rem; line-height:1.45; }
-
-
-/* Aviso y botón del entorno local de pruebas. */
-.mira-local-test-banner{position:fixed;z-index:10000;top:10px;left:50%;transform:translateX(-50%);max-width:calc(100vw - 24px);padding:9px 14px;border:1px solid #f59e0b;border-radius:12px;background:rgba(35,25,7,.96);color:#fde68a;font-size:12px;font-weight:800;letter-spacing:.03em;text-align:center;box-shadow:0 8px 28px rgba(0,0,0,.35)}
-.test-mode-btn{width:100%;margin-top:10px;padding:10px 12px;border:1px dashed #f59e0b;border-radius:10px;background:rgba(245,158,11,.10);color:#fcd34d;font-weight:800;cursor:pointer}
-.test-mode-btn:hover{background:rgba(245,158,11,.18)}
 
 
 /* V6: capa territorial unificada y dashboard bajo el menú lateral */
@@ -2570,7 +2588,6 @@ body.pmu-neomorphic .module-toggle,
 body.pmu-neomorphic .module-header-btn { color:#17365d !important; background:linear-gradient(145deg,#e2f4fd,#c6e7f7) !important; border-color:rgba(77,158,207,.72) !important; box-shadow:4px 4px 9px rgba(65,120,164,.18),-3px -3px 8px rgba(255,255,255,.76) !important; }
 body.pmu-neomorphic .inline-badge,
 body.pmu-neomorphic .brand-pill { color:#0879b6 !important; }
-body.pmu-neomorphic .mira-local-test-banner { box-shadow:0 6px 18px rgba(36,89,133,.2); }
 @media(max-width:700px){
   body.pmu-neomorphic .neo-tactile-sidebar,
   body.pmu-neomorphic .dashboard-floating-card { box-shadow:5px 5px 14px rgba(66,123,172,.24),-4px -4px 12px rgba(255,255,255,.78) !important; }
@@ -2776,7 +2793,6 @@ body { --mtt-bg:#06132b; --mtt-panel:rgba(8,24,49,.88); --mtt-line:rgba(0,190,25
 .admin-login-modal .form-group input::placeholder { color:#819bb7 !important; }
 .admin-login-modal .account-link-btn { color:#55e5f7 !important; }
 .admin-login-modal #loginError,.admin-login-modal .login-error { color:#ff858f !important; }
-.admin-login-modal .test-mode-btn { color:#ffd36b !important;background:rgba(255,180,0,.07) !important;border:1px dashed rgba(255,190,65,.75) !important; }
 .admin-login-modal .login-btn { color:#fff !important;background:linear-gradient(110deg,#087de8,#174de0) !important;border:1px solid rgba(76,177,255,.45) !important; }
 
 @media(max-width:700px){ #heroModulesGrid { grid-template-columns:1fr !important; } }
@@ -2917,3 +2933,60 @@ body.pmu-neomorphic .leaflet-tile {
 #map.leaflet-container {
   background: #172536 !important;
 }
+
+
+/* V42 — Corrección definitiva de visibilidad de la ficha compartida puesto/barrio.
+   Una regla antigua ocultaba permanentemente las fichas territoriales con display:none !important.
+   Esta regla permite mostrar la ficha cuando no tiene .hidden y conserva el cierre normal. */
+#floatingPuestoWidget:not(.hidden) {
+  display: block !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  z-index: 12000 !important;
+}
+#floatingPuestoWidget.hidden {
+  display: none !important;
+  pointer-events: none !important;
+}
+
+
+/* Selector de vistas del módulo unificado Barrios y puestos */
+.territory-mode-selector{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 4px;}
+.territory-mode-option{display:flex;align-items:center;gap:7px;min-width:0;cursor:pointer;border:1px solid var(--neo-border-subtle);border-radius:11px;padding:9px 10px;background:var(--neo-glass-bg);color:var(--text-main);font-size:.78rem;font-weight:700;box-shadow:var(--shadow-tactile-inset);}
+.territory-mode-option:has(input:checked){border-color:var(--cyan-tactile);background:rgba(34,211,238,.10);box-shadow:0 0 0 1px rgba(34,211,238,.18),var(--shadow-tactile-inset);}
+.territory-mode-option input{accent-color:var(--cyan-tactile);flex:0 0 auto;margin:0;}
+.territory-mode-panel[hidden]{display:none!important;}
+.barrios-puestos-content{gap:10px;}
+
+
+/* Dashboard electoral 2023 */
+.electoral-dashboard{display:flex;flex-direction:column;gap:12px;padding:4px 2px;color:var(--text-color,#eaf2ff)}
+.electoral-dashboard-heading{display:flex;flex-direction:column;gap:3px}
+.electoral-dashboard-heading strong{font-size:.92rem}
+.electoral-dashboard-heading span,.electoral-source-note{font-size:.7rem;color:var(--text-muted,#9fb0c7)}
+.electoral-kpi-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.electoral-global-kpi,.electoral-post-kpis>div{padding:9px;border:1px solid rgba(56,189,248,.22);border-radius:10px;background:rgba(4,20,38,.62);display:flex;flex-direction:column;gap:3px;min-width:0}
+.electoral-global-kpi strong,.electoral-post-kpis strong{font-size:1rem;color:#35d5ef}
+.electoral-global-kpi small,.electoral-post-kpis small{font-size:.68rem;color:var(--text-muted,#a8b7ca)}
+.electoral-filters{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.electoral-filters label{font-size:.72rem;display:flex;flex-direction:column;gap:4px}
+.electoral-filters select{min-width:0;width:100%;padding:8px;border-radius:8px;color:inherit;background:#06172b;border:1px solid rgba(56,189,248,.4)}
+.electoral-post-list{display:flex;flex-direction:column;gap:8px;max-height:360px;overflow:auto}
+.electoral-post-card{padding:10px;border:1px solid rgba(56,189,248,.2);border-radius:10px;background:rgba(5,23,42,.55)}
+.electoral-post-card-head{display:flex;justify-content:space-between;gap:8px;font-size:.72rem}
+.electoral-post-card-head span{white-space:nowrap;color:#35d5ef}
+.electoral-post-card-total{font-size:1.1rem;font-weight:800;color:#35d5ef;margin:7px 0 5px}
+.electoral-post-card-total small{font-size:.68rem;font-weight:400;color:var(--text-muted,#a8b7ca)}
+.electoral-post-card-stats{display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:.68rem;color:var(--text-muted,#a8b7ca)}
+.electoral-post-card-stats b{color:#f4f8ff;margin-left:3px}
+.electoral-post-kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin:8px 0}
+.electoral-post-kpis>div.total{grid-column:1/-1;border-color:#12b981}
+.electoral-post-kpis>div.total strong{color:#12d69a;font-size:1.25rem}
+.electoral-mesa-details{border:1px solid rgba(56,189,248,.25);border-radius:9px;padding:8px;margin:8px 0}
+.electoral-mesa-details summary{cursor:pointer;font-size:.75rem;font-weight:700;color:#35d5ef}
+.electoral-mesa-list{display:flex;flex-direction:column;gap:6px;margin-top:8px;max-height:220px;overflow:auto}
+.electoral-mesa-row{padding:7px;border-radius:7px;background:rgba(5,23,42,.65);display:flex;flex-direction:column;gap:3px;font-size:.7rem}
+.electoral-mesa-row span{color:#35d5ef}
+.electoral-mesa-row small{color:var(--text-muted,#a8b7ca);font-size:.65rem}
+
+.electoral-year-label{display:flex;flex-direction:column;gap:5px;font-size:.75rem;color:var(--text-color,#eaf2ff);margin-top:8px}.electoral-year-label select{background:rgba(3,18,38,.9);color:inherit;border:1px solid rgba(34,211,238,.45);border-radius:9px;padding:8px}.electoral-year-result{border:1px solid rgba(34,211,238,.25);border-radius:10px;padding:9px;margin:8px 0}.electoral-year-result>summary{cursor:pointer;font-weight:700;color:var(--text-color,#eaf2ff);padding:4px}

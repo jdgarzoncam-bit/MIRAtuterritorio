@@ -1,9 +1,3 @@
-// MODO DE PRUEBAS LOCAL: requiere Live Server/local host y ?modo=pruebas.
-// No constituye autenticación ni debe usarse como protección de producción.
-const MIRA_LOCAL_TEST_MODE = ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname)
-  && new URLSearchParams(window.location.search).get('modo') === 'pruebas';
-const MIRA_TEST_PREFIX = MIRA_LOCAL_TEST_MODE ? 'mira_demo_' : '';
-
 let map = null;
 let geojsonLayer = null;
 let datosOriginales = null;
@@ -20,7 +14,7 @@ let poligonosCoincidenciaActiva = new Set();
 let poligonosPorNombre = Object.create(null);
 
 let imagenBase64Seleccionada = "";
-let listaEvidenciasTestigos = JSON.parse(localStorage.getItem(MIRA_TEST_PREFIX + 'faca_evidencias_testigos')) || [];
+let listaEvidenciasTestigos = JSON.parse(localStorage.getItem('faca_evidencias_testigos')) || [];
 
 // IDENTIDAD VISUAL FIJA: modo oscuro y español como idioma único.
 // Se conservan las funciones de compatibilidad para los módulos existentes.
@@ -67,22 +61,236 @@ function coincidePuesto(v, puesto) {
 }
 
 const listaPuestosVotacion = [
-    { id: 1, nombre: "Colegio Silveria Espinosa", matchName: "COLEGIO SILVERIA ESPINOSA", direccion: "Calle 18B No. 4-21", lat: 4.8211, lon: -74.3524 },
-    { id: 2, nombre: "El Portal de Tus Sueños", matchName: "EL PORTAL DE TUS SUEÑOS", direccion: "Calle 21C # 1-25 Sur", lat: 4.8015, lon: -74.3468 },
-    { id: 3, nombre: "Esc. Prim. San Crist. John F. Kennedy", matchName: "COLEGIO JOHN F. KENNEDY", direccion: "Carrera 1A Sur No. 10A-04", lat: 4.8062, lon: -74.3491 },
-    { id: 4, nombre: "Colegio Molinos Manuela Ayala", matchName: "COLEGIO MANUELA AYALA DE GAITÁN", direccion: "Carrera 4 No. 14-40", lat: 4.8175, lon: -74.3541 },
-    { id: 5, nombre: "Col. Cartagenita Bloque D Primaria", matchName: "COL. CARTAGENITA BLOQUE D SEDE PRIMARIA", direccion: "Transversal 3 Sur No. 3A Sur-15", lat: 4.7968, lon: -74.3435 },
-    { id: 6, nombre: "Centro de Discapacidad Manuel González", matchName: "CENTRO DE DESARROLLO SOCIAL", direccion: "Carrera 1 No. 13-28", lat: 4.8160, lon: -74.3495 },
-    { id: 7, nombre: "Instituto Técnico Industrial", matchName: "INSTITUTO TÉCNICO INDUSTRIAL", direccion: "Carrera 5 # 9-45", lat: 4.8128, lon: -74.3551 },
-    { id: 8, nombre: "Escuela Rafael Pombo", matchName: "ESCUELA RAFAEL POMBO", direccion: "Carrera 3 No. 8-134", lat: 4.8112, lon: -74.3538 },
-    { id: 9, nombre: "Colegio Santa Rita", matchName: "COLEGIO SANTA RITA", direccion: "Carrera 10 No. 9-50", lat: 4.8135, lon: -74.3582 },
-    { id: 10, nombre: "Colegio Nacional Emilio Cifuentes", matchName: "COLEGIO NACIONAL EMILIO CIFUENTES", direccion: "Carrera 11 con calle 2", lat: 4.8085, lon: -74.3575 },
-    { id: 11, nombre: "Industrial Sede Talleres", matchName: "INDUSTRIAL SEDE TALLERES", direccion: "Piedras del Tunjo", lat: 4.8142, lon: -74.3498 },
-    { id: 12, nombre: "Centro Educativo La Concepción", matchName: "CTRO EDU LA CONCEPCION", direccion: "Carrera 14 con calle 13", lat: 4.8228, lon: -74.3536 },
-    { id: 13, nombre: "Universidad de Cundinamarca", matchName: "UNIVERSIDAD CUNDINAMARCA", direccion: "Calle 15 No. 17-44", lat: 4.8245, lon: -74.3591 },
-    { id: 14, nombre: "Colegio Arboleda Sede Arboleda", matchName: "COLEGIO ARBOLEDA SEDE ARBOLEDA", direccion: "Carrera 7A No. 3-22 Este", lat: 4.8095, lon: -74.3451 },
-    { id: 15, nombre: "Colegio Juan XXIII", matchName: "COLEGIO JUAN XXIII", direccion: "Vereda El Prado", lat: 4.8321, lon: -74.3395 },
-    { id: 16, nombre: "Escuela Antigua Mancilla", matchName: "ESCUELA ANTIGUA MANCILLA", direccion: "Vereda Mancilla", lat: 4.8385, lon: -74.3512 }
+    {
+        "id": "z1-p1",
+        "zona": 1,
+        "numero": 1,
+        "nombre": "COLEGIO DEPTAL CARTAGENITA",
+        "matchName": "COLEGIO DEPTAL CARTAGENITA",
+        "direccion": "TV. 2 SUR NO 1A - 105",
+        "lat": 4.78466695167,
+        "lon": -74.3352500086
+    },
+    {
+        "id": "z1-p2",
+        "zona": 1,
+        "numero": 2,
+        "nombre": "COLEGIO MANABLANCA",
+        "matchName": "COLEGIO MANABLANCA",
+        "direccion": "SECTOR 2 MANABLANCA",
+        "lat": 4.79798086691,
+        "lon": -74.34513239511
+    },
+    {
+        "id": "z1-p3",
+        "zona": 1,
+        "numero": 3,
+        "nombre": "COLEGIO JOHN F. KENNEDY",
+        "matchName": "COLEGIO JOHN F. KENNEDY",
+        "direccion": "KR 2 ESTE NO 1-70",
+        "lat": 4.80497,
+        "lon": -74.352733
+    },
+    {
+        "id": "z1-p4",
+        "zona": 1,
+        "numero": 4,
+        "nombre": "CENTRO DE DESARROLLO SOCIAL",
+        "matchName": "CENTRO DE DESARROLLO SOCIAL",
+        "direccion": "KR 2 CL 1 EQ",
+        "lat": 4.805636,
+        "lon": -74.350336
+    },
+    {
+        "id": "z1-p5",
+        "zona": 1,
+        "numero": 5,
+        "nombre": "COLEGIO SAN AGUSTIN",
+        "matchName": "COLEGIO SAN AGUSTIN",
+        "direccion": "KR 4 # 1 - 87",
+        "lat": 4.80811001596,
+        "lon": -74.35056916931
+    },
+    {
+        "id": "z1-p6",
+        "zona": 1,
+        "numero": 6,
+        "nombre": "COLEGIO SILVERIA ESPINOSA",
+        "matchName": "COLEGIO SILVERIA ESPINOSA",
+        "direccion": "CL 18B NO 4 - 21",
+        "lat": 4.82104786836,
+        "lon": -74.3632226211
+    },
+    {
+        "id": "z1-p7",
+        "zona": 1,
+        "numero": 7,
+        "nombre": "EL PORTAL DE TUS SUEÑOS",
+        "matchName": "EL PORTAL DE TUS SUEÃ‘OS",
+        "direccion": "CALLE 21C  # 1 -25  SUR",
+        "lat": 4.79013455238,
+        "lon": -74.33662258842
+    },
+    {
+        "id": "z1-p8",
+        "zona": 1,
+        "numero": 8,
+        "nombre": "COLEGIO JOHN F KENNEDY SD SAN CRISTOBAL",
+        "matchName": "COLEGIO JOHN F KENNEDY SD SAN CRISTOBAL",
+        "direccion": "Carrera 1 a sur Numero 10 a 04",
+        "lat": 4.81223,
+        "lon": -74.36004
+    },
+    {
+        "id": "z1-p9",
+        "zona": 1,
+        "numero": 9,
+        "nombre": "COL. MANUELA AYALA DE GAITAN SD MOLINOS",
+        "matchName": "COL. MANUELA AYALA DE GAITAN SD MOLINOS",
+        "direccion": "Carrera 4 Numero 14 40",
+        "lat": 4.817533,
+        "lon": -74.360466
+    },
+    {
+        "id": "z1-p10",
+        "zona": 1,
+        "numero": 10,
+        "nombre": "COLEGIO CARTAGENITA SEDE PRIMARIA",
+        "matchName": "COLEGIO CARTAGENITA SEDE PRIMARIA",
+        "direccion": "TRANSVERSAL 3 SUR NUMERO 3 A SUR  15",
+        "lat": 4.78499786736,
+        "lon": -74.33523726814
+    },
+    {
+        "id": "z2-p1",
+        "zona": 2,
+        "numero": 1,
+        "nombre": "INSTITUTO  TECNICO  INDUSTRIAL",
+        "matchName": "INSTITUTO  TECNICO  INDUSTRIAL",
+        "direccion": "KR 5 # 9 - 45",
+        "lat": 4.814387,
+        "lon": -74.355527
+    },
+    {
+        "id": "z2-p2",
+        "zona": 2,
+        "numero": 2,
+        "nombre": "ESCUELA RAFAEL POMBO",
+        "matchName": "ESCUELA RAFAEL POMBO",
+        "direccion": "CARRERA 3 No. 8 - 134",
+        "lat": 4.81299479548,
+        "lon": -74.35688413625
+    },
+    {
+        "id": "z2-p3",
+        "zona": 2,
+        "numero": 3,
+        "nombre": "COLEGIO MANUELA AYALA DE GAITAN",
+        "matchName": "COLEGIO MANUELA AYALA DE GAITAN",
+        "direccion": "KR 10 CL 15 ESQ",
+        "lat": 4.823145,
+        "lon": -74.356602
+    },
+    {
+        "id": "z2-p4",
+        "zona": 2,
+        "numero": 4,
+        "nombre": "COLEGIO SANTA RITA",
+        "matchName": "COLEGIO SANTA RITA",
+        "direccion": "KR 10 # 9 - 50",
+        "lat": 4.81801483559,
+        "lon": -74.35279835582
+    },
+    {
+        "id": "z2-p5",
+        "zona": 2,
+        "numero": 5,
+        "nombre": "COLISEO CUBIERTO",
+        "matchName": "COLISEO CUBIERTO",
+        "direccion": "CL 5 NO 7 - 18",
+        "lat": 4.813547,
+        "lon": -74.350511
+    },
+    {
+        "id": "z2-p6",
+        "zona": 2,
+        "numero": 6,
+        "nombre": "INDUSTRIAL SEDE TALLERES",
+        "matchName": "INDUSTRIAL SEDE TALLERES",
+        "direccion": "PIEDRAS DEL TUNJO SECTOR 19 SECTOR 800",
+        "lat": 4.814075,
+        "lon": -74.346833
+    },
+    {
+        "id": "z2-p7",
+        "zona": 2,
+        "numero": 7,
+        "nombre": "CTRO EDU LA CONCEPCION",
+        "matchName": "CTRO EDU LA CONCEPCION",
+        "direccion": "CARRERA 14 CALLE 13 ESQ",
+        "lat": 4.8224014542900004,
+        "lon": -74.35312558895
+    },
+    {
+        "id": "z2-p8",
+        "zona": 2,
+        "numero": 8,
+        "nombre": "UNIVERSIDAD CUNDINAMARCA",
+        "matchName": "UNIVERSIDAD CUNDINAMARCA",
+        "direccion": "CALLE 15 Numero 17  44",
+        "lat": 4.82874285081,
+        "lon": -74.35482494974
+    },
+    {
+        "id": "z2-p9",
+        "zona": 2,
+        "numero": 9,
+        "nombre": "COLEGIO ARBOLEDA SEDE ARBOLEDA",
+        "matchName": "COLEGIO ARBOLEDA SEDE ARBOLEDA",
+        "direccion": "Carrera 7 a Numero 3  22 este",
+        "lat": 4.80782633626,
+        "lon": -74.34425136442
+    },
+    {
+        "id": "z90-p1",
+        "zona": 90,
+        "numero": 1,
+        "nombre": "COLEGIO ARBOLEDA S  JUAN PABLO II",
+        "matchName": "COLEGIO ARBOLEDA S  JUAN PABLO II",
+        "direccion": "DIAGONAL 5 ESTE No. 9 - 16",
+        "lat": 4.80881608931,
+        "lon": -74.34151773743
+    },
+    {
+        "id": "z98-p1",
+        "zona": 98,
+        "numero": 1,
+        "nombre": "CTRO RECLUSION POLICIA NAL",
+        "matchName": "CTRO RECLUSION POLICIA NAL",
+        "direccion": "VEREDA SANTA MARTA",
+        "lat": 4.79565225723,
+        "lon": -74.32664813303
+    },
+    {
+        "id": "z99-p1",
+        "zona": 99,
+        "numero": 1,
+        "nombre": "COLEGIO JUAN XXIII",
+        "matchName": "COLEGIO JUAN XXIII",
+        "direccion": "VEREDA EL PRADO - KM 4 VIA FACATATIVA EL ROSAL",
+        "lat": 4.80977764819,
+        "lon": -74.32366982102
+    },
+    {
+        "id": "z99-p2",
+        "zona": 99,
+        "numero": 2,
+        "nombre": "ESCUELA ANTIGUA MANCILLA",
+        "matchName": "ESCUELA ANTIGUA MANCILLA",
+        "direccion": "VEREDA MANCILLAÂ - KM 3 VIA ECOPETROL",
+        "lat": 4.85001761466,
+        "lon": -74.34636793099
+    }
 ];
 
 // NAVEGACIÓN DESDE LA LANDING
@@ -146,7 +354,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && adminCardC
 
 // MÓDULO ACTIVIDADES — registro compacto, vista en vivo y archivo tipo Drive.
 const activitiesPlaceholder = document.getElementById('activitiesPlaceholder');
-const ACTIVITY_STORE_KEY = MIRA_TEST_PREFIX + 'mira_territorio_activities_v1';
+const ACTIVITY_STORE_KEY = 'mira_territorio_activities_v1';
 let activitiesState = loadActivitiesState();
 let editingParticipantId = null;
 let detailActivityId = null;
@@ -154,10 +362,6 @@ let returnToRecentAfterEdit = false;
 function loadActivitiesState(){
   const empty={activities:[],people:[],attendances:[],currentActivityId:null};
   try { const d=JSON.parse(localStorage.getItem(ACTIVITY_STORE_KEY)); if(d&&Array.isArray(d.activities)&&Array.isArray(d.people)&&Array.isArray(d.attendances)) return d; } catch(e) { console.warn('No se pudo leer el almacenamiento de actividades.',e); }
-  if(MIRA_LOCAL_TEST_MODE){
-    const demo={activities:[{id:'demo-act-001',name:'Actividad de demostración',date:new Date().toISOString().slice(0,10),place:'Facatativá (dato ficticio)',status:'active'}],people:[{id:'demo-person-001',cedula:'999000001',names:'Persona',surnames:'Demostración',phone:'3000000000',infoMira:'no'}],attendances:[{id:'demo-att-001',personId:'demo-person-001',activityId:'demo-act-001',createdAt:new Date().toISOString()}],currentActivityId:'demo-act-001'};
-    localStorage.setItem(ACTIVITY_STORE_KEY,JSON.stringify(demo)); return demo;
-  }
   return empty;
 }
 function saveActivitiesState(){localStorage.setItem(ACTIVITY_STORE_KEY,JSON.stringify(activitiesState));renderActivities();}
@@ -205,10 +409,7 @@ document.getElementById('logoutTestigoBtn').addEventListener('click', function()
     document.getElementById('landingHeaderControls').style.display = 'flex';
 });
 
-// AUTENTICACIÓN ADMINISTRATIVA — MODO BLOQUEADO HASTA INTEGRAR BACKEND
-// Seguridad: no validar credenciales en el navegador. La interfaz estática no puede
-// custodiar contraseñas ni conceder acceso a datos protegidos. El acceso se deniega
-// de forma predeterminada hasta conectar y probar el servicio de autenticación.
+// AUTENTICACIÓN ADMINISTRATIVA LOCAL.
 function cerrarCapaAccesoPMU() {
     // La capa de desenfoque pertenece exclusivamente al login. Si permanece
     // activa al cambiar al PMU, cubre el mapa y deja toda la interfaz borrosa.
@@ -227,132 +428,116 @@ function cerrarCapaAccesoPMU() {
     document.body.classList.remove('admin-login-active');
 }
 
-function activarModoPruebasLocal() {
-    if (!MIRA_LOCAL_TEST_MODE) return false;
-    cerrarCapaAccesoPMU();
-    document.body.classList.add('pmu-neomorphic');
-    // Solo estado en memoria de esta pestaña; no crea una sesión real.
-    window.MIRA_TERRITORIO_TEST_SESSION = { mode: 'local-demo', startedAt: new Date().toISOString() };
-    const overlay = document.getElementById('landing-hero-overlay');
-    const controls = document.getElementById('landingHeaderControls');
-    const appContainer = document.getElementById('app-container');
-
-    // IMPORTANTE: el contenedor principal está oculto por CSS al cargar la página.
-    // Debe mostrarse antes de crear el mapa, o el usuario solo verá el fondo vacío.
-    if (appContainer) {
-        appContainer.style.display = 'block';
-        appContainer.style.width = '100%';
-        appContainer.style.height = '100vh';
-    }
-    if (overlay) overlay.style.display = 'none';
-    if (controls) controls.style.display = 'none';
-    const logoutBtn = document.getElementById('platformLogoutBtn');
-    if (logoutBtn) logoutBtn.style.display = 'inline-flex';
-    const card = document.getElementById('adminCardContainer');
-    if (card) { card.classList.remove('is-open'); card.classList.add('hidden'); }
-    const banner = document.getElementById('miraLocalTestBanner');
-    if (banner) banner.classList.remove('hidden');
-
-    // FIX: antes solo se ocultaba la portada; el mapa nunca se inicializaba,
-    // dejando la pantalla vacía. Inicializarlo explícitamente al entrar en modo demo.
-    try {
-        if (typeof inicializarSistemaMapa === 'function') inicializarSistemaMapa();
-        if (map) setTimeout(() => map.invalidateSize(), 300);
-    } catch (err) {
-        console.error('[MIRA TU TERRITORIO] No se pudo inicializar el mapa en modo demo:', err);
-        const notice = document.getElementById('loginError');
-        if (notice) {
-            notice.textContent = 'Modo de pruebas activado, pero el mapa no pudo inicializarse. Abre F12 > Consola para revisar el error.';
-            notice.style.display = 'block';
-        }
-    }
-    console.warn('[MIRA TU TERRITORIO] Modo local de pruebas activo. No es autenticación real.');
-    return true;
-}
 function activarPMUAutenticado() {
     // Retirar primero el backdrop del login: no debe cubrir ni desenfocar el PMU.
     cerrarCapaAccesoPMU();
-    // Transición visual del portal al PMU tras recibir confirmación del servidor.
+    // Transición visual del portal al PMU tras validar el acceso local.
     document.body.classList.add('pmu-neomorphic');
     const overlay = document.getElementById('landing-hero-overlay');
     const controls = document.getElementById('landingHeaderControls');
     const appContainer = document.getElementById('app-container');
     if (appContainer) {
         appContainer.style.display = 'block';
-        appContainer.style.width = '100%';
+        appContainer.style.position = 'fixed';
+        appContainer.style.inset = '0';
+        appContainer.style.width = '100vw';
         appContainer.style.height = '100vh';
+        appContainer.style.height = '100dvh';
     }
     if (overlay) overlay.style.display = 'none';
     if (controls) controls.style.display = 'none';
     const card = document.getElementById('adminCardContainer');
     if (card) { card.classList.remove('is-open'); card.classList.add('hidden'); }
-    const banner = document.getElementById('miraLocalTestBanner');
-    if (banner) banner.classList.add('hidden');
     try {
         if (typeof inicializarSistemaMapa === 'function') inicializarSistemaMapa();
-        if (map) setTimeout(() => map.invalidateSize(), 350);
+        // Recalcular Leaflet después de que el contenedor pase de oculto a visible.
+        [120, 350, 700].forEach(delay => setTimeout(() => {
+            const mapElement = document.getElementById('map');
+            if (map && mapElement && mapElement.clientWidth > 0 && mapElement.clientHeight > 0) {
+                map.invalidateSize({ pan: false, animate: false });
+            }
+        }, delay));
     } catch (err) {
         console.error('[MIRA TU TERRITORIO] Error al inicializar el mapa tras autenticar:', err);
     }
 }
 
-function validarAccesoAdmin() {
+// AUTENTICACIÓN LOCAL INDEPENDIENTE.
+// Aviso: es una barrera de acceso local para uso en este navegador; no sustituye
+// autenticación de servidor ni protege datos frente a alguien con acceso al equipo.
+const MTT_LOCAL_AUTH_KEY = 'mtt_local_admin_v1';
+const MTT_LOCAL_SESSION_KEY = 'mtt_local_session_v1';
+
+// Cuenta temporal solicitada para habilitar el Centro de Operaciones.
+// Se inicializa una sola vez en el navegador; no es autenticación de servidor.
+(function inicializarAccesoTemporalMIRA() {
+    const TEMP_SETUP_KEY = 'mtt_temp_admin_initialized_v1';
+    if (localStorage.getItem(TEMP_SETUP_KEY) === '1') return;
+    const salt = 'mtt-temporary-admin-2026-facatativa';
+    const passwordHash = '518e662c910a37dc414952142634a521f8a610039ff56df1ffe3a49b014e436b';
+    localStorage.setItem(MTT_LOCAL_AUTH_KEY, JSON.stringify({
+        username: 'admin',
+        salt,
+        passwordHash,
+        createdAt: new Date().toISOString(),
+        temporary: true
+    }));
+    localStorage.setItem(TEMP_SETUP_KEY, '1');
+})();
+
+function mttBytesToHex(buffer) {
+    return Array.from(new Uint8Array(buffer), b => b.toString(16).padStart(2, '0')).join('');
+}
+async function mttHashLocalPassword(password, salt) {
+    if (!window.crypto || !crypto.subtle || !window.TextEncoder) {
+        throw new Error('Abre el proyecto desde localhost (por ejemplo, Live Server) para configurar el acceso local.');
+    }
+    const bytes = new TextEncoder().encode(salt + ':' + password);
+    return mttBytesToHex(await crypto.subtle.digest('SHA-256', bytes));
+}
+function mttGetLocalAdmin() {
+    try { return JSON.parse(localStorage.getItem(MTT_LOCAL_AUTH_KEY) || 'null'); }
+    catch (_) { return null; }
+}
+function mttCreateLocalToken() {
+    const bytes = new Uint8Array(24);
+    crypto.getRandomValues(bytes);
+    return mttBytesToHex(bytes);
+}
+
+async function validarAccesoAdmin() {
     const userInput = document.getElementById('username');
     const passInput = document.getElementById('password');
     const errorMsg = document.getElementById('loginError');
     const loginBtn = document.getElementById('loginBtn');
-    const showError = (message) => {
-        if (errorMsg) {
-            errorMsg.textContent = message;
-            errorMsg.style.display = 'block';
-            errorMsg.setAttribute('role', 'alert');
-        }
+    const showError = message => {
+        if (errorMsg) { errorMsg.textContent = message; errorMsg.style.display = 'block'; errorMsg.setAttribute('role', 'alert'); }
     };
-    if (MIRA_LOCAL_TEST_MODE) {
-        if (passInput) passInput.value = '';
-        mostrarAvisoCuenta('Modo local de pruebas: datos de demostración aislados. No se ha iniciado sesión real.');
-        activarModoPruebasLocal();
-        return;
-    }
-    // google.script.run solo existe cuando la interfaz se sirve desde Apps Script HtmlService.
-    // En Live Server se bloquea el acceso real y se explica el requisito; nunca se simula login.
-    if (!window.google || !google.script || !google.script.run) {
-        showError('El servidor de autenticación no está conectado a esta interfaz. En Live Server solo puedes usar el modo de pruebas; para el acceso real hay que publicar e integrar Apps Script.');
-        return;
-    }
     const username = userInput ? userInput.value.trim() : '';
     const password = passInput ? passInput.value : '';
-    if (!username || !password) {
-        showError('Escribe tu usuario y contraseña.');
-        return;
-    }
+    if (!username || !password) { showError('Escribe tu usuario y contraseña.'); return; }
+    const admin = mttGetLocalAdmin();
+    if (!admin) { showError('Todavía no existe un usuario local. Pulsa «Crear usuario» para configurar el primer acceso.'); return; }
     if (loginBtn) loginBtn.disabled = true;
-    showError('Verificando credenciales en el servidor…');
-    google.script.run
-        .withSuccessHandler(function(result) {
-            if (loginBtn) loginBtn.disabled = false;
-            if (!result || result.ok !== true || !result.token || !result.expiresAt) {
-                showError('El servidor no devolvió una sesión válida. No se abrió el PMU.');
-                return;
-            }
-            // Token de sesión por pestaña; nunca se guarda la contraseña.
-            sessionStorage.setItem('mtt_session_token', result.token);
-            sessionStorage.setItem('mtt_session_user', result.username || username);
-            sessionStorage.setItem('mtt_session_expiry', String(result.expiresAt));
+    showError('Verificando acceso local…');
+    try {
+        const hash = await mttHashLocalPassword(password, admin.salt);
+        if (username.toLowerCase() !== String(admin.username).toLowerCase() || hash !== admin.passwordHash) {
+            showError('Usuario o contraseña incorrectos.');
             if (passInput) passInput.value = '';
-            activarPMUAutenticado();
-        })
-        .withFailureHandler(function(error) {
-            if (loginBtn) loginBtn.disabled = false;
-            if (passInput) passInput.value = '';
-            const raw = error && error.message ? error.message : '';
-            // Mensaje genérico para no filtrar si el usuario existe o no.
-            showError(/sesión|credencial|contraseña|usuario|autentic/i.test(raw)
-                ? 'No fue posible validar el acceso. Revisa las credenciales o la configuración del servidor.'
-                : 'Error de conexión con el servidor de autenticación. Inténtalo de nuevo.');
-            console.warn('[MIRA TU TERRITORIO] Falló la autenticación del servidor.');
-        })
-        .iniciarSesionV13(username, password);
+            return;
+        }
+        const token = mttCreateLocalToken();
+        sessionStorage.setItem(MTT_LOCAL_SESSION_KEY, token);
+        sessionStorage.setItem('mtt_session_user', admin.username);
+        if (passInput) passInput.value = '';
+        if (errorMsg) errorMsg.style.display = 'none';
+        activarPMUAutenticado();
+    } catch (error) {
+        showError(error && error.message ? error.message : 'No fue posible validar el acceso local.');
+    } finally {
+        if (loginBtn) loginBtn.disabled = false;
+    }
 }
 
 document.getElementById('loginBtn').addEventListener('click', function(e) {
@@ -364,9 +549,7 @@ document.getElementById('password').addEventListener('keydown', function(e) {
     if (e.key === 'Enter') validarAccesoAdmin();
 });
 
-// Acciones visibles de cuenta: no simular operaciones que requieren backend.
-// La creación pública de cuentas se mantiene deshabilitada para conservar el modelo
-// de una única cuenta administrativa. La recuperación debe configurarse en servidor.
+// El primer usuario se configura y permanece en este navegador.
 const accountActionNotice = document.getElementById('accountActionNotice');
 function mostrarAvisoCuenta(message) {
     if (!accountActionNotice) return;
@@ -375,12 +558,35 @@ function mostrarAvisoCuenta(message) {
     accountActionNotice.setAttribute('role', 'status');
 }
 const createUserBtn = document.getElementById('createUserBtn');
+if (createUserBtn) createUserBtn.style.display = 'none';
 const forgotPasswordBtn = document.getElementById('forgotPasswordBtn');
-if (createUserBtn) createUserBtn.addEventListener('click', () => {
-    mostrarAvisoCuenta('La creación pública de usuarios está deshabilitada. La cuenta administrativa debe configurarse de forma privada en el servidor.');
+if (createUserBtn) createUserBtn.addEventListener('click', async () => {
+    if (mttGetLocalAdmin()) {
+        mostrarAvisoCuenta('Ya existe un usuario local en este navegador. Para cambiarlo, utiliza «Restablecer acceso local» en la configuración del proyecto.');
+        return;
+    }
+    const username = (window.prompt('Crea el nombre del usuario administrador:') || '').trim();
+    if (!username) return;
+    if (username.length < 3 || username.length > 40) { mostrarAvisoCuenta('El usuario debe tener entre 3 y 40 caracteres.'); return; }
+    const password = window.prompt('Crea una contraseña de al menos 10 caracteres:') || '';
+    if (password.length < 10) { mostrarAvisoCuenta('La contraseña debe tener al menos 10 caracteres. No se creó el usuario.'); return; }
+    const confirmation = window.prompt('Confirma la contraseña:') || '';
+    if (password !== confirmation) { mostrarAvisoCuenta('Las contraseñas no coinciden. No se creó el usuario.'); return; }
+    try {
+        const saltBytes = new Uint8Array(16);
+        crypto.getRandomValues(saltBytes);
+        const salt = mttBytesToHex(saltBytes);
+        const passwordHash = await mttHashLocalPassword(password, salt);
+        localStorage.setItem(MTT_LOCAL_AUTH_KEY, JSON.stringify({ username, salt, passwordHash, createdAt: new Date().toISOString() }));
+        mostrarAvisoCuenta('Usuario local creado en este navegador. Ya puedes ingresar con esas credenciales.');
+        const userInput = document.getElementById('username');
+        if (userInput) userInput.value = username;
+    } catch (error) {
+        mostrarAvisoCuenta(error && error.message ? error.message : 'No fue posible crear el usuario local.');
+    }
 });
 if (forgotPasswordBtn) forgotPasswordBtn.addEventListener('click', () => {
-    mostrarAvisoCuenta('La recuperación automática aún no está configurada. No ingreses tu contraseña aquí. Se debe habilitar un proceso de restablecimiento seguro en el servidor.');
+    mostrarAvisoCuenta('El acceso es local a este navegador. Si olvidas la contraseña, el administrador del proyecto debe borrar la clave mtt_local_admin_v1 del almacenamiento local y configurar un nuevo usuario.');
 });
 
 // PUESTOS DE VOTACIÓN: DESPLEGABLE PERSONALIZADO EN GLASSMORPHISM
@@ -402,7 +608,7 @@ function inicializarDropdownPuestosCustom() {
         filtrados.forEach(puesto => {
             const item = document.createElement('div');
             item.className = 'puesto-dropdown-item';
-            item.innerHTML = `<strong>📍 ${puesto.nombre}</strong><small>${puesto.direccion}</small>`;
+            item.innerHTML = `<strong>📍 Zona ${puesto.zona} · Puesto ${puesto.numero}: ${puesto.nombre}</strong><small>${puesto.direccion}</small>`;
 
             item.addEventListener('click', function() {
                 inputPuesto.value = puesto.nombre;
@@ -608,7 +814,7 @@ function inicializarEventosArchivosTestigo() {
             listaEvidenciasTestigos.push(nuevaEvidencia);
         });
 
-        localStorage.setItem(MIRA_TEST_PREFIX + 'faca_evidencias_testigos', JSON.stringify(listaEvidenciasTestigos));
+        localStorage.setItem('faca_evidencias_testigos', JSON.stringify(listaEvidenciasTestigos));
 
         document.getElementById('testigoMesaInput').value = '';
         document.getElementById('testigoNotaInput').value = '';
@@ -662,6 +868,22 @@ function manejarBotonFlotanteReapertura(estaContraido) {
     }
 }
 
+// Mantener el mapa sincronizado con el tamaño real del viewport.
+if (!window.__miraMapResizeHandlersInstalled) {
+    window.__miraMapResizeHandlersInstalled = true;
+    const actualizarTamanoMapa = () => {
+        const el = document.getElementById('map');
+        if (map && el && el.clientWidth > 0 && el.clientHeight > 0) {
+            map.invalidateSize({ pan: false, animate: false });
+        }
+    };
+    window.addEventListener('resize', () => requestAnimationFrame(actualizarTamanoMapa), { passive: true });
+    window.addEventListener('orientationchange', () => setTimeout(actualizarTamanoMapa, 250), { passive: true });
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) setTimeout(actualizarTamanoMapa, 180);
+    });
+}
+
 function inicializarSistemaMapa() {
     if (map) {
         setTimeout(() => { map.invalidateSize(); }, 200);
@@ -686,9 +908,52 @@ function inicializarSistemaMapa() {
     searchMarkersGroup.addTo(map);
     miraMarkersGroup.addTo(map);
 
+    function colapsarPanelesDeFiltros() {
+        // Cierra los desplegables del menú lateral para que la ficha tenga prioridad visual.
+        document.querySelectorAll('.neo-tactile-sidebar details.custom-dropdown[open]').forEach(panel => {
+            panel.open = false;
+        });
+    }
+
+    function restablecerFiltrosTerritorialesActivos() {
+        const modoPuestos = document.getElementById('territoryModePuestos');
+        if (modoPuestos && modoPuestos.checked) {
+            restablecerFiltrosPuestos();
+            return;
+        }
+        const resetBarrios = document.getElementById('reset-barrios-filters');
+        if (resetBarrios) resetBarrios.click();
+    }
+
     document.getElementById('closeFloatingWidget').addEventListener('click', function() {
-        document.getElementById('floatingPuestoWidget').classList.add('hidden');
+        const ficha = document.getElementById('floatingPuestoWidget');
+        if (ficha) ficha.classList.add('hidden');
+        restablecerFiltrosTerritorialesActivos();
+        colapsarPanelesDeFiltros();
     });
+
+    // Selector de vistas del módulo unificado Barrios y puestos.
+    const territoryModeBarrios = document.getElementById('territoryModeBarrios');
+    const territoryModePuestos = document.getElementById('territoryModePuestos');
+    const territoryBarriosPanel = document.getElementById('territoryBarriosPanel');
+    const territoryPuestosPanel = document.getElementById('territoryPuestosPanel');
+    function cambiarVistaTerritorial(modo) {
+        if (territoryBarriosPanel) territoryBarriosPanel.hidden = modo !== 'barrios';
+        if (territoryPuestosPanel) territoryPuestosPanel.hidden = modo !== 'puestos';
+        // Al entrar a cada vista se conserva su estado de filtros y se refresca su capa.
+        if (modo === 'puestos') {
+            cargarPuestosEnMapa();
+        } else if (typeof window.actualizarMapa === 'function') {
+            window.actualizarMapa();
+        }
+    }
+    [territoryModeBarrios, territoryModePuestos].forEach(control => {
+        if (control && !control.dataset.modeBound) {
+            control.dataset.modeBound = '1';
+            control.addEventListener('change', () => { if (control.checked) cambiarVistaTerritorial(control.value); });
+        }
+    });
+    cambiarVistaTerritorial('barrios');
 
     // Inicializar los módulos que no dependen de que exista la base de electores.
     // Antes se inicializaban dentro del fetch; si el JSON no estaba disponible,
@@ -700,30 +965,10 @@ function inicializarSistemaMapa() {
     actualizarDashboardKPIs();
     inicializarModuloTestigosPMU();
 
-    fetch('./electores_2.json')
-        .then(res => {
-            if (!res.ok) throw new Error('No se encontró electores_2.json');
-            return res.json();
-        })
-        .catch(() => fetch('./electores.json').then(res => {
-            if (!res.ok) throw new Error('No se encontró electores.json');
-            return res.json();
-        }))
-        .then(data => {
-            baseVotantes = Array.isArray(data) ? data : [];
-            generarListaPuestos();
-            cargarPuestosEnMapa();
-            actualizarDashboardKPIs();
-            actualizarMapa();
-            actualizarConteoLogistica();
-        })
-        .catch(err => {
-            baseVotantes = [];
-            generarListaPuestos();
-            cargarPuestosEnMapa();
-            actualizarDashboardKPIs();
-            console.warn('[MIRA] Base de personas no disponible. Se muestran puestos y datos vacíos de demostración.', err);
-        });
+    // La base de electores no forma parte de esta distribución independiente.
+    // Se mantiene vacía hasta conectar una fuente de datos autorizada.
+    baseVotantes = [];
+    actualizarConteoLogistica();
 
     // La capa territorial principal ahora usa los polígonos del KML.
     // Se dejan de dibujar los antiguos puntos de barrios para reducir el ruido visual.
@@ -1045,6 +1290,10 @@ function inicializarSistemaMapa() {
         const searchInput = document.getElementById('puestosSearchInput');
         const selectAll = document.getElementById('select-all-puestos');
         if (searchInput) searchInput.value = '';
+        const zonaFilter = document.getElementById('filtroZonaPuestos');
+        const numeroFilter = document.getElementById('filtroNumeroPuesto');
+        if (zonaFilter) zonaFilter.value = '';
+        if (numeroFilter) numeroFilter.value = '';
         puestosFiltroEstado = Object.create(null);
         listaPuestosVotacion.forEach(puesto => { puestosFiltroEstado[puesto.id] = true; });
         if (selectAll) selectAll.checked = true;
@@ -1066,14 +1315,18 @@ function inicializarSistemaMapa() {
         const searchInput = document.getElementById('puestosSearchInput');
         const resetBtn = document.getElementById('resetPuestosFiltersBtn');
         const selectAll = document.getElementById('select-all-puestos');
+        const zonaFilter = document.getElementById('filtroZonaPuestos');
+        const numeroFilter = document.getElementById('filtroNumeroPuesto');
         if (!container) return;
 
         function renderPuestos(filtro = "") {
             container.innerHTML = '';
             const query = normalizarBusquedaTerritorial(filtro);
+            const zonaElegida = zonaFilter ? zonaFilter.value : '';
+            const numeroElegido = numeroFilter ? numeroFilter.value : '';
             const coincidencias = listaPuestosVotacion.filter(puesto => {
-                const texto = normalizarBusquedaTerritorial(`${puesto.nombre} ${puesto.direccion}`);
-                return !query || texto.includes(query);
+                const texto = normalizarBusquedaTerritorial(`${puesto.nombre} ${puesto.direccion} zona ${puesto.zona} puesto ${puesto.numero}`);
+                return (!query || texto.includes(query)) && (!zonaElegida || String(puesto.zona) === zonaElegida) && (!numeroElegido || String(puesto.numero) === numeroElegido);
             });
 
             listaPuestosVotacion.forEach(puesto => {
@@ -1086,7 +1339,7 @@ function inicializarSistemaMapa() {
                 itemDiv.innerHTML = `
                     <label style="display:flex; align-items:center; gap:8px; cursor:pointer; flex:1; min-width:0; margin:0;">
                         <input type="checkbox" class="chk-puesto" data-id="${puesto.id}" ${estaActivo ? 'checked' : ''}>
-                        <span class="puesto-name-clickable" title="${puesto.nombre}">${puesto.nombre}</span>
+                        <span class="puesto-name-clickable" title="${puesto.nombre}">Z${puesto.zona} · P${puesto.numero} — ${puesto.nombre}</span>
                     </label>
                     <button type="button" class="puesto-zoom-btn" title="Ver ficha y barrio asociado en el mapa" style="background:transparent; border:none; color:var(--cyan-tactile); cursor:pointer; font-size:0.9rem; padding:2px 4px; flex-shrink:0;">📍</button>
                 `;
@@ -1161,8 +1414,8 @@ function inicializarSistemaMapa() {
 
                 // Búsqueda en vivo: selecciona todas las coincidencias de nombre/dirección.
                 listaPuestosVotacion.forEach(p => {
-                    const texto = normalizarBusquedaTerritorial(`${p.nombre} ${p.direccion}`);
-                    puestosFiltroEstado[p.id] = texto.includes(query);
+                    const texto = normalizarBusquedaTerritorial(`${p.nombre} ${p.direccion} zona ${p.zona} puesto ${p.numero}`);
+                    puestosFiltroEstado[p.id] = texto.includes(query) && (!zonaFilter || !zonaFilter.value || String(p.zona) === zonaFilter.value) && (!numeroFilter || !numeroFilter.value || String(p.numero) === numeroFilter.value);
                 });
                 if (selectAll) selectAll.checked = false;
                 renderPuestos(this.value);
@@ -1174,6 +1427,24 @@ function inicializarSistemaMapa() {
                 }
             });
         }
+
+        [zonaFilter, numeroFilter].forEach(control => {
+            if (control && !control.dataset.v12Bound) {
+                control.dataset.v12Bound = '1';
+                control.addEventListener('change', () => {
+                    const q = normalizarBusquedaTerritorial(searchInput ? searchInput.value : '');
+                    listaPuestosVotacion.forEach(p => {
+                        const t = normalizarBusquedaTerritorial(`${p.nombre} ${p.direccion} zona ${p.zona} puesto ${p.numero}`);
+                        puestosFiltroEstado[p.id] = (!q || t.includes(q)) && (!zonaFilter || !zonaFilter.value || String(p.zona) === zonaFilter.value) && (!numeroFilter || !numeroFilter.value || String(p.numero) === numeroFilter.value);
+                    });
+                    if (selectAll) selectAll.checked = false;
+                    renderPuestos(searchInput ? searchInput.value : '');
+                    const matches = listaPuestosVotacion.filter(p => puestosFiltroEstado[p.id] !== false);
+                    aplicarFiltroTerritorialDesdePuestos(matches, true);
+                    if (matches.length === 1 && map) map.setView([matches[0].lat, matches[0].lon], 16);
+                });
+            }
+        });
 
         if (resetBtn && !resetBtn.dataset.v11Bound) {
             resetBtn.dataset.v11Bound = '1';
@@ -1258,7 +1529,7 @@ function inicializarSistemaMapa() {
 
             const marker = L.marker([puesto.lat, puesto.lon], { icon: pin3DIcon });
 
-            marker.bindTooltip(`${puesto.nombre} (${totalVotantes} votantes)`, {
+            marker.bindTooltip(`Zona ${puesto.zona} · Puesto ${puesto.numero}: ${puesto.nombre} (${totalVotantes} votantes)`, {
                 permanent: false, direction: 'top', className: 'leaflet-tooltip-barrio'
             });
 
@@ -1272,6 +1543,7 @@ function inicializarSistemaMapa() {
     }
 
     function mostrarFichaPuesto(puesto, votantes) {
+        colapsarPanelesDeFiltros();
         let mesasCount = {};
         votantes.forEach(v => {
             let m = v.MESA || 'S/N';
@@ -1305,11 +1577,37 @@ function inicializarSistemaMapa() {
             `;
         }).join('');
 
+        const buscarDatosElectorales = (data) => (data?.puestos || []).find(p => Number(p.zona) === Number(puesto.zona) && Number(p.puesto) === Number(puesto.numero));
+        const datosElectorales2019 = buscarDatosElectorales(window.MTT_ELECTORAL_2019);
+        const datosElectorales2023 = buscarDatosElectorales(window.MTT_ELECTORAL_2023);
+        const fmtVotos = n => Number(n || 0).toLocaleString('es-CO');
+        const renderBloqueElectoral = (datos, anio) => datos ? `
+            <details class="electoral-year-result">
+              <summary>🗳️ Resultados electorales ${anio} · Concejo</summary>
+              <div class="electoral-post-kpis">
+                <div><strong>${fmtVotos(datos.votosNulos)}</strong><small>Votos nulos</small></div>
+                <div><strong>${fmtVotos(datos.votosBlanco)}</strong><small>Votos en blanco</small></div>
+                <div><strong>${fmtVotos(datos.votosNoMarcados)}</strong><small>No marcados</small></div>
+                <div><strong>${fmtVotos(datos.votosDiana)}</strong><small>Diana Marcela Morales Gutiérrez</small></div>
+                <div class="total"><strong>${fmtVotos(datos.votosTotales)}</strong><small>Total de votos</small></div>
+              </div>
+              <details class="electoral-mesa-details">
+                <summary>Ver resultados por mesa (${datos.mesas})</summary>
+                <div class="electoral-mesa-list">${Object.entries(datos.detalleMesas).map(([mesa,v]) => `
+                  <div class="electoral-mesa-row"><strong>Mesa ${mesa}</strong><span>Total: ${fmtVotos(v.votosTotales)}</span><small>Nulos ${fmtVotos(v.votosNulos)} · Blanco ${fmtVotos(v.votosBlanco)} · No marcados ${fmtVotos(v.votosNoMarcados)} · Diana ${fmtVotos(v.votosDiana)}</small></div>`).join('')}</div>
+              </details>
+            </details>` : `<p class="placeholder-text">No hay resultados de ${anio} asociados a este código de zona y puesto.</p>`;
+        const bloqueElectoral = datosElectorales2019 || datosElectorales2023 ? `
+            <div class="dash-divider"></div><div class="dash-section-title">🗳️ Historial de resultados electorales · Concejo</div>
+            ${renderBloqueElectoral(datosElectorales2019,2019)}
+            ${renderBloqueElectoral(datosElectorales2023,2023)}` : '<p class="placeholder-text">No hay resultados electorales asociados a este código de zona y puesto.</p>';
+
         const widgetContent = document.getElementById('floatingWidgetContent');
         widgetContent.innerHTML = `
             <div class="dash-header">
                 <div class="dash-title-group">
                     <h3>🗳️ ${puesto.nombre}</h3>
+                    <span class="dash-badge">ZONA ${puesto.zona} · PUESTO ${puesto.numero}</span>
                     <span class="dash-badge">PUESTO OFICIAL</span>
                 </div>
             </div>
@@ -1317,9 +1615,9 @@ function inicializarSistemaMapa() {
             <div class="dash-circles-row">
                 <div class="dash-circle-item">
                     <div class="dash-circle-ring">
-                        <span>${puesto.id}</span>
+                        <span>${puesto.numero}</span>
                     </div>
-                    <small>ID Puesto</small>
+                    <small>N.º de puesto</small>
                 </div>
 
                 <div class="dash-circle-item active">
@@ -1363,6 +1661,8 @@ function inicializarSistemaMapa() {
 
             <div class="dash-divider"></div>
 
+            ${bloqueElectoral}
+
             <div class="dash-section-title">
                 <span class="dash-icon">📊</span> Distribución de Censo por Mesas
             </div>
@@ -1376,7 +1676,11 @@ function inicializarSistemaMapa() {
         `;
 
         const widgetContainer = document.getElementById('floatingPuestoWidget');
-        widgetContainer.classList.remove('hidden');
+        if (widgetContainer) {
+            widgetContainer.dataset.kind = 'post';
+            widgetContainer.classList.remove('hidden');
+            widgetContainer.setAttribute('aria-live', 'polite');
+        }
 
         document.getElementById('downloadExcelBtn').addEventListener('click', function() {
             exportarExcelPuesto(puesto, votantes);
@@ -1521,7 +1825,7 @@ function inicializarSistemaMapa() {
         });
 
         downloadAllBtn.addEventListener('click', function() {
-            const evidenciasLocales = JSON.parse(localStorage.getItem(MIRA_TEST_PREFIX + 'faca_evidencias_testigos')) || [];
+            const evidenciasLocales = JSON.parse(localStorage.getItem('faca_evidencias_testigos')) || [];
             if (evidenciasLocales.length === 0) {
                 alert("No hay evidencias registradas para exportar.");
                 return;
@@ -1542,6 +1846,8 @@ function inicializarSistemaMapa() {
         });
 
         const filtroPuestoActas = document.getElementById('filtroPuestoActas');
+        const filtroZonaActas = document.getElementById('filtroZonaActas');
+        const filtroNumeroActas = document.getElementById('filtroNumeroActas');
         const ordenMesasActas = document.getElementById('ordenMesasActas');
         function normalizarMesa(valor) {
             const nums = String(valor ?? '').match(/\d+/g);
@@ -1555,19 +1861,26 @@ function inicializarSistemaMapa() {
             if (puestos.includes(anterior)) filtroPuestoActas.value = anterior;
         }
         if (filtroPuestoActas) filtroPuestoActas.addEventListener('change', renderizarGaleriaTestigos);
+        if (filtroZonaActas) filtroZonaActas.addEventListener('change', renderizarGaleriaTestigos);
+        if (filtroNumeroActas) filtroNumeroActas.addEventListener('change', renderizarGaleriaTestigos);
         if (ordenMesasActas) ordenMesasActas.addEventListener('change', renderizarGaleriaTestigos);
 
         function renderizarGaleriaTestigos() {
-            const evidenciasLocales = JSON.parse(localStorage.getItem(MIRA_TEST_PREFIX + 'faca_evidencias_testigos')) || [];
+            const evidenciasLocales = JSON.parse(localStorage.getItem('faca_evidencias_testigos')) || [];
             actualizarFiltroPuestos(evidenciasLocales);
             if (evidenciasLocales.length === 0) {
                 galleryGrid.innerHTML = `<p class="placeholder-text">No hay actas cargadas aún. Esperando transmisión de los testigos en campo...</p>`;
                 return;
             }
             const puestoElegido = filtroPuestoActas ? filtroPuestoActas.value : '';
+            const zonaElegida = filtroZonaActas ? filtroZonaActas.value : '';
+            const numeroElegido = filtroNumeroActas ? filtroNumeroActas.value : '';
             const orden = ordenMesasActas ? ordenMesasActas.value : 'asc';
-            const evidenciasFiltradas = evidenciasLocales.filter(ev => !puestoElegido || ev.puesto === puestoElegido)
-                .sort((a,b) => (normalizarMesa(a.mesa) - normalizarMesa(b.mesa)) * (orden === 'desc' ? -1 : 1));
+            const evidenciasFiltradas = evidenciasLocales.filter(ev => {
+                const nombre = normalizarTexto(ev.puesto);
+                const oficial = listaPuestosVotacion.find(p => normalizarTexto(p.matchName) === nombre || normalizarTexto(p.nombre) === nombre);
+                return (!puestoElegido || ev.puesto === puestoElegido) && (!zonaElegida || (oficial && String(oficial.zona) === zonaElegida)) && (!numeroElegido || (oficial && String(oficial.numero) === numeroElegido));
+            }).sort((a,b) => (normalizarMesa(a.mesa) - normalizarMesa(b.mesa)) * (orden === 'desc' ? -1 : 1));
             if (!evidenciasFiltradas.length) {
                 galleryGrid.innerHTML = `<p class="placeholder-text">No hay actas para el puesto seleccionado.</p>`;
                 return;
@@ -1815,7 +2128,7 @@ if (query && redTotal.length > 0) {
             }).map(a => ({ nombre: a.name || a.actividad || a.nombre || '', fecha: a.date || a.fecha || '' }));
         } else {
             try {
-                const guardados = JSON.parse(localStorage.getItem(MIRA_TEST_PREFIX + 'mira_concejal_activities_v1') || '[]');
+                const guardados = JSON.parse(localStorage.getItem('mira_concejal_activities_v1') || '[]');
                 registros = (Array.isArray(guardados) ? guardados : []).filter(a =>
                     normalizar(a.barrio || a.sector || '') === barrio
                 ).map(a => ({ nombre: a.description || a.actividad || a.name || a.nombre || '', fecha: a.date || a.fecha || '' }));
@@ -1901,6 +2214,7 @@ if (query && redTotal.length > 0) {
     };
 
     function mostrarFichaBarrio(feature, nombre) {
+        colapsarPanelesDeFiltros();
         const widget = document.getElementById('floatingPuestoWidget');
         const content = document.getElementById('floatingWidgetContent');
         if (!widget || !content) return;
@@ -1965,8 +2279,6 @@ if (query && redTotal.length > 0) {
 function limpiarEstadoVisualPMU(){
   const appContainer = document.getElementById('app-container');
   if (appContainer) appContainer.style.display = 'none';
-  const banner = document.getElementById('miraLocalTestBanner');
-  if (banner) banner.classList.add('hidden');
   const activities = document.getElementById('activitiesPlaceholder');
   if (activities) activities.classList.add('hidden');
   ['testigosModal','testigoStandaloneContainer','concejalWorkspace'].forEach(id=>{
@@ -1988,29 +2300,13 @@ function limpiarEstadoVisualPMU(){
   const pass=document.getElementById('password'); if(pass) pass.value='';
   const user=document.getElementById('username'); if(user) user.value='';
   const error=document.getElementById('loginError'); if(error) error.style.display='none';
-  window.MIRA_TERRITORIO_TEST_SESSION=null;
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
 function volverAInterfazInicial(){
-  // Cerrar sesión en el servidor cuando exista una sesión real. La interfaz
-  // vuelve a la portada incluso si el servidor no está disponible; el token
-  // local se elimina siempre para evitar reutilizar una sesión en el navegador.
-  const token=sessionStorage.getItem('mtt_session_token');
-  const limpiarCredenciales=()=>{
-    ['mtt_session_token','mtt_session_user','mtt_session_expiry'].forEach(k=>sessionStorage.removeItem(k));
-    limpiarEstadoVisualPMU();
-  };
-  if(token && window.google && google.script && google.script.run){
-    try{
-      google.script.run
-        .withSuccessHandler(limpiarCredenciales)
-        .withFailureHandler(err=>{console.warn('[MIRA] No se pudo confirmar la revocación en servidor; se limpió la sesión local.',err);limpiarCredenciales();})
-        .cerrarSesionV13(token);
-    }catch(err){console.warn('[MIRA] Error al solicitar cierre de sesión.',err);limpiarCredenciales();}
-  }else{
-    limpiarCredenciales();
-  }
+  // Cierre de sesión local.
+  ['mtt_local_session_v1','mtt_session_user','mtt_session_expiry','mtt_session_token'].forEach(k=>sessionStorage.removeItem(k));
+  limpiarEstadoVisualPMU();
 }
 const homeReturnButton = document.getElementById('platformHomeBtn');
 if(homeReturnButton){
@@ -2019,23 +2315,11 @@ if(homeReturnButton){
 
 
 
-// Control visible solo en localhost + ?modo=pruebas.
-(function configurarModoPruebasLocal(){
- const btn=document.getElementById('localTestModeBtn');
- if(MIRA_LOCAL_TEST_MODE){
-   if(btn){btn.classList.remove('hidden');btn.addEventListener('click',activarModoPruebasLocal);}
-   const error=document.getElementById('loginError');
-   if(error){error.textContent='Entorno local detectado. Usa el botón de pruebas para abrir la interfaz con datos ficticios; esto no autentica una cuenta real.';error.style.display='block';}
-   const pass=document.getElementById('password');if(pass)pass.setAttribute('autocomplete','off');
- }
-})();
-
-
 // MÓDULO CONCEJAL V14 — separado de las actividades generales del partido.
 (function initConcejalModule(){
   const workspace=document.getElementById('concejalWorkspace');
   if(!workspace)return;
-  const STORE_KEY=MIRA_TEST_PREFIX+'mira_concejal_activities_v1';
+  const STORE_KEY='mira_concejal_activities_v1';
   const form=document.getElementById('concejalActivityForm');
   const barrioInput=document.getElementById('concejalBarrioInput');
   const descriptionInput=document.getElementById('concejalActivityDescription');
@@ -2043,9 +2327,9 @@ if(homeReturnButton){
   const options=document.getElementById('concejalBarriosOptions');
   const list=document.getElementById('concejalHistoryList');
   const notice=document.getElementById('concejalFormNotice');
-  let records=[]; let editingId=null; let miniMap=null; let miniLayer=null; let miniTileLayer=null; let selectedFeatureLayer=null; let featureCollection=null;
+  let records=readRecords(); let editingId=null; let miniMap=null; let miniLayer=null; let miniTileLayer=null; let selectedFeatureLayer=null; let featureCollection=null;
   function readRecords(){try{const v=JSON.parse(localStorage.getItem(STORE_KEY)||'[]');return Array.isArray(v)?v:[]}catch(e){console.warn('No se pudo leer el historial de Concejal.',e);return[]}}
-  function persist(){document.getElementById('concejalSidebarCount').textContent=records.length+' actividades centralizadas';renderHistory()}
+  function persist(){localStorage.setItem(STORE_KEY,JSON.stringify(records));document.getElementById('concejalSidebarCount').textContent=records.length+' actividades guardadas en este navegador (pendiente de servidor central)';renderHistory()}
   function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
   function norm(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim()}
   function getNames(){return Object.keys(poligonosPorNombre||{}).sort((a,b)=>a.localeCompare(b,'es'))}
@@ -2057,11 +2341,11 @@ if(homeReturnButton){
   }
   function showNotice(msg,type='success'){notice.textContent=msg;notice.classList.remove('hidden');notice.style.borderColor=type==='error'?'#fb7185':'#2dd4bf';}
   function resetForm(){editingId=null;form.reset();dateInput.value=new Date().toISOString().slice(0,10);document.getElementById('concejalFormTitle').textContent='Registrar actividad';document.getElementById('saveConcejalActivityBtn').textContent='Guardar actividad';document.getElementById('cancelEditConcejalBtn').classList.add('hidden');notice.classList.add('hidden');focusBarrio('')}
-  function openModule(){document.getElementById('activitiesPlaceholder').classList.add('hidden');workspace.classList.remove('hidden');document.getElementById('landing-hero-overlay').style.display='none';document.getElementById('landingHeaderControls').style.display='none';document.getElementById('concejalStorageNotice').textContent='Los registros de gestión y compromisos se guardan en la base de datos central de MIRA TU TERRITORIO.';populateNames();initMiniMap();setTimeout(()=>miniMap&&miniMap.invalidateSize(),180);renderHistory()}
+  function openModule(){document.getElementById('activitiesPlaceholder').classList.add('hidden');workspace.classList.remove('hidden');document.getElementById('landing-hero-overlay').style.display='none';document.getElementById('landingHeaderControls').style.display='none';document.getElementById('concejalStorageNotice').textContent='Los registros se guardan en este navegador. La base centralizada requiere integrar el servidor y sus permisos.';populateNames();initMiniMap();setTimeout(()=>miniMap&&miniMap.invalidateSize(),180);renderHistory()}
   function closeModule(){workspace.classList.add('hidden');if(miniMap){miniMap.remove();miniMap=null;miniLayer=null;miniTileLayer=null;selectedFeatureLayer=null;}document.getElementById('landing-hero-overlay').style.display='none';document.getElementById('landingHeaderControls').style.display='none';}
   function renderHistory(){const q=norm(document.getElementById('concejalHistorySearch').value);const from=document.getElementById('concejalFilterDateFrom').value;const to=document.getElementById('concejalFilterDateTo').value;const barrio=norm(document.getElementById('concejalFilterBarrio').value);const filtered=records.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')||(b.updatedAt||b.createdAt||'').localeCompare(a.updatedAt||a.createdAt||'')).filter(r=>(!q||norm(r.description+' '+r.barrio).includes(q))&&(!from||r.date>=from)&&(!to||r.date<=to)&&(!barrio||norm(r.barrio).includes(barrio)));document.getElementById('concejalHistoryCount').textContent=filtered.length+' de '+records.length+' registros';list.innerHTML=filtered.length?filtered.map(r=>'<article class="concejal-history-item"><h3>'+esc(r.barrio)+'</h3><div class="concejal-history-meta"><span>📅 '+esc(r.date)+'</span><span>Registro: '+esc((r.createdAt||'').slice(0,10))+'</span></div><p class="concejal-history-description">'+esc(r.description)+'</p><div class="concejal-history-actions"><button type="button" data-concejal-edit="'+esc(r.id)+'">Editar</button><button type="button" data-concejal-map="'+esc(r.barrio)+'">Ver barrio en mapa</button></div></article>').join(''):'<div class="activity-empty-drive"><h3>No hay coincidencias</h3><p>Ajusta la búsqueda o los filtros para consultar el historial.</p></div>';list.querySelectorAll('[data-concejal-edit]').forEach(b=>b.addEventListener('click',()=>editRecord(b.dataset.concejalEdit)));list.querySelectorAll('[data-concejal-map]').forEach(b=>b.addEventListener('click',()=>{barrioInput.value=b.dataset.concejalMap;focusBarrio(b.dataset.concejalMap);document.getElementById('concejalBarrioInput').scrollIntoView({behavior:'smooth',block:'center'});}));document.getElementById('concejalSidebarCount').textContent=records.length+' actividades registradas';renderHistoryCommitments(q,from,to,barrio); }
   function editRecord(id){const r=records.find(x=>x.id===id);if(!r)return;editingId=id;barrioInput.value=r.barrio;descriptionInput.value=r.description;dateInput.value=r.date;focusBarrio(r.barrio);document.getElementById('concejalFormTitle').textContent='Editar actividad';document.getElementById('saveConcejalActivityBtn').textContent='Guardar cambios';document.getElementById('cancelEditConcejalBtn').classList.remove('hidden');document.getElementById('concejalTitle').scrollIntoView({behavior:'smooth',block:'start'});}
-  form.addEventListener('submit',async e=>{e.preventDefault();const barrio=barrioInput.value.trim();const descripcion=descriptionInput.value.trim();const fecha=dateInput.value;if(!barrio||!descripcion||!fecha){showNotice('Completa el barrio, la actividad y la fecha.','error');return;}const names=getNames();if(names.length&&!names.some(n=>norm(n)===norm(barrio))){showNotice('Selecciona un barrio que exista en el listado territorial.','error');return;}const btn=document.getElementById('saveConcejalActivityBtn');btn.disabled=true;try{if(!window.MIRA_DATA)throw new Error('La conexión central todavía no está lista.');const payload={barrio,descripcion,fecha};if(editingId)await MIRA_DATA.updateConcejalActivity(editingId,payload);else await MIRA_DATA.createConcejalActivity(payload);records=(await MIRA_DATA.listConcejalActivities()).map(r=>({id:r.id,barrio:r.barrio,description:r.descripcion,date:r.fecha,createdAt:r.created_at,updatedAt:r.updated_at}));persist();resetForm();showNotice('Actividad guardada en la base central.','success');}catch(err){showNotice(err.message||'No fue posible guardar la actividad.','error');}finally{btn.disabled=false;}});
+  form.addEventListener('submit',e=>{e.preventDefault();const barrio=barrioInput.value.trim();const description=descriptionInput.value.trim();const date=dateInput.value;if(!barrio||!description||!date){showNotice('Completa el barrio, la actividad y la fecha.','error');return;}const names=getNames();if(names.length&&!names.some(n=>norm(n)===norm(barrio))){showNotice('Selecciona un barrio que exista en el listado territorial.','error');return;}const now=new Date().toISOString();if(editingId){const r=records.find(x=>x.id===editingId);if(r){r.barrio=barrio;r.description=description;r.date=date;r.updatedAt=now;}}else records.push({id:'conc_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),barrio,description,date,createdAt:now,updatedAt:now});persist();resetForm();showNotice('Actividad guardada en el historial local de pruebas.','success');});
   barrioInput.addEventListener('input',()=>{const v=barrioInput.value.trim();const exact=getNames().find(n=>norm(n)===norm(v));if(exact)focusBarrio(exact);else document.getElementById('concejalMapSelectedName').textContent=v?'Selecciona un barrio válido':'Selecciona un barrio';});
   // Presentación personalizada de sugerencias de barrio, con el mismo estilo del selector de puestos.
   // No modifica la lógica de guardado ni los filtros; solo reemplaza el desplegable nativo no estilizable.
@@ -2101,18 +2385,18 @@ if(homeReturnButton){
   }
 
   // Extensión V26: compromisos, indicadores y exportación mensual compatible con Word.
-  const COMMITMENT_KEY=MIRA_TEST_PREFIX+'mira_concejal_commitments_v1';
+  const COMMITMENT_KEY='mira_concejal_commitments_v1';
   const commitmentForm=document.getElementById('concejalCommitmentForm');
   const commitmentList=document.getElementById('concejalCommitmentList');
   const commitmentNotice=document.getElementById('concejalCommitmentNotice');
   const commitmentBarrio=document.getElementById('concejalCommitmentBarrio');
   const commitmentDropdown=document.getElementById('concejalCommitmentBarrioDropdown');
-  let commitments=[];
+  let commitments=readCommitments();
   function readCommitments(){try{const value=JSON.parse(localStorage.getItem(COMMITMENT_KEY)||'[]');return Array.isArray(value)?value:[]}catch(e){console.warn('No se pudieron leer los compromisos locales.',e);return[]}}
-  function persistCommitments(){renderCommitments();renderDashboard();renderHistoryCommitments()}
+  function persistCommitments(){localStorage.setItem(COMMITMENT_KEY,JSON.stringify(commitments));renderCommitments();renderDashboard();renderHistoryCommitments()}
   function commitmentNoticeText(message,error=false){commitmentNotice.textContent=message;commitmentNotice.classList.remove('hidden');commitmentNotice.style.borderColor=error?'#fb7185':'#2dd4bf'}
   function renderDashboard(){const completed=commitments.filter(c=>c.status==='Cumplido').length;const achieved=commitments.filter(c=>c.achieved&&String(c.result||'').trim()).length;const total=commitments.length;const percent=total?Math.round(completed/total*100):0;document.getElementById('concejalKpiActivities').textContent=records.length;document.getElementById('concejalKpiCommitments').textContent=total;document.getElementById('concejalKpiCompleted').textContent=completed;document.getElementById('concejalKpiAchievements').textContent=achieved;document.getElementById('concejalProgressText').textContent=percent+'%';document.getElementById('concejalProgressBar').style.width=percent+'%';document.getElementById('concejalCommitmentCount').textContent=total+' compromiso'+(total===1?'':'s');}
-  function renderCommitments(){if(!commitmentList)return;const q=norm(document.getElementById('concejalCommitmentSearch').value);const filtered=commitments.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')).filter(c=>!q||norm([c.barrio,c.text,c.with,c.status,c.result].join(' ')).includes(q));commitmentList.innerHTML=filtered.length?filtered.map(c=>'<article class="concejal-history-item"><div class="concejal-commitment-card-head"><h3>'+esc(c.text)+'</h3><span class="concejal-status-pill" data-status="'+esc(c.status)+'">'+esc(c.status)+'</span></div><div class="concejal-history-meta"><span>🏘️ '+esc(c.barrio)+'</span><span>📅 '+esc(c.date)+'</span>'+(c.deadline?'<span>Vence: '+esc(c.deadline)+'</span>':'')+'</div><p class="concejal-history-description"><strong>Compromiso con:</strong> '+esc(c.with)+'</p><p class="concejal-history-description"><strong>Resultado obtenido:</strong> '+esc(c.result||'Sin resultado registrado')+'</p><p class="concejal-history-description"><strong>Se logró:</strong> '+(c.achieved?'Sí':'No marcado')+'</p><div class="concejal-history-actions"><button type="button" data-commitment-edit="'+esc(c.id)+'">Editar</button><button type="button" data-commitment-delete="'+esc(c.id)+'">Eliminar</button></div></article>').join(''):'<div class="activity-empty-drive"><h3>No hay compromisos coincidentes</h3><p>Registra un compromiso o ajusta la búsqueda.</p></div>';commitmentList.querySelectorAll('[data-commitment-edit]').forEach(b=>b.addEventListener('click',()=>editCommitment(b.dataset.commitmentEdit)));commitmentList.querySelectorAll('[data-commitment-delete]').forEach(b=>b.addEventListener('click',async()=>{const item=commitments.find(c=>c.id===b.dataset.commitmentDelete);if(item&&confirm('¿Eliminar este compromiso de la base central?')){try{await MIRA_DATA.deleteConcejalCommitment(item.id);commitments=(await MIRA_DATA.listConcejalCommitments()).map(mapCommitment);persistCommitments();}catch(err){commitmentNoticeText(err.message||'No fue posible eliminar el compromiso.',true);}}}));}
+  function renderCommitments(){if(!commitmentList)return;const q=norm(document.getElementById('concejalCommitmentSearch').value);const filtered=commitments.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')).filter(c=>!q||norm([c.barrio,c.text,c.with,c.status,c.result].join(' ')).includes(q));commitmentList.innerHTML=filtered.length?filtered.map(c=>'<article class="concejal-history-item"><div class="concejal-commitment-card-head"><h3>'+esc(c.text)+'</h3><span class="concejal-status-pill" data-status="'+esc(c.status)+'">'+esc(c.status)+'</span></div><div class="concejal-history-meta"><span>🏘️ '+esc(c.barrio)+'</span><span>📅 '+esc(c.date)+'</span>'+(c.deadline?'<span>Vence: '+esc(c.deadline)+'</span>':'')+'</div><p class="concejal-history-description"><strong>Compromiso con:</strong> '+esc(c.with)+'</p><p class="concejal-history-description"><strong>Resultado obtenido:</strong> '+esc(c.result||'Sin resultado registrado')+'</p><p class="concejal-history-description"><strong>Se logró:</strong> '+(c.achieved?'Sí':'No marcado')+'</p><div class="concejal-history-actions"><button type="button" data-commitment-edit="'+esc(c.id)+'">Editar</button><button type="button" data-commitment-delete="'+esc(c.id)+'">Eliminar</button></div></article>').join(''):'<div class="activity-empty-drive"><h3>No hay compromisos coincidentes</h3><p>Registra un compromiso o ajusta la búsqueda.</p></div>';commitmentList.querySelectorAll('[data-commitment-edit]').forEach(b=>b.addEventListener('click',()=>editCommitment(b.dataset.commitmentEdit)));commitmentList.querySelectorAll('[data-commitment-delete]').forEach(b=>b.addEventListener('click',()=>{const item=commitments.find(c=>c.id===b.dataset.commitmentDelete);if(item&&confirm('¿Eliminar este compromiso del almacenamiento local de pruebas?')){commitments=commitments.filter(c=>c.id!==item.id);persistCommitments()}}));}
   function renderHistoryCommitments(qOverride,fromOverride,toOverride,barrioOverride){
     const target=document.getElementById('concejalHistoryCommitmentList');if(!target)return;
     const q=typeof qOverride==='string'?qOverride:norm(document.getElementById('concejalHistorySearch').value);
@@ -2126,8 +2410,7 @@ if(homeReturnButton){
   }
   function resetCommitmentForm(){commitmentForm.reset();document.getElementById('concejalCommitmentId').value='';document.getElementById('concejalCommitmentDate').value=new Date().toISOString().slice(0,10);document.getElementById('saveConcejalCommitmentBtn').textContent='Guardar compromiso';document.getElementById('cancelConcejalCommitmentEditBtn').classList.add('hidden');commitmentNotice.classList.add('hidden')}
   function editCommitment(id){const c=commitments.find(x=>x.id===id);if(!c)return;document.getElementById('concejalCommitmentId').value=c.id;commitmentBarrio.value=c.barrio;document.getElementById('concejalCommitmentText').value=c.text;document.getElementById('concejalCommitmentWith').value=c.with;document.getElementById('concejalCommitmentDate').value=c.date;document.getElementById('concejalCommitmentDeadline').value=c.deadline||'';document.getElementById('concejalCommitmentStatus').value=c.status;document.getElementById('concejalCommitmentResult').value=c.result||'';document.getElementById('concejalCommitmentAchieved').checked=!!c.achieved;document.getElementById('saveConcejalCommitmentBtn').textContent='Guardar cambios';document.getElementById('cancelConcejalCommitmentEditBtn').classList.remove('hidden');commitmentForm.scrollIntoView({behavior:'smooth',block:'center'})}
-  function mapCommitment(c){return {id:c.id,barrio:c.barrio,text:c.compromiso,with:c.adquirido_con,date:c.fecha,deadline:c.fecha_limite||'',status:c.estado,result:c.resultado||'',achieved:!!c.logrado,createdAt:c.created_at,updatedAt:c.updated_at};}
-  commitmentForm.addEventListener('submit',async e=>{e.preventDefault();const barrio=commitmentBarrio.value.trim();const validNames=getNames();if(validNames.length&&!validNames.some(n=>norm(n)===norm(barrio))){commitmentNoticeText('Selecciona un barrio válido de la lista territorial.',true);return;}const achieved=document.getElementById('concejalCommitmentAchieved').checked;const result=document.getElementById('concejalCommitmentResult').value.trim();if(achieved&&!result){commitmentNoticeText('Describe el resultado obtenido antes de marcar “Se logró”.',true);return;}const id=document.getElementById('concejalCommitmentId').value;const payload={barrio,compromiso:document.getElementById('concejalCommitmentText').value.trim(),adquirido_con:document.getElementById('concejalCommitmentWith').value.trim(),fecha:document.getElementById('concejalCommitmentDate').value,fecha_limite:document.getElementById('concejalCommitmentDeadline').value||null,estado:document.getElementById('concejalCommitmentStatus').value,resultado:result||null,logrado:achieved};const btn=document.getElementById('saveConcejalCommitmentBtn');btn.disabled=true;try{if(id)await MIRA_DATA.updateConcejalCommitment(id,payload);else await MIRA_DATA.createConcejalCommitment(payload);commitments=(await MIRA_DATA.listConcejalCommitments()).map(mapCommitment);persistCommitments();resetCommitmentForm();commitmentNoticeText('Compromiso guardado en la base central.');}catch(err){commitmentNoticeText(err.message||'No fue posible guardar el compromiso.',true);}finally{btn.disabled=false;}});
+  commitmentForm.addEventListener('submit',e=>{e.preventDefault();const barrio=commitmentBarrio.value.trim();const validNames=getNames();if(validNames.length&&!validNames.some(n=>norm(n)===norm(barrio))){commitmentNoticeText('Selecciona un barrio válido de la lista territorial.',true);return}const achieved=document.getElementById('concejalCommitmentAchieved').checked;const result=document.getElementById('concejalCommitmentResult').value.trim();if(achieved&&!result){commitmentNoticeText('Describe el resultado obtenido antes de marcar “Se logró”.',true);return}const id=document.getElementById('concejalCommitmentId').value;const now=new Date().toISOString();const item={id:id||'com_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),barrio,text:document.getElementById('concejalCommitmentText').value.trim(),with:document.getElementById('concejalCommitmentWith').value.trim(),date:document.getElementById('concejalCommitmentDate').value,deadline:document.getElementById('concejalCommitmentDeadline').value,status:document.getElementById('concejalCommitmentStatus').value,result,achieved,createdAt:(commitments.find(c=>c.id===id)||{}).createdAt||now,updatedAt:now};if(id){commitments=commitments.map(c=>c.id===id?item:c)}else commitments.push(item);persistCommitments();resetCommitmentForm();commitmentNoticeText('Compromiso guardado en el almacenamiento local de pruebas.');});
   document.getElementById('cancelConcejalCommitmentEditBtn').addEventListener('click',resetCommitmentForm);
   document.getElementById('concejalCommitmentSearch').addEventListener('input',renderCommitments);
   function renderCommitmentSuggestions(){const query=norm(commitmentBarrio.value);const names=getNames().filter(n=>!query||norm(n).includes(query)).slice(0,80);commitmentDropdown.innerHTML=names.length?names.map(n=>'<button type="button" class="mira-combobox-option" role="option" data-commitment-barrio="'+esc(n)+'">'+esc(n)+'</button>').join(''):'<div class="mira-combobox-empty">No hay barrios coincidentes</div>';commitmentDropdown.classList.remove('hidden');commitmentBarrio.setAttribute('aria-expanded','true');commitmentDropdown.querySelectorAll('[data-commitment-barrio]').forEach(b=>b.addEventListener('mousedown',e=>e.preventDefault()));commitmentDropdown.querySelectorAll('[data-commitment-barrio]').forEach(b=>b.addEventListener('click',()=>{commitmentBarrio.value=b.dataset.commitmentBarrio;commitmentDropdown.classList.add('hidden');commitmentBarrio.setAttribute('aria-expanded','false')}))}
@@ -2187,9 +2470,6 @@ if(homeReturnButton){
   // Expose a read-only accessor for the territorial popup to read the latest activity.
   window.MiraConcejalActivities={getLatestForBarrio:function(name){return records.filter(r=>norm(r.barrio)===norm(name)).sort((a,b)=>(b.date||'').localeCompare(a.date||''))[0]||null;},getAll:function(){return records.slice()}};
   document.addEventListener('visibilitychange',()=>{if(!document.hidden&& !workspace.classList.contains('hidden'))miniMap&&miniMap.invalidateSize()});
-  async function loadConcejalRemote(){try{const [activityRows,commitmentRows]=await Promise.all([MIRA_DATA.listConcejalActivities(),MIRA_DATA.listConcejalCommitments()]);records=(activityRows||[]).map(r=>({id:r.id,barrio:r.barrio,description:r.descripcion,date:r.fecha,createdAt:r.created_at,updatedAt:r.updated_at}));commitments=(commitmentRows||[]).map(mapCommitment);persist();persistCommitments();}catch(err){showNotice('No fue posible cargar los registros centralizados: '+(err.message||'error de conexión'),'error');}}
-  window.addEventListener('mira:data-ready',loadConcejalRemote);
-  if(window.MIRA_DATA)loadConcejalRemote();
   document.getElementById('concejalActivityDate').value=new Date().toISOString().slice(0,10);populateNames();persist();
 })();
 
