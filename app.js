@@ -1067,22 +1067,25 @@ if (!window.__miraMapResizeHandlersInstalled) {
 }
 
 function inicializarSistemaMapa() {
+    // Registrar el módulo E-14 antes de cualquier retorno temprano. La función
+    // está declarada dentro de este ámbito y es hoisted; así también queda
+    // disponible cuando Leaflet ya creó el mapa en una sesión anterior.
+    if (!window.__MIRA_E14_INITIALIZED__) {
+        try {
+            inicializarModuloTestigosPMU();
+            window.__MIRA_E14_INITIALIZED__ = true;
+        } catch (e14InitError) {
+            console.error('[MIRA E-14] Error inicializando el módulo:', e14InitError);
+            const e14Status = document.getElementById('e14CentralStatus');
+            if (e14Status) e14Status.textContent = 'No se pudo inicializar la consulta E-14. Reintenta abrir el panel.';
+        }
+    }
     if (map) {
         setTimeout(() => { map.invalidateSize(); }, 200);
         return;
     }
 
     map = L.map('map', { zoomControl: false, preferCanvas: true }).setView([4.8123, -74.3542], 14);
-
-    // E-14 se inicializa primero y de forma aislada. Ningún error de dashboard,
-    // logística o cartografía debe impedir registrar el panel y sus eventos.
-    try {
-        // E-14 ya fue inicializado al comienzo del arranque del mapa.
-    } catch (e14InitError) {
-        console.error('[MIRA E-14] Error inicializando el módulo:', e14InitError);
-        const e14Status = document.getElementById('e14CentralStatus');
-        if (e14Status) e14Status.textContent = 'El panel E-14 abrió, pero su inicialización encontró un error. Consulta la consola.';
-    }
     L.control.zoom({ position: 'topright' }).addTo(map);
 
     // V39: restaurar la cartografía base satelital. Sin esta capa Leaflet deja
@@ -1231,7 +1234,6 @@ function inicializarSistemaMapa() {
 
     inicializarModuloLogistica();
     actualizarDashboardKPIs();
-    inicializarModuloTestigosPMU();
 
     // La base de electores no forma parte de esta distribución independiente.
     // Se mantiene vacía hasta conectar una fuente de datos autorizada.
