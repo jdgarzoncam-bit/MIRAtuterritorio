@@ -14,6 +14,30 @@ let poligonosCoincidenciaActiva = new Set();
 let poligonosPorNombre = Object.create(null);
 
 let imagenBase64Seleccionada = "";
+
+// Apertura global por delegación: funciona aunque el botón se regenere en el DOM
+// o el inicializador de Testigos no haya alcanzado a registrar sus listeners.
+if (!window.__MIRA_E14_GLOBAL_HANDLER__) {
+    window.__MIRA_E14_GLOBAL_HANDLER__ = true;
+    document.addEventListener('click', event => {
+        const trigger = event.target?.closest?.('#openTestigosModalBtn');
+        if (!trigger) return;
+        event.preventDefault();
+        event.stopPropagation();
+        const panel = document.getElementById('testigosModal');
+        const gallery = document.getElementById('testigosGalleryGrid');
+        if (!panel || !gallery) {
+            console.error('[MIRA E-14] Faltan #testigosModal o #testigosGalleryGrid.');
+            alert('No se encontró el panel E-14 completo. Recarga la plataforma y vuelve a intentarlo.');
+            return;
+        }
+        panel.classList.remove('hidden');
+        panel.style.cssText += ';display:flex!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;z-index:10050!important';
+        panel.setAttribute('aria-hidden','false');
+        document.body.style.overflow = 'hidden';
+        document.dispatchEvent(new CustomEvent('mira:e14-panel-open'));
+    }, true);
+}
 function leerEvidenciasTestigosLocales() {
     try {
         const stored = localStorage.getItem('faca_evidencias_testigos');
@@ -2273,17 +2297,22 @@ function inicializarSistemaMapa() {
             modal.setAttribute('aria-hidden','true');
             document.body.style.overflow = '';
         };
-        if (openBtn && !openBtn.dataset.e14Bound) {
-            openBtn.dataset.e14Bound = '1';
-            openBtn.type = 'button';
-            openBtn.addEventListener('click', abrirPanelE14);
-        } else if (!openBtn) {
-            console.error('[MIRA E-14] No se encontró openTestigosModalBtn.');
+        // La apertura visual se gestiona por delegación global para soportar
+        // reconstrucciones del botón; aquí solo se atiende la carga de la galería.
+        if (!document.documentElement.dataset.e14OpenListener) {
+            document.documentElement.dataset.e14OpenListener = '1';
+            document.addEventListener('mira:e14-panel-open', () => { cargarCentral(); });
         }
         if (closeBtn && !closeBtn.dataset.e14Bound) {
             closeBtn.dataset.e14Bound = '1';
             closeBtn.type = 'button';
             closeBtn.addEventListener('click', cerrarPanelE14);
+        }
+        if (modal && !modal.dataset.e14EscapeBound) {
+            modal.dataset.e14EscapeBound = '1';
+            document.addEventListener('keydown', event => {
+                if (event.key === 'Escape' && !modal.classList.contains('hidden')) cerrarPanelE14(event);
+            });
         }
 
         downloadAllBtn.addEventListener('click', function() {
