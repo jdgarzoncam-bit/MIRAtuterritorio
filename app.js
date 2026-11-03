@@ -2047,7 +2047,7 @@ function inicializarSistemaMapa() {
     function inicializarModuloLogistica() {
         const btnLogistica=document.getElementById('logisticaBtn');
         const selectLogistica=document.getElementById('logisticaSelect');
-        const dropdownLogistica=document.getElementById('dropdown-logistica');
+        const dropdownLogistica=document.getElementById('dropdown-infomira');
         if(!btnLogistica || !selectLogistica || !dropdownLogistica) return;
         let box=document.getElementById('logisticaResultsContainer');
         if(!box){box=document.createElement('div');box.id='logisticaResultsContainer';dropdownLogistica.querySelector('.dropdown-content')?.appendChild(box);}
