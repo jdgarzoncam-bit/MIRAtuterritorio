@@ -31,6 +31,48 @@ async function getOwnModulePermissions(token) {
   if(!Array.isArray(rows)) throw new Error("La respuesta de permisos no es válida. El acceso se mantendrá bloqueado.");
   return rows;
 }
+function clearAuthenticatedState() {
+  window.MIRA_CURRENT_USER=null;
+  window.dispatchEvent(new Event("mira:signed-out"));
+}
+async function establishAuthenticatedUser(authUser) {
+  if(!authUser?.id) throw new Error("No fue posible identificar la cuenta autenticada.");
+  if(authUser.emailVerified!==true) throw new Error("Primero confirma tu correo electrónico. Revisa tu bandeja de entrada y Spam.");
+  const token=await bearerToken();
+  const profile=await getOwnProfile(token,authUser.id);
+  if(!profile || profile.active!==true || profile.email_verified!==true || !["admin","operator","viewer","witness"].includes(profile.role)) {
+    throw new Error("Tu cuenta todavía no está aprobada. Solicita al administrador que habilite tu perfil.");
+  }
+  let permissions=[];
+  if(profile.role!=="admin") {
+    permissions=await getOwnModulePermissions(token);
+    if(!permissions.some(permission=>permission.allowed===true && permission.action_key==="view")) {
+      throw new Error("Tu cuenta está aprobada, pero todavía no tiene módulos autorizados. Solicita al administrador que habilite al menos uno.");
+    }
+  }
+  window.MIRA_CURRENT_USER={role:profile.role,authUserId:profile.auth_user_id,displayName:profile.display_name||authUser.name||profile.email,email:profile.email||authUser.email};
+  window.dispatchEvent(new Event("mira:authenticated"));
+  if(typeof window.activarPMUAutenticado!=="function") throw new Error("No se pudo iniciar la interfaz principal.");
+  window.activarPMUAutenticado();
+}
+async function restoreExistingSession() {
+  try {
+    const result=await auth.getSession();
+    if(result?.error) throw result.error;
+    const sessionData=result?.data;
+    const authUser=sessionData?.user||sessionData?.session?.user||null;
+    if(!authUser) { clearAuthenticatedState(); return; }
+    await establishAuthenticatedUser(authUser);
+  } catch(error) {
+    clearAuthenticatedState();
+    try { await auth.signOut(); } catch(signOutError) { console.warn("[MIRA Auth] No se pudo limpiar una sesión inválida.",signOutError); }
+    console.warn("[MIRA Auth] La sesión guardada no superó la validación; se requiere iniciar sesión.",error);
+  }
+}
+async function signOutCompletely() {
+  try { await auth.signOut(); }
+  finally { clearAuthenticatedState(); }
+}
 function showLoginError(message) {
   const error=document.getElementById("loginError");
   if(error){error.textContent=message;error.style.display="block";}
@@ -49,26 +91,7 @@ async function loginWithNeon() {
       if(code.includes("EMAIL_NOT_VERIFIED")||status===403) throw new Error("Primero confirma tu correo electrónico. Revisa tu bandeja de entrada y Spam.");
       throw new Error("No fue posible iniciar sesión. Verifica tus credenciales.");
     }
-    const authUserId=result?.data?.user?.id;
-    if(!authUserId) throw new Error("El proveedor de identidad no devolvió el identificador de la sesión.");
-    const token=await bearerToken();
-    const profile=await getOwnProfile(token,authUserId);
-    if(!profile || profile.active!==true || profile.email_verified!==true || !["admin","operator","viewer","witness"].includes(profile.role)) {
-      await auth.signOut();
-      throw new Error("Tu cuenta todavía no está aprobada. Solicita al administrador que habilite tu perfil.");
-    }
-    if(profile.role!=="admin") {
-      let permissions=[];
-      try { permissions=await getOwnModulePermissions(token); }
-      catch(permissionError) { await auth.signOut(); throw permissionError; }
-      const hasExplicitView=permissions.some(permission=>permission.allowed===true && permission.action_key==="view");
-      if(!hasExplicitView) {
-        await auth.signOut();
-        throw new Error("Tu cuenta está aprobada, pero todavía no tienes permisos de consulta asignados. Solicita al administrador que habilite al menos un módulo.");
-      }
-    }
-    window.MIRA_CURRENT_USER={role:profile.role,authUserId:profile.auth_user_id,displayName:profile.display_name||email,email};
-    window.dispatchEvent(new Event("mira:authenticated"));
+    await establishAuthenticatedUser(result?.data?.user);
     const error=document.getElementById("loginError");
     if(error) error.style.display="none";
     const pass=document.getElementById("password"); if(pass) pass.value="";
@@ -110,5 +133,9 @@ document.addEventListener("DOMContentLoaded",()=>{
     window.location.href="registro-usuario.html";
   },true);
   const logout=document.getElementById("platformHomeBtn");
-  if(logout) logout.addEventListener("click",()=>{auth.signOut().catch(err=>console.warn("No se pudo cerrar la sesión remota",err));},true);
+  if(logout) logout.addEventListener("click",event=>{
+    event.preventDefault();
+    signOutCompletely().catch(err=>console.warn("[MIRA Auth] Error al cerrar sesión.",err));
+  },true);
+  restoreExistingSession();
 });
