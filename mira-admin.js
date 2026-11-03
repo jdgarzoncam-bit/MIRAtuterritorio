@@ -147,6 +147,7 @@ async function changePermission(input){
     const state=input.closest(".admin-module-permission")?.querySelector(".admin-access-state");
     if(state){state.textContent=input.checked?"Acceso completo":"Restringido";state.classList.toggle("is-allowed",input.checked);state.classList.toggle("is-restricted",!input.checked);}
     notice(input.checked?"Módulo habilitado con acceso completo.":"Módulo restringido; se bloquean sus operaciones.");
+    renderMatrix();
   }catch(error){
     input.checked=!input.checked;
     notice(error.message||"No fue posible guardar el permiso.",true);
