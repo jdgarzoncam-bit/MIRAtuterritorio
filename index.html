@@ -710,7 +710,11 @@
             <div class="admin-permissions-body">
                 <aside class="admin-users-pane">
                     <div class="admin-pane-heading"><strong>Usuarios registrados</strong><button type="button" id="refreshAdminUsersBtn" title="Actualizar">↻</button></div>
-                    <p class="admin-pane-hint">Solo aparecen cuentas que ya tienen un perfil vinculado en MIRA.</p>
+                    <p class="admin-pane-hint">Separa las solicitudes pendientes de las cuentas que ya están habilitadas.</p>
+                    <div class="admin-users-tabs" role="tablist" aria-label="Estado de las cuentas">
+                        <button type="button" id="adminUsersPendingTab" class="admin-users-tab is-active" role="tab" aria-selected="true">Por aprobar</button>
+                        <button type="button" id="adminUsersApprovedTab" class="admin-users-tab" role="tab" aria-selected="false">Aprobados</button>
+                    </div>
                     <div id="adminUsersList" class="admin-users-list"><p class="admin-permissions-loading">Cargando usuarios…</p></div>
                 </aside>
                 <section class="admin-matrix-pane">
