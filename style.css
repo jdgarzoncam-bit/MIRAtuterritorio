@@ -5712,3 +5712,15 @@ a:hover {color:#E6EDFD;}
   #e14CentralControls > div:nth-of-type(2) { flex-direction: column; }
   #e14CentralControls > div:nth-of-type(2) button { width: 100%; }
 }
+
+
+/* E-14: keep upload and migration controls inside their private-storage panel. */
+#e14CentralControls { width:100%; max-width:100%; min-width:0; box-sizing:border-box; overflow:hidden; }
+#e14CentralControls > div:first-of-type { display:grid !important; grid-template-columns:repeat(2,minmax(0,1fr)) !important; gap:9px !important; width:100%; min-width:0; }
+#e14CentralControls > div:first-of-type > * { min-width:0; width:100%; max-width:100%; box-sizing:border-box; }
+#e14CentralControls > div:nth-of-type(2) { display:flex !important; flex-direction:column; align-items:stretch; width:100%; min-width:0; }
+#e14CentralControls > div:nth-of-type(2) button { display:block; width:100%; max-width:100%; min-width:0; white-space:normal; overflow-wrap:anywhere; line-height:1.35; padding:10px 12px; }
+#e14CentralControls #e14CentralStatus { display:block; width:100%; overflow-wrap:anywhere; white-space:normal; line-height:1.45; }
+@media(max-width:560px) {
+  #e14CentralControls > div:first-of-type { grid-template-columns:minmax(0,1fr) !important; }
+}
