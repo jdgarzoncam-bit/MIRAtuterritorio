@@ -155,7 +155,6 @@ async function changePermission(input){
 }
 const MODULE_TARGETS = {
   infomira:["dropdown-infomira"],
-  logistica:["dropdown-logistica"],
   testigos:["dropdown-testigos"],
   centro_operaciones:["dropdown-puestos","dropdown-barrios-puestos"],
   actividades:["dropdown-actividades"],
