@@ -897,8 +897,8 @@ function inicializarEventosArchivosTestigo() {
         renderizarMiniaturas();
 
         const mensajeExito = totalFotos === 1
-            ? "✅ ¡Acta E-14 transmitida con éxito al Centro de Operaciones!"
-            : `✅ ¡${totalFotos} actas/fotos transmitidas con éxito al Centro de Operaciones!`;
+            ? "✅ ¡Acta E-14 guardada correctamente en este dispositivo!"
+            : `✅ ¡${totalFotos} actas/fotos guardadas correctamente en este dispositivo!`;
         alert(mensajeExito);
     });
 }
@@ -2184,7 +2184,7 @@ function inicializarSistemaMapa() {
             const evidenciasLocales = leerEvidenciasTestigosLocales();
             actualizarFiltroPuestos(evidenciasLocales);
             if (evidenciasLocales.length === 0) {
-                galleryGrid.innerHTML = `<p class="placeholder-text">No hay actas cargadas aún. Esperando transmisión de los testigos en campo...</p>`;
+                galleryGrid.innerHTML = `<p class="placeholder-text">No hay actas cargadas aún. Las evidencias se mostrarán aquí cuando estén guardadas en este dispositivo...</p>`;
                 return;
             }
             const puestoElegido = filtroPuestoActas ? filtroPuestoActas.value : '';
