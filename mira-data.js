@@ -179,6 +179,41 @@ export const MIRA_DATA = {
   },
   async listAdminAudit({limit=30}={}) {
     return miraRequest("admin_audit_log",{query:qs({select:"id,actor_auth_user_id,target_auth_user_id,action_key,details,created_at",order:"created_at.desc",limit:String(Math.min(Math.max(limit,1),100))})});
+  },
+  async e14Request(action, payload={}) {
+    const token=await miraToken();
+    const endpoint="https://br-winter-night-b758ke2j-e14secure.compute.c-13.us-east-1.aws.neon.tech/";
+    const response=await fetch(endpoint+(action==="list"?"?action=list":""),{
+      method:action==="list"?"GET":"POST",
+      headers:{Authorization:`Bearer ${token}`,...(action==="list"?{}:{"Content-Type":"application/json"})},
+      body:action==="list"?undefined:JSON.stringify({action,...payload}),
+      cache:"no-store"
+    });
+    const text=await response.text(); let data={}; try{data=text?JSON.parse(text):{};}catch{}
+    if(!response.ok) throw new Error(data.error||`Servicio E-14: HTTP ${response.status}`);
+    return data;
+  },
+  async listE14Evidence() {
+    const result=await this.e14Request("list");
+    return Array.isArray(result.items)?result.items:[];
+  },
+  async uploadE14Evidence({file,puesto,mesa,nota="",legacy_id=null,hora_original=null}) {
+    if(!(file instanceof Blob)) throw new Error("Selecciona una imagen válida.");
+    if(!["image/jpeg","image/png","image/webp"].includes(file.type)) throw new Error("Formato no permitido. Usa JPG, PNG o WebP.");
+    if(file.size<1||file.size>12*1024*1024) throw new Error("La imagen debe pesar máximo 12 MB.");
+    const signed=await this.e14Request("presign-upload",{puesto,mesa,mime_type:file.type,size_bytes:file.size});
+    const uploaded=await fetch(signed.upload_url,{method:"PUT",headers:signed.required_headers,body:file});
+    if(!uploaded.ok) throw new Error("Neon Storage rechazó la carga de la imagen.");
+    const confirmed=await this.e14Request("confirm-upload",{
+      object_key:signed.object_key,puesto,mesa,nota,nombre_original:file.name||"evidencia",mime_type:file.type,size_bytes:file.size,legacy_id,hora_original
+    });
+    if(!confirmed.item?.id) throw new Error("El archivo se cargó, pero no se confirmó su registro. Conserva el respaldo y solicita revisión.");
+    return confirmed.item;
+  },
+  async getE14Download(id) {
+    const result=await this.e14Request("download",{id});
+    if(!result.download_url) throw new Error("No se pudo generar la descarga autorizada.");
+    return result;
   }
 };
 window.MIRA_DATA = MIRA_DATA;
