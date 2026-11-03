@@ -556,7 +556,7 @@ document.getElementById('saveParticipantBtn').addEventListener('click',async()=>
     let personRow=editingPersonId?activitiesState.people.find(p=>p.id===editingPersonId)||null:found?.[0]||null;
     const sameName=activitiesState.people.find(p=>normActivityText(p.names+' '+p.surnames)===normActivityText(names+' '+surnames)&&normalizeCedula(p.cedula)!==ced&&p.id!==editingPersonId);
     if(!personRow&&sameName&&!confirm('Existe una ficha con el mismo nombre y otra cédula. ¿Confirmas que es otra persona?'))return;
-    const payload={cedula:ced,nombres,apellidos:surnames,telefono:document.getElementById('participantPhone').value.trim()||null,info_mira:info==='si',tipo_participacion:participantType,actualizado_por:window.MIRA_CURRENT_USER?.email||null};
+    const payload={cedula:ced,nombres:names,apellidos:surnames,telefono:document.getElementById('participantPhone').value.trim()||null,info_mira:info==='si',tipo_participacion:participantType,actualizado_por:window.MIRA_CURRENT_USER?.email||null};
     if(personRow){
       const updated=await window.MIRA_DATA.updatePerson(personRow.id,payload);
       personRow=updated?.[0]||{...personRow,...payload,cedula};
