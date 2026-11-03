@@ -5665,3 +5665,16 @@ a:hover {color:#E6EDFD;}
     font-size: .76rem;
   }
 }
+
+
+/* Gestión segura de actividades: estados y acciones administrativas */
+.activity-state-pill{display:inline-flex;align-items:center;width:max-content;margin:2px 0 8px;padding:4px 9px;border:1px solid rgba(148,163,184,.3);border-radius:999px;font-size:.68rem;font-weight:800;letter-spacing:.02em;color:#cbd5e1;background:rgba(71,85,105,.18)}
+.activity-state-pill.active{color:#6ee7b7;border-color:rgba(16,185,129,.35);background:rgba(16,185,129,.1)}
+.activity-state-pill.cancelled{color:#fca5a5;border-color:rgba(248,113,113,.35);background:rgba(248,113,113,.1)}
+.activity-state-pill.closed{color:#cbd5e1}
+.activity-folder-actions{display:flex;flex-wrap:wrap;align-items:center;gap:7px}
+.activity-folder-actions .activity-row-btn{font-size:.72rem;padding:7px 9px}
+.activity-folder-actions .activity-manage-cancel{border-color:rgba(245,158,11,.4);color:#fcd34d}
+.activity-folder-actions .activity-manage-delete{border-color:rgba(248,113,113,.45);color:#fca5a5}
+.activity-delete-locked{display:inline-flex;align-items:center;font-size:.68rem;color:#94a3b8;padding:5px 3px}
+.activity-folder-actions button:disabled{opacity:.55;cursor:wait}
