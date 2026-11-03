@@ -22,6 +22,15 @@ async function getOwnProfile(token,authUserId) {
   const rows=await response.json();
   return rows?.[0] || null;
 }
+async function getOwnModulePermissions(token) {
+  const response=await fetch(`${DATA_API_URL}/module_permissions?select=module_key,action_key,allowed&limit=500`,{
+    headers:{Authorization:`Bearer ${token}`,"Accept-Profile":"mira"}
+  });
+  if(!response.ok) throw new Error("No fue posible comprobar los permisos de los módulos. El acceso se mantendrá bloqueado.");
+  const rows=await response.json();
+  if(!Array.isArray(rows)) throw new Error("La respuesta de permisos no es válida. El acceso se mantendrá bloqueado.");
+  return rows;
+}
 function showLoginError(message) {
   const error=document.getElementById("loginError");
   if(error){error.textContent=message;error.style.display="block";}
@@ -46,7 +55,17 @@ async function loginWithNeon() {
     const profile=await getOwnProfile(token,authUserId);
     if(!profile || profile.active!==true || profile.email_verified!==true || !["admin","operator","viewer","witness"].includes(profile.role)) {
       await auth.signOut();
-      throw new Error("Tu cuenta todavía no tiene permisos asignados. Solicita al administrador que habilite tu perfil.");
+      throw new Error("Tu cuenta todavía no está aprobada. Solicita al administrador que habilite tu perfil.");
+    }
+    if(profile.role!=="admin") {
+      let permissions=[];
+      try { permissions=await getOwnModulePermissions(token); }
+      catch(permissionError) { await auth.signOut(); throw permissionError; }
+      const hasExplicitView=permissions.some(permission=>permission.allowed===true && permission.action_key==="view");
+      if(!hasExplicitView) {
+        await auth.signOut();
+        throw new Error("Tu cuenta está aprobada, pero todavía no tienes permisos de consulta asignados. Solicita al administrador que habilite al menos un módulo.");
+      }
     }
     window.MIRA_CURRENT_USER={role:profile.role,authUserId:profile.auth_user_id,displayName:profile.display_name||email,email};
     window.dispatchEvent(new Event("mira:authenticated"));
