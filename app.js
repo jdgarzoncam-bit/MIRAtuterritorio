@@ -2138,21 +2138,33 @@ function inicializarSistemaMapa() {
             statusNode.style.color = error ? '#ffaaa3' : 'var(--text-muted)';
         };
         const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-        const descargarRespaldoLocal = registros => {
-            const backup = {
-                schema: 'mira-e14-local-backup-v1',
-                created_at: new Date().toISOString(),
-                source: 'localStorage:faca_evidencias_testigos',
-                count: registros.length,
-                records: registros
+        const descargarRespaldoLocal = async registros => {
+            const password = prompt('Crea una contraseña para cifrar el respaldo E-14 (mínimo 12 caracteres). No la compartas ni la pierdas.');
+            if (!password || password.length < 12) throw new Error('El respaldo requiere una contraseña de al menos 12 caracteres.');
+            const confirmation = prompt('Escribe nuevamente la contraseña del respaldo para confirmarla.');
+            if (password !== confirmation) throw new Error('Las contraseñas no coinciden. No se inició la migración.');
+            if (!window.crypto?.subtle) throw new Error('Este navegador no permite cifrar el respaldo de forma segura.');
+            const encoder = new TextEncoder();
+            const salt = crypto.getRandomValues(new Uint8Array(16));
+            const iv = crypto.getRandomValues(new Uint8Array(12));
+            const material = await crypto.subtle.importKey('raw', encoder.encode(password), 'PBKDF2', false, ['deriveKey']);
+            const key = await crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:310000,hash:'SHA-256'}, material, {name:'AES-GCM',length:256}, false, ['encrypt']);
+            const backup = {schema:'mira-e14-encrypted-backup-v1',created_at:new Date().toISOString(),source:'localStorage:faca_evidencias_testigos',count:registros.length,records:registros};
+            const encrypted = await crypto.subtle.encrypt({name:'AES-GCM',iv}, key, encoder.encode(JSON.stringify(backup)));
+            const toBase64 = bytes => {
+                let binary = '';
+                for (let i=0; i<bytes.length; i+=0x8000) binary += String.fromCharCode(...bytes.subarray(i,i+0x8000));
+                return btoa(binary);
             };
-            const blob = new Blob([JSON.stringify(backup)], {type:'application/json'});
+            const envelope = {format:'MIRA-E14-AES256-GCM',kdf:'PBKDF2-SHA256-310000',salt:toBase64(salt),iv:toBase64(iv),ciphertext:toBase64(new Uint8Array(encrypted))};
+            const blob = new Blob([JSON.stringify(envelope)], {type:'application/json'});
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'MIRA_E14_respaldo_local_' + new Date().toISOString().replace(/[:.]/g,'-') + '.json';
+            a.download = 'MIRA_E14_respaldo_cifrado_' + new Date().toISOString().replace(/[:.]/g,'-') + '.mirae14';
             document.body.appendChild(a); a.click(); a.remove();
             setTimeout(() => URL.revokeObjectURL(url), 30000);
+            return true;
         };
         const cargarCentral = async () => {
             if (cargando) return;
@@ -2265,7 +2277,7 @@ function inicializarSistemaMapa() {
             if (!accepted) return;
             migrationBtn.disabled = true;
             try {
-                descargarRespaldoLocal(local);
+                await descargarRespaldoLocal(local);
                 const cloud = await window.MIRA_DATA.listE14Evidence();
                 let migrated = 0, skipped = 0, failed = 0;
                 for (let i=0; i<local.length; i++) {
@@ -2276,7 +2288,8 @@ function inicializarSistemaMapa() {
                         const blob = await (await fetch(ev.imgData)).blob();
                         const type = ['image/jpeg','image/png','image/webp'].includes(blob.type) ? blob.type : 'image/jpeg';
                         const file = new File([blob], 'E14_' + String(ev.puesto || 'puesto').replace(/[^a-z0-9_-]/gi,'_') + '_Mesa_' + String(ev.mesa || 'NA').replace(/[^a-z0-9_-]/gi,'_') + '_' + ev.id + (type==='image/png'?'.png':type==='image/webp'?'.webp':'.jpg'), {type});
-                        await window.MIRA_DATA.uploadE14Evidence({file,puesto:ev.puesto,mesa:ev.mesa,nota:marker + ' ' + (ev.nota || ''),hora_original:ev.hora || ''});
+                        const saved = await window.MIRA_DATA.uploadE14Evidence({file,puesto:ev.puesto,mesa:ev.mesa,nota:marker + ' ' + (ev.nota || ''),hora_original:ev.hora || ''});
+                        cloud.push({...saved,nota:marker + ' ' + (ev.nota || '')});
                         migrated++;
                     } catch (error) { failed++; console.error('[MIRA E-14] Falló migración local', ev.id, error); }
                     status('Migración: ' + (i+1) + '/' + local.length + ' · Migradas: ' + migrated + ' · Ya existentes: ' + skipped + ' · Fallidas: ' + failed);
