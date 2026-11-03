@@ -439,6 +439,12 @@ let detailActivityId = null;
 let returnToRecentAfterEdit = false;
 let activitiesBackendReady = false;
 let activitiesLoading = false;
+let activityPermissions = new Set();
+function canManageActivities(action){
+  const user=window.MIRA_CURRENT_USER;
+  if(user?.role==="admin") return true;
+  return activityPermissions.has(action);
+}
 async function loadActivitiesFromNeon(){
   if(activitiesLoading)return;
   activitiesLoading=true;
@@ -447,8 +453,12 @@ async function loadActivitiesFromNeon(){
     const result=await Promise.all([
       window.MIRA_DATA.listPeople({limit:1000}),
       window.MIRA_DATA.listActivities({limit:100}),
-      window.MIRA_DATA.listAttendances({limit:1000})
+      window.MIRA_DATA.listAttendances({limit:1000}),
+      window.MIRA_DATA.listMyModulePermissions()
     ]);
+    const currentUser=window.MIRA_CURRENT_USER;
+    activityPermissions=new Set((result[3]||[]).filter(p=>p.module_key==="actividades"&&p.allowed===true).map(p=>p.action_key));
+    if(currentUser?.role==="admin") activityPermissions=new Set(["view","create","edit","delete","export","manage"]);
     activitiesState.people=(result[0]||[]).map(p=>{const parsed=splitLegacyPersonName(p.nombres,p.apellidos);return {id:p.id,cedula:p.cedula||p.cedula_normalizada||'',names:parsed.names,surnames:parsed.surnames,phone:p.telefono||'',infoMira:p.info_mira===true?'si':p.info_mira===false?'no':'',type:p.tipo_participacion||''};});
     activitiesState.activities=(result[1]||[]).map(a=>({id:a.id,name:a.nombre,date:a.fecha,place:a.lugar||'',status:a.estado==='activa'?'active':a.estado==='finalizada'?'finished':a.estado,createdAt:a.created_at}));
     activitiesState.attendances=(result[2]||[]).map(a=>({id:a.id,personId:a.persona_id,activityId:a.actividad_id,createdAt:a.fecha_registro||a.created_at}));
@@ -461,7 +471,9 @@ async function loadActivitiesFromNeon(){
     activitiesBackendReady=false;
     console.error('[MIRA] Error cargando datos desde Neon:',error);
     const notice=document.getElementById('duplicateNotice');
-    if(notice){notice.textContent='No se pudieron cargar los datos desde Neon: '+(error.message||'Error de conexión');notice.classList.remove('hidden');}
+    if(notice){notice.textContent='No se pudieron cargar las actividades desde Neon: '+(error.message||'Error de conexión')+'. Reintenta abrir el módulo.';notice.classList.remove('hidden');}
+    const folders=document.getElementById('activitiesFolders');
+    if(folders) folders.innerHTML='<div class="activity-empty-drive"><h3>No fue posible consultar las actividades</h3><p>Verifica tu sesión y permisos. Vuelve a abrir el módulo para reintentar.</p></div>';
   }finally{activitiesLoading=false;}
 }
 window.addEventListener('mira:authenticated',loadActivitiesFromNeon);
@@ -478,7 +490,7 @@ function splitLegacyPersonName(nombres,apellidos){
 function escapeActivityHtml(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function currentActivity(){return activitiesState.activities.find(a=>a.id===activitiesState.currentActivityId&&a.status==='active')||null;}
 let activitiesReturnContext = 'landing';
-function openActivities(view='registration'){activitiesReturnContext=(document.getElementById('landing-hero-overlay').style.display==='none')?'platform':'landing';activitiesPlaceholder.classList.remove('hidden');document.getElementById('landing-hero-overlay').style.display='none';document.getElementById('landingHeaderControls').style.display='none';if(!activitiesBackendReady)loadActivitiesFromNeon();renderActivities();showActivityView(view);}
+async function openActivities(view='registration'){activitiesReturnContext=(document.getElementById('landing-hero-overlay').style.display==='none')?'platform':'landing';activitiesPlaceholder.classList.remove('hidden');document.getElementById('landing-hero-overlay').style.display='none';document.getElementById('landingHeaderControls').style.display='none';if(!activitiesBackendReady)await loadActivitiesFromNeon();renderActivities();showActivityView(view);}
 function closeActivities(){activitiesPlaceholder.classList.add('hidden');if(activitiesReturnContext==='platform'){document.getElementById('landing-hero-overlay').style.display='none';document.getElementById('landingHeaderControls').style.display='none';}else{document.getElementById('landing-hero-overlay').style.display='flex';document.getElementById('landingHeaderControls').style.display='flex';}}
 function showActivityView(view){const target={registration:'activityRegistrationView',recent:'activityRecentPanel',all:'activityAllView',detail:'activityDetailView'}[view]||'activityRegistrationView';['activityRegistrationView','activityRecentPanel','activityAllView','activityDetailView'].forEach(id=>document.getElementById(id).classList.toggle('hidden',id!==target));document.getElementById('activityScreenSubtitle').textContent=({registration:'Registro de participación territorial.',recent:'Consulta en vivo y rectificación de registros.',all:'Archivo de actividades y sus hojas de cálculo.',detail:'Registros guardados en esta actividad.'})[view]||'Registro de participación territorial.';document.querySelectorAll('.activity-mobile-tab').forEach(tab=>tab.classList.toggle('is-active',tab.dataset.activityView===(view==='detail'?'all':view)));}
 document.getElementById('btnSelectActividades').addEventListener('click',()=>openActivities('registration'));
@@ -599,8 +611,8 @@ function renderActivities(){
     const count=activitiesState.attendances.filter(x=>x.activityId===a.id).length;
     const statusLabel=a.status==='active'?'En curso':a.status==='finished'?'Finalizada':a.status==='cancelada'?'Cancelada':a.status||'Sin estado';
     const statusClass=a.status==='active'?'active':a.status==='cancelada'?'cancelled':'closed';
-    const cancelButton=a.status==='active'?'<button class="activity-row-btn activity-manage-cancel" data-activity-cancel="${escapeActivityHtml(a.id)}" type="button">Cancelar</button>':'';
-    const deleteButton=count===0?'<button class="activity-row-btn activity-manage-delete" data-activity-delete="${escapeActivityHtml(a.id)}" type="button">Eliminar</button>':'<span class="activity-delete-locked" title="Tiene asistencias asociadas">No eliminable · '+count+' registros</span>';
+    const cancelButton=a.status==='active'&&canManageActivities('edit')?'<button class="activity-row-btn activity-manage-cancel" data-activity-cancel="${escapeActivityHtml(a.id)}" type="button">Cancelar</button>':'';
+    const deleteButton=canManageActivities('delete')?(count===0?'<button class="activity-row-btn activity-manage-delete" data-activity-delete="${escapeActivityHtml(a.id)}" type="button">Eliminar</button>':'<span class="activity-delete-locked" title="Tiene asistencias asociadas">No eliminable · '+count+' registros</span>'):'';
     return `<article class="activity-folder"><div class="folder-icon">📁</div><h3>${escapeActivityHtml(a.name)}</h3><p>${escapeActivityHtml(a.date||'Sin fecha')} · ${count} registros</p><span class="activity-state-pill ${statusClass}">${escapeActivityHtml(statusLabel)}</span><div class="activity-folder-actions"><button class="activity-row-btn" data-folder-open="${escapeActivityHtml(a.id)}" type="button">📂 Abrir</button>${cancelButton}${deleteButton}</div></article><button class="activity-file-card" data-folder-export="${escapeActivityHtml(a.id)}" type="button" aria-label="Descargar Excel de ${escapeActivityHtml(a.name)}"><span class="file-icon">📊</span><strong>${escapeActivityHtml(a.name)}.xlsx</strong><small>Archivo de registros · ${count} filas</small><span class="file-type">EXCEL · DESCARGAR</span></button>`;
   }).join(''):'<div class="activity-empty-drive"><div>📂</div><h3>Aún no hay actividades</h3><p>Crea una actividad para que aparezca aquí su carpeta y su archivo Excel.</p></div>';
   folders.querySelectorAll('[data-folder-open]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();openActivityFolder(b.dataset.folderOpen);}));
