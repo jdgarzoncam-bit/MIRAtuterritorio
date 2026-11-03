@@ -2207,7 +2207,7 @@ function inicializarSistemaMapa() {
         const filtroNumeroActas = document.getElementById('filtroNumeroActas');
         const ordenMesasActas = document.getElementById('ordenMesasActas');
         function normalizarMesa(valor) {
-            const nums = String(valor ?? '').match(/\\d+/g);
+            const nums = String(valor ?? '').match(/\d+/g);
             return nums && nums.length ? Math.min(...nums.map(Number)) : Number.MAX_SAFE_INTEGER;
         }
         function actualizarFiltroPuestos(evidencias) {
