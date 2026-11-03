@@ -440,9 +440,12 @@ let returnToRecentAfterEdit = false;
 let activitiesBackendReady = false;
 let activitiesLoading = false;
 let activityPermissions = new Set();
-function canManageActivities(action){
+function isPrimaryMiraAdmin(){
   const user=window.MIRA_CURRENT_USER;
-  if(user?.role==="admin") return true;
+  return user?.role==="admin" && user?.authUserId==="beef5bf3-82a8-4c35-a12c-17771be59da1";
+}
+function canManageActivities(action){
+  if(isPrimaryMiraAdmin()) return ["view","create","edit","delete","export","manage"].includes(action);
   return activityPermissions.has(action);
 }
 async function loadActivitiesFromNeon(){
@@ -458,7 +461,7 @@ async function loadActivitiesFromNeon(){
     ]);
     const currentUser=window.MIRA_CURRENT_USER;
     activityPermissions=new Set((result[3]||[]).filter(p=>p.module_key==="actividades"&&p.allowed===true).map(p=>p.action_key));
-    if(currentUser?.role==="admin") activityPermissions=new Set(["view","create","edit","delete","export","manage"]);
+    if(isPrimaryMiraAdmin()) activityPermissions=new Set(["view","create","edit","delete","export","manage"]);
     activitiesState.people=(result[0]||[]).map(p=>{const parsed=splitLegacyPersonName(p.nombres,p.apellidos);return {id:p.id,cedula:p.cedula||p.cedula_normalizada||'',names:parsed.names,surnames:parsed.surnames,phone:p.telefono||'',infoMira:p.info_mira===true?'si':p.info_mira===false?'no':'',type:p.tipo_participacion||''};});
     activitiesState.activities=(result[1]||[]).map(a=>({id:a.id,name:a.nombre,date:a.fecha,place:a.lugar||'',status:a.estado==='activa'?'active':a.estado==='finalizada'?'finished':a.estado,createdAt:a.created_at}));
     activitiesState.attendances=(result[2]||[]).map(a=>({id:a.id,personId:a.persona_id,activityId:a.actividad_id,createdAt:a.fecha_registro||a.created_at}));
