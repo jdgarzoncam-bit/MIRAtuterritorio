@@ -2202,7 +2202,7 @@ function inicializarSistemaMapa() {
         };
         const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
         // El marcador técnico identifica migraciones y no debe mostrarse como observación al usuario.
-        const notaVisibleE14 = value => String(value ?? '').replace(/\\[MIRA-LOCAL-ID:[^\\]]+\\]/g,'').trim();
+        const notaVisibleE14 = value => String(value ?? '').replace(/\[MIRA-LOCAL-ID:[^\]]+\]/g,'').trim();
         const descargarRespaldoLocal = async registros => {
             const password = prompt('Crea una contraseña para cifrar el respaldo E-14 (mínimo 12 caracteres). No la compartas ni la pierdas.');
             if (!password || password.length < 12) throw new Error('El respaldo requiere una contraseña de al menos 12 caracteres.');
