@@ -1,5 +1,5 @@
 import { createAuthClient } from "https://esm.sh/@neondatabase/auth@0.7.0-beta";
-import { MIRA_DATA } from "./mira-data.js";
+import { MIRA_DATA } from "./mira-data.js?v=20261103-activity-auth-2";
 import { createAuthClient } from "https://esm.sh/@neondatabase/auth@0.7.0-beta";
 
 const AUTH_URL = "https://ep-round-dawn-b7l3ya3h.neonauth.c-13.us-east-1.aws.neon.tech/neondb/auth";
