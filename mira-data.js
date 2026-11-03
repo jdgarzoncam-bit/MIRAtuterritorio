@@ -171,7 +171,7 @@ export const MIRA_DATA = {
   createPQRS(payload) {
     if(!["peticion","queja","reclamo","sugerencia"].includes(payload.tipo)) throw new Error("Selecciona un tipo de PQRS válido.");
     if(!payload.modulo_key?.trim()||!payload.asunto?.trim()||payload.asunto.trim().length<4||!payload.descripcion?.trim()||payload.descripcion.trim().length<10) throw new Error("Completa el módulo, asunto y descripción.");
-    return miraRequest("pqrs",{method:"POST",anonymous:true,body:{tipo:payload.tipo,modulo_key:payload.modulo_key,asunto:payload.asunto.trim(),descripcion:payload.descripcion.trim()}});
+    return miraRequest("pqrs",{method:"POST",anonymous:true,prefer:"return=minimal",body:{tipo:payload.tipo,modulo_key:payload.modulo_key,asunto:payload.asunto.trim(),descripcion:payload.descripcion.trim()}});
   },
   updatePQRS(id,payload) {
     const allowed={}; if(["recibida","en_revision","respondida","cerrada"].includes(payload.estado)) allowed.estado=payload.estado;
