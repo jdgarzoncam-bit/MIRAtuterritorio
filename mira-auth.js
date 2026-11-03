@@ -95,8 +95,6 @@ async function loginWithNeon() {
     const error=document.getElementById("loginError");
     if(error) error.style.display="none";
     const pass=document.getElementById("password"); if(pass) pass.value="";
-    if(typeof window.activarPMUAutenticado==="function") window.activarPMUAutenticado();
-    else throw new Error("No se pudo iniciar la interfaz principal.");
   } catch(error) {
     clearAuthenticatedState();
     try { await auth.signOut(); } catch(signOutError) { console.warn("[MIRA Auth] No se pudo limpiar la sesión tras un acceso rechazado.",signOutError); }
