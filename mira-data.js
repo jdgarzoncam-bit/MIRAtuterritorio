@@ -195,8 +195,14 @@ export const MIRA_DATA = {
     return data;
   },
   async listE14Evidence() {
-    const result=await this.e14Request("list");
-    return Array.isArray(result.items)?result.items:[];
+    // Consulta la tabla directamente mediante Neon Data API. PostgreSQL RLS
+    // exige Testigos · Consulta; evita el listado roto del endpoint e14secure.
+    const params = {
+      select:"id,puesto,mesa,nota,object_key,nombre_original,mime_type,size_bytes,uploaded_by,created_at,legacy_id,hora_original",
+      order:"created_at.desc",
+      limit:"100"
+    };
+    return miraRequest("evidencias_e14",{query:qs(params)});
   },
   async uploadE14Evidence({file,puesto,mesa,nota="",legacy_id=null,hora_original=null}) {
     if(!(file instanceof Blob)) throw new Error("Selecciona una imagen válida.");
