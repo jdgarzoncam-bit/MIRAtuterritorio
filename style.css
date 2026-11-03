@@ -5079,6 +5079,11 @@ a:hover {color:#E6EDFD;}
 .admin-pane-heading{display:flex;justify-content:space-between;align-items:center;font-size:.9rem}
 .admin-pane-heading button{border:0;background:rgba(68,191,225,.12);color:#63dff5;border-radius:9px;width:32px;height:32px;font-size:1.2rem;cursor:pointer}
 .admin-pane-hint{font-size:.72rem;line-height:1.5;color:#8fa8bf;margin:7px 0 14px}
+.admin-users-tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:0 0 12px;padding:4px;border:1px solid rgba(125,184,220,.16);border-radius:12px;background:rgba(3,16,34,.34)}
+.admin-users-tab{min-width:0;padding:9px 6px;border:1px solid transparent;border-radius:9px;background:transparent;color:#9eb4c9;font:inherit;font-size:.68rem;font-weight:750;cursor:pointer;transition:background .18s,border-color .18s,color .18s}
+.admin-users-tab:hover{color:#e8f6ff;background:rgba(255,255,255,.045)}
+.admin-users-tab.is-active{color:#eaf8ff;border-color:rgba(54,194,226,.42);background:rgba(22,151,190,.18);box-shadow:inset 0 0 18px rgba(24,164,203,.07)}
+.admin-users-tab:focus-visible{outline:2px solid #35c9e8;outline-offset:2px}
 .admin-users-list{display:grid;gap:8px}
 .admin-user-row{display:flex;align-items:center;gap:10px;width:100%;padding:11px;border:1px solid rgba(126,177,210,.14);border-radius:13px;background:rgba(255,255,255,.035);color:inherit;text-align:left;cursor:pointer}
 .admin-user-row.is-selected{border-color:rgba(62,205,237,.72);background:rgba(25,155,193,.13)}
