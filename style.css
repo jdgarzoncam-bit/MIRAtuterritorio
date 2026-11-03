@@ -5595,3 +5595,15 @@ a:hover {color:#E6EDFD;}
 .concejal-person-consent input{margin-top:2px;flex:0 0 auto}
 @media(max-width:760px){.concejal-person-fields{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:480px){.concejal-person-fields{grid-template-columns:1fr}.concejal-person-form{padding:12px}}
+
+
+/* MIRA — estado de acceso binario por módulo */
+.admin-module-access-control{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.admin-access-state{display:inline-flex;align-items:center;padding:5px 9px;border:1px solid rgba(148,163,184,.2);border-radius:999px;font-size:.65rem;font-weight:800;letter-spacing:.02em}
+.admin-access-state.is-allowed{color:#75e5c7;border-color:rgba(55,211,166,.28);background:rgba(36,180,140,.09)}
+.admin-access-state.is-restricted{color:#b4c4d4;background:rgba(148,163,184,.08)}
+.module-access-restricted{position:relative!important;overflow:hidden!important;isolation:isolate}
+.module-access-restricted>summary,.module-access-restricted>.dropdown-content{filter:blur(3px);opacity:.48;pointer-events:none;user-select:none}
+.module-access-lock-overlay{position:absolute;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:12px;text-align:center;border:1px solid rgba(112,157,190,.24);border-radius:inherit;background:rgba(5,18,35,.76);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);color:#dceaf7;pointer-events:none}
+.module-access-lock-icon{font-size:1.15rem;line-height:1}
+.module-access-lock-overlay strong{font-size:.68rem;font-weight:850;letter-spacing:.01em}
