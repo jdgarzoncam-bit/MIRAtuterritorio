@@ -5607,3 +5607,61 @@ a:hover {color:#E6EDFD;}
 .module-access-lock-overlay{position:absolute;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:12px;text-align:center;border:1px solid rgba(112,157,190,.24);border-radius:inherit;background:rgba(5,18,35,.76);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);color:#dceaf7;pointer-events:none}
 .module-access-lock-icon{font-size:1.15rem;line-height:1}
 .module-access-lock-overlay strong{font-size:.68rem;font-weight:850;letter-spacing:.01em}
+
+
+/* Corrección visual: navegación del módulo Actividades dentro de la ventana principal */
+.activities-workspace .activity-mobile-nav {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 9px;
+  width: min(1120px, 100%);
+  margin: 0 auto 18px;
+  padding: 10px 12px;
+  border: 1px solid rgba(49, 220, 239, .28);
+  border-radius: 14px;
+  background: rgba(7, 18, 38, .76);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+}
+.activities-workspace .activity-mobile-nav .activity-mobile-tab {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 8px 14px;
+  border: 1px solid rgba(49, 220, 239, .34);
+  border-radius: 10px;
+  background: rgba(12, 31, 54, .88);
+  color: #dcecff;
+  font: inherit;
+  font-size: .82rem;
+  font-weight: 750;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: background .18s ease, border-color .18s ease, color .18s ease, transform .18s ease;
+}
+.activities-workspace .activity-mobile-nav .activity-mobile-tab:hover {
+  border-color: #36d9ef;
+  background: rgba(20, 65, 91, .9);
+  color: #fff;
+  transform: translateY(-1px);
+}
+.activities-workspace .activity-mobile-nav .activity-mobile-tab.is-active {
+  border-color: rgba(49, 220, 239, .82);
+  background: linear-gradient(135deg, rgba(8, 117, 190, .9), rgba(37, 99, 235, .9));
+  color: #fff;
+  box-shadow: 0 5px 16px rgba(0, 120, 220, .2), inset 0 1px 0 rgba(255,255,255,.16);
+}
+@media (max-width: 600px) {
+  .activities-workspace .activity-mobile-nav {
+    gap: 7px;
+    padding: 8px;
+  }
+  .activities-workspace .activity-mobile-nav .activity-mobile-tab {
+    flex: 1 1 auto;
+    padding: 8px 10px;
+    font-size: .76rem;
+  }
+}
