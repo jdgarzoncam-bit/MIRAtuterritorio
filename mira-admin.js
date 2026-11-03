@@ -260,7 +260,7 @@ function init(){
     }
   };
   window.addEventListener("mira:authenticated",()=>{syncVisibility();applyModuleAccess();});
-  window.addEventListener("mira:signed-out",syncVisibility);
+  window.addEventListener("mira:signed-out",()=>{syncVisibility();applyModuleAccess();});
   syncVisibility();
   applyModuleAccess();
 }
