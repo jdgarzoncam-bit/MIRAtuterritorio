@@ -5678,3 +5678,24 @@ a:hover {color:#E6EDFD;}
 .activity-folder-actions .activity-manage-delete{border-color:rgba(248,113,113,.45);color:#fca5a5}
 .activity-delete-locked{display:inline-flex;align-items:center;font-size:.68rem;color:#94a3b8;padding:5px 3px}
 .activity-folder-actions button:disabled{opacity:.55;cursor:wait}
+
+
+/* E-14: apertura explícita y capa superior del modal de auditoría. */
+#testigosModal.testigos-modal-overlay:not(.hidden) {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 10050 !important;
+}
+#testigosModal.testigos-modal-overlay.hidden {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+#testigosModal .testigos-modal-card {
+  position: relative;
+  z-index: 10051;
+}
