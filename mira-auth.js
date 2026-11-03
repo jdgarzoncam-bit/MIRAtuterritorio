@@ -98,6 +98,8 @@ async function loginWithNeon() {
     if(typeof window.activarPMUAutenticado==="function") window.activarPMUAutenticado();
     else throw new Error("No se pudo iniciar la interfaz principal.");
   } catch(error) {
+    clearAuthenticatedState();
+    try { await auth.signOut(); } catch(signOutError) { console.warn("[MIRA Auth] No se pudo limpiar la sesión tras un acceso rechazado.",signOutError); }
     showLoginError(error?.message || "No fue posible iniciar sesión.");
   } finally { if(button) button.disabled=false; }
 }
