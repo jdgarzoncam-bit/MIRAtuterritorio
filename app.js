@@ -2558,12 +2558,18 @@ function inicializarSistemaMapa() {
                 return lugar && (lugar === barrio || lugar.includes(barrio) || barrio.includes(lugar));
             }).map(a => ({ nombre: a.name || a.actividad || a.nombre || '', fecha: a.date || a.fecha || '' }));
         } else {
-            try {
-                const guardados = JSON.parse(localStorage.getItem('mira_concejal_activities_v1') || '[]');
-                registros = (Array.isArray(guardados) ? guardados : []).filter(a =>
-                    normalizar(a.barrio || a.sector || '') === barrio
-                ).map(a => ({ nombre: a.description || a.actividad || a.name || a.nombre || '', fecha: a.date || a.fecha || '' }));
-            } catch (_) { registros = []; }
+            // Concejal se consulta únicamente desde la fuente centralizada Neon.
+            // No se mezclan registros antiguos del localStorage con la información vigente.
+            const centralizados = window.MiraConcejalActivities &&
+                typeof window.MiraConcejalActivities.getAll === 'function'
+                ? window.MiraConcejalActivities.getAll()
+                : [];
+            registros = centralizados.filter(a =>
+                normalizar(a.barrio || '') === barrio
+            ).map(a => ({
+                nombre: a.description || a.actividad || a.name || a.nombre || '',
+                fecha: a.date || a.fecha || ''
+            }));
         }
         registros.sort((a, b) => String(b.fecha || '').localeCompare(String(a.fecha || '')));
         return registros[0] || null;
