@@ -14,7 +14,26 @@ let poligonosCoincidenciaActiva = new Set();
 let poligonosPorNombre = Object.create(null);
 
 let imagenBase64Seleccionada = "";
-let listaEvidenciasTestigos = JSON.parse(localStorage.getItem('faca_evidencias_testigos')) || [];
+function leerEvidenciasTestigosLocales() {
+    try {
+        const stored = localStorage.getItem('faca_evidencias_testigos');
+        const parsed = stored ? JSON.parse(stored) : [];
+        return Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+        console.warn('[MIRA Testigos] No fue posible leer las evidencias locales.', error);
+        return [];
+    }
+}
+function guardarEvidenciasTestigosLocales(registros) {
+    try {
+        localStorage.setItem('faca_evidencias_testigos', JSON.stringify(registros));
+        return true;
+    } catch (error) {
+        console.error('[MIRA Testigos] No fue posible guardar las evidencias locales.', error);
+        return false;
+    }
+}
+let listaEvidenciasTestigos = leerEvidenciasTestigosLocales();
 
 // IDENTIDAD VISUAL FIJA: modo oscuro y español como idioma único.
 // Se conservan las funciones de compatibilidad para los módulos existentes.
@@ -851,20 +870,23 @@ function inicializarEventosArchivosTestigo() {
         const horaFormato = ahora.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         const totalFotos = listaFotosSeleccionadas.length;
 
+        const nuevasEvidencias = listaEvidenciasTestigos.slice();
         listaFotosSeleccionadas.forEach((imgData, idx) => {
             const sufijoFoto = totalFotos > 1 ? ` (Foto ${idx + 1} de ${totalFotos})` : '';
-            const nuevaEvidencia = {
+            nuevasEvidencias.push({
                 id: Date.now() + idx,
                 puesto: puesto,
                 mesa: mesa,
                 nota: nota ? `${nota}${sufijoFoto}` : (totalFotos > 1 ? `Foto ${idx + 1} de ${totalFotos}` : "Sin observaciones"),
                 imgData: imgData,
                 hora: horaFormato
-            };
-            listaEvidenciasTestigos.push(nuevaEvidencia);
+            });
         });
-
-        localStorage.setItem('faca_evidencias_testigos', JSON.stringify(listaEvidenciasTestigos));
+        if (!guardarEvidenciasTestigosLocales(nuevasEvidencias)) {
+            alert("No fue posible guardar las evidencias en este dispositivo. No se limpiaron las fotos; descarga o libera espacio e inténtalo nuevamente.");
+            return;
+        }
+        listaEvidenciasTestigos = nuevasEvidencias;
 
         document.getElementById('testigoMesaInput').value = '';
         document.getElementById('testigoNotaInput').value = '';
@@ -2118,7 +2140,7 @@ function inicializarSistemaMapa() {
         });
 
         downloadAllBtn.addEventListener('click', function() {
-            const evidenciasLocales = JSON.parse(localStorage.getItem('faca_evidencias_testigos')) || [];
+            const evidenciasLocales = leerEvidenciasTestigosLocales();
             if (evidenciasLocales.length === 0) {
                 alert("No hay evidencias registradas para exportar.");
                 return;
@@ -2159,7 +2181,7 @@ function inicializarSistemaMapa() {
         if (ordenMesasActas) ordenMesasActas.addEventListener('change', renderizarGaleriaTestigos);
 
         function renderizarGaleriaTestigos() {
-            const evidenciasLocales = JSON.parse(localStorage.getItem('faca_evidencias_testigos')) || [];
+            const evidenciasLocales = leerEvidenciasTestigosLocales();
             actualizarFiltroPuestos(evidenciasLocales);
             if (evidenciasLocales.length === 0) {
                 galleryGrid.innerHTML = `<p class="placeholder-text">No hay actas cargadas aún. Esperando transmisión de los testigos en campo...</p>`;
