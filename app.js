@@ -2425,6 +2425,8 @@ function inicializarSistemaMapa() {
             if (!file || !puesto || !mesa) { status('Selecciona una imagen y completa puesto y mesa.', true); return; }
             uploadBtn.disabled = true;
             try {
+                const existing = await window.MIRA_DATA.listE14Evidence();
+                if (existing.length >= 50) throw new Error('Se alcanzó el límite operativo de 50 imágenes para esta jornada. Descarga y cierra la operación antes de recibir más evidencias.');
                 await window.MIRA_DATA.uploadE14Evidence({file,puesto,mesa,nota});
                 fileInput.value = '';
                 document.getElementById('e14CentralNota').value = '';
