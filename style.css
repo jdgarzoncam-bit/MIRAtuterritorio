@@ -5699,3 +5699,16 @@ a:hover {color:#E6EDFD;}
   position: relative;
   z-index: 10051;
 }
+
+
+/* E-14 responsive controls: avoid overlapping fields and actions on narrow screens. */
+#e14CentralControls { box-sizing: border-box; max-width: 100%; overflow: hidden; }
+#e14CentralControls > div:first-of-type { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+#e14CentralControls .testigo-input-styled { min-width: 0; max-width: 100%; width: 100%; box-sizing: border-box; }
+#e14CentralControls > div:nth-of-type(2) { align-items: stretch; }
+#e14CentralControls > div:nth-of-type(2) button { min-width: 0; max-width: 100%; white-space: normal; }
+@media (max-width: 560px) {
+  #e14CentralControls > div:first-of-type { grid-template-columns: minmax(0, 1fr) !important; }
+  #e14CentralControls > div:nth-of-type(2) { flex-direction: column; }
+  #e14CentralControls > div:nth-of-type(2) button { width: 100%; }
+}
