@@ -125,8 +125,18 @@ export const MIRA_DATA = {
     return miraRequest("testigo_archivos",{query:qs(params)});
   },
   submitPublicReport(payload) {
-    const allowed={puesto_votacion:String(payload.puesto_votacion||"").trim(),mesa_votacion:String(payload.mesa_votacion||"").trim(),tipo_reporte:payload.tipo_reporte,descripcion:String(payload.descripcion||"").trim()};
-    if(allowed.puesto_votacion.length<3 || allowed.mesa_votacion.length<1 || allowed.descripcion.length<5) throw new Error("Completa puesto, mesa y descripción.");
+    const allowed={
+      puesto_votacion:String(payload?.puesto_votacion||"").trim(),
+      mesa_votacion:String(payload?.mesa_votacion||"").trim(),
+      tipo_reporte:String(payload?.tipo_reporte||"").trim(),
+      descripcion:String(payload?.descripcion||"").trim()
+    };
+    if(!["novedad","acta","logistica","otro"].includes(allowed.tipo_reporte)) {
+      throw new Error("Selecciona un tipo de reporte válido.");
+    }
+    if(allowed.puesto_votacion.length<3 || allowed.mesa_votacion.length<1 || allowed.descripcion.length<5) {
+      throw new Error("Completa puesto, mesa y descripción.");
+    }
     return miraRequest("reportes_operativos",{method:"POST",body:allowed,anonymous:true});
   },
   async listUserProfiles() {
