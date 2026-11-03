@@ -5,7 +5,7 @@ const AUTH_URL = "https://ep-round-dawn-b7l3ya3h.neonauth.c-13.us-east-1.aws.neo
 const DATA_API_URL = "https://ep-round-dawn-b7l3ya3h.apirest.c-13.us-east-1.aws.neon.tech/neondb/rest/v1";
 const auth = createAuthClient(AUTH_URL);
 const $ = (id) => document.getElementById(id);
-const cleanCedula = value => String(value || "").replace(/\\D/g, "");
+const cleanCedula = value => String(value || "").replace(/\D/g, "");
 const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let currentUser = null;
 let activities = [];
