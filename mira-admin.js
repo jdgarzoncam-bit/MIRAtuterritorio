@@ -4,6 +4,7 @@ const $ = (id) => document.getElementById(id);
 let users = [], modules = [], selectedProfile = null, permissionRows = [];
 let activeUserTab = "pending";
 let busy = false;
+let reloadUsersAfterBusy = false;
 
 function escapeHtml(value) {
   return String(value ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -23,7 +24,8 @@ function openPanel(){
   $("adminPermissionsPanel")?.classList.remove("hidden");
   $("adminPermissionsPanel")?.setAttribute("aria-hidden","false");
   document.body.classList.add("admin-permissions-open");
-  loadUsers();
+  if(window.MIRA_CURRENT_USER && window.MIRA_DATA) loadUsers();
+  else $("adminUsersList").innerHTML='<p class="admin-permissions-loading">Esperando la sesión y los servicios de datos…</p>';
 }
 function closePanel(){
   $("adminPermissionsPanel")?.classList.add("hidden");
@@ -31,11 +33,17 @@ function closePanel(){
   document.body.classList.remove("admin-permissions-open");
 }
 async function loadUsers(){
-  if(!isAdmin()||busy)return;
+  if(!isAdmin())return;
+  if(busy){reloadUsersAfterBusy=true;return;}
+  if(!window.MIRA_DATA){$("adminUsersList").innerHTML='<p class="admin-permissions-loading">Esperando conexión con Neon…</p>';return;}
   busy=true;clearNotice();
   $("adminUsersList").innerHTML='<p class="admin-permissions-loading">Consultando perfiles…</p>';
   try{
-    const [profileRows,moduleRows]=await Promise.all([window.MIRA_DATA.listUserProfiles(),window.MIRA_DATA.listModuleCatalog()]);
+    const timeout=(promise,label)=>Promise.race([promise,new Promise((_,reject)=>setTimeout(()=>reject(new Error("Tiempo de espera agotado al consultar "+label+". Intenta actualizar nuevamente.")),15000))]);
+    const [profileRows,moduleRows]=await Promise.all([
+      timeout(window.MIRA_DATA.listUserProfiles(),"perfiles"),
+      timeout(window.MIRA_DATA.listModuleCatalog(),"catálogo de módulos")
+    ]);
     users=Array.isArray(profileRows)?profileRows:[];
     modules=Array.isArray(moduleRows)?moduleRows:[];
     renderUsers();
@@ -46,7 +54,10 @@ async function loadUsers(){
     }
   }catch(error){
     $("adminUsersList").innerHTML='<p class="admin-permissions-error">'+escapeHtml(error.message||"No fue posible consultar los usuarios.")+'</p>';
-  }finally{busy=false;}
+  }finally{
+    busy=false;
+    if(reloadUsersAfterBusy){reloadUsersAfterBusy=false;queueMicrotask(()=>loadUsers());}
+  }
 }
 function renderUsers(){
   const candidates=users.filter(u=>u.role!=="admin");
@@ -258,7 +269,10 @@ function init(){
       if(!authorized)closePanel();
     }
   };
-  window.addEventListener("mira:authenticated",()=>{syncVisibility();applyModuleAccess();});
+  window.addEventListener("mira:authenticated",()=>{
+    syncVisibility();applyModuleAccess();
+    if(!$("adminPermissionsPanel")?.classList.contains("hidden"))loadUsers();
+  });
   window.addEventListener("mira:signed-out",()=>{syncVisibility();applyModuleAccess();});
   syncVisibility();
   applyModuleAccess();
