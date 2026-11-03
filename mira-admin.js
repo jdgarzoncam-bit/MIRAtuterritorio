@@ -1,8 +1,5 @@
 // MIRA TU TERRITORIO — Control Administrativo: permisos granulares.
-const ACTIONS = [
-  ["view","Consultar"],["create","Crear"],["edit","Editar"],
-  ["delete","Eliminar"],["export","Exportar"],["manage","Administrar"]
-];
+const ACTIONS = [["view","Consulta"]];
 const $ = (id) => document.getElementById(id);
 let users = [], modules = [], selectedProfile = null, permissionRows = [];
 let activeUserTab = "pending";
@@ -123,10 +120,8 @@ function renderMatrix(){
   const visibleModules=modules.filter(m=>m.module_key!=="control_administrativo");
   const approval = selectedProfile && selectedProfile.role!=="admin" ? renderApprovalControls(selectedProfile) : "";
   $("adminPermissionsMatrix").innerHTML=approval+visibleModules.map(m=>{
-    return '<article class="admin-module-permission"><div class="admin-module-permission-title"><strong>'+escapeHtml(m.module_name)+'</strong><small>'+escapeHtml(m.description||"Permisos del módulo")+'</small></div><div class="admin-action-checks">'+ACTIONS.map(([key,label])=>{
-      const checked=allowed.has(m.module_key+"::"+key);
-      return '<label class="admin-action-check"><input type="checkbox" data-module="'+escapeHtml(m.module_key)+'" data-action="'+key+'" '+(checked?"checked":"")+'><span>'+label+'</span></label>';
-    }).join("")+'</div></article>';
+    const checked=allowed.has(m.module_key+"::view");
+    return '<article class="admin-module-permission"><div class="admin-module-permission-title"><strong>'+escapeHtml(m.module_name)+'</strong><small>'+escapeHtml(m.description||"Permisos del módulo")+'</small></div><div class="admin-module-access-control"><label class="admin-action-check"><input type="checkbox" data-module="'+escapeHtml(m.module_key)+'" data-action="view" '+(checked?"checked":"")+'><span>Consulta</span></label><span class="admin-access-state '+(checked?"is-allowed":"is-restricted")+'">'+(checked?"Acceso completo":"Restringido")+'</span></div></article>';
   }).join("")||'<p class="admin-permissions-empty">No hay módulos configurados.</p>';
 }
 async function changePermission(input){
@@ -154,25 +149,44 @@ const MODULE_TARGETS = {
   testigos:["dropdown-testigos"],
   centro_operaciones:["dropdown-puestos","dropdown-barrios-puestos"],
   actividades:["dropdown-actividades"],
-  concejal:["dropdown-concejal"]
+  concejal:["dropdown-concejal"],
+  pqrs:["dropdown-pqrs-admin"]
 };
+function setModuleRestricted(element,restricted){
+  if(!element)return;
+  element.classList.toggle("module-access-restricted",restricted);
+  let overlay=element.querySelector(":scope > .module-access-lock-overlay");
+  if(restricted){
+    element.open=false;
+    if(!overlay){
+      overlay=document.createElement("div");
+      overlay.className="module-access-lock-overlay";
+      overlay.setAttribute("role","note");
+      overlay.innerHTML='<span class="module-access-lock-icon" aria-hidden="true">🔒</span><strong>No tienes acceso a este módulo</strong>';
+      element.appendChild(overlay);
+    }
+    element.setAttribute("aria-disabled","true");
+  }else{
+    overlay?.remove();
+    element.removeAttribute("aria-disabled");
+  }
+}
 async function applyModuleAccess(){
   const current=window.MIRA_CURRENT_USER;
   if(!current)return;
   const allTargets=Object.values(MODULE_TARGETS).flat();
+  allTargets.forEach(id=>$(id)?.classList.remove("hidden"));
   if(current.role==="admin"){
-    allTargets.forEach(id=>$(id)?.classList.remove("hidden"));
+    allTargets.forEach(id=>setModuleRestricted($(id),false));
     return;
   }
-  allTargets.forEach(id=>$(id)?.classList.add("hidden"));
   try{
     const rows=await window.MIRA_DATA.listMyModulePermissions();
-    const canView=new Set((rows||[]).filter(p=>p.allowed&&p.action_key==="view").map(p=>p.module_key));
-    Object.entries(MODULE_TARGETS).forEach(([moduleKey,ids])=>{
-      if(canView.has(moduleKey))ids.forEach(id=>$(id)?.classList.remove("hidden"));
-    });
+    const canView=new Set((rows||[]).filter(p=>p.allowed===true&&p.action_key==="view").map(p=>p.module_key));
+    Object.entries(MODULE_TARGETS).forEach(([moduleKey,ids])=>ids.forEach(id=>setModuleRestricted($(id),!canView.has(moduleKey))));
   }catch(error){
-    console.warn("[MIRA permisos] No fue posible cargar permisos de módulos; se mantiene acceso cerrado.",error);
+    allTargets.forEach(id=>setModuleRestricted($(id),true));
+    console.warn("[MIRA permisos] No fue posible cargar permisos; todos los módulos quedan restringidos.",error);
   }
 }
 function init(){
@@ -194,6 +208,10 @@ function init(){
     const button=event.target.closest("[data-profile-id]");
     if(button)selectUser(button.dataset.profileId);
   });
+  document.addEventListener("click",event=>{
+    const locked=event.target.closest(".module-access-restricted");
+    if(locked){event.preventDefault();event.stopImmediatePropagation();}
+  },true);
   $("adminPermissionsMatrix")?.addEventListener("click",event=>{
     const button=event.target.closest("[data-profile-approval]");
     if(button)changeUserApproval(button);
