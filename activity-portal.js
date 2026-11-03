@@ -129,17 +129,18 @@ $("publicActivityForm").addEventListener("submit", async event => {
   try {
     if (!currentUser) throw new Error("La sesión expiró. Inicia sesión nuevamente.");
     const cedula = cleanCedula($("pubCedula").value);
-    const nombres = $("pubNames").value.trim();
+    const firstNames = $("pubNames").value.trim();
     const apellidos = $("pubSurnames").value.trim();
     const actividad_id = $("pubActivity").value;
     const info_mira = $("pubInfo").value === "si";
-    if (!cedula || !nombres || !apellidos || !actividad_id || !$("pubInfo").value) throw new Error("Completa los campos obligatorios.");
+    if (!cedula || !firstNames || !apellidos || !actividad_id || !$("pubInfo").value) throw new Error("Completa los campos obligatorios.");
     if (!activities.some(a => a.id === actividad_id && a.estado !== "cancelada")) throw new Error("La actividad ya no está disponible. Actualiza la página.");
     let matches = await MIRA_DATA.listPeople({cedula,limit:2});
     let person = matches?.[0];
     if (matches?.length > 1) throw new Error("Hay más de una ficha con esa cédula. Se requiere revisión administrativa; no se registró la asistencia.");
-    const personData = {cedula,nombres,apellidos,telefono:$("pubPhone").value.trim() || null,info_mira};
+    const personData = {cedula,nombres:firstNames,apellidos,telefono:$("pubPhone").value.trim() || null,info_mira};
     if (!person) {
+      status("Guardando ficha de la persona en Neon…");
       const created = await MIRA_DATA.createPerson(personData);
       person = created?.[0];
       if (!person?.id) {
@@ -149,6 +150,7 @@ $("publicActivityForm").addEventListener("submit", async event => {
       }
     }
     try {
+      status("Ficha validada. Guardando asistencia en Neon…");
       await MIRA_DATA.createAttendance({persona_id:person.id,actividad_id,registrado_por:currentUser.id});
     } catch (error) {
       if (/duplicate|unique|asistencias_unicas|409/i.test(error.message || "")) throw new Error("Esta persona ya tiene asistencia registrada en esta actividad; no se duplicó.");
@@ -157,7 +159,7 @@ $("publicActivityForm").addEventListener("submit", async event => {
     status("Asistencia guardada y confirmada en la base central.");
     $("publicActivityForm").reset();
     await refreshActivities();
-  } catch (error) { status(error.message || "No fue posible guardar el registro.", true); }
+  } catch (error) { status("No fue posible guardar el registro: " + (error.message || "Error desconocido."), true); }
   finally { busy = false; submit.disabled = false; }
 });
 restoreSession();
