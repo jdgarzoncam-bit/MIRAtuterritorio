@@ -544,6 +544,7 @@ document.getElementById('saveParticipantBtn').addEventListener('click',async()=>
   const actId=document.getElementById('participantActivity').value||activitiesState.currentActivityId;
   const act=activitiesState.activities.find(a=>a.id===actId);
   if(!act){alert('Primero crea una actividad desde Todas las actividades.');return;}
+  if(act.status!=='active'){alert('Esta actividad no está en curso. No se pueden registrar nuevas asistencias.');return;}
   const ced=normalizeCedula(document.getElementById('participantCedula').value);
   const names=document.getElementById('participantNames').value.trim();
   const surnames=document.getElementById('participantSurnames').value.trim();
@@ -587,7 +588,46 @@ function renderActivityTable(){const body=document.getElementById('activityParti
 function exportActivityExcel(activityId){if(!window.XLSX){alert('No se pudo cargar la herramienta de Excel.');return;}const rows=activityRows(activityId).map(({a,p,act})=>({'Actividad':act.name||'','Fecha actividad':act.date||'','Lugar':act.place||'','Cédula':p.cedula||'','Nombres':p.names||'','Apellidos':p.surnames||'','Teléfono':p.phone||'','InfoMIRA':p.infoMira==='si'?'Sí':'No','Fecha registro':a.createdAt||''}));const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),'Registros');const act=activitiesState.activities.find(a=>a.id===activityId);XLSX.writeFile(wb,(act?act.name:'Mira_Tu_Territorio').replace(/[^a-z0-9_-]/gi,'_')+'.xlsx');}
 document.getElementById('exportSingleActivityBtn').addEventListener('click',()=>exportActivityExcel(detailActivityId));
 function openActivityFolder(id){const act=activitiesState.activities.find(a=>a.id===id);if(!act)return;detailActivityId=id;document.getElementById('activityDetailTitle').textContent=act.name;document.getElementById('activityDetailMeta').textContent=[act.date,act.place,activitiesState.attendances.filter(x=>x.activityId===id).length+' registros'].filter(Boolean).join(' · ');const rows=activityRows(id);document.getElementById('activityDetailBody').innerHTML=rows.length?rows.map(({a,p})=>`<tr><td>${escapeActivityHtml((p.names||'')+' '+(p.surnames||''))}</td><td>${escapeActivityHtml(p.cedula||'')}</td><td>${escapeActivityHtml(p.phone||'—')}</td><td>${p.infoMira==='si'?'Sí':'No'}</td><td>${a.createdAt?new Date(a.createdAt).toLocaleString('es-CO'):''}</td><td><button class="activity-row-btn" data-edit="${a.id}" type="button">Editar</button></td></tr>`).join(''):'<tr><td colspan="6">Esta actividad aún no tiene registros.</td></tr>';const body=document.getElementById('activityDetailBody');body.querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',()=>editAttendance(b.dataset.edit)));showActivityView('detail');}
-function renderActivities(){const select=document.getElementById('participantActivity'),old=select.value;select.innerHTML='<option value="">Seleccionar actividad…</option>'+activitiesState.activities.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(a=>`<option value="${a.id}">${escapeActivityHtml(a.name)}${a.status==='active'?' · En curso':''}</option>`).join('');if(old&&activitiesState.activities.some(a=>a.id===old))select.value=old;else if(currentActivity())select.value=currentActivity().id;const folders=document.getElementById('activitiesFolders');folders.innerHTML=activitiesState.activities.length?activitiesState.activities.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(a=>`<article class="activity-folder"><div class="folder-icon">📁</div><h3>${escapeActivityHtml(a.name)}</h3><p>${escapeActivityHtml(a.date||'Sin fecha')} · ${activitiesState.attendances.filter(x=>x.activityId===a.id).length} registros</p><div class="activity-folder-actions"><button class="activity-row-btn" data-folder-open="${a.id}" type="button">📂 Abrir</button></div></article><button class="activity-file-card" data-folder-export="${a.id}" type="button" aria-label="Descargar Excel de ${escapeActivityHtml(a.name)}"><span class="file-icon">📊</span><strong>${escapeActivityHtml(a.name)}.xlsx</strong><small>Archivo de registros · ${activitiesState.attendances.filter(x=>x.activityId===a.id).length} filas</small><span class="file-type">EXCEL · DESCARGAR</span></button>`).join(''):'<div class="activity-empty-drive"><div>📂</div><h3>Aún no hay actividades</h3><p>Crea una actividad para que aparezca aquí su carpeta y su archivo Excel.</p></div>';folders.querySelectorAll('[data-folder-open]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();openActivityFolder(b.dataset.folderOpen);}));folders.querySelectorAll('[data-folder-export]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();exportActivityExcel(b.dataset.folderExport);}));document.getElementById('sideActivityPeople').textContent=activitiesState.people.length;document.getElementById('sideActivityAttendances').textContent=activitiesState.attendances.length;document.getElementById('sideActivityCount').textContent=activitiesState.activities.length+' actividades guardadas';renderActivityTable();}
+function renderActivities(){
+  const select=document.getElementById('participantActivity'),old=select.value;
+  const activeActivities=activitiesState.activities.filter(a=>a.status==='active');
+  select.innerHTML='<option value="">Seleccionar actividad…</option>'+activeActivities.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(a=>`<option value="${escapeActivityHtml(a.id)}">${escapeActivityHtml(a.name)} · En curso</option>`).join('');
+  if(old&&activeActivities.some(a=>a.id===old))select.value=old;
+  else if(currentActivity())select.value=currentActivity().id;
+  const folders=document.getElementById('activitiesFolders');
+  folders.innerHTML=activitiesState.activities.length?activitiesState.activities.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(a=>{
+    const count=activitiesState.attendances.filter(x=>x.activityId===a.id).length;
+    const statusLabel=a.status==='active'?'En curso':a.status==='finished'?'Finalizada':a.status==='cancelada'?'Cancelada':a.status||'Sin estado';
+    const statusClass=a.status==='active'?'active':a.status==='cancelada'?'cancelled':'closed';
+    const cancelButton=a.status==='active'?'<button class="activity-row-btn activity-manage-cancel" data-activity-cancel="${escapeActivityHtml(a.id)}" type="button">Cancelar</button>':'';
+    const deleteButton=count===0?'<button class="activity-row-btn activity-manage-delete" data-activity-delete="${escapeActivityHtml(a.id)}" type="button">Eliminar</button>':'<span class="activity-delete-locked" title="Tiene asistencias asociadas">No eliminable · '+count+' registros</span>';
+    return `<article class="activity-folder"><div class="folder-icon">📁</div><h3>${escapeActivityHtml(a.name)}</h3><p>${escapeActivityHtml(a.date||'Sin fecha')} · ${count} registros</p><span class="activity-state-pill ${statusClass}">${escapeActivityHtml(statusLabel)}</span><div class="activity-folder-actions"><button class="activity-row-btn" data-folder-open="${escapeActivityHtml(a.id)}" type="button">📂 Abrir</button>${cancelButton}${deleteButton}</div></article><button class="activity-file-card" data-folder-export="${escapeActivityHtml(a.id)}" type="button" aria-label="Descargar Excel de ${escapeActivityHtml(a.name)}"><span class="file-icon">📊</span><strong>${escapeActivityHtml(a.name)}.xlsx</strong><small>Archivo de registros · ${count} filas</small><span class="file-type">EXCEL · DESCARGAR</span></button>`;
+  }).join(''):'<div class="activity-empty-drive"><div>📂</div><h3>Aún no hay actividades</h3><p>Crea una actividad para que aparezca aquí su carpeta y su archivo Excel.</p></div>';
+  folders.querySelectorAll('[data-folder-open]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();openActivityFolder(b.dataset.folderOpen);}));
+  folders.querySelectorAll('[data-folder-export]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();exportActivityExcel(b.dataset.folderExport);}));
+  folders.querySelectorAll('[data-activity-cancel]').forEach(b=>b.addEventListener('click',async e=>{
+    e.stopPropagation();const item=activitiesState.activities.find(a=>a.id===b.dataset.activityCancel);if(!item)return;
+    if(!confirm('¿Cancelar la actividad "'+item.name+'"? Se conservarán todos sus registros y ya no se podrán agregar nuevas asistencias.'))return;
+    b.disabled=true;
+    try{await window.MIRA_DATA.cancelActivity(item.id);await loadActivitiesFromNeon();alert('Actividad cancelada. Sus registros se conservaron.');}
+    catch(error){alert('No fue posible cancelar la actividad: '+(error.message||'Error desconocido. Verifica que tengas permiso de edición.'));}
+    finally{b.disabled=false;}
+  }));
+  folders.querySelectorAll('[data-activity-delete]').forEach(b=>b.addEventListener('click',async e=>{
+    e.stopPropagation();const item=activitiesState.activities.find(a=>a.id===b.dataset.activityDelete);if(!item)return;
+    const count=activitiesState.attendances.filter(x=>x.activityId===item.id).length;
+    if(count>0){alert('No se puede eliminar: la actividad tiene '+count+' asistencia(s) asociada(s). Cancélala si ya no continuará.');return;}
+    if(!confirm('ELIMINACIÓN DEFINITIVA\n\n¿Eliminar "'+item.name+'"? Esta acción no se puede deshacer. La base de datos también bloqueará la eliminación si existe alguna asistencia asociada.'))return;
+    b.disabled=true;
+    try{await window.MIRA_DATA.deleteActivity(item.id);await loadActivitiesFromNeon();alert('Actividad eliminada definitivamente.');}
+    catch(error){alert('No fue posible eliminar la actividad: '+(error.message||'Error desconocido. Verifica el permiso de eliminación y que no tenga asistencias asociadas.'));}
+    finally{b.disabled=false;}
+  }));
+  document.getElementById('sideActivityPeople').textContent=activitiesState.people.length;
+  document.getElementById('sideActivityAttendances').textContent=activitiesState.attendances.length;
+  document.getElementById('sideActivityCount').textContent=activitiesState.activities.length+' actividades guardadas';
+  renderActivityTable();
+}
 renderActivities();
 
 document.getElementById('logoutTestigoBtn').addEventListener('click', function() {
