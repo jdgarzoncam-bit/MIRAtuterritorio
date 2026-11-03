@@ -669,6 +669,20 @@
                             <button id="downloadAllEvidenciasBtn" class="excel-download-btn" style="width: auto; padding: 8px 14px; font-size: 0.78rem; background: var(--primary-blue);">
                                 📥 Descargar Reporte Excel Consolidado
                             </button>
+                            <div id="e14CentralControls" style="margin-top:14px;padding:14px;border:1px solid #24d9ee55;border-radius:14px;background:#071426;">
+                                <strong style="display:block;margin-bottom:10px;color:var(--cyan-tactile);">Almacenamiento central seguro · Personal autorizado</strong>
+                                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:9px;">
+                                    <input id="e14CentralPuesto" class="testigo-input-styled" placeholder="Puesto de votación" maxlength="160">
+                                    <input id="e14CentralMesa" class="testigo-input-styled" placeholder="Mesa(s)" maxlength="20">
+                                    <input id="e14CentralNota" class="testigo-input-styled" placeholder="Observación (opcional)" maxlength="1000">
+                                    <input id="e14CentralFile" type="file" accept="image/jpeg,image/png,image/webp" class="testigo-input-styled">
+                                </div>
+                                <div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:10px;">
+                                    <button id="e14CentralUploadBtn" type="button" class="mira-reset-btn">🔒 Cargar evidencia privada</button>
+                                    <button id="e14MigrationBtn" type="button" class="mira-reset-btn">🛡️ Respaldar y migrar este dispositivo</button>
+                                </div>
+                                <p id="e14CentralStatus" role="status" style="font-size:.78rem;color:var(--text-muted);margin:9px 0 0;">Las cargas requieren sesión y permiso Testigos · Crear. Las evidencias locales no se borran al migrar.</p>
+                            </div>
                         </div>
                         <div id="testigosGalleryGrid" class="testigos-gallery-grid">
                             <p class="placeholder-text">No hay actas cargadas aún. Esperando transmisión de los testigos en campo...</p>
