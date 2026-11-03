@@ -5,6 +5,7 @@ const ACTIONS = [
 ];
 const $ = (id) => document.getElementById(id);
 let users = [], modules = [], selectedProfile = null, permissionRows = [];
+let activeUserTab = "pending";
 let busy = false;
 
 function escapeHtml(value) {
@@ -51,13 +52,20 @@ async function loadUsers(){
   }finally{busy=false;}
 }
 function renderUsers(){
-  if(!users.length){$("adminUsersList").innerHTML='<p class="admin-permissions-empty">No hay perfiles de usuario vinculados todavía.</p>';return;}
-  $("adminUsersList").innerHTML=users.map(u=>{
+  const candidates=users.filter(u=>u.role!=="admin");
+  const pending=candidates.filter(u=>u.email_verified!==true||u.active!==true);
+  const approved=candidates.filter(u=>u.email_verified===true&&u.active===true);
+  const shown=activeUserTab==="approved"?approved:pending;
+  const pendingTab=$("adminUsersPendingTab"), approvedTab=$("adminUsersApprovedTab");
+  if(pendingTab){pendingTab.classList.toggle("is-active",activeUserTab==="pending");pendingTab.setAttribute("aria-selected",String(activeUserTab==="pending"));pendingTab.textContent="Por aprobar · "+pending.length;}
+  if(approvedTab){approvedTab.classList.toggle("is-active",activeUserTab==="approved");approvedTab.setAttribute("aria-selected",String(activeUserTab==="approved"));approvedTab.textContent="Aprobados · "+approved.length;}
+  if(!shown.length){$("adminUsersList").innerHTML=activeUserTab==="approved"?'<p class="admin-permissions-empty">Todavía no hay cuentas aprobadas y activas.</p>':'<p class="admin-permissions-empty">No hay solicitudes pendientes de aprobación.</p>';return;}
+  $("adminUsersList").innerHTML=shown.map(u=>{
     const selected=selectedProfile?.id===u.id;
     const label=u.display_name||u.email||"Usuario";
     return '<button type="button" class="admin-user-row '+(selected?"is-selected":"")+'" data-profile-id="'+escapeHtml(u.id)+'" '+(u.role==="admin"?'data-is-admin="true"':'')+'>'+
       '<span class="admin-user-avatar">'+escapeHtml((label.trim()[0]||"U").toUpperCase())+'</span>'+
-      '<span class="admin-user-copy"><strong>'+escapeHtml(label)+'</strong><small>'+escapeHtml(u.email||"Sin correo")+'</small><em>'+(u.role==="admin"?"Administradora":u.role==="operator"?"Operador":u.role==="viewer"?"Consulta":u.role==="witness"?"Testigo":escapeHtml(u.role||"Sin rol"))+' · '+(u.email_verified?(u.active?"Activo":"Pendiente de aprobación"):"Correo sin confirmar")+'</em></span>'+
+      '<span class="admin-user-copy"><strong>'+escapeHtml(label)+'</strong><small>'+escapeHtml(u.email||"Sin correo")+'</small><em>'+(u.role==="admin"?"Administradora":u.role==="operator"?"Operador":u.role==="viewer"?"Consulta":u.role==="witness"?"Testigo":escapeHtml(u.role||"Sin rol"))+' · '+(u.email_verified?(u.active?"Aprobado · Activo":"Pendiente de aprobación"):"Correo sin confirmar")+'</em></span>'+
       (u.role==="admin"?'<span class="admin-user-lock" title="Cuenta protegida">🔒</span>':'<span class="admin-user-arrow">›</span>')+'</button>';
   }).join("");
 }
@@ -170,6 +178,16 @@ async function applyModuleAccess(){
 function init(){
   const launch=$("openAdminPermissionsBtn");
   if(launch)launch.addEventListener("click",openPanel);
+  const switchUserTab=(tab)=>{
+    activeUserTab=tab;selectedProfile=null;permissionRows=[];
+    $("adminSelectedUser").innerHTML='<strong>Selecciona un usuario</strong><span>Sus permisos aparecerán aquí.</span>';
+    $("adminPermissionsMatrix").innerHTML='<p class="admin-permissions-empty">Selecciona un usuario para consultar sus permisos.</p>';
+    renderUsers();
+    const first=users.find(u=>u.role!=="admin"&&(tab==="approved"?(u.email_verified===true&&u.active===true):(u.email_verified!==true||u.active!==true)));
+    if(first)selectUser(first.id);
+  };
+  $("adminUsersPendingTab")?.addEventListener("click",()=>switchUserTab("pending"));
+  $("adminUsersApprovedTab")?.addEventListener("click",()=>switchUserTab("approved"));
   $("closeAdminPermissionsBtn")?.addEventListener("click",closePanel);
   $("refreshAdminUsersBtn")?.addEventListener("click",()=>{selectedProfile=null;$("adminSelectedUser").innerHTML='<strong>Selecciona un usuario</strong><span>Sus permisos aparecerán aquí.</span>';$("adminPermissionsMatrix").innerHTML='<p class="admin-permissions-empty">Selecciona un usuario.</p>';loadUsers();});
   $("adminUsersList")?.addEventListener("click",event=>{
