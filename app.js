@@ -2201,6 +2201,8 @@ function inicializarSistemaMapa() {
             statusNode.style.color = error ? '#ffaaa3' : 'var(--text-muted)';
         };
         const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        // El marcador técnico identifica migraciones y no debe mostrarse como observación al usuario.
+        const notaVisibleE14 = value => String(value ?? '').replace(/\\[MIRA-LOCAL-ID:[^\\]]+\\]/g,'').trim();
         const descargarRespaldoLocal = async registros => {
             const password = prompt('Crea una contraseña para cifrar el respaldo E-14 (mínimo 12 caracteres). No la compartas ni la pierdas.');
             if (!password || password.length < 12) throw new Error('El respaldo requiere una contraseña de al menos 12 caracteres.');
@@ -2257,7 +2259,7 @@ function inicializarSistemaMapa() {
             const resumen = evidenciasCentralizadas.map((ev,index) => ({
                 'N.º':index+1,'Puesto de Votación':ev.puesto,'Mesa(s)':ev.mesa,
                 'Fecha de carga':ev.created_at,'Hora original':ev.hora_original || '',
-                'Observaciones':ev.nota,'Nombre de archivo':ev.nombre_original
+                'Observaciones':notaVisibleE14(ev.nota),'Nombre de archivo':ev.nombre_original
             }));
             const worksheet = XLSX.utils.json_to_sheet(resumen);
             const workbook = XLSX.utils.book_new();
@@ -2305,7 +2307,7 @@ function inicializarSistemaMapa() {
                 try {
                     const signed = await window.MIRA_DATA.getE14Download(ev.id);
                     const when = ev.hora_original || (ev.created_at ? new Date(ev.created_at).toLocaleString('es-CO') : 'Sin fecha');
-                    return '<div class="testigo-card-item"><img loading="lazy" src="' + esc(signed.download_url) + '" alt="Acta E-14 Puesto ' + esc(ev.puesto) + '"><div class="testigo-card-info"><strong>📍 ' + esc(ev.puesto) + '</strong><small><strong>Mesas:</strong> ' + esc(ev.mesa) + ' | <strong>Hora:</strong> ' + esc(when) + '</small><small><strong>Nota:</strong> ' + esc(ev.nota || 'Sin observaciones') + '</small><a href="' + esc(signed.download_url) + '" target="_blank" rel="noopener noreferrer" class="testigo-download-link" download="' + esc(ev.nombre_original || 'E14_' + ev.puesto + '_' + ev.mesa) + '">📥 Descargar Foto E-14</a></div></div>';
+                    return '<div class="testigo-card-item"><img loading="lazy" src="' + esc(signed.download_url) + '" alt="Acta E-14 Puesto ' + esc(ev.puesto) + '"><div class="testigo-card-info"><strong>📍 ' + esc(ev.puesto) + '</strong><small><strong>Mesas:</strong> ' + esc(ev.mesa) + ' | <strong>Hora:</strong> ' + esc(when) + '</small><small><strong>Nota:</strong> ' + esc(notaVisibleE14(ev.nota) || 'Sin observaciones') + '</small><a href="' + esc(signed.download_url) + '" target="_blank" rel="noopener noreferrer" class="testigo-download-link" download="' + esc(ev.nombre_original || 'E14_' + ev.puesto + '_' + ev.mesa) + '">📥 Descargar Foto E-14</a></div></div>';
                 } catch (error) {
                     return '<div class="testigo-card-item"><div class="testigo-card-info"><strong>' + esc(ev.puesto) + ' · Mesa ' + esc(ev.mesa) + '</strong><small>No se pudo generar la descarga autorizada: ' + esc(error.message) + '</small></div></div>';
                 }
