@@ -453,18 +453,26 @@ async function loadActivitiesFromNeon(){
   activitiesLoading=true;
   try{
     if(!window.MIRA_DATA)throw new Error('El cliente de Neon todavía no está disponible.');
-    const result=await Promise.all([
+    const [peopleRows,activityRows,attendanceRows]=await Promise.all([
       window.MIRA_DATA.listPeople({limit:1000}),
       window.MIRA_DATA.listActivities({limit:100}),
-      window.MIRA_DATA.listAttendances({limit:1000}),
-      window.MIRA_DATA.listMyModulePermissions()
+      window.MIRA_DATA.listAttendances({limit:1000})
     ]);
-    const currentUser=window.MIRA_CURRENT_USER;
-    activityPermissions=new Set((result[3]||[]).filter(p=>p.module_key==="actividades"&&p.allowed===true).map(p=>p.action_key));
-    if(isPrimaryMiraAdmin()) activityPermissions=new Set(["view","create","edit","delete","export","manage"]);
-    activitiesState.people=(result[0]||[]).map(p=>{const parsed=splitLegacyPersonName(p.nombres,p.apellidos);return {id:p.id,cedula:p.cedula||p.cedula_normalizada||'',names:parsed.names,surnames:parsed.surnames,phone:p.telefono||'',infoMira:p.info_mira===true?'si':p.info_mira===false?'no':'',type:p.tipo_participacion||''};});
-    activitiesState.activities=(result[1]||[]).map(a=>({id:a.id,name:a.nombre,date:a.fecha,place:a.lugar||'',status:a.estado==='activa'?'active':a.estado==='finalizada'?'finished':a.estado,createdAt:a.created_at}));
-    activitiesState.attendances=(result[2]||[]).map(a=>({id:a.id,personId:a.persona_id,activityId:a.actividad_id,createdAt:a.fecha_registro||a.created_at}));
+    // La cuenta administradora principal no depende de consultar su propia matriz de permisos.
+    if(isPrimaryMiraAdmin()){
+      activityPermissions=new Set(["view","create","edit","delete","export","manage"]);
+    }else{
+      try{
+        const rows=await window.MIRA_DATA.listMyModulePermissions();
+        activityPermissions=new Set((rows||[]).filter(p=>p.module_key==="actividades"&&p.allowed===true).map(p=>p.action_key));
+      }catch(permissionError){
+        activityPermissions=new Set();
+        console.warn("[MIRA Actividades] No se pudieron consultar permisos; se mantiene solo el acceso permitido por RLS.",permissionError);
+      }
+    }
+    activitiesState.people=(peopleRows||[]).map(p=>{const parsed=splitLegacyPersonName(p.nombres,p.apellidos);return {id:p.id,cedula:p.cedula||p.cedula_normalizada||'',names:parsed.names,surnames:parsed.surnames,phone:p.telefono||'',infoMira:p.info_mira===true?'si':p.info_mira===false?'no':'',type:p.tipo_participacion||''};});
+    activitiesState.activities=(activityRows||[]).map(a=>({id:a.id,name:a.nombre,date:a.fecha,place:a.lugar||'',status:["activa","active","en_curso"].includes(String(a.estado||"").toLowerCase())?"active":["finalizada","finished","cerrada"].includes(String(a.estado||"").toLowerCase())?"finished":String(a.estado||"").toLowerCase()==="cancelada"?"cancelada":a.estado,createdAt:a.created_at}));
+    activitiesState.attendances=(attendanceRows||[]).map(a=>({id:a.id,personId:a.persona_id,activityId:a.actividad_id,createdAt:a.fecha_registro||a.created_at}));
     const active=activitiesState.activities.find(a=>a.status==='active');
     activitiesState.currentActivityId=active?.id||activitiesState.activities[0]?.id||null;
     activitiesBackendReady=true;
