@@ -86,17 +86,24 @@ async function selectUser(profileId,show=true){
 function renderApprovalControls(user){
   const roles=[["viewer","Consulta"],["operator","Operador"],["witness","Testigo"]];
   const options=roles.map(([value,label])=>'<option value="'+value+'" '+(user.role===value?"selected":"")+'>'+label+'</option>').join("");
-  const canApprove=user.email_verified===true;
+  const hasModuleAccess=permissionRows.some(p=>p.action_key==="view"&&p.allowed===true);
+  const canApprove=user.email_verified===true&&hasModuleAccess;
   const action=user.active?"suspend":"activate";
-  const label=user.active?"Desaprobar cuenta":"Aprobar cuenta";
-  const hint=canApprove?(user.active?"La cuenta está aprobada. Puedes desaprobarla para retirar su acceso.":"El correo está confirmado. Puedes aprobar la cuenta y asignar un rol."):"La persona debe confirmar su correo antes de que puedas activar la cuenta.";
-  return '<section class="admin-approval-card"><div><strong>Estado y aprobación</strong><small>'+hint+'</small></div><label class="admin-role-picker"><span>Rol de la cuenta</span><select id="adminRoleSelect">'+options+'</select></label><button type="button" class="admin-approval-button" data-profile-approval="'+action+'" '+(!canApprove&&!user.active?"disabled":"")+'>'+label+'</button><button type="button" class="admin-approval-button admin-role-save" data-profile-approval="save-role">Guardar rol</button></section><div class="admin-approval-divider"></div>';
+  const label=user.active?"Desaprobar cuenta":"Aprobar y habilitar cuenta";
+  let hint;
+  if(!user.email_verified)hint="La persona debe confirmar su correo electrónico antes de continuar.";
+  else if(!hasModuleAccess&&!user.active)hint="Asigna al menos un módulo con Consulta. Los demás permanecerán restringidos.";
+  else if(user.active&&!hasModuleAccess)hint="La cuenta está activa, pero no tiene módulos autorizados. El ingreso permanece bloqueado.";
+  else hint="Correo confirmado y módulos asignados. La cuenta puede habilitarse.";
+  return '<section class="admin-approval-card"><div><strong>Estado y aprobación</strong><small>'+hint+'</small></div><label class="admin-role-picker"><span>Rol de la cuenta</span><select id="adminRoleSelect">'+options+'</select></label><button type="button" class="admin-approval-button" data-profile-approval="'+action+'" '+(!user.active&&!canApprove?"disabled":"")+'>'+label+'</button><button type="button" class="admin-approval-button admin-role-save" data-profile-approval="save-role">Guardar rol</button></section><div class="admin-approval-divider"></div>';
 }
 async function changeUserApproval(button){
   if(!isAdmin()||!selectedProfile||selectedProfile.role==="admin")return;
   const action=button.dataset.profileApproval;
   const activate=action==="activate";
   if(activate&&!selectedProfile.email_verified){notice("No puedes activar una cuenta cuyo correo no está confirmado.",true);return;}
+  const hasModuleAccess=permissionRows.some(p=>p.action_key==="view"&&p.allowed===true);
+  if(activate&&!hasModuleAccess){notice("No puedes aprobar esta cuenta: asigna al menos un módulo con Consulta. Los demás quedarán restringidos.",true);return;}
   const nextActive=action==="save-role"?selectedProfile.active:activate;
   const role=$("adminRoleSelect")?.value||selectedProfile.role;
   button.disabled=true;
@@ -111,7 +118,7 @@ async function changeUserApproval(button){
     renderUsers();
     $("adminSelectedUser").innerHTML='<strong>'+escapeHtml(selectedProfile.display_name||selectedProfile.email||"Usuario")+'</strong><span>'+escapeHtml(selectedProfile.email||"")+' · '+(selectedProfile.email_verified?"Correo confirmado":"Correo sin confirmar")+' · '+(selectedProfile.active?"Cuenta activa":"Pendiente de aprobación")+'</span>';
     renderMatrix();
-    notice(action==="save-role"?"Rol actualizado. Los permisos de los módulos se conservan.":activate?"Cuenta aprobada y activada. Ahora asigna los permisos de cada módulo.":"Cuenta desaprobada. Sus permisos se conservan, pero el acceso queda bloqueado.");
+    notice(action==="save-role"?"Rol actualizado. Los permisos de los módulos se conservan.":activate?"Cuenta aprobada y habilitada con los módulos autorizados.":"Cuenta desaprobada. Sus permisos se conservan, pero el acceso queda bloqueado.");
   }catch(error){notice(error.message||"No fue posible actualizar el estado de la cuenta.",true);}
   finally{button.disabled=false;}
 }
