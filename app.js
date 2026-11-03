@@ -360,7 +360,7 @@ const listaPuestosVotacion = [
 ];
 
 // NAVEGACIÓN DESDE LA LANDING
-document.getElementById('btnSelectTestigo').addEventListener('click', function() {
+document.getElementById('btnSelectTestigo')?.addEventListener('click', function() {
     document.getElementById('landing-hero-overlay').style.display = 'none';
     document.getElementById('landingHeaderControls').style.display = 'none';
     document.getElementById('testigoStandaloneContainer').classList.remove('hidden');
@@ -551,8 +551,8 @@ let activitiesReturnContext = 'landing';
 async function openActivities(view='registration'){activitiesReturnContext=(document.getElementById('landing-hero-overlay').style.display==='none')?'platform':'landing';activitiesPlaceholder.classList.remove('hidden');document.getElementById('landing-hero-overlay').style.display='none';document.getElementById('landingHeaderControls').style.display='none';if(!activitiesBackendReady)await loadActivitiesFromNeon();renderActivities();showActivityView(view);}
 function closeActivities(){activitiesPlaceholder.classList.add('hidden');if(activitiesReturnContext==='platform'){document.getElementById('landing-hero-overlay').style.display='none';document.getElementById('landingHeaderControls').style.display='none';}else{document.getElementById('landing-hero-overlay').style.display='flex';document.getElementById('landingHeaderControls').style.display='flex';}}
 function showActivityView(view){const target={registration:'activityRegistrationView',recent:'activityRecentPanel',all:'activityAllView',detail:'activityDetailView'}[view]||'activityRegistrationView';['activityRegistrationView','activityRecentPanel','activityAllView','activityDetailView'].forEach(id=>document.getElementById(id).classList.toggle('hidden',id!==target));document.getElementById('activityScreenSubtitle').textContent=({registration:'Registro de participación territorial.',recent:'Consulta en vivo y rectificación de registros.',all:'Archivo de actividades y sus hojas de cálculo.',detail:'Registros guardados en esta actividad.'})[view]||'Registro de participación territorial.';document.querySelectorAll('.activity-mobile-tab').forEach(tab=>tab.classList.toggle('is-active',tab.dataset.activityView===(view==='detail'?'all':view)));}
-document.getElementById('btnSelectActividades').addEventListener('click',()=>openActivities('registration'));
-document.getElementById('btnSelectActividades').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openActivities('registration');}});
+document.getElementById('btnSelectActividades')?.addEventListener('click',()=>openActivities('registration'));
+document.getElementById('btnSelectActividades')?.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openActivities('registration');}});
 document.getElementById('closeActivitiesPlaceholder').addEventListener('click',closeActivities);document.getElementById('returnFromActivities').addEventListener('click',closeActivities);
 
 document.querySelectorAll('.activity-mobile-tab').forEach(tab=>tab.addEventListener('click',()=>{const view=tab.dataset.activityView;if(view==='registration')document.getElementById('newActivityForm')?.classList.add('hidden');showActivityView(view);if(view==='recent'||view==='all')renderActivities();}));
