@@ -183,19 +183,29 @@ function setModuleRestricted(element,restricted){
 }
 async function applyModuleAccess(){
   const current=window.MIRA_CURRENT_USER;
-  if(!current)return;
   const allTargets=Object.values(MODULE_TARGETS).flat();
-  allTargets.forEach(id=>$(id)?.classList.remove("hidden"));
-  if(current.role==="admin"){
-    allTargets.forEach(id=>setModuleRestricted($(id),false));
+  if(!current){
+    allTargets.forEach(id=>setModuleRestricted($(id),true));
+    return;
+  }
+  // Cerrar todos los módulos antes de resolver permisos: nunca mostrar acceso provisional.
+  allTargets.forEach(id=>setModuleRestricted($(id),true));
+  if(current.role==="admin"&&current.authUserId===PRIMARY_ADMIN_AUTH_ID){
+    allTargets.forEach(id=>{setModuleRestricted($(id),false);$(id)?.classList.remove("hidden");});
     return;
   }
   try{
+    if(!window.MIRA_DATA?.listMyModulePermissions) throw new Error("El servicio de permisos no está disponible.");
     const rows=await window.MIRA_DATA.listMyModulePermissions();
-    const canView=new Set((rows||[]).filter(p=>p.allowed===true&&p.action_key==="view").map(p=>p.module_key));
-    Object.entries(MODULE_TARGETS).forEach(([moduleKey,ids])=>ids.forEach(id=>setModuleRestricted($(id),!canView.has(moduleKey))));
+    if(!Array.isArray(rows)) throw new Error("La respuesta de permisos no es válida.");
+    const canView=new Set(rows.filter(p=>p.allowed===true&&p.action_key==="view").map(p=>p.module_key));
+    Object.entries(MODULE_TARGETS).forEach(([moduleKey,ids])=>ids.forEach(id=>{
+      const element=$(id);
+      setModuleRestricted(element,!canView.has(moduleKey));
+      if(element)element.classList.remove("hidden");
+    }));
   }catch(error){
-    allTargets.forEach(id=>setModuleRestricted($(id),true));
+    allTargets.forEach(id=>{setModuleRestricted($(id),true);$(id)?.classList.remove("hidden");});
     console.warn("[MIRA permisos] No fue posible cargar permisos; todos los módulos quedan restringidos.",error);
   }
 }
