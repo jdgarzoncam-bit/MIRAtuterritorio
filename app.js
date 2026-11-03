@@ -2129,35 +2129,65 @@ function inicializarSistemaMapa() {
         const closeBtn = document.getElementById('closeTestigosModalBtn');
         const downloadAllBtn = document.getElementById('downloadAllEvidenciasBtn');
         const galleryGrid = document.getElementById('testigosGalleryGrid');
+        const statusNode = document.getElementById('e14CentralStatus');
+        let evidenciasCentralizadas = [];
+        let cargando = false;
+        const status = (message, error=false) => {
+            if (!statusNode) return;
+            statusNode.textContent = message;
+            statusNode.style.color = error ? '#ffaaa3' : 'var(--text-muted)';
+        };
+        const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        const descargarRespaldoLocal = registros => {
+            const backup = {
+                schema: 'mira-e14-local-backup-v1',
+                created_at: new Date().toISOString(),
+                source: 'localStorage:faca_evidencias_testigos',
+                count: registros.length,
+                records: registros
+            };
+            const blob = new Blob([JSON.stringify(backup)], {type:'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'MIRA_E14_respaldo_local_' + new Date().toISOString().replace(/[:.]/g,'-') + '.json';
+            document.body.appendChild(a); a.click(); a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 30000);
+        };
+        const cargarCentral = async () => {
+            if (cargando) return;
+            cargando = true;
+            galleryGrid.innerHTML = '<p class="placeholder-text">Consultando evidencias privadas en Neon…</p>';
+            try {
+                evidenciasCentralizadas = await window.MIRA_DATA.listE14Evidence();
+                await renderizarGaleriaTestigos();
+                status('Conectado al repositorio privado. Evidencias centrales: ' + evidenciasCentralizadas.length + '.');
+            } catch (error) {
+                galleryGrid.innerHTML = '<p class="placeholder-text">No fue posible consultar el repositorio privado. ' + esc(error.message) + '</p>';
+                status('Acceso denegado o servicio no disponible. Verifica sesión y permiso Testigos · Consulta.', true);
+            } finally { cargando = false; }
+        };
 
         openBtn.addEventListener('click', function() {
             modal.classList.remove('hidden');
-            renderizarGaleriaTestigos();
+            cargarCentral();
         });
-
-        closeBtn.addEventListener('click', function() {
-            modal.classList.add('hidden');
-        });
+        closeBtn.addEventListener('click', function() { modal.classList.add('hidden'); });
 
         downloadAllBtn.addEventListener('click', function() {
-            const evidenciasLocales = leerEvidenciasTestigosLocales();
-            if (evidenciasLocales.length === 0) {
-                alert("No hay evidencias registradas para exportar.");
+            if (!evidenciasCentralizadas.length) {
+                alert('No hay evidencias centrales para exportar.');
                 return;
             }
-
-            const resumenExportar = evidenciasLocales.map((ev, index) => ({
-                "N.º": index + 1,
-                "Puesto de Votación": ev.puesto,
-                "Mesa(s)": ev.mesa,
-                "Hora de Transmisión": ev.hora,
-                "Observaciones": ev.nota
+            const resumen = evidenciasCentralizadas.map((ev,index) => ({
+                'N.º':index+1,'Puesto de Votación':ev.puesto,'Mesa(s)':ev.mesa,
+                'Fecha de carga':ev.created_at,'Hora original':ev.hora_original || '',
+                'Observaciones':ev.nota,'Nombre de archivo':ev.nombre_original
             }));
-
-            const worksheet = XLSX.utils.json_to_sheet(resumenExportar);
+            const worksheet = XLSX.utils.json_to_sheet(resumen);
             const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Reporte Actas E14");
-            XLSX.writeFile(workbook, `Reporte_Consolidado_Actas_E14_PMU.xlsx`);
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'Reporte Actas E14');
+            XLSX.writeFile(workbook, 'Reporte_Consolidado_Actas_E14_PMU.xlsx');
         });
 
         const filtroPuestoActas = document.getElementById('filtroPuestoActas');
@@ -2165,14 +2195,14 @@ function inicializarSistemaMapa() {
         const filtroNumeroActas = document.getElementById('filtroNumeroActas');
         const ordenMesasActas = document.getElementById('ordenMesasActas');
         function normalizarMesa(valor) {
-            const nums = String(valor ?? '').match(/\d+/g);
+            const nums = String(valor ?? '').match(/\\d+/g);
             return nums && nums.length ? Math.min(...nums.map(Number)) : Number.MAX_SAFE_INTEGER;
         }
         function actualizarFiltroPuestos(evidencias) {
             if (!filtroPuestoActas) return;
             const anterior = filtroPuestoActas.value;
             const puestos = [...new Set(evidencias.map(ev => ev.puesto).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es'));
-            filtroPuestoActas.innerHTML = '<option value="">Todos los puestos</option>' + puestos.map(p => `<option value="${String(p).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;')}">${p}</option>`).join('');
+            filtroPuestoActas.innerHTML = '<option value="">Todos los puestos</option>' + puestos.map(p => '<option value="' + esc(p) + '">' + esc(p) + '</option>').join('');
             if (puestos.includes(anterior)) filtroPuestoActas.value = anterior;
         }
         if (filtroPuestoActas) filtroPuestoActas.addEventListener('change', renderizarGaleriaTestigos);
@@ -2180,40 +2210,84 @@ function inicializarSistemaMapa() {
         if (filtroNumeroActas) filtroNumeroActas.addEventListener('change', renderizarGaleriaTestigos);
         if (ordenMesasActas) ordenMesasActas.addEventListener('change', renderizarGaleriaTestigos);
 
-        function renderizarGaleriaTestigos() {
-            const evidenciasLocales = leerEvidenciasTestigosLocales();
-            actualizarFiltroPuestos(evidenciasLocales);
-            if (evidenciasLocales.length === 0) {
-                galleryGrid.innerHTML = `<p class="placeholder-text">No hay actas cargadas aún. Las evidencias se mostrarán aquí cuando estén guardadas en este dispositivo...</p>`;
-                return;
-            }
+        async function renderizarGaleriaTestigos() {
             const puestoElegido = filtroPuestoActas ? filtroPuestoActas.value : '';
             const zonaElegida = filtroZonaActas ? filtroZonaActas.value : '';
             const numeroElegido = filtroNumeroActas ? filtroNumeroActas.value : '';
             const orden = ordenMesasActas ? ordenMesasActas.value : 'asc';
-            const evidenciasFiltradas = evidenciasLocales.filter(ev => {
+            const filtradas = evidenciasCentralizadas.filter(ev => {
                 const nombre = normalizarTexto(ev.puesto);
                 const oficial = listaPuestosVotacion.find(p => normalizarTexto(p.matchName) === nombre || normalizarTexto(p.nombre) === nombre);
                 return (!puestoElegido || ev.puesto === puestoElegido) && (!zonaElegida || (oficial && String(oficial.zona) === zonaElegida)) && (!numeroElegido || (oficial && String(oficial.numero) === numeroElegido));
             }).sort((a,b) => (normalizarMesa(a.mesa) - normalizarMesa(b.mesa)) * (orden === 'desc' ? -1 : 1));
-            if (!evidenciasFiltradas.length) {
-                galleryGrid.innerHTML = `<p class="placeholder-text">No hay actas para el puesto seleccionado.</p>`;
+            actualizarFiltroPuestos(evidenciasCentralizadas);
+            if (!filtradas.length) {
+                galleryGrid.innerHTML = '<p class="placeholder-text">No hay evidencias centrales para los filtros seleccionados. Puedes migrar las fotografías locales desde el panel superior.</p>';
                 return;
             }
-            galleryGrid.innerHTML = evidenciasFiltradas.map(ev => `
-                <div class="testigo-card-item">
-                    <img src="${ev.imgData}" alt="Acta E-14 Puesto ${ev.puesto}">
-                    <div class="testigo-card-info">
-                        <strong>📍 ${ev.puesto}</strong>
-                        <small><strong>Mesas:</strong> ${ev.mesa} | <strong>Hora:</strong> ${ev.hora}</small>
-                        <small><strong>Nota:</strong> ${ev.nota}</small>
-                        <a href="${ev.imgData}" download="E14_${ev.puesto.replace(/\s+/g, '_')}_Mesas_${ev.mesa}.jpg" class="testigo-download-link">
-                            📥 Descargar Foto E-14
-                        </a>
-                    </div>
-                </div>
-            `).join('');
+            galleryGrid.innerHTML = '<p class="placeholder-text">Generando enlaces temporales autorizados…</p>';
+            const cards = await Promise.all(filtradas.map(async ev => {
+                try {
+                    const signed = await window.MIRA_DATA.getE14Download(ev.id);
+                    const when = ev.hora_original || (ev.created_at ? new Date(ev.created_at).toLocaleString('es-CO') : 'Sin fecha');
+                    return '<div class="testigo-card-item"><img loading="lazy" src="' + esc(signed.download_url) + '" alt="Acta E-14 Puesto ' + esc(ev.puesto) + '"><div class="testigo-card-info"><strong>📍 ' + esc(ev.puesto) + '</strong><small><strong>Mesas:</strong> ' + esc(ev.mesa) + ' | <strong>Hora:</strong> ' + esc(when) + '</small><small><strong>Nota:</strong> ' + esc(ev.nota || 'Sin observaciones') + '</small><a href="' + esc(signed.download_url) + '" target="_blank" rel="noopener noreferrer" class="testigo-download-link" download="' + esc(ev.nombre_original || 'E14_' + ev.puesto + '_' + ev.mesa) + '">📥 Descargar Foto E-14</a></div></div>';
+                } catch (error) {
+                    return '<div class="testigo-card-item"><div class="testigo-card-info"><strong>' + esc(ev.puesto) + ' · Mesa ' + esc(ev.mesa) + '</strong><small>No se pudo generar la descarga autorizada: ' + esc(error.message) + '</small></div></div>';
+                }
+            }));
+            galleryGrid.innerHTML = cards.join('');
         }
+
+        const uploadBtn = document.getElementById('e14CentralUploadBtn');
+        if (uploadBtn) uploadBtn.addEventListener('click', async () => {
+            const fileInput = document.getElementById('e14CentralFile');
+            const file = fileInput?.files?.[0];
+            const puesto = document.getElementById('e14CentralPuesto')?.value.trim();
+            const mesa = document.getElementById('e14CentralMesa')?.value.trim();
+            const nota = document.getElementById('e14CentralNota')?.value.trim() || '';
+            if (!file || !puesto || !mesa) { status('Selecciona una imagen y completa puesto y mesa.', true); return; }
+            uploadBtn.disabled = true;
+            try {
+                await window.MIRA_DATA.uploadE14Evidence({file,puesto,mesa,nota});
+                fileInput.value = '';
+                document.getElementById('e14CentralNota').value = '';
+                await cargarCentral();
+                status('Evidencia cargada, verificada y registrada en el repositorio privado.');
+            } catch (error) { status('No se completó la carga: ' + error.message, true); }
+            finally { uploadBtn.disabled = false; }
+        });
+
+        const migrationBtn = document.getElementById('e14MigrationBtn');
+        if (migrationBtn) migrationBtn.addEventListener('click', async () => {
+            const local = leerEvidenciasTestigosLocales();
+            if (!local.length) { status('Este navegador no tiene evidencias locales para migrar.'); return; }
+            const accepted = confirm('Se descargará primero un respaldo JSON con las fotografías locales. Después se intentará migrarlas a Neon. Los originales NO se borrarán. ¿Continuar?');
+            if (!accepted) return;
+            migrationBtn.disabled = true;
+            try {
+                descargarRespaldoLocal(local);
+                const cloud = await window.MIRA_DATA.listE14Evidence();
+                let migrated = 0, skipped = 0, failed = 0;
+                for (let i=0; i<local.length; i++) {
+                    const ev = local[i];
+                    const marker = '[MIRA-LOCAL-ID:' + String(ev.id) + ']';
+                    if (cloud.some(item => String(item.nota || '').includes(marker))) { skipped++; continue; }
+                    try {
+                        const blob = await (await fetch(ev.imgData)).blob();
+                        const type = ['image/jpeg','image/png','image/webp'].includes(blob.type) ? blob.type : 'image/jpeg';
+                        const file = new File([blob], 'E14_' + String(ev.puesto || 'puesto').replace(/[^a-z0-9_-]/gi,'_') + '_Mesa_' + String(ev.mesa || 'NA').replace(/[^a-z0-9_-]/gi,'_') + '_' + ev.id + (type==='image/png'?'.png':type==='image/webp'?'.webp':'.jpg'), {type});
+                        await window.MIRA_DATA.uploadE14Evidence({file,puesto:ev.puesto,mesa:ev.mesa,nota:marker + ' ' + (ev.nota || ''),hora_original:ev.hora || ''});
+                        migrated++;
+                    } catch (error) { failed++; console.error('[MIRA E-14] Falló migración local', ev.id, error); }
+                    status('Migración: ' + (i+1) + '/' + local.length + ' · Migradas: ' + migrated + ' · Ya existentes: ' + skipped + ' · Fallidas: ' + failed);
+                }
+                evidenciasCentralizadas = await window.MIRA_DATA.listE14Evidence();
+                await renderizarGaleriaTestigos();
+                status('Conciliación terminada. Migradas: ' + migrated + ' · Ya existentes: ' + skipped + ' · Fallidas: ' + failed + '. Respaldo descargado; originales locales conservados.');
+                alert('Migración E-14 finalizada. Migradas: ' + migrated + '\\nYa existentes: ' + skipped + '\\nFallidas: ' + failed + '\\nNo se borró ningún dato local.');
+            } catch (error) { status('La migración se detuvo: ' + error.message + '. Los datos locales siguen intactos.', true); }
+            finally { migrationBtn.disabled = false; }
+        });
     }
 
     function inicializarModuloInfoMIRA() {
