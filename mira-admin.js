@@ -137,7 +137,9 @@ async function changePermission(input){
     const existing=permissionRows.find(p=>p.module_key===moduleKey&&p.action_key===actionKey);
     if(existing)Object.assign(existing,row);
     else permissionRows.push(row);
-    notice("Permiso actualizado y confirmado en la base de datos: "+(input.checked?"habilitado":"retirado")+".");
+    const state=input.closest(".admin-module-permission")?.querySelector(".admin-access-state");
+    if(state){state.textContent=input.checked?"Acceso completo":"Restringido";state.classList.toggle("is-allowed",input.checked);state.classList.toggle("is-restricted",!input.checked);}
+    notice(input.checked?"Módulo habilitado con acceso completo.":"Módulo restringido; se bloquean sus operaciones.");
   }catch(error){
     input.checked=!input.checked;
     notice(error.message||"No fue posible guardar el permiso.",true);
