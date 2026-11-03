@@ -2245,11 +2245,46 @@ function inicializarSistemaMapa() {
             } finally { cargando = false; }
         };
 
-        openBtn.addEventListener('click', function() {
+        // Apertura explícita del modal: evita conflictos entre la clase global .hidden,
+        // transiciones y estilos de otros módulos flotantes.
+        const abrirPanelE14 = async event => {
+            event?.preventDefault();
+            event?.stopPropagation();
+            if (!modal || !galleryGrid) {
+                console.error('[MIRA E-14] No se encontró el contenedor del panel o la galería.');
+                alert('No se pudo abrir la consola E-14: falta un elemento de la interfaz. Recarga la plataforma.');
+                return;
+            }
             modal.classList.remove('hidden');
-            cargarCentral();
-        });
-        closeBtn.addEventListener('click', function() { modal.classList.add('hidden'); });
+            modal.style.display = 'flex';
+            modal.style.visibility = 'visible';
+            modal.style.opacity = '1';
+            modal.style.pointerEvents = 'auto';
+            modal.setAttribute('aria-hidden','false');
+            document.body.style.overflow = 'hidden';
+            await cargarCentral();
+        };
+        const cerrarPanelE14 = event => {
+            event?.preventDefault();
+            event?.stopPropagation();
+            if (!modal) return;
+            modal.classList.add('hidden');
+            modal.style.display = 'none';
+            modal.setAttribute('aria-hidden','true');
+            document.body.style.overflow = '';
+        };
+        if (openBtn && !openBtn.dataset.e14Bound) {
+            openBtn.dataset.e14Bound = '1';
+            openBtn.type = 'button';
+            openBtn.addEventListener('click', abrirPanelE14);
+        } else if (!openBtn) {
+            console.error('[MIRA E-14] No se encontró openTestigosModalBtn.');
+        }
+        if (closeBtn && !closeBtn.dataset.e14Bound) {
+            closeBtn.dataset.e14Bound = '1';
+            closeBtn.type = 'button';
+            closeBtn.addEventListener('click', cerrarPanelE14);
+        }
 
         downloadAllBtn.addEventListener('click', function() {
             if (!evidenciasCentralizadas.length) {
