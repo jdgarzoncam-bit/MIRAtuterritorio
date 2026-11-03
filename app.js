@@ -15,27 +15,50 @@ let poligonosPorNombre = Object.create(null);
 
 let imagenBase64Seleccionada = "";
 
-// Apertura global por delegación: funciona aunque el botón se regenere en el DOM
-// o el inicializador de Testigos no haya alcanzado a registrar sus listeners.
+// Control E-14 centralizado. No detener la propagación del clic: otros módulos
+// pueden necesitar sus eventos. La apertura visual no depende de la carga de datos.
 if (!window.__MIRA_E14_GLOBAL_HANDLER__) {
     window.__MIRA_E14_GLOBAL_HANDLER__ = true;
     document.addEventListener('click', event => {
         const trigger = event.target?.closest?.('#openTestigosModalBtn');
-        if (!trigger) return;
-        event.preventDefault();
-        event.stopPropagation();
-        const panel = document.getElementById('testigosModal');
-        const gallery = document.getElementById('testigosGalleryGrid');
-        if (!panel || !gallery) {
-            console.error('[MIRA E-14] Faltan #testigosModal o #testigosGalleryGrid.');
-            alert('No se encontró el panel E-14 completo. Recarga la plataforma y vuelve a intentarlo.');
+        if (trigger) {
+            event.preventDefault();
+            trigger.type = 'button';
+            const panel = document.getElementById('testigosModal');
+            const gallery = document.getElementById('testigosGalleryGrid');
+            if (!panel || !gallery) {
+                console.error('[MIRA E-14] Elementos faltantes:', {panel:!!panel,gallery:!!gallery});
+                alert('No se encontró el panel E-14 completo. Recarga la plataforma y vuelve a intentarlo.');
+                return;
+            }
+            panel.classList.remove('hidden');
+            panel.hidden = false;
+            panel.style.setProperty('display','flex','important');
+            panel.style.setProperty('visibility','visible','important');
+            panel.style.setProperty('opacity','1','important');
+            panel.style.setProperty('pointer-events','auto','important');
+            panel.style.setProperty('z-index','10050','important');
+            panel.setAttribute('aria-hidden','false');
+            document.body.style.overflow = 'hidden';
+            if (typeof window.MIRA_E14_CARGAR_CENTRAL === 'function') {
+                window.MIRA_E14_CARGAR_CENTRAL();
+            } else {
+                gallery.innerHTML = '<p class="placeholder-text">El panel está abierto, pero el módulo de consulta aún no termina de inicializar. Cierra y vuelve a abrir en unos segundos.</p>';
+                console.error('[MIRA E-14] La función de consulta no está inicializada.');
+            }
             return;
         }
-        panel.classList.remove('hidden');
-        panel.style.cssText += ';display:flex!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;z-index:10050!important';
-        panel.setAttribute('aria-hidden','false');
-        document.body.style.overflow = 'hidden';
-        document.dispatchEvent(new CustomEvent('mira:e14-panel-open'));
+        if (event.target?.closest?.('#closeTestigosModalBtn')) {
+            event.preventDefault();
+            const panel = document.getElementById('testigosModal');
+            if (panel) {
+                panel.classList.add('hidden');
+                panel.hidden = true;
+                panel.style.setProperty('display','none','important');
+                panel.setAttribute('aria-hidden','true');
+            }
+            document.body.style.overflow = '';
+        }
     }, true);
 }
 function leerEvidenciasTestigosLocales() {
@@ -2268,6 +2291,7 @@ function inicializarSistemaMapa() {
                 status('Acceso denegado o servicio no disponible. Verifica sesión y permiso Testigos · Consulta.', true);
             } finally { cargando = false; }
         };
+        window.MIRA_E14_CARGAR_CENTRAL = cargarCentral;
 
         // Apertura explícita del modal: evita conflictos entre la clase global .hidden,
         // transiciones y estilos de otros módulos flotantes.
