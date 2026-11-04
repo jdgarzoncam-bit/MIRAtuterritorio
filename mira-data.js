@@ -191,7 +191,11 @@ export const MIRA_DATA = {
       cache:"no-store"
     });
     const text=await response.text(); let data={}; try{data=text?JSON.parse(text):{};}catch{}
-    if(!response.ok) throw new Error(data.error||`Servicio E-14: HTTP ${response.status}`);
+    if(!response.ok) {
+      const message=String(data.error||data.message||`Servicio E-14: HTTP ${response.status}`);
+      if(message.includes("E14_LIMIT_REACHED")) throw new Error("Se alcanzó el máximo seguro de 70 evidencias para esta jornada. La imagen no se registró.");
+      throw new Error(message);
+    }
     return data;
   },
   async listE14Evidence() {
