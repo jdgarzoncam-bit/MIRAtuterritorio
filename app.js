@@ -2189,19 +2189,36 @@ function inicializarSistemaMapa() {
         const target = normalizarTexto(nombre);
         const feature = datosOriginales.features.find(f => normalizarTexto(f.properties?.nombre || f.properties?.Barrio || '') === target);
         if (!feature?.geometry) return null;
-        const rings = feature.geometry.type === 'Polygon' ? feature.geometry.coordinates :
-            feature.geometry.type === 'MultiPolygon' ? feature.geometry.coordinates.flat(1) : [];
-        const ring = rings[0];
-        if (!ring?.length) return null;
-        // Centroide de área para polígonos, con promedio de vértices como respaldo.
-        let area2=0, cx=0, cy=0;
-        for(let i=0;i<ring.length-1;i++){
-            const [x1,y1]=ring[i], [x2,y2]=ring[i+1], cross=x1*y2-x2*y1;
-            area2+=cross; cx+=(x1+x2)*cross; cy+=(y1+y2)*cross;
-        }
-        if(Math.abs(area2)>1e-12) return [cy/(3*area2),cx/(3*area2)];
-        const pts=ring.slice(0,-1);
-        return pts.length ? [pts.reduce((s,p)=>s+p[1],0)/pts.length,pts.reduce((s,p)=>s+p[0],0)/pts.length] : null;
+        const geometry = feature.geometry;
+        const rings = geometry.type === 'Polygon'
+            ? [geometry.coordinates?.[0] || []]
+            : geometry.type === 'MultiPolygon'
+                ? geometry.coordinates.map(polygon => polygon?.[0] || [])
+                : [];
+        // En barrios multipolígono se usa el componente exterior de mayor área,
+        // evitando calcular la recogida desde una isla o fragmento menor.
+        let best = null;
+        rings.forEach(ring => {
+            if (!Array.isArray(ring) || ring.length < 4) return;
+            let area2 = 0, cx = 0, cy = 0;
+            for (let i = 0; i < ring.length - 1; i++) {
+                const [x1, y1] = ring[i], [x2, y2] = ring[i + 1];
+                const cross = x1 * y2 - x2 * y1;
+                area2 += cross;
+                cx += (x1 + x2) * cross;
+                cy += (y1 + y2) * cross;
+            }
+            const area = Math.abs(area2);
+            if (area < 1e-12 || (best && area <= best.area)) return;
+            best = { area, point: [cy / (3 * area2), cx / (3 * area2)] };
+        });
+        if (best) return best.point;
+        const fallback = rings.find(ring => Array.isArray(ring) && ring.length >= 4);
+        const points = fallback ? fallback.slice(0, -1) : [];
+        return points.length
+            ? [points.reduce((sum, point) => sum + point[1], 0) / points.length,
+               points.reduce((sum, point) => sum + point[0], 0) / points.length]
+            : null;
     }
     function buscarPuestoLogistica(nombre) {
         const target=normalizarTexto(nombre);
@@ -2293,6 +2310,12 @@ function inicializarSistemaMapa() {
                     '<p class="mira-db-action-hint">Los conductores se consideran disponibles para cualquier ruta. La asignación operativa debe confirmarse con cada conductor; aún no se guarda una asignación en la base de datos.</p></section>';
                 box.querySelectorAll('[data-driver-route]').forEach(select=>{
                     select.addEventListener('change',()=>{
+                        const duplicated = select.value && [...box.querySelectorAll('[data-driver-route]')]
+                            .some(other => other !== select && other.value === select.value);
+                        if (duplicated) {
+                            alert('Ese conductor ya está asignado a otra ruta en esta sesión.');
+                            select.value = '';
+                        }
                         const driver=drivers.find(d=>String(d.id)===select.value);
                         const target=box.querySelector('[data-driver-contact="'+select.dataset.driverRoute+'"]');
                         if(target) target.innerHTML=driver?'<div class="mira-db-action-hint">Conductor seleccionado: '+escapeHtml(getName(driver))+'</div>'+botonesContactoLogistica(getPhone(driver),getName(driver)):'';
