@@ -567,16 +567,27 @@ document.getElementById('sideOpenActivityModuleBtn').addEventListener('click',()
 function syncMiraQuickModules(){
   const root=document.getElementById('miraQuickModules');
   const testigos=document.getElementById('miraQuickTestigosBtn');
+  const activities=document.getElementById('miraQuickActivitiesBtn');
   const status=document.getElementById('miraQuickTestigosStatus');
+  const activitiesStatus=document.getElementById('miraQuickActivitiesStatus');
+  const publicLock=document.getElementById('miraQuickPublicLock');
   const user=window.MIRA_CURRENT_USER;
+  const authenticated=Boolean(user?.authUserId);
   const isAdmin=user?.role==='admin'&&user?.authUserId==='beef5bf3-82a8-4c35-a12c-17771be59da1';
-  if(root)root.classList.toggle('hidden',!user?.authUserId);
+  if(root)root.classList.remove('hidden');
+  if(publicLock)publicLock.classList.toggle('hidden',authenticated);
   if(testigos){
     testigos.disabled=!isAdmin;
     testigos.setAttribute('aria-disabled',String(!isAdmin));
     testigos.classList.toggle('is-locked',!isAdmin);
   }
-  if(status)status.textContent=isAdmin?'Acceso administrador':'Bloqueado temporalmente';
+  if(activities){
+    activities.disabled=!authenticated;
+    activities.setAttribute('aria-disabled',String(!authenticated));
+    activities.classList.toggle('is-locked',!authenticated);
+  }
+  if(status)status.textContent=isAdmin?'Acceso administrador':authenticated?'Restringido al administrador':'Inicia sesión para acceder';
+  if(activitiesStatus)activitiesStatus.textContent=authenticated?'Registro y seguimiento':'Inicia sesión para acceder';
 }
 document.getElementById('miraQuickModulesToggle')?.addEventListener('click',()=>{
   const panel=document.getElementById('miraQuickModulesPanel');
@@ -1136,7 +1147,15 @@ function inicializarSistemaMapa() {
         }
     }
     if (map) {
-        setTimeout(() => { map.invalidateSize(); }, 200);
+        setTimeout(() => {
+            map.invalidateSize({ pan: false, animate: false });
+            if (datosOriginales && typeof window.actualizarMapa === 'function') {
+                window.actualizarMapa();
+                if (poligonosKmlVisibles && geojsonLayer && !map.hasLayer(geojsonLayer)) geojsonLayer.addTo(map);
+            } else if (typeof window.MIRA_CARGAR_POLIGONOS === 'function') {
+                window.MIRA_CARGAR_POLIGONOS();
+            }
+        }, 200);
         return;
     }
 
@@ -1414,6 +1433,8 @@ function inicializarSistemaMapa() {
             }
         }
     }
+    // Permite recuperar la cartografía si el mapa se inicializó mientras su contenedor estaba oculto.
+    window.MIRA_CARGAR_POLIGONOS = cargarPoligonosTerritoriales;
     function obtenerNombreBarrio(feature, index) {
         if (feature && feature.properties) {
             return feature.properties.nombre || feature.properties.Barrio || `Sector ${index + 1}`;
