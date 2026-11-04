@@ -2426,7 +2426,7 @@ function inicializarSistemaMapa() {
             uploadBtn.disabled = true;
             try {
                 const existing = await window.MIRA_DATA.listE14Evidence();
-                if (existing.length >= 50) throw new Error('Se alcanzó el límite operativo de 50 imágenes para esta jornada. Descarga y cierra la operación antes de recibir más evidencias.');
+                if (existing.length >= 70) throw new Error('Se alcanzó el límite operativo de 70 imágenes para esta jornada. Descarga y cierra la operación antes de recibir más evidencias.');
                 await window.MIRA_DATA.uploadE14Evidence({file,puesto,mesa,nota});
                 fileInput.value = '';
                 document.getElementById('e14CentralNota').value = '';
@@ -2451,7 +2451,7 @@ function inicializarSistemaMapa() {
                     const ev = local[i];
                     const marker = '[MIRA-LOCAL-ID:' + String(ev.id) + ']';
                     if (cloud.some(item => String(item.nota || '').includes(marker))) { skipped++; continue; }
-                    if (cloud.length >= 50) { capped++; continue; }
+                    if (cloud.length >= 70) { capped++; continue; }
                     try {
                         const blob = await (await fetch(ev.imgData)).blob();
                         const type = ['image/jpeg','image/png','image/webp'].includes(blob.type) ? blob.type : 'image/jpeg';
@@ -2464,7 +2464,7 @@ function inicializarSistemaMapa() {
                 }
                 evidenciasCentralizadas = await window.MIRA_DATA.listE14Evidence();
                 await renderizarGaleriaTestigos();
-                status('Conciliación terminada. Migradas: ' + migrated + ' · Ya existentes: ' + skipped + ' · Fallidas: ' + failed + ' · No migradas por límite de 50: ' + capped + '. Respaldo descargado; originales locales conservados.');
+                status('Conciliación terminada. Migradas: ' + migrated + ' · Ya existentes: ' + skipped + ' · Fallidas: ' + failed + ' · No migradas por límite de 70: ' + capped + '. Respaldo descargado; originales locales conservados.');
                 alert('Migración E-14 finalizada. Migradas: ' + migrated + '\\nYa existentes: ' + skipped + '\\nFallidas: ' + failed + '\\nNo migradas por límite de 50: ' + capped + '\\nNo se borró ningún dato local.');
             } catch (error) { status('La migración se detuvo: ' + error.message + '. Los datos locales siguen intactos.', true); }
             finally { migrationBtn.disabled = false; }
