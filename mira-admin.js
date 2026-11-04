@@ -211,7 +211,10 @@ async function applyModuleAccess(){
     const canView=new Set(rows.filter(p=>p.allowed===true&&p.action_key==="view").map(p=>p.module_key));
     Object.entries(MODULE_TARGETS).forEach(([moduleKey,ids])=>ids.forEach(id=>{
       const element=$(id);
-      setModuleRestricted(element,!canView.has(moduleKey));
+      // Auditoría Testigos: restricción temporal única por rol de administrador.
+      // No se habilita mediante permisos granulares mientras el módulo está en ejecución.
+      const allowed=moduleKey==="testigos"?false:canView.has(moduleKey);
+      setModuleRestricted(element,!allowed);
       if(element)element.classList.remove("hidden");
     }));
   }catch(error){

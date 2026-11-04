@@ -5724,3 +5724,80 @@ a:hover {color:#E6EDFD;}
 @media(max-width:560px) {
   #e14CentralControls > div:first-of-type { grid-template-columns:minmax(0,1fr) !important; }
 }
+
+
+/* MIRA · Ajustes responsivos transversales (móvil, tablet y escritorio) */
+img, video, canvas, svg { max-width: 100%; }
+input, select, textarea, button { max-width: 100%; }
+.table-wrap, .table-responsive, .mira-table-wrap { width: 100%; max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+#testigosModal, #testigoStandaloneContainer, #landing-hero-overlay {
+  padding: clamp(8px, 2vw, 24px);
+}
+#testigosModal .modal-content, #testigosModal .testigos-modal-content,
+#testigoStandaloneContainer .testigo-standalone-card {
+  width: min(100%, 1100px);
+  max-width: 100%;
+  max-height: calc(100dvh - 24px);
+  overflow: auto;
+}
+#testigosGalleryGrid, .testigo-thumbnails-grid, #testigoThumbnailsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr));
+  gap: clamp(8px, 1.5vw, 16px);
+}
+#testigosGalleryGrid img, #testigoThumbnailsGrid img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+@media (max-width: 1024px) {
+  .landing-hero-container { max-width: 100%; }
+  .hero-modules-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); }
+  #mainSidebar { max-width: min(88vw, 360px); }
+}
+@media (max-width: 768px) {
+  body { min-height: 100dvh; height: auto; overflow-x: hidden; }
+  #map { min-height: 45dvh; }
+  .top-header-controls { top: 10px; right: 10px; gap: 6px; }
+  .top-control-btn { width: 38px; height: 38px; }
+  .landing-hero-container { padding: 12px; }
+  .hero-title { font-size: clamp(2rem, 9vw, 3.5rem); }
+  .hero-description { margin-bottom: 22px; }
+  .hero-modules-grid { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .hero-module-card { min-height: 0; padding: 20px 16px; }
+  .testigos-form-grid, .testigo-media-buttons { grid-template-columns: minmax(0, 1fr); }
+  #testigosModal { align-items: flex-start; overflow-y: auto; }
+  #testigosModal > * { width: 100%; }
+  .testigo-standalone-card { padding: 18px 14px; }
+  .testigo-standalone-header { flex-wrap: wrap; gap: 10px; }
+  .testigo-standalone-header h2 { font-size: 1.1rem; }
+  .testigo-media-buttons .media-btn, button { min-height: 42px; }
+  .table-wrap table, .table-responsive table { min-width: 720px; }
+}
+@media (max-width: 480px) {
+  .hero-title { letter-spacing: -0.7px; }
+  .brand-pill, .live-status-pill { font-size: .65rem; padding: 5px 10px; }
+  .landing-top-bar { gap: 7px; margin-bottom: 16px; }
+  #testigosModal { padding: 6px; }
+  #testigosModal .card, #testigosModal .panel { padding: 12px; }
+  .testigo-standalone-card { border-radius: 14px; padding: 14px 10px; }
+  .testigo-thumb-item { min-width: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+
+
+/* MIRA · Menú rápido superior izquierdo para Testigos y Actividades */
+.mira-quick-modules{position:fixed;top:16px;left:16px;z-index:12000;display:flex;flex-direction:column;align-items:flex-start;gap:8px}
+.mira-quick-toggle{display:flex;align-items:center;gap:10px;padding:11px 15px;border:1px solid var(--neo-border-glow);border-radius:14px;background:rgba(7,20,38,.88);color:var(--text-main);font-family:inherit;font-size:.85rem;font-weight:700;box-shadow:var(--shadow-tactile-extrude),0 0 18px rgba(56,189,248,.12);backdrop-filter:blur(18px);cursor:pointer}
+.mira-quick-toggle-icon{font-size:1.15rem;color:var(--cyan-tactile)}
+.mira-quick-panel{display:flex;min-width:240px;flex-direction:column;gap:6px;padding:8px;border:1px solid var(--neo-border-glow);border-radius:16px;background:rgba(7,20,38,.94);box-shadow:var(--shadow-tactile-extrude),0 12px 32px rgba(0,0,0,.32);backdrop-filter:blur(22px)}
+.mira-quick-item{display:grid;grid-template-columns:28px 1fr 18px;align-items:center;gap:9px;width:100%;padding:11px 12px;border:1px solid transparent;border-radius:11px;background:rgba(255,255,255,.035);color:var(--text-main);text-align:left;cursor:pointer}
+.mira-quick-item:hover:not(:disabled){border-color:var(--cyan-tactile);background:rgba(56,189,248,.1)}
+.mira-quick-item strong,.mira-quick-item small{display:block}
+.mira-quick-item strong{font-size:.86rem}
+.mira-quick-item small{margin-top:3px;color:var(--text-muted);font-size:.7rem}
+.mira-quick-item.is-locked{opacity:.58;cursor:not-allowed}
+.mira-quick-lock{font-size:.8rem;text-align:center}
+@media(max-width:600px){.mira-quick-modules{top:10px;left:10px}.mira-quick-toggle{padding:9px 12px}.mira-quick-panel{min-width:min(240px,calc(100vw - 20px))}}

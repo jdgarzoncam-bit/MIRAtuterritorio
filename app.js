@@ -24,6 +24,11 @@ if (!window.__MIRA_E14_GLOBAL_HANDLER__) {
         if (trigger) {
             event.preventDefault();
             trigger.type = 'button';
+            const currentUser = window.MIRA_CURRENT_USER;
+            if (!(currentUser?.role === 'admin' && currentUser?.authUserId === 'beef5bf3-82a8-4c35-a12c-17771be59da1')) {
+                alert('El módulo Testigos está temporalmente reservado al administrador.');
+                return;
+            }
             const panel = document.getElementById('testigosModal');
             const gallery = document.getElementById('testigosGalleryGrid');
             if (!panel || !gallery) {
@@ -360,7 +365,7 @@ const listaPuestosVotacion = [
 ];
 
 // NAVEGACIÓN DESDE LA LANDING
-document.getElementById('btnSelectTestigo').addEventListener('click', function() {
+document.getElementById('btnSelectTestigo')?.addEventListener('click', function() {
     document.getElementById('landing-hero-overlay').style.display = 'none';
     document.getElementById('landingHeaderControls').style.display = 'none';
     document.getElementById('testigoStandaloneContainer').classList.remove('hidden');
@@ -551,13 +556,56 @@ let activitiesReturnContext = 'landing';
 async function openActivities(view='registration'){activitiesReturnContext=(document.getElementById('landing-hero-overlay').style.display==='none')?'platform':'landing';activitiesPlaceholder.classList.remove('hidden');document.getElementById('landing-hero-overlay').style.display='none';document.getElementById('landingHeaderControls').style.display='none';if(!activitiesBackendReady)await loadActivitiesFromNeon();renderActivities();showActivityView(view);}
 function closeActivities(){activitiesPlaceholder.classList.add('hidden');if(activitiesReturnContext==='platform'){document.getElementById('landing-hero-overlay').style.display='none';document.getElementById('landingHeaderControls').style.display='none';}else{document.getElementById('landing-hero-overlay').style.display='flex';document.getElementById('landingHeaderControls').style.display='flex';}}
 function showActivityView(view){const target={registration:'activityRegistrationView',recent:'activityRecentPanel',all:'activityAllView',detail:'activityDetailView'}[view]||'activityRegistrationView';['activityRegistrationView','activityRecentPanel','activityAllView','activityDetailView'].forEach(id=>document.getElementById(id).classList.toggle('hidden',id!==target));document.getElementById('activityScreenSubtitle').textContent=({registration:'Registro de participación territorial.',recent:'Consulta en vivo y rectificación de registros.',all:'Archivo de actividades y sus hojas de cálculo.',detail:'Registros guardados en esta actividad.'})[view]||'Registro de participación territorial.';document.querySelectorAll('.activity-mobile-tab').forEach(tab=>tab.classList.toggle('is-active',tab.dataset.activityView===(view==='detail'?'all':view)));}
-document.getElementById('btnSelectActividades').addEventListener('click',()=>openActivities('registration'));
-document.getElementById('btnSelectActividades').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openActivities('registration');}});
+document.getElementById('btnSelectActividades')?.addEventListener('click',()=>openActivities('registration'));
+document.getElementById('btnSelectActividades')?.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openActivities('registration');}});
 document.getElementById('closeActivitiesPlaceholder').addEventListener('click',closeActivities);document.getElementById('returnFromActivities').addEventListener('click',closeActivities);
 
 document.querySelectorAll('.activity-mobile-tab').forEach(tab=>tab.addEventListener('click',()=>{const view=tab.dataset.activityView;if(view==='registration')document.getElementById('newActivityForm')?.classList.add('hidden');showActivityView(view);if(view==='recent'||view==='all')renderActivities();}));
 document.getElementById('sideAllActivitiesBtn').addEventListener('click',()=>openActivities('all'));
 document.getElementById('sideOpenActivityModuleBtn').addEventListener('click',()=>{openActivities('registration');showNewActivity();});
+
+function syncMiraQuickModules(){
+  const root=document.getElementById('miraQuickModules');
+  const testigos=document.getElementById('miraQuickTestigosBtn');
+  const status=document.getElementById('miraQuickTestigosStatus');
+  const user=window.MIRA_CURRENT_USER;
+  const isAdmin=user?.role==='admin'&&user?.authUserId==='beef5bf3-82a8-4c35-a12c-17771be59da1';
+  if(root)root.classList.toggle('hidden',!user?.authUserId);
+  if(testigos){
+    testigos.disabled=!isAdmin;
+    testigos.setAttribute('aria-disabled',String(!isAdmin));
+    testigos.classList.toggle('is-locked',!isAdmin);
+  }
+  if(status)status.textContent=isAdmin?'Acceso administrador':'Bloqueado temporalmente';
+}
+document.getElementById('miraQuickModulesToggle')?.addEventListener('click',()=>{
+  const panel=document.getElementById('miraQuickModulesPanel');
+  const toggle=document.getElementById('miraQuickModulesToggle');
+  const opening=panel?.classList.contains('hidden');
+  panel?.classList.toggle('hidden',!opening);
+  toggle?.setAttribute('aria-expanded',String(Boolean(opening)));
+});
+document.getElementById('miraQuickTestigosBtn')?.addEventListener('click',()=>{
+  const user=window.MIRA_CURRENT_USER;
+  if(!(user?.role==='admin'&&user?.authUserId==='beef5bf3-82a8-4c35-a12c-17771be59da1'))return;
+  document.getElementById('miraQuickModulesPanel')?.classList.add('hidden');
+  document.getElementById('miraQuickModulesToggle')?.setAttribute('aria-expanded','false');
+  document.getElementById('openTestigosModalBtn')?.click();
+});
+document.getElementById('miraQuickActivitiesBtn')?.addEventListener('click',()=>{
+  if(!window.MIRA_CURRENT_USER?.authUserId)return;
+  document.getElementById('miraQuickModulesPanel')?.classList.add('hidden');
+  document.getElementById('miraQuickModulesToggle')?.setAttribute('aria-expanded','false');
+  openActivities('registration');
+});
+window.addEventListener('mira:authenticated',syncMiraQuickModules);
+window.addEventListener('mira:signed-out',()=>{
+  syncMiraQuickModules();
+  document.getElementById('miraQuickModulesPanel')?.classList.add('hidden');
+  document.getElementById('miraQuickModulesToggle')?.setAttribute('aria-expanded','false');
+});
+document.addEventListener('DOMContentLoaded',syncMiraQuickModules);
+
 
 document.getElementById('backToActivityRegistration')?.addEventListener('click',()=>showActivityView('registration'));
 document.getElementById('backToActivityHomeFromAll').addEventListener('click',()=>showActivityView('registration'));
@@ -937,11 +985,18 @@ function inicializarEventosArchivosTestigo() {
 
     async function agregarArchivos(archivos) {
         if (!archivos || archivos.length === 0) return;
-        for (let i = 0; i < archivos.length; i++) {
-            const dataUrl = await procesarYComprimirImagen(archivos[i]);
-            if (dataUrl) {
-                listaFotosSeleccionadas.push(dataUrl);
-            }
+        const disponibles = Math.max(0, 70 - listaFotosSeleccionadas.length);
+        if (disponibles === 0) {
+            alert('Alcanzaste el máximo de 70 imágenes para esta jornada.');
+            return;
+        }
+        const seleccion = Array.from(archivos).slice(0, disponibles);
+        for (let i = 0; i < seleccion.length; i++) {
+            const dataUrl = await procesarYComprimirImagen(seleccion[i]);
+            if (dataUrl) listaFotosSeleccionadas.push(dataUrl);
+        }
+        if (archivos.length > disponibles) {
+            alert('Se añadieron hasta completar el máximo de 70 imágenes. Las adicionales no se incorporaron.');
         }
         renderizarMiniaturas();
     }
@@ -2425,6 +2480,8 @@ function inicializarSistemaMapa() {
             if (!file || !puesto || !mesa) { status('Selecciona una imagen y completa puesto y mesa.', true); return; }
             uploadBtn.disabled = true;
             try {
+                const existing = await window.MIRA_DATA.listE14Evidence();
+                if (existing.length >= 70) throw new Error('Se alcanzó el límite operativo de 70 imágenes para esta jornada. Descarga y cierra la operación antes de recibir más evidencias.');
                 await window.MIRA_DATA.uploadE14Evidence({file,puesto,mesa,nota});
                 fileInput.value = '';
                 document.getElementById('e14CentralNota').value = '';
@@ -2444,11 +2501,12 @@ function inicializarSistemaMapa() {
             try {
                 await descargarRespaldoLocal(local);
                 const cloud = await window.MIRA_DATA.listE14Evidence();
-                let migrated = 0, skipped = 0, failed = 0;
+                let migrated = 0, skipped = 0, failed = 0, capped = 0;
                 for (let i=0; i<local.length; i++) {
                     const ev = local[i];
                     const marker = '[MIRA-LOCAL-ID:' + String(ev.id) + ']';
                     if (cloud.some(item => String(item.nota || '').includes(marker))) { skipped++; continue; }
+                    if (cloud.length >= 70) { capped++; continue; }
                     try {
                         const blob = await (await fetch(ev.imgData)).blob();
                         const type = ['image/jpeg','image/png','image/webp'].includes(blob.type) ? blob.type : 'image/jpeg';
@@ -2456,13 +2514,21 @@ function inicializarSistemaMapa() {
                         const saved = await window.MIRA_DATA.uploadE14Evidence({file,puesto:ev.puesto,mesa:ev.mesa,nota:marker + ' ' + (ev.nota || ''),hora_original:ev.hora || ''});
                         cloud.push({...saved,nota:marker + ' ' + (ev.nota || '')});
                         migrated++;
-                    } catch (error) { failed++; console.error('[MIRA E-14] Falló migración local', ev.id, error); }
-                    status('Migración: ' + (i+1) + '/' + local.length + ' · Migradas: ' + migrated + ' · Ya existentes: ' + skipped + ' · Fallidas: ' + failed);
+                    } catch (error) {
+                        if (String(error.message || error).includes('máximo seguro de 70 evidencias')) {
+                            capped += local.length - i;
+                            status('Se alcanzó el máximo de 70 evidencias. Se detuvo la migración; los archivos locales permanecen intactos.');
+                            break;
+                        }
+                        failed++;
+                        console.error('[MIRA E-14] Falló migración local', ev.id, error);
+                    }
+                    status('Migración: ' + (i+1) + '/' + local.length + ' · Migradas: ' + migrated + ' · Ya existentes: ' + skipped + ' · Fallidas: ' + failed + ' · Límite alcanzado: ' + capped);
                 }
                 evidenciasCentralizadas = await window.MIRA_DATA.listE14Evidence();
                 await renderizarGaleriaTestigos();
-                status('Conciliación terminada. Migradas: ' + migrated + ' · Ya existentes: ' + skipped + ' · Fallidas: ' + failed + '. Respaldo descargado; originales locales conservados.');
-                alert('Migración E-14 finalizada. Migradas: ' + migrated + '\\nYa existentes: ' + skipped + '\\nFallidas: ' + failed + '\\nNo se borró ningún dato local.');
+                status('Conciliación terminada. Migradas: ' + migrated + ' · Ya existentes: ' + skipped + ' · Fallidas: ' + failed + ' · No migradas por límite de 70: ' + capped + '. Respaldo descargado; originales locales conservados.');
+                alert('Migración E-14 finalizada. Migradas: ' + migrated + '\\nYa existentes: ' + skipped + '\\nFallidas: ' + failed + '\\nNo migradas por límite de 70: ' + capped + '\\nNo se borró ningún dato local.');
             } catch (error) { status('La migración se detuvo: ' + error.message + '. Los datos locales siguen intactos.', true); }
             finally { migrationBtn.disabled = false; }
         });

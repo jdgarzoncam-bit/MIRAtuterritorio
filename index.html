@@ -13,7 +13,7 @@
     <!-- SheetJS -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
-    <link rel="stylesheet" href="style.css?v=20261103-module-access-2">
+    <link rel="stylesheet" href="style.css?v=20261104-modules-menu-1">
 </head>
 <body class="theme-dark">
 
@@ -48,27 +48,17 @@
             <!-- MÓDULOS INICIALES -->
             <div class="hero-modules-grid" id="heroModulesGrid">
                 
-                <!-- TARJETA 1: TESTIGOS ELECTORALES -->
-                <div class="hero-module-card" id="btnSelectTestigo">
+                <!-- ACCESO PÚBLICO 1: REPORTES CIUDADANOS -->
+                <div class="hero-module-card" id="btnSelectReportes" role="button" tabindex="0" aria-label="Reportes ciudadanos">
                     <div class="card-arrow-badge">↗</div>
-                    <div class="card-icon-glow">📱</div>
+                    <div class="card-icon-glow">📍</div>
                     <div class="card-text-block">
-                        <h3 data-i18n="mod_testigos_title">Testigos Electorales</h3>
-                        <p data-i18n="mod_testigos_desc">Transmisión rápida de actas E-14 desde puesto de votación sin contraseña.</p>
+                        <h3>Reportes ciudadanos</h3>
+                        <p>Informa novedades del territorio para su revisión y seguimiento.</p>
                     </div>
                 </div>
 
-                <!-- TARJETA 2: ACTIVIDADES -->
-                <div class="hero-module-card" id="btnSelectActividades" role="button" tabindex="0" aria-label="Actividades">
-                    <div class="card-arrow-badge">↗</div>
-                    <div class="card-icon-glow">📋</div>
-                    <div class="card-text-block">
-                        <h3>Actividades</h3>
-                        <p>Registro, seguimiento y consulta de actividades de gestión territorial.</p>
-                    </div>
-                </div>
-
-                <!-- TARJETA 3: PQRS -->
+                <!-- ACCESO PÚBLICO 2: PQRS -->
                 <div class="hero-module-card" id="btnSelectPQRS" role="button" tabindex="0" aria-label="PQRS">
                     <div class="card-arrow-badge">↗</div><div class="card-icon-glow">💬</div>
                     <div class="card-text-block"><h3>PQRS</h3><p>Envía peticiones, quejas, reclamos y sugerencias sobre los módulos.</p></div>
@@ -162,6 +152,18 @@
       <footer class="activities-footer"><button id="returnFromActivities" class="activity-secondary-btn" type="button">← Volver al menú principal</button></footer>
     </section>
 
+    <section id="citizenReportWorkspace" class="activities-workspace pqrs-workspace hidden" aria-labelledby="citizenReportTitle">
+      <header class="activities-header"><div class="activities-header-copy"><div class="brand-pill">MIRA TU TERRITORIO · PARTICIPACIÓN</div><h1 id="citizenReportTitle"><span class="hero-title-cyan">Reportes ciudadanos</span></h1><p>Comparte una situación del territorio para su revisión.</p></div><button class="top-control-btn" id="closeCitizenReport" type="button" aria-label="Cerrar">✕</button></header>
+      <div class="activity-view pqrs-form-view"><div class="activity-panel pqrs-form-panel">
+        <form id="citizenReportForm"><div class="pqrs-form-grid">
+          <label>Categoría<select id="citizenReportCategory" required><option value="">Selecciona una categoría</option><option value="seguridad">Seguridad</option><option value="movilidad">Movilidad</option><option value="servicios_publicos">Servicios públicos</option><option value="espacio_publico">Espacio público</option><option value="ambiente">Ambiente</option><option value="convivencia">Convivencia</option><option value="otro">Otro</option></select></label>
+          <label>Sector o barrio<input id="citizenReportSector" minlength="2" maxlength="160" required placeholder="Ej. Cartagenita"></label>
+          <label class="pqrs-full-field">Ubicación de referencia<input id="citizenReportLocation" minlength="2" maxlength="240" required placeholder="Dirección, punto de referencia o lugar"></label>
+          <label class="pqrs-full-field">Descripción<textarea id="citizenReportDescription" rows="6" minlength="10" maxlength="3000" required placeholder="Describe la situación. No incluyas cédulas, teléfonos ni información sensible."></textarea></label>
+        </div><div id="citizenReportNotice" class="activity-notice hidden" role="status" aria-live="polite"></div><div class="activity-actions"><button id="citizenReportSend" class="login-btn" type="submit">Enviar reporte ↗</button><button class="activity-secondary-btn" type="reset">Limpiar</button></div></form>
+      </div></div>
+      <footer class="activities-footer"><button class="activity-secondary-btn" id="returnFromCitizenReport" type="button">← Volver al menú principal</button></footer>
+    </section>
     <section id="pqrsSubmitWorkspace" class="activities-workspace pqrs-workspace hidden" aria-labelledby="pqrsSubmitTitle">
       <header class="activities-header"><div class="activities-header-copy"><div class="brand-pill">MIRA TU TERRITORIO · PARTICIPACIÓN</div><h1 id="pqrsSubmitTitle"><span class="hero-title-cyan">PQRS</span></h1><p>Envía una petición, queja, reclamo o sugerencia sobre el funcionamiento de la plataforma.</p></div><button class="top-control-btn" id="closePqrsSubmit" type="button" title="Volver al menú" aria-label="Cerrar módulo">✕</button></header>
       <div class="activity-view pqrs-form-view"><div class="activity-panel pqrs-form-panel">
@@ -379,6 +381,16 @@
     <!-- CONTENEDOR PRINCIPAL DEL SISTEMA (PMU / ADMIN) -->
     <div id="app-container">
         
+        <div id="miraQuickModules" class="mira-quick-modules hidden">
+            <button id="miraQuickModulesToggle" class="mira-quick-toggle" type="button" aria-expanded="false" aria-controls="miraQuickModulesPanel" aria-label="Abrir menú de módulos">
+                <span class="mira-quick-toggle-icon" aria-hidden="true">☰</span><span>Módulos</span>
+            </button>
+            <nav id="miraQuickModulesPanel" class="mira-quick-panel hidden" aria-label="Módulos principales">
+                <button type="button" class="mira-quick-item" id="miraQuickTestigosBtn"><span aria-hidden="true">🗳️</span><span><strong>Testigos</strong><small id="miraQuickTestigosStatus">Solo administrador</small></span><span class="mira-quick-lock" aria-hidden="true">🔒</span></button>
+                <button type="button" class="mira-quick-item" id="miraQuickActivitiesBtn"><span aria-hidden="true">📋</span><span><strong>Actividades</strong><small>Registro y seguimiento</small></span><span aria-hidden="true">›</span></button>
+            </nav>
+        </div>
+
         <div id="mainSidebar" class="sidebar-wrapper-group">
             
             <sidebar class="neo-tactile-sidebar" aria-label="Menú principal de navegación">
@@ -575,6 +587,7 @@
                         </summary>
                         <div class="dropdown-content concejal-sidebar-content">
                             <p class="concejal-sidebar-description">Registro e historial exclusivo de la gestión territorial de la concejal.</p>
+                            <button class="activity-sidebar-tile" id="openCitizenReportsBtn" type="button"><span class="activity-side-icon">📍</span><span><strong>Reportes ciudadanos</strong><small>Consultar y gestionar reportes</small></span><b>›</b></button>
                             <div class="activity-sidebar-shortcuts concejal-sidebar-shortcuts">
                                 <button class="activity-sidebar-tile" id="openConcejalRegisterBtn" type="button">
                                     <span class="activity-side-icon">◷</span>
@@ -733,11 +746,12 @@
             <footer class="admin-permissions-footer"><span>La cuenta administradora principal conserva todos sus privilegios.</span><span>Registro abierto · correo verificado · aprobación administrativa obligatoria.</span></footer>
         </div>
     </section>
-    <script type="module" src="mira-data.js?v=20261103-e14-private-1"></script>
+    <script type="module" src="mira-data.js?v=20261104-e14-backend-review-1"></script>
     <script type="module" src="mira-auth.js?v=20261103-require-module-view-1"></script>
-    <script src="app.js?v=20261103-e14-init-order-4"></script>
-    <script type="module" src="mira-admin.js?v=20261103-admin-refresh-2"></script>
-    <script type="module" src="pqrs.js?v=20261031-pqrs-module-1"></script>
+    <script src="app.js?v=20261104-modules-menu-1"></script>
+    <script type="module" src="mira-admin.js?v=20261104-testigos-admin-only-1"></script>
+    <script type="module" src="reportes.js?v=20261103-anon-submit-minimal-2"></script>
+    <script type="module" src="pqrs.js?v=20261103-pqrs-anon-2"></script>
     <script src="pmu-navigation.js?v=20261031-vertical-glass"></script>
     <script src="electoral-dashboard.js"></script>
     <script src="mobile-operations.js?v=20261031-mobile-map-panel-1"></script>
