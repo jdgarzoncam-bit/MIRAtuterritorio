@@ -13,7 +13,7 @@
     <!-- SheetJS -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
-    <link rel="stylesheet" href="style.css?v=20261103-public-reports-1">
+    <link rel="stylesheet" href="style.css?v=20261104-modules-menu-1">
 </head>
 <body class="theme-dark">
 
@@ -381,6 +381,16 @@
     <!-- CONTENEDOR PRINCIPAL DEL SISTEMA (PMU / ADMIN) -->
     <div id="app-container">
         
+        <div id="miraQuickModules" class="mira-quick-modules hidden">
+            <button id="miraQuickModulesToggle" class="mira-quick-toggle" type="button" aria-expanded="false" aria-controls="miraQuickModulesPanel" aria-label="Abrir menú de módulos">
+                <span class="mira-quick-toggle-icon" aria-hidden="true">☰</span><span>Módulos</span>
+            </button>
+            <nav id="miraQuickModulesPanel" class="mira-quick-panel hidden" aria-label="Módulos principales">
+                <button type="button" class="mira-quick-item" id="miraQuickTestigosBtn"><span aria-hidden="true">🗳️</span><span><strong>Testigos</strong><small id="miraQuickTestigosStatus">Solo administrador</small></span><span class="mira-quick-lock" aria-hidden="true">🔒</span></button>
+                <button type="button" class="mira-quick-item" id="miraQuickActivitiesBtn"><span aria-hidden="true">📋</span><span><strong>Actividades</strong><small>Registro y seguimiento</small></span><span aria-hidden="true">›</span></button>
+            </nav>
+        </div>
+
         <div id="mainSidebar" class="sidebar-wrapper-group">
             
             <sidebar class="neo-tactile-sidebar" aria-label="Menú principal de navegación">
