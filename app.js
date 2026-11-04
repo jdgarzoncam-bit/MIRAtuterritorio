@@ -2466,13 +2466,21 @@ function inicializarSistemaMapa() {
                         const saved = await window.MIRA_DATA.uploadE14Evidence({file,puesto:ev.puesto,mesa:ev.mesa,nota:marker + ' ' + (ev.nota || ''),hora_original:ev.hora || ''});
                         cloud.push({...saved,nota:marker + ' ' + (ev.nota || '')});
                         migrated++;
-                    } catch (error) { failed++; console.error('[MIRA E-14] Falló migración local', ev.id, error); }
+                    } catch (error) {
+                        if (String(error.message || error).includes('máximo seguro de 70 evidencias')) {
+                            capped += local.length - i;
+                            status('Se alcanzó el máximo de 70 evidencias. Se detuvo la migración; los archivos locales permanecen intactos.');
+                            break;
+                        }
+                        failed++;
+                        console.error('[MIRA E-14] Falló migración local', ev.id, error);
+                    }
                     status('Migración: ' + (i+1) + '/' + local.length + ' · Migradas: ' + migrated + ' · Ya existentes: ' + skipped + ' · Fallidas: ' + failed + ' · Límite alcanzado: ' + capped);
                 }
                 evidenciasCentralizadas = await window.MIRA_DATA.listE14Evidence();
                 await renderizarGaleriaTestigos();
                 status('Conciliación terminada. Migradas: ' + migrated + ' · Ya existentes: ' + skipped + ' · Fallidas: ' + failed + ' · No migradas por límite de 70: ' + capped + '. Respaldo descargado; originales locales conservados.');
-                alert('Migración E-14 finalizada. Migradas: ' + migrated + '\\nYa existentes: ' + skipped + '\\nFallidas: ' + failed + '\\nNo migradas por límite de 50: ' + capped + '\\nNo se borró ningún dato local.');
+                alert('Migración E-14 finalizada. Migradas: ' + migrated + '\\nYa existentes: ' + skipped + '\\nFallidas: ' + failed + '\\nNo migradas por límite de 70: ' + capped + '\\nNo se borró ningún dato local.');
             } catch (error) { status('La migración se detuvo: ' + error.message + '. Los datos locales siguen intactos.', true); }
             finally { migrationBtn.disabled = false; }
         });
