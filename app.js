@@ -24,6 +24,11 @@ if (!window.__MIRA_E14_GLOBAL_HANDLER__) {
         if (trigger) {
             event.preventDefault();
             trigger.type = 'button';
+            const currentUser = window.MIRA_CURRENT_USER;
+            if (!(currentUser?.role === 'admin' && currentUser?.authUserId === 'beef5bf3-82a8-4c35-a12c-17771be59da1')) {
+                alert('El módulo Testigos está temporalmente reservado al administrador.');
+                return;
+            }
             const panel = document.getElementById('testigosModal');
             const gallery = document.getElementById('testigosGalleryGrid');
             if (!panel || !gallery) {
@@ -558,6 +563,49 @@ document.getElementById('closeActivitiesPlaceholder').addEventListener('click',c
 document.querySelectorAll('.activity-mobile-tab').forEach(tab=>tab.addEventListener('click',()=>{const view=tab.dataset.activityView;if(view==='registration')document.getElementById('newActivityForm')?.classList.add('hidden');showActivityView(view);if(view==='recent'||view==='all')renderActivities();}));
 document.getElementById('sideAllActivitiesBtn').addEventListener('click',()=>openActivities('all'));
 document.getElementById('sideOpenActivityModuleBtn').addEventListener('click',()=>{openActivities('registration');showNewActivity();});
+
+function syncMiraQuickModules(){
+  const root=document.getElementById('miraQuickModules');
+  const testigos=document.getElementById('miraQuickTestigosBtn');
+  const status=document.getElementById('miraQuickTestigosStatus');
+  const user=window.MIRA_CURRENT_USER;
+  const isAdmin=user?.role==='admin'&&user?.authUserId==='beef5bf3-82a8-4c35-a12c-17771be59da1';
+  if(root)root.classList.toggle('hidden',!user?.authUserId);
+  if(testigos){
+    testigos.disabled=!isAdmin;
+    testigos.setAttribute('aria-disabled',String(!isAdmin));
+    testigos.classList.toggle('is-locked',!isAdmin);
+  }
+  if(status)status.textContent=isAdmin?'Acceso administrador':'Bloqueado temporalmente';
+}
+document.getElementById('miraQuickModulesToggle')?.addEventListener('click',()=>{
+  const panel=document.getElementById('miraQuickModulesPanel');
+  const toggle=document.getElementById('miraQuickModulesToggle');
+  const opening=panel?.classList.contains('hidden');
+  panel?.classList.toggle('hidden',!opening);
+  toggle?.setAttribute('aria-expanded',String(Boolean(opening)));
+});
+document.getElementById('miraQuickTestigosBtn')?.addEventListener('click',()=>{
+  const user=window.MIRA_CURRENT_USER;
+  if(!(user?.role==='admin'&&user?.authUserId==='beef5bf3-82a8-4c35-a12c-17771be59da1'))return;
+  document.getElementById('miraQuickModulesPanel')?.classList.add('hidden');
+  document.getElementById('miraQuickModulesToggle')?.setAttribute('aria-expanded','false');
+  document.getElementById('openTestigosModalBtn')?.click();
+});
+document.getElementById('miraQuickActivitiesBtn')?.addEventListener('click',()=>{
+  if(!window.MIRA_CURRENT_USER?.authUserId)return;
+  document.getElementById('miraQuickModulesPanel')?.classList.add('hidden');
+  document.getElementById('miraQuickModulesToggle')?.setAttribute('aria-expanded','false');
+  openActivities('registration');
+});
+window.addEventListener('mira:authenticated',syncMiraQuickModules);
+window.addEventListener('mira:signed-out',()=>{
+  syncMiraQuickModules();
+  document.getElementById('miraQuickModulesPanel')?.classList.add('hidden');
+  document.getElementById('miraQuickModulesToggle')?.setAttribute('aria-expanded','false');
+});
+document.addEventListener('DOMContentLoaded',syncMiraQuickModules);
+
 
 document.getElementById('backToActivityRegistration')?.addEventListener('click',()=>showActivityView('registration'));
 document.getElementById('backToActivityHomeFromAll').addEventListener('click',()=>showActivityView('registration'));
