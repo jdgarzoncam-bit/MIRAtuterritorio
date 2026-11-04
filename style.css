@@ -5801,3 +5801,5 @@ input, select, textarea, button { max-width: 100%; }
 .mira-quick-item.is-locked{opacity:.58;cursor:not-allowed}
 .mira-quick-lock{font-size:.8rem;text-align:center}
 @media(max-width:600px){.mira-quick-modules{top:10px;left:10px}.mira-quick-toggle{padding:9px 12px}.mira-quick-panel{min-width:min(240px,calc(100vw - 20px))}}
+
+.mira-quick-toggle-lock{font-size:.78rem;line-height:1;margin-left:2px}
