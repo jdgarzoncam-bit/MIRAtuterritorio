@@ -937,11 +937,18 @@ function inicializarEventosArchivosTestigo() {
 
     async function agregarArchivos(archivos) {
         if (!archivos || archivos.length === 0) return;
-        for (let i = 0; i < archivos.length; i++) {
-            const dataUrl = await procesarYComprimirImagen(archivos[i]);
-            if (dataUrl) {
-                listaFotosSeleccionadas.push(dataUrl);
-            }
+        const disponibles = Math.max(0, 70 - listaFotosSeleccionadas.length);
+        if (disponibles === 0) {
+            alert('Alcanzaste el máximo de 70 imágenes para esta jornada.');
+            return;
+        }
+        const seleccion = Array.from(archivos).slice(0, disponibles);
+        for (let i = 0; i < seleccion.length; i++) {
+            const dataUrl = await procesarYComprimirImagen(seleccion[i]);
+            if (dataUrl) listaFotosSeleccionadas.push(dataUrl);
+        }
+        if (archivos.length > disponibles) {
+            alert('Se añadieron hasta completar el máximo de 70 imágenes. Las adicionales no se incorporaron.');
         }
         renderizarMiniaturas();
     }
