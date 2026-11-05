@@ -45,3 +45,23 @@ Solo se realizaron lecturas de repositorio, metadatos, esquema, RLS, trigger, fu
 - HEAD documental de esta revisión: 2b8e7e9472c1ec550e9b092a0093224c66684594.
 - Comparación con main: divergente; 2 commits propios por delante y 13 commits por detrás, con base común a292beaee5bd0e6c14dd7966120a78e603580971.
 - No se creó merge, pull request ni despliegue de GitHub Pages.
+## Desactivación temporal de Testigos / Auditoría E-14 — 2026-11-05
+
+- En `index.html` se sustituyó el acceso lateral de Auditoría Testigos por un módulo bloqueado con aviso de renovación y candado. Se retiró el botón «Ver y Descargar Actas E-14» y el acceso rápido Testigos quedó deshabilitado.
+- Se retiró la opción «Auditoría Testigos» del selector de módulo relacionado en el formulario PQRS.
+- El portal legado y el modal E-14 permanecen inertes/ocultos para evitar romper referencias antiguas de DOM.
+- `app.js` establece `window.MIRA_TESTIGOS_TEMP_DISABLED = true`, bloquea los antiguos selectores de entrada y evita inicializar las operaciones de captura local y E-14.
+- `mira-data.js` ahora rechaza `e14Request()` y `listE14Evidence()` mientras la bandera temporal no sea desactivada explícitamente en una futura validación.
+- `mira-admin.js` mantiene `dropdown-testigos` bloqueado incluso para el administrador principal y retira temporalmente Testigos de la matriz de permisos granulares.
+- Las rutas directas `testigo-publico.html` y `testigos-admin.html` se convirtieron en pantallas estáticas de módulo inactivo y ya no cargan los JavaScript antiguos.
+- Se actualizaron los parámetros de caché de `mira-data.js`, `app.js` y `mira-admin.js`.
+- La revisión de Neon confirmó 0 filas en `mira.evidencias_e14` y 0 filas en `mira.testigos_publicos`. No se eliminaron datos.
+- Los permisos y políticas de PostgreSQL todavía no se modificaron. Las políticas/grants existentes fueron inspeccionados: la tabla E-14 permite SELECT a `authenticated`; `testigos_publicos` permite INSERT a `anonymous` y SELECT/UPDATE a `authenticated`. RLS permanece habilitada.
+- La revocación temporal de esos privilegios/políticas queda pendiente de definir el alcance exacto de reconstrucción de autenticación/seguridad. La autenticación global Neon Auth y las políticas RLS de los demás módulos se conservaron.
+
+## Estado de GitHub tras la desactivación
+
+- HEAD de la rama al cierre de esta actualización: pendiente de verificar tras guardar este documento.
+- Comparación observada con `main`: divergente, 10 commits propios por delante y 13 por detrás; base común `a292beaee5bd0e6c14dd7966120a78e603580971`.
+- `main` no se modificó y no se creó despliegue ni merge.
+- La ejecución CI más reciente con éxito sigue siendo la validación anterior del commit `a292bea...`; los cambios actuales no se han ejecutado en CI ni probado en navegador.
