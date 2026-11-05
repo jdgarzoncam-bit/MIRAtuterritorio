@@ -15,7 +15,4 @@ jobs:
           node-version: 20
       - name: Comprobar sintaxis JavaScript
         run: |
-          node --check app.js
-          node --check mira-data.js
-          node --check mira-auth.js
-          node --check pmu-navigation.js
+          find . -type f -name '*.js' -not -path './node_modules/*' -print0 | xargs -0 -r -n1 node --check
