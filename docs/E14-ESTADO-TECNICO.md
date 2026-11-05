@@ -12,14 +12,14 @@
 - RLS está habilitada. Políticas visibles: SELECT requiere `mira.has_module_permission('testigos','view')`; INSERT requiere `mira.has_module_permission('testigos','create')` y `uploaded_by = auth.jwt()->>'sub'`. No se encontró política DELETE.
 - El trigger `trg_e14_limit_70` corre BEFORE INSERT y llama a `mira.enforce_e14_limit_70()`; usa `pg_advisory_xact_lock(hashtextextended('mira.evidencias_e14:limit-70',0))`, cuenta las filas y rechaza cuando hay 70. El límite es atómico para inserciones que disparen el trigger.
 - La tabla estaba vacía en el momento de la consulta; el bucket privado `mira-testigos-evidencias` también estaba vacío.
-- Neon Functions list/get no encuentra `e14secure` en la rama consultada; list_functions devolvió vacío y get_function devolvió 404. No es seguro desplegar encima sin inspeccionar el servicio real y su configuración.
+- Neon Functions list/get no encuentra `e14secure` en la rama `production`; list_functions devolvió vacío y get_function devolvió 404. La revisión de otras ramas encontró `e14secure` activa (deployment 2, Node.js 24, estado completed) en la rama temporal `mcp-migration-2026-11-03T22-29-59` (`br-lucky-boat-b70mmt53`). Su URL de invocación corresponde a esa rama y no coincide con el hostname de producción usado por el frontend. La acción get_function solo devuelve metadatos, no el paquete/código fuente ni su configuración de entorno. No se promovió ni sobrescribió ese deployment.
 - La UI comprueba el límite con un listado previo en cliente, pero ese chequeo es orientativo; la protección concurrente depende del trigger SQL.
 - La migración local crea primero un respaldo cifrado descargable y no borra los originales locales.
 - La galería genera una URL temporal de descarga por imagen. No existe control de borrado en la interfaz revisada.
 
 ## Bloqueos y riesgos pendientes
 
-1. Identificar el despliegue/host que atiende el hostname `e14secure` y recuperar su código y variables sin exponer secretos. El recurso no aparece como Neon Function del branch/project indicado.
+1. Recuperar el paquete/código fuente y la configuración segura del deployment 2 de `e14secure` en la rama Neon temporal. El recurso está identificado, pero la herramienta de gestión devuelve únicamente metadatos. Determinar también por qué el frontend de GitHub apunta a un hostname de production donde el recurso no existe.
 2. Confirmar si el JWT entregado por `miraToken()` contiene `sub` con el mismo identificador que `auth.user_id()` en las políticas SQL.
 3. Añadir una política RLS DELETE alineada con `mira.has_module_permission('testigos','delete')` y GRANT DELETE, después de verificar el flujo real de identidad y autorización.
 4. La secuencia actual sube el objeto antes de confirmar metadatos. Si la confirmación falla, el objeto puede quedar huérfano; se requiere una rutina compensatoria segura en el backend verificado.
@@ -28,7 +28,7 @@
 
 ## Cambios de esta revisión
 
-No se modificó el código del backend ni se desplegó una función, ya que el código operativo de `e14secure` no pudo verificarse. No se cambió el esquema ni se eliminaron datos. No se integró la rama en `main`.
+No se modificó el código del backend ni se desplegó una función: aunque se localizó el deployment activo en la rama temporal, no fue posible recuperar su paquete ni verificar el código operativo. No se cambió el esquema ni se eliminaron datos. No se integró la rama en `main`.
 
 ## Pruebas
 
