@@ -135,7 +135,7 @@ async function changeUserApproval(button){
 }
 function renderMatrix(){
   const allowed=new Set(permissionRows.filter(p=>p.allowed).map(p=>p.module_key+"::"+p.action_key));
-  const visibleModules=modules.filter(m=>m.module_key!=="control_administrativo");
+  const visibleModules=modules.filter(m=>m.module_key!=="control_administrativo"&&m.module_key!=="testigos");
   const approval = selectedProfile && selectedProfile.role!=="admin" ? renderApprovalControls(selectedProfile) : "";
   $("adminPermissionsMatrix").innerHTML=approval+visibleModules.map(m=>{
     const checked=allowed.has(m.module_key+"::view");
@@ -182,7 +182,9 @@ function setModuleRestricted(element,restricted){
       overlay=document.createElement("div");
       overlay.className="module-access-lock-overlay";
       overlay.setAttribute("role","note");
-      overlay.innerHTML='<span class="module-access-lock-icon" aria-hidden="true">🔒</span><strong>No tienes acceso a este módulo</strong>';
+      overlay.innerHTML=element.id==="dropdown-testigos"
+        ? '<span class="module-access-lock-icon" aria-hidden="true">🔒</span><strong>Módulo temporalmente inactivo · En renovación</strong>'
+        : '<span class="module-access-lock-icon" aria-hidden="true">🔒</span><strong>No tienes acceso a este módulo</strong>';
       element.appendChild(overlay);
     }
     element.setAttribute("aria-disabled","true");
@@ -201,7 +203,11 @@ async function applyModuleAccess(){
   // Cerrar todos los módulos antes de resolver permisos: nunca mostrar acceso provisional.
   allTargets.forEach(id=>setModuleRestricted($(id),true));
   if(current.role==="admin"&&current.authUserId===PRIMARY_ADMIN_AUTH_ID){
-    allTargets.forEach(id=>{setModuleRestricted($(id),false);$(id)?.classList.remove("hidden");});
+    allTargets.forEach(id=>{
+      const temporaryLock=id==="dropdown-testigos";
+      setModuleRestricted($(id),temporaryLock);
+      $(id)?.classList.remove("hidden");
+    });
     return;
   }
   try{
