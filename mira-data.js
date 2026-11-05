@@ -182,6 +182,9 @@ export const MIRA_DATA = {
     return miraRequest("admin_audit_log",{query:qs({select:"id,actor_auth_user_id,target_auth_user_id,action_key,details,created_at",order:"created_at.desc",limit:String(Math.min(Math.max(limit,1),100))})});
   },
   async e14Request(action, payload={}) {
+    if (window.MIRA_TESTIGOS_TEMP_DISABLED !== false) {
+      throw new Error("El módulo Testigos / Auditoría E-14 está temporalmente inactivo.");
+    }
     const token=await miraToken();
     const endpoint="https://br-winter-night-b758ke2j-e14secure.compute.c-13.us-east-1.aws.neon.tech/";
     const response=await fetch(endpoint+(action==="list"?"?action=list":""),{
@@ -199,6 +202,9 @@ export const MIRA_DATA = {
     return data;
   },
   async listE14Evidence() {
+    if (window.MIRA_TESTIGOS_TEMP_DISABLED !== false) {
+      throw new Error("El módulo Testigos / Auditoría E-14 está temporalmente inactivo.");
+    }
     // Consulta la tabla directamente mediante Neon Data API. PostgreSQL RLS
     // exige Testigos · Consulta; evita el listado roto del endpoint e14secure.
     const params = {
