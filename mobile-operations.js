@@ -3,7 +3,7 @@
  const MQ='(max-width:600px)';
  const cards=[
   {id:'dropdown-infomira',icon:'💙',title:'InfoMIRA',desc:'Red de cuidadores y líderes',tone:'blue',mapPanel:true},
-  {id:'dropdown-logistica',icon:'🚐',title:'Logística',desc:'Transporte y operación Día D',tone:'orange'},
+  {id:'dropdown-infomira',icon:'🚐',title:'Logística',desc:'Transporte y operación Día D',tone:'orange'},
   {id:'dropdown-testigos',icon:'🗳️',title:'Auditoría de testigos',desc:'Actas y evidencias E-14',tone:'violet'},
   {id:'dropdown-puestos',icon:'📊',title:'Info Electoral',desc:'Resultados y estadísticas',tone:'cyan'},
   {id:'dropdown-barrios-puestos',icon:'🏘️',title:'Barrios y puestos',desc:'Consulta territorial',tone:'green',mapPanel:true},
