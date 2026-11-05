@@ -5599,6 +5599,10 @@ a:hover {color:#E6EDFD;}
 
 /* MIRA — estado de acceso binario por módulo */
 .admin-module-access-control{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.admin-module-actions{gap:9px 14px;padding-top:7px}
+.admin-module-actions .admin-action-check{display:inline-flex;align-items:center;gap:6px;min-width:76px}
+.admin-module-actions .admin-access-state{margin-left:auto}
+@media(max-width:760px){.admin-module-actions .admin-access-state{margin-left:0}}
 .admin-access-state{display:inline-flex;align-items:center;padding:5px 9px;border:1px solid rgba(148,163,184,.2);border-radius:999px;font-size:.65rem;font-weight:800;letter-spacing:.02em}
 .admin-access-state.is-allowed{color:#75e5c7;border-color:rgba(55,211,166,.28);background:rgba(36,180,140,.09)}
 .admin-access-state.is-restricted{color:#b4c4d4;background:rgba(148,163,184,.08)}
