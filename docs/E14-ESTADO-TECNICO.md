@@ -33,3 +33,15 @@ No se modificó el código del backend ni se desplegó una función: aunque se l
 ## Pruebas
 
 Solo se realizaron lecturas de repositorio, metadatos, esquema, RLS, trigger, funciones SQL y listado de objetos. No se usaron imágenes reales ni se ejecutaron cargas, descargas o eliminaciones de prueba.
+
+## Verificación de privilegios y CI
+
+- Grants efectivos comprobados para el rol authenticated: SELECT=true, INSERT=false y DELETE=false. El navegador no inserta ni elimina directamente vía Data API; esas operaciones dependen del servicio privado.
+- El último workflow «Validar JavaScript de MIRA» completado con éxito antes de esta revisión corresponde al commit a292beaee5bd0e6c14dd7966120a78e603580971 (4 de noviembre de 2026). Ejecutó node --check sobre app.js, mira-data.js, mira-auth.js y pmu-navigation.js. Los commits de esta revisión solo modifican este documento, por lo que esos archivos siguen siendo los mismos validados.
+- El workflow se ejecuta en pull requests hacia main; los commits documentales de esta revisión no dispararon una nueva ejecución. El estado combinado de checks del HEAD documental no muestra checks.
+
+## Estado de rama
+
+- HEAD documental de esta revisión: 2b8e7e9472c1ec550e9b092a0093224c66684594.
+- Comparación con main: divergente; 2 commits propios por delante y 13 commits por detrás, con base común a292beaee5bd0e6c14dd7966120a78e603580971.
+- No se creó merge, pull request ni despliegue de GitHub Pages.
