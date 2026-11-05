@@ -170,7 +170,7 @@
         <div class="pqrs-intro"><span class="pqrs-intro-icon">💬</span><div><h2>Cuéntanos cómo podemos mejorar</h2><p>Tu comentario quedará registrado para revisión por el equipo administrador.</p></div></div>
         <form id="pqrsSubmitForm"><div class="pqrs-form-grid">
           <label>Tipo de solicitud<select id="pqrsType" required><option value="peticion">Petición</option><option value="queja">Queja</option><option value="reclamo">Reclamo</option><option value="sugerencia">Sugerencia</option></select></label>
-          <label>Módulo relacionado<select id="pqrsModule" required><option value="">Selecciona un módulo</option><option value="infomira">InfoMIRA</option><option value="logistica">Logística &amp; Transporte</option><option value="testigos">Auditoría Testigos</option><option value="info_electoral">Info Electoral</option><option value="barrios_puestos">Barrios y puestos</option><option value="actividades">Actividades</option><option value="concejal">Concejal · Gestión territorial</option><option value="centro_operaciones">Centro de Operaciones</option><option value="pqrs">PQRS</option><option value="otro">Otro / General</option></select></label>
+          <label>Módulo relacionado<select id="pqrsModule" required><option value="">Selecciona un módulo</option><option value="infomira">InfoMIRA</option><option value="logistica">Logística &amp; Transporte</option><option value="info_electoral">Info Electoral</option><option value="barrios_puestos">Barrios y puestos</option><option value="actividades">Actividades</option><option value="concejal">Concejal · Gestión territorial</option><option value="centro_operaciones">Centro de Operaciones</option><option value="pqrs">PQRS</option><option value="otro">Otro / General</option></select></label>
           <label class="pqrs-full-field">Asunto<input id="pqrsSubject" type="text" maxlength="160" minlength="4" placeholder="Resume el motivo de tu comentario" required></label>
           <label class="pqrs-full-field">Descripción<textarea id="pqrsDescription" rows="7" minlength="10" maxlength="5000" placeholder="Describe tu petición, queja, reclamo o sugerencia con el mayor detalle posible…" required></textarea><small class="pqrs-field-help">Entre 10 y 5.000 caracteres. No incluyas contraseñas ni datos personales sensibles.</small></label>
         </div><div id="pqrsSubmitNotice" class="activity-notice hidden" role="status" aria-live="polite"></div><div class="activity-actions"><button id="pqrsSendBtn" class="login-btn" type="submit">Enviar PQRS ↗</button><button id="pqrsClearBtn" class="activity-secondary-btn" type="reset">Limpiar formulario</button></div></form>
@@ -313,7 +313,7 @@
     </section>
 
     <!-- PORTAL DIRECTO EXCLUSIVO PARA TESTIGOS -->
-    <div id="testigoStandaloneContainer" class="hidden">
+    <div id="testigoStandaloneContainer" class="hidden" aria-hidden="true" inert>
         <div class="testigo-standalone-card">
             <div class="testigo-standalone-header">
                 <div>
@@ -386,7 +386,7 @@
                 <span class="mira-quick-toggle-icon" aria-hidden="true">☰</span><span>Módulos</span>
             </button>
             <nav id="miraQuickModulesPanel" class="mira-quick-panel hidden" aria-label="Módulos principales">
-                <button type="button" class="mira-quick-item" id="miraQuickTestigosBtn"><span aria-hidden="true">🗳️</span><span><strong>Testigos</strong><small id="miraQuickTestigosStatus">Solo administrador</small></span><span class="mira-quick-lock" aria-hidden="true">🔒</span></button>
+                <button type="button" class="mira-quick-item is-locked" id="miraQuickTestigosBtn" disabled aria-disabled="true" title="Módulo temporalmente inactivo"><span aria-hidden="true">🗳️</span><span><strong>Testigos</strong><small id="miraQuickTestigosStatus">En renovación · Acceso bloqueado</small></span><span class="mira-quick-lock" aria-hidden="true">🔒</span></button>
                 <button type="button" class="mira-quick-item" id="miraQuickActivitiesBtn"><span aria-hidden="true">📋</span><span><strong>Actividades</strong><small>Registro y seguimiento</small></span><span aria-hidden="true">›</span></button>
             </nav>
         </div>
@@ -465,19 +465,20 @@
                         </div>
                     </details>
 
-                    <!-- MÓDULO 3: Auditoría de Testigos -->
-                    <details class="custom-dropdown" id="dropdown-testigos">
+                    <!-- MÓDULO TEMPORALMENTE BLOQUEADO: TESTIGOS / AUDITORÍA E-14 -->
+                    <details class="custom-dropdown module-access-restricted" id="dropdown-testigos" aria-disabled="true">
                         <summary>
-                            <span class="summary-title"><i class="neo-icon">🗳️</i> Auditoría Testigos (Actas E-14)</span>
+                            <span class="summary-title"><i class="neo-icon">🗳️</i> Testigos y Auditoría E-14</span>
                             <svg class="arrow-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
                         </summary>
                         <div class="dropdown-content">
-                            <div class="mira-filter-box" style="width: 100%; box-sizing: border-box;">
-                                <p style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.3;">Consola de auditoría de actas recibidas desde el campo.</p>
-                                <button id="openTestigosModalBtn" class="mira-reset-btn btn-auditoria-fit">
-                                    🖼️ Ver y Descargar Actas E-14
-                                </button>
+                            <div class="mira-filter-box" style="width:100%;box-sizing:border-box;">
+                                <p style="font-size:.78rem;color:var(--text-muted);line-height:1.4;">Este módulo está temporalmente inactivo mientras se renuevan sus componentes. El acceso se habilitará únicamente después de su validación.</p>
                             </div>
+                        </div>
+                        <div class="module-access-lock-overlay" role="note">
+                            <span class="module-access-lock-icon" aria-hidden="true">🔒</span>
+                            <strong>Módulo en renovación · Acceso bloqueado</strong>
                         </div>
                     </details>
 
@@ -654,7 +655,7 @@
         </div>
 
         <!-- MODAL DE AUDITORÍA DE TESTIGOS -->
-        <div id="testigosModal" class="testigos-modal-overlay hidden">
+        <div id="testigosModal" class="testigos-modal-overlay hidden" aria-hidden="true" inert>
             <div class="testigos-modal-card">
                 <div class="testigos-modal-header">
                     <h3>💻 Centro de Operaciones — Auditoría y Descarga de Actas E-14</h3>
