@@ -1,5 +1,5 @@
 // MIRA TU TERRITORIO — Control Administrativo: permisos granulares.
-const ACTIONS = [["view","Consulta"]];
+const ACTIONS = [["view","Consulta"],["create","Crear"],["edit","Editar"],["delete","Eliminar"]];
 const $ = (id) => document.getElementById(id);
 let users = [], modules = [], selectedProfile = null, permissionRows = [];
 let activeUserTab = "pending";
@@ -134,13 +134,19 @@ async function changeUserApproval(button){
   finally{button.disabled=false;}
 }
 function renderMatrix(){
-  const allowed=new Set(permissionRows.filter(p=>p.allowed).map(p=>p.module_key+"::"+p.action_key));
-  const visibleModules=modules.filter(m=>m.module_key!=="control_administrativo");
+  const allowed=new Set(permissionRows.filter(p=>p.allowed===true).map(p=>p.module_key+"::"+p.action_key));
+  const visibleModules=modules.filter(m=>m.module_key!=="control_administrativo" && m.active===true);
   const approval = selectedProfile && selectedProfile.role!=="admin" ? renderApprovalControls(selectedProfile) : "";
   $("adminPermissionsMatrix").innerHTML=approval+visibleModules.map(m=>{
-    const checked=allowed.has(m.module_key+"::view");
-    return '<article class="admin-module-permission"><div class="admin-module-permission-title"><strong>'+escapeHtml(m.module_name)+'</strong><small>'+escapeHtml(m.description||"Permisos del módulo")+'</small></div><div class="admin-module-access-control"><label class="admin-action-check"><input type="checkbox" data-module="'+escapeHtml(m.module_key)+'" data-action="view" '+(checked?"checked":"")+'><span>Consulta</span></label><span class="admin-access-state '+(checked?"is-allowed":"is-restricted")+'">'+(checked?"Acceso completo":"Restringido")+'</span></div></article>';
-  }).join("")||'<p class="admin-permissions-empty">No hay módulos configurados.</p>';
+    const actionChecks=ACTIONS.map(([action,label])=>{
+      const checked=allowed.has(m.module_key+"::"+action);
+      return '<label class="admin-action-check"><input type="checkbox" data-module="'+escapeHtml(m.module_key)+'" data-action="'+action+'" '+(checked?"checked":"")+'><span>'+label+'</span></label>';
+    }).join("");
+    const hasView=allowed.has(m.module_key+"::view");
+    const count=ACTIONS.filter(([action])=>allowed.has(m.module_key+"::"+action)).length;
+    const state=count===0?"Sin acceso":count===ACTIONS.length?"Permisos completos":count+" de "+ACTIONS.length+" acciones";
+    return '<article class="admin-module-permission"><div class="admin-module-permission-title"><strong>'+escapeHtml(m.module_name)+'</strong><small>'+escapeHtml(m.description||"Permisos del módulo")+'</small></div><div class="admin-module-access-control admin-module-actions">'+actionChecks+'<span class="admin-access-state '+(hasView?"is-allowed":"is-restricted")+'">'+state+'</span></div></article>';
+  }).join("")||'<p class="admin-permissions-empty">No hay módulos activos configurados.</p>';
 }
 async function changePermission(input){
   if(!isAdmin()||!selectedProfile||selectedProfile.role==="admin")return;
@@ -156,8 +162,11 @@ async function changePermission(input){
     if(existing)Object.assign(existing,row);
     else permissionRows.push(row);
     const state=input.closest(".admin-module-permission")?.querySelector(".admin-access-state");
-    if(state){state.textContent=input.checked?"Acceso completo":"Restringido";state.classList.toggle("is-allowed",input.checked);state.classList.toggle("is-restricted",!input.checked);}
-    notice(input.checked?"Módulo habilitado con acceso completo.":"Módulo restringido; se bloquean sus operaciones.");
+    if(state){const allowedNow=permissionRows.some(p=>p.module_key===moduleKey&&p.action_key==="view"&&p.allowed===true);
+      const count=ACTIONS.filter(([action])=>permissionRows.some(p=>p.module_key===moduleKey&&p.action_key===action&&p.allowed===true)).length;
+      state.textContent=count===0?"Sin acceso":count===ACTIONS.length?"Permisos completos":count+" de "+ACTIONS.length+" acciones";
+      state.classList.toggle("is-allowed",allowedNow);state.classList.toggle("is-restricted",!allowedNow);}
+    notice(input.checked?"Permiso concedido.":"Permiso revocado.");
     renderMatrix();
   }catch(error){
     input.checked=!input.checked;
