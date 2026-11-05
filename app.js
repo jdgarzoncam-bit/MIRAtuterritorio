@@ -1,3 +1,5 @@
+// Desactivación temporal e irreversible desde la UI hasta validación expresa.
+window.MIRA_TESTIGOS_TEMP_DISABLED = true;
 let map = null;
 let geojsonLayer = null;
 let datosOriginales = null;
@@ -20,6 +22,12 @@ let imagenBase64Seleccionada = "";
 if (!window.__MIRA_E14_GLOBAL_HANDLER__) {
     window.__MIRA_E14_GLOBAL_HANDLER__ = true;
     document.addEventListener('click', event => {
+        const disabledEntry = event.target?.closest?.('#openTestigosModalBtn, #miraQuickTestigosBtn, #btnSelectTestigo');
+        if (window.MIRA_TESTIGOS_TEMP_DISABLED && disabledEntry) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            return;
+        }
         const trigger = event.target?.closest?.('#openTestigosModalBtn');
         if (trigger) {
             event.preventDefault();
@@ -365,11 +373,10 @@ const listaPuestosVotacion = [
 ];
 
 // NAVEGACIÓN DESDE LA LANDING
-document.getElementById('btnSelectTestigo')?.addEventListener('click', function() {
-    document.getElementById('landing-hero-overlay').style.display = 'none';
-    document.getElementById('landingHeaderControls').style.display = 'none';
-    document.getElementById('testigoStandaloneContainer').classList.remove('hidden');
-    inicializarDropdownPuestosCustom();
+document.getElementById('btnSelectTestigo')?.addEventListener('click', function(event) {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    return;
 });
 
 // ACCESO ADMINISTRADOR DESDE EL BOTÓN SUPERIOR (se conserva la autenticación existente)
@@ -569,14 +576,14 @@ function syncMiraQuickModules(){
   const testigos=document.getElementById('miraQuickTestigosBtn');
   const status=document.getElementById('miraQuickTestigosStatus');
   const user=window.MIRA_CURRENT_USER;
-  const isAdmin=user?.role==='admin'&&user?.authUserId==='beef5bf3-82a8-4c35-a12c-17771be59da1';
   if(root)root.classList.toggle('hidden',!user?.authUserId);
   if(testigos){
-    testigos.disabled=!isAdmin;
-    testigos.setAttribute('aria-disabled',String(!isAdmin));
-    testigos.classList.toggle('is-locked',!isAdmin);
+    testigos.disabled=true;
+    testigos.setAttribute('aria-disabled','true');
+    testigos.classList.add('is-locked');
+    testigos.title='Módulo temporalmente inactivo';
   }
-  if(status)status.textContent=isAdmin?'Acceso administrador':'Bloqueado temporalmente';
+  if(status)status.textContent='En renovación · Acceso bloqueado';
 }
 document.getElementById('miraQuickModulesToggle')?.addEventListener('click',()=>{
   const panel=document.getElementById('miraQuickModulesPanel');
@@ -585,12 +592,10 @@ document.getElementById('miraQuickModulesToggle')?.addEventListener('click',()=>
   panel?.classList.toggle('hidden',!opening);
   toggle?.setAttribute('aria-expanded',String(Boolean(opening)));
 });
-document.getElementById('miraQuickTestigosBtn')?.addEventListener('click',()=>{
-  const user=window.MIRA_CURRENT_USER;
-  if(!(user?.role==='admin'&&user?.authUserId==='beef5bf3-82a8-4c35-a12c-17771be59da1'))return;
-  document.getElementById('miraQuickModulesPanel')?.classList.add('hidden');
-  document.getElementById('miraQuickModulesToggle')?.setAttribute('aria-expanded','false');
-  document.getElementById('openTestigosModalBtn')?.click();
+document.getElementById('miraQuickTestigosBtn')?.addEventListener('click',event=>{
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  return;
 });
 document.getElementById('miraQuickActivitiesBtn')?.addEventListener('click',()=>{
   if(!window.MIRA_CURRENT_USER?.authUserId)return;
@@ -914,6 +919,7 @@ function procesarYComprimirImagen(file) {
 }
 
 function inicializarEventosArchivosTestigo() {
+    if (window.MIRA_TESTIGOS_TEMP_DISABLED) return;
     const btnCamara = document.getElementById('btnTomarFotoCamara');
     const btnGaleria = document.getElementById('btnSubirGaleria');
     const cameraInput = document.getElementById('testigoCameraInput');
@@ -2301,6 +2307,11 @@ function inicializarSistemaMapa() {
     }
 
     function inicializarModuloTestigosPMU() {
+        if (window.MIRA_TESTIGOS_TEMP_DISABLED) {
+            const status = document.getElementById('e14CentralStatus');
+            if (status) status.textContent = 'Módulo E-14 temporalmente inactivo. Sus operaciones están bloqueadas durante la renovación.';
+            return;
+        }
         const modal = document.getElementById('testigosModal');
         const openBtn = document.getElementById('openTestigosModalBtn');
         const closeBtn = document.getElementById('closeTestigosModalBtn');
