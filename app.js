@@ -369,6 +369,7 @@ document.getElementById('btnSelectTestigo')?.addEventListener('click', function(
     document.getElementById('landing-hero-overlay').style.display = 'none';
     document.getElementById('landingHeaderControls').style.display = 'none';
     document.getElementById('testigoStandaloneContainer').classList.remove('hidden');
+    document.getElementById('miraQuickModules')?.classList.add('hidden');
     inicializarDropdownPuestosCustom();
 });
 
@@ -553,8 +554,8 @@ function splitLegacyPersonName(nombres,apellidos){
 function escapeActivityHtml(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function currentActivity(){return activitiesState.activities.find(a=>a.id===activitiesState.currentActivityId&&a.status==='active')||null;}
 let activitiesReturnContext = 'landing';
-async function openActivities(view='registration'){activitiesReturnContext=(document.getElementById('landing-hero-overlay').style.display==='none')?'platform':'landing';activitiesPlaceholder.classList.remove('hidden');document.getElementById('landing-hero-overlay').style.display='none';document.getElementById('landingHeaderControls').style.display='none';if(!activitiesBackendReady)await loadActivitiesFromNeon();renderActivities();showActivityView(view);}
-function closeActivities(){activitiesPlaceholder.classList.add('hidden');if(activitiesReturnContext==='platform'){document.getElementById('landing-hero-overlay').style.display='none';document.getElementById('landingHeaderControls').style.display='none';}else{document.getElementById('landing-hero-overlay').style.display='flex';document.getElementById('landingHeaderControls').style.display='flex';}}
+async function openActivities(view='registration'){document.getElementById('miraQuickModules')?.classList.add('hidden');activitiesReturnContext=(document.getElementById('landing-hero-overlay').style.display==='none')?'platform':'landing';activitiesPlaceholder.classList.remove('hidden');document.getElementById('landing-hero-overlay').style.display='none';document.getElementById('landingHeaderControls').style.display='none';if(!activitiesBackendReady)await loadActivitiesFromNeon();renderActivities();showActivityView(view);}
+function closeActivities(){activitiesPlaceholder.classList.add('hidden');if(activitiesReturnContext==='landing'&&!document.body.classList.contains('pmu-neomorphic'))document.getElementById('miraQuickModules')?.classList.remove('hidden');if(activitiesReturnContext==='platform'){document.getElementById('landing-hero-overlay').style.display='none';document.getElementById('landingHeaderControls').style.display='none';}else{document.getElementById('landing-hero-overlay').style.display='flex';document.getElementById('landingHeaderControls').style.display='flex';}}
 function showActivityView(view){const target={registration:'activityRegistrationView',recent:'activityRecentPanel',all:'activityAllView',detail:'activityDetailView'}[view]||'activityRegistrationView';['activityRegistrationView','activityRecentPanel','activityAllView','activityDetailView'].forEach(id=>document.getElementById(id).classList.toggle('hidden',id!==target));document.getElementById('activityScreenSubtitle').textContent=({registration:'Registro de participación territorial.',recent:'Consulta en vivo y rectificación de registros.',all:'Archivo de actividades y sus hojas de cálculo.',detail:'Registros guardados en esta actividad.'})[view]||'Registro de participación territorial.';document.querySelectorAll('.activity-mobile-tab').forEach(tab=>tab.classList.toggle('is-active',tab.dataset.activityView===(view==='detail'?'all':view)));}
 document.getElementById('btnSelectActividades')?.addEventListener('click',()=>openActivities('registration'));
 document.getElementById('btnSelectActividades')?.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openActivities('registration');}});
@@ -574,7 +575,9 @@ function syncMiraQuickModules(){
   const user=window.MIRA_CURRENT_USER;
   const authenticated=Boolean(user?.authUserId);
   const isAdmin=user?.role==='admin'&&user?.authUserId==='beef5bf3-82a8-4c35-a12c-17771be59da1';
-  if(root)root.classList.remove('hidden');
+  const pmuVisible=document.body.classList.contains('pmu-neomorphic') || document.getElementById('app-container')?.style.display==='block';
+  const standaloneVisible=!document.getElementById('testigoStandaloneContainer')?.classList.contains('hidden') || !document.getElementById('activitiesPlaceholder')?.classList.contains('hidden');
+  if(root)root.classList.toggle('hidden',pmuVisible||standaloneVisible);
   if(publicLock)publicLock.classList.toggle('hidden',authenticated);
   if(testigos){
     testigos.disabled=!isAdmin;
@@ -761,6 +764,7 @@ renderActivities();
 
 document.getElementById('logoutTestigoBtn').addEventListener('click', function() {
     document.getElementById('testigoStandaloneContainer').classList.add('hidden');
+    document.getElementById('miraQuickModules')?.classList.remove('hidden');
     document.getElementById('landing-hero-overlay').style.display = 'flex';
     document.getElementById('landingHeaderControls').style.display = 'flex';
 });
@@ -789,6 +793,7 @@ function activarPMUAutenticado() {
     cerrarCapaAccesoPMU();
     // Transición visual del portal al PMU tras validar la sesión de Neon Auth.
     document.body.classList.add('pmu-neomorphic');
+    document.getElementById('miraQuickModules')?.classList.add('hidden');
     const overlay = document.getElementById('landing-hero-overlay');
     const controls = document.getElementById('landingHeaderControls');
     const appContainer = document.getElementById('app-container');
@@ -1304,7 +1309,7 @@ function inicializarSistemaMapa() {
     // La cartografía territorial se agenda inmediatamente después de preparar
     // el renderizador del mapa. Así no depende de que los módulos posteriores
     // (Logística, Dashboard o Testigos) terminen su inicialización sin errores.
-    setTimeout(() => cargarPoligonosTerritoriales(), 0);
+    setTimeout(() => { if (map && typeof cargarPoligonosTerritoriales === 'function') cargarPoligonosTerritoriales(); }, 80);
 
     inicializarModuloLogistica();
     actualizarDashboardKPIs();
@@ -1321,9 +1326,11 @@ function inicializarSistemaMapa() {
         const container = document.getElementById('barrios-checkbox-container');
         if (container) container.innerHTML = '<p class="loading-text">Cargando sectores y geometrías territoriales…</p>';
 
+        const geoJsonPath = 'barrios_poligonos_kml_aportado.geojson';
         const fuentes = [
-            new URL('./barrios_poligonos_kml_aportado.geojson?v=20261031-geojson-recovery', document.baseURI).href,
-            'https://raw.githubusercontent.com/jdgarzoncam-bit/MIRAtuterritorio/main/barrios_poligonos_kml_aportado.geojson'
+            new URL('./' + geoJsonPath + '?v=20261105-main-geojson-restore-1', document.baseURI).href,
+            'https://raw.githubusercontent.com/jdgarzoncam-bit/MIRAtuterritorio/main/' + geoJsonPath,
+            'https://cdn.jsdelivr.net/gh/jdgarzoncam-bit/MIRAtuterritorio@main/' + geoJsonPath
         ];
         const errores = [];
         let data = null;
@@ -1331,7 +1338,7 @@ function inicializarSistemaMapa() {
 
         for (const url of fuentes) {
             try {
-                const response = await fetch(url, { cache: 'no-store' });
+                const response = await fetch(url, { cache: 'reload', credentials: 'omit' });
                 if (!response.ok) throw new Error('HTTP ' + response.status);
                 const candidate = await response.json();
                 if (!candidate || candidate.type !== 'FeatureCollection' || !Array.isArray(candidate.features) || !candidate.features.length) {
