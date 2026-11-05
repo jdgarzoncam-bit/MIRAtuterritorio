@@ -1141,6 +1141,9 @@ function inicializarSistemaMapa() {
     // Registrar el módulo E-14 antes de cualquier retorno temprano. La función
     // está declarada dentro de este ámbito y es hoisted; así también queda
     // disponible cuando Leaflet ya creó el mapa en una sesión anterior.
+    // Exponer la carga para reintentos y reinicializaciones cuando Leaflet ya existe.
+    // La declaración interna está disponible por hoisting dentro de esta función.
+    window.MIRA_CARGAR_POLIGONOS = cargarPoligonosTerritoriales;
     if (!window.__MIRA_E14_INITIALIZED__) {
         try {
             inicializarModuloTestigosPMU();
@@ -1309,7 +1312,7 @@ function inicializarSistemaMapa() {
     // La cartografía territorial se agenda inmediatamente después de preparar
     // el renderizador del mapa. Así no depende de que los módulos posteriores
     // (Logística, Dashboard o Testigos) terminen su inicialización sin errores.
-    setTimeout(() => { if (map && typeof cargarPoligonosTerritoriales === 'function') cargarPoligonosTerritoriales(); }, 80);
+    setTimeout(() => { if (map && typeof window.MIRA_CARGAR_POLIGONOS === 'function') window.MIRA_CARGAR_POLIGONOS(); }, 80);
 
     inicializarModuloLogistica();
     actualizarDashboardKPIs();
