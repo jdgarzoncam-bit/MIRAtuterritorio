@@ -1157,8 +1157,13 @@ function inicializarSistemaMapa() {
             if (datosOriginales && typeof window.actualizarMapa === 'function') {
                 window.actualizarMapa();
                 if (poligonosKmlVisibles && geojsonLayer && !map.hasLayer(geojsonLayer)) geojsonLayer.addTo(map);
-            } else if (typeof window.MIRA_CARGAR_POLIGONOS === 'function') {
-                window.MIRA_CARGAR_POLIGONOS();
+            } else {
+                // El mapa puede sobrevivir al cierre/reapertura del módulo. En ese
+                // caso la carga territorial local no se había ejecutado en esta
+                // nueva inicialización: invocar directamente la función del ámbito.
+                cargarPoligonosTerritoriales().catch(error => {
+                    console.error('[MIRA] No fue posible reintentar la carga territorial:', error);
+                });
             }
         }, 200);
         return;
@@ -1372,6 +1377,9 @@ function inicializarSistemaMapa() {
         }
 
         datosOriginales = data;
+        // Mantener disponible la recarga para el mapa persistente y el botón de
+        // recuperación, sin depender de que se vuelva a crear la instancia Leaflet.
+        window.MIRA_CARGAR_POLIGONOS = cargarPoligonosTerritoriales;
         barriosFiltroEstado = Object.create(null);
         data.features.forEach((feature, index) => {
             barriosFiltroEstado[obtenerNombreBarrio(feature, index)] = true;
@@ -1391,6 +1399,15 @@ function inicializarSistemaMapa() {
                         : { paddingTopLeft: [410, 45], paddingBottomRight: [45, 45], maxZoom: 14 });
                     window.__MIRA_INITIAL_TERRITORY_FIT_DONE = true;
                 }
+            }
+            // Si el contenedor estuvo oculto durante la descarga, Leaflet puede
+            // calcular límites con dimensiones cero. Recalcular tamaño y encuadre
+            // después de que el panel del mapa haya quedado visible.
+            if (map) {
+                requestAnimationFrame(() => {
+                    map.invalidateSize({ pan: false, animate: false });
+                    if (geojsonLayer && poligonosKmlVisibles && !map.hasLayer(geojsonLayer)) geojsonLayer.addTo(map);
+                });
             }
             console.info('[MIRA] Cartografía territorial cargada:', {
                 sectores: data.features.length,
