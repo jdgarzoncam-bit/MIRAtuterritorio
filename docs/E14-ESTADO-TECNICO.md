@@ -65,3 +65,41 @@ Solo se realizaron lecturas de repositorio, metadatos, esquema, RLS, trigger, fu
 - Comparación observada con `main`: divergente, 10 commits propios por delante y 13 por detrás; base común `a292beaee5bd0e6c14dd7966120a78e603580971`.
 - `main` no se modificó y no se creó despliegue ni merge.
 - La ejecución CI más reciente con éxito sigue siendo la validación anterior del commit `a292bea...`; los cambios actuales no se han ejecutado en CI ni probado en navegador.
+
+## Refuerzo de cierre temporal — 2026-11-09
+
+### Estado de producción
+
+- La revisión confirmó que `mira.module_catalog` todavía marca `testigos.active=true`.
+- `anonymous` mantiene INSERT en `mira.testigos_publicos`, con una política pública de inserción. La tabla no tiene filas.
+- `authenticated` tiene SELECT y UPDATE en `testigos_publicos`, pero las políticas RLS los condicionan a `mira.has_module_permission('testigos', ...)`.
+- Las tablas `evidencias_e14` y `testigo_archivos` también dependen de esa función para autorizar consulta/escritura.
+
+### Migración preparada y probada, pendiente de aprobación
+
+- Migration ID: `ac69dbd6-3cf5-4cc5-82aa-d3d01764d4a7`.
+- Rama temporal: `br-dry-snow-b704rkb5`, creada desde producción.
+- El cambio obliga a comprobar el estado activo del catálogo para todos los roles, incluida la cuenta administradora principal; rechaza acciones fuera de la lista permitida y bloquea Testigos explícitamente hasta su futura reconstrucción.
+- La migración marca el módulo Testigos inactivo, revoca INSERT anónimo en `testigos_publicos` y elimina `witnesses_public_insert`.
+- Las pruebas aisladas confirmaron que Testigos queda denegado incluso para el administrador; Actividades y Control Administrativo siguen habilitados para el administrador; Logística inactiva y acciones inválidas quedan denegadas.
+- La función conserva `SECURITY DEFINER` y `search_path=pg_catalog,mira,auth`.
+- En la rama temporal, las tablas públicas y E-14 continuaron con 0 filas.
+- **Esta migración no se ha aplicado en producción.** Las políticas y grants productivos siguen como estaban hasta recibir aprobación expresa.
+
+### Barreras de interfaz/API
+
+- En `mira-data.js` se instaló un guard de cierre antes de solicitar tokens o llamar a red para listar/actualizar testigos, consultar archivos y ejecutar operaciones E-14 (consulta, carga y descarga).
+- Se añadió una suite Node de regresión en `tests/testigos-inactive.test.cjs`, que prueba que las siete operaciones fallan cerradas y que Actividades continúa consultando normalmente.
+- El workflow de validación se amplió para ejecutar la suite en cada push a `feat/landing-reportes-testigos-e14` y en pull requests hacia `main`. Aún no se cuenta con un resultado de CI concluido verificado.
+
+### Deployment antiguo e14secure
+
+- Producción no tiene una Neon Function `e14secure` desplegada.
+- La rama antigua `br-lucky-boat-b70mmt53` conserva un deployment activo de `e14secure` (deployment 2, Node.js 24). El endpoint apunta a esa rama antigua y su código fuente/configuración no están disponibles en la salida de metadatos.
+- Esa copia tenía 0 filas de `evidencias_e14` y `testigos_publicos` al revisarla, pero su catálogo seguía con Testigos activo.
+- No se eliminó ni modificó la función ni la rama, porque se requiere autorización expresa. Eliminar la rama completa también eliminaría su copia de base de datos; la alternativa menos destructiva es eliminar únicamente el deployment de la función, aunque habría que decidir si la API Data de la rama antigua también debe cerrarse.
+
+### Pruebas no realizadas
+
+- No se cargaron ni descargaron evidencias reales.
+- No se hizo prueba visual de Testigos ni Control Administrativo en navegador; la rama de trabajo no está desplegada y la aplicación no se encontraba abierta en el navegador conectado.
