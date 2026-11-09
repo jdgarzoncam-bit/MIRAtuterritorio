@@ -724,10 +724,13 @@
     <section id="adminPermissionsPanel" class="admin-permissions-overlay hidden" aria-hidden="true">
         <div class="admin-permissions-dialog" role="dialog" aria-modal="true" aria-labelledby="adminPermissionsTitle">
             <header class="admin-permissions-header">
-                <div><span class="admin-permissions-eyebrow">MIRA TU TERRITORIO · SEGURIDAD</span><h2 id="adminPermissionsTitle">Aprobación de cuentas y permisos</h2><p>Aprueba o desaprueba solicitudes y concede permisos por módulo desde un solo lugar.</p></div>
-                <button type="button" id="closeAdminPermissionsBtn" class="admin-permissions-close" aria-label="Cerrar">✕</button>
+                <div><span class="admin-permissions-eyebrow">MIRA TU TERRITORIO · SEGURIDAD</span><h2 id="adminPermissionsTitle">Control Administrativo</h2><p>Gestiona cuentas, roles, permisos y consulta el historial de cambios.</p></div>
+                <div class="admin-permissions-header-actions">
+                    <button type="button" id="adminViewToggleBtn" class="admin-view-toggle">Ver historial de auditoría</button>
+                    <button type="button" id="closeAdminPermissionsBtn" class="admin-permissions-close" aria-label="Cerrar">✕</button>
+                </div>
             </header>
-            <div class="admin-permissions-body">
+            <div id="adminPermissionsBody" class="admin-permissions-body">
                 <aside class="admin-users-pane">
                     <div class="admin-pane-heading"><strong>Usuarios registrados</strong><button type="button" id="refreshAdminUsersBtn" title="Actualizar">↻</button></div>
                     <p class="admin-pane-hint">Separa las solicitudes pendientes de las cuentas que ya están habilitadas.</p>
@@ -744,6 +747,13 @@
                     <div id="adminPermissionsNotice" class="admin-permissions-notice hidden" role="status" aria-live="polite"></div>
                 </section>
             </div>
+            <section id="adminAuditPanel" class="admin-audit-panel hidden" aria-hidden="true" aria-label="Historial de auditoría">
+                <div class="admin-audit-toolbar">
+                    <div><strong>Historial de auditoría</strong><p>Eventos de creación, actualización y retiro de cuentas y permisos.</p></div>
+                    <button type="button" id="refreshAdminAuditBtn" class="admin-audit-refresh">Actualizar</button>
+                </div>
+                <div id="adminAuditList" class="admin-audit-list"><p class="admin-permissions-loading">Abre el historial para consultar los eventos.</p></div>
+            </section>
             <footer class="admin-permissions-footer"><span>La cuenta administradora principal conserva todos sus privilegios.</span><span>Registro abierto · correo verificado · aprobación administrativa obligatoria.</span></footer>
         </div>
     </section>
