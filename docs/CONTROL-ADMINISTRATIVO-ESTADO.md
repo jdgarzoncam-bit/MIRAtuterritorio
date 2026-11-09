@@ -117,7 +117,7 @@ El usuario autorizó ambos ajustes el 2026-11-09. Los cambios se aplicaron en la
 
 ## Próximas etapas sugeridas
 
-1. Cerrar Control Administrativo: aplicar los cambios pendientes de `user_profiles` y del trigger de activación, completar pruebas de navegador y CI.
+1. Cerrar Control Administrativo: completar pruebas de navegador y CI; los dos ajustes de base de datos ya están aplicados y verificados en producción.
 2. Cierre de servidor para Testigos temporalmente inactivo: bloquear también las rutas/API y el INSERT anónimo de `testigos_publicos`, sin borrar datos ni reconstruir todavía el módulo.
 3. Revisión de autorización efectiva: comprobar, módulo por módulo, que los permisos de la interfaz y las políticas RLS coincidan; reforzar `has_module_permission` para que respete el estado activo del catálogo.
 4. Blindaje de formularios públicos: validar límites, abuso automatizado, trazabilidad y retención de PQRS y reportes ciudadanos, manteniendo los formularios públicos que sí deben funcionar.
