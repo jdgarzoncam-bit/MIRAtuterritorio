@@ -123,15 +123,45 @@ El usuario autorizó ambos ajustes el 2026-11-09. Los cambios se aplicaron en la
 - La rama de producción `br-winter-night-b758ke2j` no se eliminó ni se cambió de nombre.
 - El código del proyecto permanece en `feat/landing-reportes-testigos-e14`; `main` no fue modificado y no hay publicación nueva de GitHub Pages.
 
+## Bloqueo reforzado de Testigos y permisos por módulo — 2026-11-09
+
+### Migración preparada y probada en rama temporal; pendiente de aplicar en producción
+
+- Migration ID: `ac69dbd6-3cf5-4cc5-82aa-d3d01764d4a7`.
+- Rama temporal de validación: `br-dry-snow-b704rkb5`; rama padre: producción `br-winter-night-b758ke2j`.
+- La función `mira.has_module_permission(module, action)` propuesta comprueba primero que la acción sea válida y que el módulo exista y esté activo en `mira.module_catalog`; solo después permite el bypass del administrador principal o evalúa el permiso del usuario. Testigos se bloquea expresamente incluso para el administrador, hasta que se reconstruya y valide.
+- La migración marca `testigos` como inactivo, revoca INSERT al rol `anonymous` en `mira.testigos_publicos` y elimina la política `witnesses_public_insert`. No elimina registros ni desactiva formularios públicos de otros módulos.
+- Pruebas en la rama temporal: `testigos.active=false`; privilegio INSERT anónimo=false; política pública ausente; permisos de Testigos false sin identidad y también con el JWT simulado del administrador principal; Actividades y Control Administrativo siguen habilitados para el administrador; Logística (inactivo) y acciones no permitidas devuelven false.
+- Se confirmó que la función mantiene `SECURITY DEFINER` y `search_path=pg_catalog,mira,auth`.
+- El resultado de prueba conserva 0 filas tanto en `mira.testigos_publicos` como en `mira.evidencias_e14`. No se insertaron registros de prueba.
+- **Producción aún no se ha modificado con esta migración.** La aplicación de `ac69dbd6-3cf5-4cc5-82aa-d3d01764d4a7` queda pendiente de aprobación expresa.
+
+### Servicio E-14 antiguo identificado
+
+- La rama de producción `br-winter-night-b758ke2j` no tiene un deployment Neon Function llamado `e14secure`.
+- Se encontró un deployment activo `e14secure` (deployment 2, Node.js 24) en la rama antigua `br-lucky-boat-b70mmt53` (`mcp-migration-2026-11-03T22-29-59`). Su URL apunta a esa rama, no a producción.
+- La rama antigua contiene 0 filas de `mira.evidencias_e14` y 0 filas de `mira.testigos_publicos` en la inspección realizada; el catálogo de esa copia todavía marca Testigos activo.
+- Las herramientas disponibles exponen metadatos del deployment, pero no su paquete fuente ni configuración. No se invocó, modificó ni eliminó el deployment ni la rama antigua. El cierre definitivo de ese endpoint requiere una decisión expresa, porque eliminar la rama también elimina su copia de base de datos.
+
+### Barrera adicional en el cliente y pruebas automatizadas
+
+- `mira-data.js` incorpora `assertTestigosEnabled()` en las rutas `listPublicWitnesses`, `updatePublicWitness`, `listWitnessFiles`, `e14Request`, `listE14Evidence`, `uploadE14Evidence` y `getE14Download`. Si la bandera temporal no es exactamente `false`, la operación falla antes de pedir un token o iniciar una petición de red.
+- Se añadió `tests/testigos-inactive.test.cjs` para verificar las siete rutas, el comportamiento cerrado por defecto y que Actividades sigue pudiendo realizar consultas cuando Testigos se habilita explícitamente.
+- `.github/workflows/validate.yml` ahora ejecuta `node --test tests/*.test.cjs` además de `node --check`, tanto al actualizar esta rama como en los pull requests hacia `main`.
+- Se actualizó el parámetro de caché de `mira-data.js` en `index.html`.
+- El estado combinado de checks consultado para los commits recientes todavía no devuelve resultados; no se declara CI aprobado hasta ver un run concluido.
+- No se pudo hacer una prueba visual de Control Administrativo: la aplicación no estaba abierta en el navegador disponible y esta rama aún no está publicada en GitHub Pages.
+
 ## Próximas etapas sugeridas
 
-1. Cerrar Control Administrativo: completar pruebas de navegador y CI; los dos ajustes de base de datos ya están aplicados y verificados en producción.
-2. Cierre de servidor para Testigos temporalmente inactivo: bloquear también las rutas/API y el INSERT anónimo de `testigos_publicos`, sin borrar datos ni reconstruir todavía el módulo.
-3. Revisión de autorización efectiva: comprobar, módulo por módulo, que los permisos de la interfaz y las políticas RLS coincidan; reforzar `has_module_permission` para que respete el estado activo del catálogo.
-4. Blindaje de formularios públicos: validar límites, abuso automatizado, trazabilidad y retención de PQRS y reportes ciudadanos, manteniendo los formularios públicos que sí deben funcionar.
-5. Pruebas funcionales de los módulos operativos: Actividades/Asistencias, Concejal, InfoMIRA, Centro de Operaciones, Reportes y PQRS, incluyendo permisos de consulta/creación/edición/eliminación.
-6. Continuidad y privacidad de datos: respaldos, exportación controlada, recuperación, retención de datos personales y pruebas de restauración.
-7. Integración y publicación: actualizar esta rama desde `main` (actualmente está 13 commits por detrás), resolver conflictos, abrir PR, ejecutar CI, revisar y solo entonces integrar y desplegar Pages.
+1. Aplicar en producción la migración preparada y probada `ac69dbd6-3cf5-4cc5-82aa-d3d01764d4a7`, previa aprobación expresa.
+2. Resolver el deployment `e14secure` de la rama antigua `br-lucky-boat-b70mmt53`: decidir si se elimina solo la función o también la rama completa, después de valorar que la rama contiene una copia de base de datos.
+3. Completar las pruebas de Control Administrativo en navegador: aprobación, suspensión, cambio de rol, asignación/retirada de permisos, historial y cambios rápidos de usuario. Después verificar el inicio de sesión real.
+4. Confirmar CI en GitHub Actions; el workflow ya incorpora pruebas de seguridad del cliente y sintaxis.
+5. Probar los módulos operativos: Actividades/Asistencias, Concejal, InfoMIRA, Centro de Operaciones, Reportes y PQRS, incluidos sus permisos y límites.
+6. Completar respaldos, exportación controlada, recuperación, retención de datos personales y prueba de restauración.
+7. Sincronizar esta rama con `main` (la comparación actual indica 13 commits por detrás y 36 por delante), resolver conflictos y abrir un PR revisable. Integrar y publicar Pages únicamente después de CI y validación.
+
 
 ## Límites pendientes
 
