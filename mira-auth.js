@@ -24,13 +24,22 @@ async function getOwnProfile(token,authUserId) {
   return rows?.[0] || null;
 }
 async function getOwnModulePermissions(token) {
-  const response=await fetch(`${DATA_API_URL}/module_permissions?select=module_key,action_key,allowed&limit=500`,{
-    headers:{Authorization:`Bearer ${token}`,"Accept-Profile":"mira"}
-  });
-  if(!response.ok) throw new Error("No fue posible comprobar los permisos de los módulos. El acceso se mantendrá bloqueado.");
-  const rows=await response.json();
-  if(!Array.isArray(rows)) throw new Error("La respuesta de permisos no es válida. El acceso se mantendrá bloqueado.");
-  return rows;
+  const headers={Authorization:`Bearer ${token}`,"Accept-Profile":"mira"};
+  const [permissionsResponse,catalogResponse]=await Promise.all([
+    fetch(`${DATA_API_URL}/module_permissions?select=module_key,action_key,allowed&limit=500`,{headers}),
+    fetch(`${DATA_API_URL}/module_catalog?select=module_key&active=eq.true`,{headers})
+  ]);
+  if(!permissionsResponse.ok||!catalogResponse.ok) {
+    throw new Error("No fue posible comprobar los permisos o módulos activos. El acceso se mantendrá bloqueado.");
+  }
+  const [rows,catalog]=await Promise.all([permissionsResponse.json(),catalogResponse.json()]);
+  if(!Array.isArray(rows)||!Array.isArray(catalog)) throw new Error("La respuesta de permisos y módulos no es válida. El acceso se mantendrá bloqueado.");
+  const activeModules=new Set(catalog.map(item=>item.module_key));
+  return rows.filter(permission=>
+    activeModules.has(permission.module_key) &&
+    permission.module_key!=="testigos" &&
+    permission.module_key!=="control_administrativo"
+  );
 }
 function clearAuthenticatedState() {
   window.MIRA_CURRENT_USER=null;
