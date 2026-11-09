@@ -3,6 +3,7 @@ import { createAuthClient } from "https://esm.sh/@neondatabase/auth@0.7.0-beta";
 
 const AUTH_URL = "https://ep-round-dawn-b7l3ya3h.neonauth.c-13.us-east-1.aws.neon.tech/neondb/auth";
 const DATA_API_URL = "https://ep-round-dawn-b7l3ya3h.apirest.c-13.us-east-1.aws.neon.tech/neondb/rest/v1";
+const PRIMARY_ADMIN_AUTH_ID = "beef5bf3-82a8-4c35-a12c-17771be59da1";
 const auth = createAuthClient(AUTH_URL,{allowAnonymous:true});
 window.MIRA_AUTH = auth;
 
@@ -40,7 +41,9 @@ async function establishAuthenticatedUser(authUser) {
   if(authUser.emailVerified!==true) throw new Error("Primero confirma tu correo electrónico. Revisa tu bandeja de entrada y Spam.");
   const token=await bearerToken();
   const profile=await getOwnProfile(token,authUser.id);
-  if(!profile || profile.active!==true || profile.email_verified!==true || !["admin","operator","viewer","witness"].includes(profile.role)) {
+  if(!profile || profile.auth_user_id!==authUser.id) throw new Error("La identidad de la cuenta no coincide con su perfil. El acceso fue bloqueado.");
+  if(profile.role==="admin" && profile.auth_user_id!==PRIMARY_ADMIN_AUTH_ID) throw new Error("La cuenta administradora no corresponde al administrador principal autorizado.");
+  if(profile.active!==true || profile.email_verified!==true || !["admin","operator","viewer","witness"].includes(profile.role)) {
     throw new Error("Tu cuenta todavía no está aprobada. Solicita al administrador que habilite tu perfil.");
   }
   let permissions=[];
