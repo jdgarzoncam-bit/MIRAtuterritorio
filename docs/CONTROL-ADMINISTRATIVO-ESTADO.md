@@ -72,16 +72,36 @@ Se crearon ramas QA a partir de producción. Los perfiles y permisos con prefijo
 - En la versión corregida, Actividades activo permite la aprobación; Testigos y Logística (módulo inactivo) como único permiso son rechazados por PostgreSQL.
 - Los escenarios se ejecutaron con identidades JWT simuladas y el rol `authenticated` en ramas de prueba, nunca sobre producción.
 
-## Migración pendiente de aprobación — habilitar aprobación de perfiles
+## Ajustes de aprobación de perfiles — aplicados en producción
 
-Se preparó una nueva migración para producción, aún no aplicada:
+El usuario autorizó ambos ajustes el 2026-11-09. Los cambios se aplicaron en la rama Neon de producción `br-winter-night-b758ke2j`, database `neondb`.
+
+### A. Privilegio UPDATE para perfiles
 
 - Migration ID: `4bbb1033-4517-4c05-bdeb-43c0248f9810`.
-- Rama temporal: `br-cool-shadow-b7dlb4no`, parent `br-winter-night-b758ke2j`.
-- Script preparado: `GRANT UPDATE ON TABLE mira.user_profiles TO authenticated`.
-- ACL verificada en la rama: `authenticated` puede ejecutar UPDATE; `anonymous` no puede. La fila sigue sujeta a la política RLS `profile_admin_update_non_admin`, que limita la actualización a la cuenta administradora principal y no permite promover otro perfil a `admin`.
-- En esa misma rama temporal se probó la nueva definición de `mira.enforce_profile_activation_requirements()`, pero esa definición se ejecutó como una prueba independiente y no forma parte del script de migración preparado. Para producción requerirá una instrucción SQL separada después de aprobación explícita.
-- Producción conserva todavía el ACL original sin UPDATE sobre `user_profiles` y la versión histórica del trigger de activación. La interfaz está corregida, pero la aprobación no quedará operativa hasta autorizar los dos cambios de base de datos.
+- Se aplicó `GRANT UPDATE ON TABLE mira.user_profiles TO authenticated`.
+- Se verificó en producción: `authenticated` tiene UPDATE=true; `anonymous` UPDATE=false.
+- La política RLS `profile_admin_update_non_admin` permanece: `USING` y `WITH CHECK` requieren `mira.is_active_admin()` y `role <> 'admin'`. Por ello la operación sigue limitada a la cuenta principal y no permite promover otra cuenta al rol `admin`.
+- El rol autenticado no recibió INSERT ni DELETE sobre `user_profiles`.
+
+### B. Regla de aprobación de cuentas a nivel de PostgreSQL
+
+- Se reemplazó en producción la función `mira.enforce_profile_activation_requirements()`.
+- Se conserva `SECURITY DEFINER`, el propietario `neondb_owner` y `search_path=pg_catalog,mira`.
+- Para activar cualquier cuenta distinta al administrador principal, exige `email_verified=true` y al menos un permiso Consulta (`view`) habilitado en un módulo cuyo catálogo tenga `active=true`.
+- Excluye expresamente `testigos` y `control_administrativo`; módulos inactivos, como Logística, tampoco pueden habilitar el ingreso.
+- Antes de producción se probó en rama aislada: Actividades activa permite la aprobación; Testigos únicamente y Logística únicamente son rechazados por el trigger; correo sin confirmar es rechazado.
+
+### Verificación posterior en producción
+
+- `anonymous`: no tiene SELECT, INSERT, UPDATE ni DELETE en `user_profiles` ni permisos de escritura en `admin_audit_log`.
+- `authenticated`: puede SELECT y UPDATE perfiles; no puede INSERT ni DELETE perfiles y no puede insertar, actualizar o borrar el historial.
+- Las políticas RLS de perfiles permanecen y no se eliminaron ni ampliaron para otros roles.
+- El historial de auditoría conserva 78 eventos.
+- La política `admin_audit_log_admin_read` se mantiene en solo lectura para el administrador activo.
+- E-14 conserva 0 filas; no se reactivó ni se modificó.
+- No se crearon usuarios de prueba en producción.
+
 
 
 ## Revisión transversal de seguridad de Neon — solo lectura
@@ -107,11 +127,7 @@ Se preparó una nueva migración para producción, aún no aplicada:
 
 ## Límites pendientes
 
-1. Autorizar o rechazar la migración ACL pendiente y la actualización del trigger de activación.
-2. Completar pruebas de desaprobación/suspensión y cambio de rol normal en la rama temporal.
-3. Probar visualmente la interfaz en escritorio y móvil, incluidos estados vacíos, errores de red, actualización del historial y cambio rápido entre usuarios.
-4. Ejecutar CI mediante un pull request de validación antes de cualquier integración.
-5. Verificar los flujos en la aplicación desplegada después de integrar a `main`; esta rama no se ha desplegado.
-6. No declarar Control Administrativo completamente certificado hasta completar la migración aprobada y las pruebas de navegador.
-
-
+1. Probar visualmente la interfaz en escritorio y móvil, incluidos estados vacíos, errores de red, actualización del historial y cambio rápido entre usuarios.
+2. Ejecutar CI mediante un pull request de validación antes de cualquier integración.
+3. Verificar los flujos en la aplicación desplegada después de integrar a `main`; esta rama no se ha desplegado.
+4. No declarar Control Administrativo completamente certificado hasta completar las pruebas de navegador y el flujo real de inicio de sesión.
