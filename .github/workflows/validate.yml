@@ -18,4 +18,5 @@ jobs:
           node --check app.js
           node --check mira-data.js
           node --check mira-auth.js
+          node --check mira-admin.js
           node --check pmu-navigation.js
