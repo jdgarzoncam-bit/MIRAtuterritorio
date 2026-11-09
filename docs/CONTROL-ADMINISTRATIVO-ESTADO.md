@@ -44,20 +44,21 @@ Se inspeccionaron las políticas RLS, ACL, funciones y triggers de `mira.user_pr
 - La sintaxis de `mira-admin.js`, `mira-auth.js` y `mira-data.js` se comprobó mediante análisis sintáctico V8. Para esta comprobación se retiraron únicamente las declaraciones `import`/`export` al compilar el texto, sin ejecutar el código.
 - No se ha realizado todavía una prueba funcional en navegador ni una ejecución CI del HEAD actual. El workflow de validación se dispara en pull requests a `main`, y el de Pages en `main`; no se creó PR ni se publicó esta rama.
 
-## Migración preparada y verificada en Neon temporal
+## Migración de protección del historial — aplicada en producción
 
-Se preparó una migración aislada, sin aplicarla a producción:
+La migración se aprobó y se aplicó el 2026-11-09 en la rama Neon de producción. La rama temporal de prueba fue eliminada:
 
 - Migration ID: `4b29ca1d-f9da-48fa-8aaa-145b9ac874d3`.
-- Rama temporal: `br-noisy-sound-b7cuqq2g`.
+- La rama temporal `br-noisy-sound-b7cuqq2g` fue eliminada al completar la migración.
 - Cambio propuesto: sustituir la política ALL de `admin_audit_log` por una política SELECT exclusiva del administrador principal; revocar los privilegios directos y conceder solamente SELECT al rol `authenticated`.
 - Verificación en la rama temporal: `anonymous` sin SELECT/INSERT/UPDATE/DELETE; `authenticated` con SELECT y sin INSERT/UPDATE/DELETE. RLS continúa habilitada.
 - Los triggers `audit_user_profiles_changes` y `audit_module_permissions_changes` permanecen instalados. Su función `mira.audit_admin_changes()` es SECURITY DEFINER y su propietario conserva INSERT, por lo que los eventos automáticos pueden seguir registrándose aunque la cuenta autenticada no pueda escribir directamente en el historial.
-- Producción no ha sido modificada. La migración está pendiente de aprobación explícita antes de aplicarse.
+- Verificación posterior en producción: política única `admin_audit_log_admin_read` (SELECT, administrador activo); `authenticated` tiene SELECT=true e INSERT/UPDATE/DELETE=false; `anonymous` no tiene los cuatro privilegios; RLS continúa habilitada. Ambos triggers siguen instalados y llaman a `mira.audit_admin_changes()`, función SECURITY DEFINER propiedad de `neondb_owner`.
+- El historial conserva 78 eventos después de aplicar el cambio. No se borraron ni alteraron registros existentes.
 
 ## Límites pendientes
 
-1. Aplicar la migración de auditoría únicamente después de aprobación explícita.
+1. Ejecutar pruebas funcionales de consulta del historial y de registro automático de eventos desde cambios administrativos.
 2. Probar en un entorno controlado la consulta del historial, asignación/retiro de permisos, aprobación/desaprobación, cambio de rol y el bloqueo de una cuenta sin permisos.
 3. Probar visualmente la interfaz en escritorio y móvil, incluidos estados vacíos y errores de conexión.
 4. Revisar en una etapa posterior la política de aprobación a nivel de trigger SQL para que también excluya módulos temporalmente deshabilitados. La validación de la interfaz y del inicio de sesión ya excluye Testigos; el trigger de producción todavía conserva su condición histórica genérica.
