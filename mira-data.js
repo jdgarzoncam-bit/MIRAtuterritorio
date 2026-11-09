@@ -41,6 +41,12 @@ async function miraRequest(table, {method="GET", query="", body, anonymous=false
 const qs = (params) => new URLSearchParams(params).toString();
 const cleanCedula = (value) => String(value || "").replace(/\D/g, "");
 
+function assertTestigosEnabled() {
+  if (window.MIRA_TESTIGOS_TEMP_DISABLED !== false) {
+    throw new Error("El módulo Testigos / Auditoría E-14 está temporalmente inactivo.");
+  }
+}
+
 export const MIRA_DATA = {
   async listInfoMiraDirectory({cedula="", search="", limit=100, offset=0}={}) {
     const params = {
@@ -99,9 +105,13 @@ export const MIRA_DATA = {
     return miraRequest("reportes_operativos",{query:qs({select:"*",order:"created_at.desc",limit:String(Math.min(Math.max(limit,1),100))})});
   },
   async listPublicWitnesses({limit=100}={}) {
+    assertTestigosEnabled();
     return miraRequest("testigos_publicos",{query:qs({select:"*",order:"created_at.desc",limit:String(Math.min(Math.max(limit,1),100))})});
   },
-  updatePublicWitness(id,payload) { return miraRequest("testigos_publicos",{method:"PATCH",query:qs({id:`eq.${id}`}),body:payload}); },
+  updatePublicWitness(id,payload) {
+    assertTestigosEnabled();
+    return miraRequest("testigos_publicos",{method:"PATCH",query:qs({id:`eq.${id}`}),body:payload});
+  },
   async listConcejalActivities({limit=500}={}) {
     return miraRequest("concejal_actividades",{query:qs({select:"*",order:"fecha.desc,created_at.desc",limit:String(Math.min(Math.max(limit,1),500))})});
   },
@@ -121,6 +131,7 @@ export const MIRA_DATA = {
   updateConcejalCommitment(id,payload) { return miraRequest("concejal_compromisos",{method:"PATCH",query:qs({id:`eq.${id}`}),body:payload}); },
   deleteConcejalCommitment(id) { return miraRequest("concejal_compromisos",{method:"DELETE",query:qs({id:`eq.${id}`})}); },
   async listWitnessFiles({witnessId,limit=100}={}) {
+    assertTestigosEnabled();
     const params={select:"*",order:"created_at.desc",limit:String(Math.min(Math.max(limit,1),100))};
     if(witnessId) params.testigo_id=`eq.${witnessId}`;
     return miraRequest("testigo_archivos",{query:qs(params)});
@@ -182,9 +193,7 @@ export const MIRA_DATA = {
     return miraRequest("admin_audit_log",{query:qs({select:"id,actor_auth_user_id,target_auth_user_id,action_key,details,created_at",order:"created_at.desc",limit:String(Math.min(Math.max(limit,1),100))})});
   },
   async e14Request(action, payload={}) {
-    if (window.MIRA_TESTIGOS_TEMP_DISABLED !== false) {
-      throw new Error("El módulo Testigos / Auditoría E-14 está temporalmente inactivo.");
-    }
+    assertTestigosEnabled();
     const token=await miraToken();
     const endpoint="https://br-winter-night-b758ke2j-e14secure.compute.c-13.us-east-1.aws.neon.tech/";
     const response=await fetch(endpoint+(action==="list"?"?action=list":""),{
@@ -202,9 +211,7 @@ export const MIRA_DATA = {
     return data;
   },
   async listE14Evidence() {
-    if (window.MIRA_TESTIGOS_TEMP_DISABLED !== false) {
-      throw new Error("El módulo Testigos / Auditoría E-14 está temporalmente inactivo.");
-    }
+    assertTestigosEnabled();
     // Consulta la tabla directamente mediante Neon Data API. PostgreSQL RLS
     // exige Testigos · Consulta; evita el listado roto del endpoint e14secure.
     const params = {
@@ -215,6 +222,7 @@ export const MIRA_DATA = {
     return miraRequest("evidencias_e14",{query:qs(params)});
   },
   async uploadE14Evidence({file,puesto,mesa,nota="",legacy_id=null,hora_original=null}) {
+    assertTestigosEnabled();
     if(!(file instanceof Blob)) throw new Error("Selecciona una imagen válida.");
     if(!["image/jpeg","image/png","image/webp"].includes(file.type)) throw new Error("Formato no permitido. Usa JPG, PNG o WebP.");
     if(file.size<1||file.size>12*1024*1024) throw new Error("La imagen debe pesar máximo 12 MB.");
@@ -228,6 +236,7 @@ export const MIRA_DATA = {
     return confirmed.item;
   },
   async getE14Download(id) {
+    assertTestigosEnabled();
     const result=await this.e14Request("download",{id});
     if(!result.download_url) throw new Error("No se pudo generar la descarga autorizada.");
     return result;
