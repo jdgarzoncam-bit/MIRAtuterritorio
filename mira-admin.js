@@ -1,8 +1,16 @@
 // MIRA TU TERRITORIO — Control Administrativo: permisos granulares.
-const ACTIONS = [["view","Consulta"]];
+const MODULE_ACTIONS = {
+  actividades:[["view","Consulta"],["create","Crear"],["edit","Editar"],["delete","Eliminar"]],
+  concejal:[["view","Consulta"],["create","Crear"],["edit","Editar"],["delete","Eliminar"]],
+  infomira:[["view","Consulta"],["create","Crear"],["edit","Editar"],["delete","Eliminar"]],
+  centro_operaciones:[["view","Consulta"]], reportes:[["view","Consulta"]], pqrs:[["view","Consulta"]]
+};
 const $ = (id) => document.getElementById(id);
 let users = [], modules = [], selectedProfile = null, permissionRows = [];
 let activeUserTab = "pending";
+let activePanelView = "users";
+let selectionRequestVersion = 0;
+let auditRequestVersion = 0;
 let busy = false;
 let reloadUsersAfterBusy = false;
 
@@ -24,10 +32,12 @@ function openPanel(){
   $("adminPermissionsPanel")?.classList.remove("hidden");
   $("adminPermissionsPanel")?.setAttribute("aria-hidden","false");
   document.body.classList.add("admin-permissions-open");
+  switchPanelView("users");
   if(window.MIRA_CURRENT_USER && window.MIRA_DATA) loadUsers();
   else $("adminUsersList").innerHTML='<p class="admin-permissions-loading">Esperando la sesión y los servicios de datos…</p>';
 }
 function closePanel(){
+  selectionRequestVersion++;auditRequestVersion++;
   $("adminPermissionsPanel")?.classList.add("hidden");
   $("adminPermissionsPanel")?.setAttribute("aria-hidden","true");
   document.body.classList.remove("admin-permissions-open");
@@ -77,22 +87,23 @@ function renderUsers(){
       (u.role==="admin"?'<span class="admin-user-lock" title="Cuenta protegida">🔒</span>':'<span class="admin-user-arrow">›</span>')+'</button>';
   }).join("");
 }
-async function selectUser(profileId,show=true){
-  const user=users.find(u=>u.id===profileId);
-  if(!user)return;
-  selectedProfile=user;clearNotice();renderUsers();
-  $("adminSelectedUser").innerHTML='<strong>'+escapeHtml(user.display_name||user.email||"Usuario")+'</strong><span>'+escapeHtml(user.email||"")+' · '+(user.email_verified?"Correo confirmado":"Correo sin confirmar")+' · '+(user.active?"Cuenta activa":"Pendiente de aprobación")+'</span>';
-  if(user.role==="admin"){
-    $("adminPermissionsMatrix").innerHTML='<div class="admin-permissions-protected"><strong>🔒 Cuenta administradora protegida</strong><p>Esta cuenta conserva todos los permisos y no puede modificarse desde este panel.</p></div>';
-    return;
-  }
-  $("adminPermissionsMatrix").innerHTML='<p class="admin-permissions-loading">Cargando permisos…</p>';
-  try{
-    permissionRows=await window.MIRA_DATA.listModulePermissions(user.id);
-    renderMatrix();
-  }catch(error){
-    $("adminPermissionsMatrix").innerHTML='<p class="admin-permissions-error">'+escapeHtml(error.message||"No fue posible cargar los permisos.")+'</p>';
-  }
+async function selectUser(profileId){
+ const user=users.find(u=>u.id===profileId); if(!user)return;
+ const version=++selectionRequestVersion;
+ selectedProfile=user;permissionRows=[];clearNotice();renderUsers();
+ $("adminSelectedUser").innerHTML='<strong>'+escapeHtml(user.display_name||user.email||"Usuario")+'</strong><span>'+escapeHtml(user.email||"")+' · '+(user.email_verified?"Correo confirmado":"Correo sin confirmar")+' · '+(user.active?"Cuenta activa":"Pendiente de aprobación")+'</span>';
+ if(user.role==="admin"){
+  $("adminPermissionsMatrix").innerHTML='<div class="admin-permissions-protected"><strong>🔒 Cuenta administradora protegida</strong><p>Esta cuenta conserva todos los permisos y no puede modificarse desde este panel.</p></div>';return;
+ }
+ $("adminPermissionsMatrix").innerHTML='<p class="admin-permissions-loading">Cargando permisos…</p>';
+ try{
+  const rows=await window.MIRA_DATA.listModulePermissions(user.id);
+  if(version!==selectionRequestVersion||selectedProfile?.id!==user.id)return;
+  permissionRows=Array.isArray(rows)?rows:[];renderMatrix();
+ }catch(error){
+  if(version!==selectionRequestVersion||selectedProfile?.id!==user.id)return;
+  $("adminPermissionsMatrix").innerHTML='<p class="admin-permissions-error">'+escapeHtml(error.message||"No fue posible cargar los permisos.")+'</p>';
+ }
 }
 function renderApprovalControls(user){
   const roles=[["viewer","Consulta"],["operator","Operador"],["witness","Testigo"]];
@@ -109,61 +120,96 @@ function renderApprovalControls(user){
   return '<section class="admin-approval-card"><div><strong>Estado y aprobación</strong><small>'+hint+'</small></div><label class="admin-role-picker"><span>Rol de la cuenta</span><select id="adminRoleSelect">'+options+'</select></label><button type="button" class="admin-approval-button" data-profile-approval="'+action+'" '+(!user.active&&!canApprove?"disabled":"")+'>'+label+'</button><button type="button" class="admin-approval-button admin-role-save" data-profile-approval="save-role">Guardar rol</button></section><div class="admin-approval-divider"></div>';
 }
 async function changeUserApproval(button){
-  if(!isAdmin()||!selectedProfile||selectedProfile.role==="admin")return;
-  const action=button.dataset.profileApproval;
-  const activate=action==="activate";
-  if(activate&&!selectedProfile.email_verified){notice("No puedes activar una cuenta cuyo correo no está confirmado.",true);return;}
-  const hasModuleAccess=permissionRows.some(p=>p.action_key==="view"&&p.allowed===true);
-  if(activate&&!hasModuleAccess){notice("No puedes aprobar esta cuenta: asigna al menos un módulo con Consulta. Los demás quedarán restringidos.",true);return;}
-  const nextActive=action==="save-role"?selectedProfile.active:activate;
-  const role=$("adminRoleSelect")?.value||selectedProfile.role;
-  button.disabled=true;
-  try{
-    const updated=await window.MIRA_DATA.updateUserProfile(selectedProfile.id,{active:nextActive,role});
-    const row=Array.isArray(updated)?updated[0]:null;
-    if(!row || row.id!==selectedProfile.id || row.active!==nextActive || row.role!==role) {
-      throw new Error("Neon no confirmó el estado y rol solicitados. No se mostrará el cambio como exitoso.");
-    }
-    selectedProfile={...selectedProfile,...row};
-    users=users.map(u=>u.id===selectedProfile.id?selectedProfile:u);
-    renderUsers();
-    $("adminSelectedUser").innerHTML='<strong>'+escapeHtml(selectedProfile.display_name||selectedProfile.email||"Usuario")+'</strong><span>'+escapeHtml(selectedProfile.email||"")+' · '+(selectedProfile.email_verified?"Correo confirmado":"Correo sin confirmar")+' · '+(selectedProfile.active?"Cuenta activa":"Pendiente de aprobación")+'</span>';
-    renderMatrix();
-    notice(action==="save-role"?"Rol actualizado. Los permisos de los módulos se conservan.":activate?"Cuenta aprobada y habilitada con los módulos autorizados.":"Cuenta desaprobada. Sus permisos se conservan, pero el acceso queda bloqueado.");
-  }catch(error){notice(error.message||"No fue posible actualizar el estado de la cuenta.",true);}
-  finally{button.disabled=false;}
+ if(!isAdmin()||!selectedProfile||selectedProfile.role==="admin")return;
+ const target={...selectedProfile},targetId=selectedProfile.id,action=button.dataset.profileApproval;
+ const activate=action==="activate";
+ if(activate&&!target.email_verified){notice("No puedes activar una cuenta cuyo correo no está confirmado.",true);return;}
+ const hasModuleAccess=permissionRows.some(p=>p.action_key==="view"&&p.allowed===true);
+ if(activate&&!hasModuleAccess){notice("No puedes aprobar esta cuenta: asigna al menos un módulo con Consulta.",true);return;}
+ const nextActive=action==="save-role"?target.active:activate;
+ const role=$("adminRoleSelect")?.value||target.role;button.disabled=true;
+ try{
+  const updated=await window.MIRA_DATA.updateUserProfile(targetId,{active:nextActive,role});
+  const row=Array.isArray(updated)?updated[0]:null;
+  if(!row||row.id!==targetId||row.active!==nextActive||row.role!==role)throw new Error("Neon no confirmó el estado y rol solicitados. No se mostrará el cambio como exitoso.");
+  const merged={...target,...row};users=users.map(u=>u.id===targetId?merged:u);
+  if(selectedProfile?.id===targetId){
+   selectedProfile=merged;
+   $("adminSelectedUser").innerHTML='<strong>'+escapeHtml(merged.display_name||merged.email||"Usuario")+'</strong><span>'+escapeHtml(merged.email||"")+' · '+(merged.email_verified?"Correo confirmado":"Correo sin confirmar")+' · '+(merged.active?"Cuenta activa":"Pendiente de aprobación")+'</span>';
+   renderUsers();renderMatrix();
+   notice(action==="save-role"?"Rol actualizado. Los permisos de los módulos se conservan.":activate?"Cuenta aprobada y habilitada con los módulos autorizados.":"Cuenta desaprobada. Sus permisos se conservan, pero el acceso queda bloqueado.");
+  }
+ }catch(error){if(selectedProfile?.id===targetId)notice(error.message||"No fue posible actualizar el estado de la cuenta.",true);}
+ finally{if(button.isConnected)button.disabled=false;}
 }
 function renderMatrix(){
-  const allowed=new Set(permissionRows.filter(p=>p.allowed).map(p=>p.module_key+"::"+p.action_key));
-  const visibleModules=modules.filter(m=>m.module_key!=="control_administrativo"&&m.module_key!=="testigos");
-  const approval = selectedProfile && selectedProfile.role!=="admin" ? renderApprovalControls(selectedProfile) : "";
-  $("adminPermissionsMatrix").innerHTML=approval+visibleModules.map(m=>{
-    const checked=allowed.has(m.module_key+"::view");
-    return '<article class="admin-module-permission"><div class="admin-module-permission-title"><strong>'+escapeHtml(m.module_name)+'</strong><small>'+escapeHtml(m.description||"Permisos del módulo")+'</small></div><div class="admin-module-access-control"><label class="admin-action-check"><input type="checkbox" data-module="'+escapeHtml(m.module_key)+'" data-action="view" '+(checked?"checked":"")+'><span>Consulta</span></label><span class="admin-access-state '+(checked?"is-allowed":"is-restricted")+'">'+(checked?"Acceso completo":"Restringido")+'</span></div></article>';
-  }).join("")||'<p class="admin-permissions-empty">No hay módulos configurados.</p>';
+ const allowed=new Set(permissionRows.filter(p=>p.allowed).map(p=>p.module_key+"::"+p.action_key));
+ const visibleModules=modules.filter(m=>m.module_key!=="control_administrativo"&&m.module_key!=="testigos"&&m.active!==false);
+ const approval=selectedProfile&&selectedProfile.role!=="admin"?renderApprovalControls(selectedProfile):"";
+ $("adminPermissionsMatrix").innerHTML=approval+visibleModules.map(m=>{
+  const actions=MODULE_ACTIONS[m.module_key]||[["view","Consulta"]];
+  const controls=actions.map(([key,label])=>{
+   const checked=allowed.has(m.module_key+"::"+key);
+   return '<label class="admin-action-check"><input type="checkbox" data-module="'+escapeHtml(m.module_key)+'" data-action="'+escapeHtml(key)+'" '+(checked?"checked":"")+'><span>'+escapeHtml(label)+'</span></label>';
+  }).join("");
+  const activeCount=actions.filter(([key])=>allowed.has(m.module_key+"::"+key)).length;
+  return '<article class="admin-module-permission"><div class="admin-module-permission-title"><strong>'+escapeHtml(m.module_name)+'</strong><small>'+escapeHtml(m.description||"Permisos del módulo")+'</small><small class="admin-permission-summary">'+activeCount+' de '+actions.length+' acciones habilitadas</small></div><div class="admin-module-access-control"><div class="admin-action-checks">'+controls+'</div></div></article>';
+ }).join("")||'<p class="admin-permissions-empty">No hay módulos configurados.</p>';
 }
 async function changePermission(input){
-  if(!isAdmin()||!selectedProfile||selectedProfile.role==="admin")return;
-  const moduleKey=input.dataset.module,actionKey=input.dataset.action;
-  input.disabled=true;
-  try{
-    const saved=await window.MIRA_DATA.setModulePermission(selectedProfile.id,moduleKey,actionKey,input.checked);
-    const row=Array.isArray(saved)?saved[0]:null;
-    if(!row || row.user_profile_id!==selectedProfile.id || row.module_key!==moduleKey || row.action_key!==actionKey || row.allowed!==input.checked) {
-      throw new Error("Neon no confirmó el permiso solicitado. Se restaurará el estado anterior.");
-    }
-    const existing=permissionRows.find(p=>p.module_key===moduleKey&&p.action_key===actionKey);
-    if(existing)Object.assign(existing,row);
-    else permissionRows.push(row);
-    const state=input.closest(".admin-module-permission")?.querySelector(".admin-access-state");
-    if(state){state.textContent=input.checked?"Acceso completo":"Restringido";state.classList.toggle("is-allowed",input.checked);state.classList.toggle("is-restricted",!input.checked);}
-    notice(input.checked?"Módulo habilitado con acceso completo.":"Módulo restringido; se bloquean sus operaciones.");
-    renderMatrix();
-  }catch(error){
-    input.checked=!input.checked;
-    notice(error.message||"No fue posible guardar el permiso.",true);
-  }finally{input.disabled=false;}
+ if(!isAdmin()||!selectedProfile||selectedProfile.role==="admin")return;
+ const targetProfileId=selectedProfile.id,moduleKey=input.dataset.module,actionKey=input.dataset.action,nextValue=input.checked;
+ input.disabled=true;
+ try{
+  const saved=await window.MIRA_DATA.setModulePermission(targetProfileId,moduleKey,actionKey,nextValue);
+  const row=Array.isArray(saved)?saved[0]:null;
+  if(!row||row.user_profile_id!==targetProfileId||row.module_key!==moduleKey||row.action_key!==actionKey||row.allowed!==nextValue)throw new Error("Neon no confirmó el permiso solicitado. Se restaurará el estado anterior.");
+  if(selectedProfile?.id!==targetProfileId)return;
+  const existing=permissionRows.find(p=>p.module_key===moduleKey&&p.action_key===actionKey);
+  if(existing)Object.assign(existing,row);else permissionRows.push(row);
+  notice(nextValue?"Permiso habilitado.":"Permiso retirado; la base de datos bloqueará esa acción.");renderMatrix();
+ }catch(error){
+  if(input.isConnected)input.checked=!nextValue;
+  if(selectedProfile?.id===targetProfileId)notice(error.message||"No fue posible guardar el permiso.",true);
+ }finally{if(input.isConnected)input.disabled=false;}
 }
+function switchPanelView(view){
+ if(!isAdmin())return;
+ activePanelView=view==="audit"?"audit":"users";
+ $("adminPermissionsBody")?.classList.toggle("hidden",activePanelView!=="users");
+ $("adminAuditPanel")?.classList.toggle("hidden",activePanelView!=="audit");
+ $("adminAuditPanel")?.setAttribute("aria-hidden",String(activePanelView!=="audit"));
+ const toggle=$("adminViewToggleBtn");
+ if(toggle){toggle.textContent=activePanelView==="audit"?"Volver a usuarios y permisos":"Ver historial de auditoría";toggle.setAttribute("aria-label",toggle.textContent);}
+ if(activePanelView==="audit")loadAudit();
+}
+function auditActionLabel(action){
+ const labels={profile_created:"Cuenta creada",profile_updated:"Cuenta actualizada",profile_deleted:"Cuenta eliminada",permission_created:"Permiso asignado",permission_updated:"Permiso actualizado",permission_deleted:"Permiso retirado"};
+ return labels[action]||action||"Evento";
+}
+function renderAudit(rows){
+ const node=$("adminAuditList");if(!node)return;
+ if(!rows.length){node.innerHTML='<p class="admin-permissions-empty">Todavía no hay eventos de auditoría.</p>';return;}
+ node.innerHTML=rows.map(item=>{
+  const date=new Date(item.created_at);
+  const dateLabel=Number.isNaN(date.getTime())?escapeHtml(item.created_at||"Fecha no disponible"):escapeHtml(new Intl.DateTimeFormat("es-CO",{dateStyle:"medium",timeStyle:"short"}).format(date));
+  return '<article class="admin-audit-event"><div class="admin-audit-event-heading"><strong>'+escapeHtml(auditActionLabel(item.action_key))+'</strong><time>'+dateLabel+'</time></div><div class="admin-audit-identities"><span><b>Actor:</b> '+escapeHtml(item.actor_auth_user_id||"Sistema")+'</span><span><b>Objetivo:</b> '+escapeHtml(item.target_auth_user_id||"—")+'</span></div><details><summary>Ver detalles del evento</summary><pre>'+escapeHtml(JSON.stringify(item.details||{},null,2))+'</pre></details></article>';
+ }).join("");
+}
+async function loadAudit(){
+ if(!isAdmin()||!window.MIRA_DATA?.listAdminAudit)return;
+ const version=++auditRequestVersion,node=$("adminAuditList");
+ if(node)node.innerHTML='<p class="admin-permissions-loading">Consultando historial…</p>';
+ try{
+  const rows=await window.MIRA_DATA.listAdminAudit({limit:100});
+  if(version!==auditRequestVersion||activePanelView!=="audit")return;
+  renderAudit(Array.isArray(rows)?rows:[]);
+ }catch(error){
+  if(version!==auditRequestVersion||activePanelView!=="audit")return;
+  if(node)node.innerHTML='<p class="admin-permissions-error">'+escapeHtml(error.message||"No fue posible consultar el historial de auditoría.")+'</p>';
+ }
+}
+
 const MODULE_TARGETS = {
   infomira:["dropdown-infomira"],
   testigos:["dropdown-testigos"],
@@ -232,6 +278,7 @@ function init(){
   const launch=$("openAdminPermissionsBtn");
   if(launch)launch.addEventListener("click",openPanel);
   const switchUserTab=(tab)=>{
+    selectionRequestVersion++;
     activeUserTab=tab;selectedProfile=null;permissionRows=[];
     $("adminSelectedUser").innerHTML='<strong>Selecciona un usuario</strong><span>Sus permisos aparecerán aquí.</span>';
     $("adminPermissionsMatrix").innerHTML='<p class="admin-permissions-empty">Selecciona un usuario para consultar sus permisos.</p>';
@@ -242,6 +289,8 @@ function init(){
   $("adminUsersPendingTab")?.addEventListener("click",()=>switchUserTab("pending"));
   $("adminUsersApprovedTab")?.addEventListener("click",()=>switchUserTab("approved"));
   $("closeAdminPermissionsBtn")?.addEventListener("click",closePanel);
+  $("adminViewToggleBtn")?.addEventListener("click",()=>switchPanelView(activePanelView==="audit"?"users":"audit"));
+  $("refreshAdminAuditBtn")?.addEventListener("click",loadAudit);
   $("refreshAdminUsersBtn")?.addEventListener("click",()=>{selectedProfile=null;$("adminSelectedUser").innerHTML='<strong>Selecciona un usuario</strong><span>Sus permisos aparecerán aquí.</span>';$("adminPermissionsMatrix").innerHTML='<p class="admin-permissions-empty">Selecciona un usuario.</p>';loadUsers();});
   $("adminUsersList")?.addEventListener("click",event=>{
     const button=event.target.closest("[data-profile-id]");
