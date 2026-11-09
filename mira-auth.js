@@ -49,7 +49,7 @@ async function establishAuthenticatedUser(authUser) {
   let permissions=[];
   if(profile.role!=="admin") {
     permissions=await getOwnModulePermissions(token);
-    if(!permissions.some(permission=>permission.allowed===true && permission.action_key==="view")) {
+    if(!permissions.some(permission=>permission.allowed===true && permission.action_key==="view" && permission.module_key!=="testigos" && permission.module_key!=="control_administrativo")) {
       throw new Error("Tu cuenta está aprobada, pero todavía no tiene módulos autorizados. Solicita al administrador que habilite al menos uno.");
     }
   }
