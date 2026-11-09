@@ -149,7 +149,7 @@ El usuario autorizó ambos ajustes el 2026-11-09. Los cambios se aplicaron en la
 - Se añadió `tests/testigos-inactive.test.cjs` para verificar las siete rutas, el comportamiento cerrado por defecto y que Actividades sigue pudiendo realizar consultas cuando Testigos se habilita explícitamente.
 - `.github/workflows/validate.yml` ahora ejecuta `node --test tests/*.test.cjs` además de `node --check`, tanto al actualizar esta rama como en los pull requests hacia `main`.
 - Se actualizó el parámetro de caché de `mira-data.js` en `index.html`.
-- El estado combinado de checks consultado para los commits recientes todavía no devuelve resultados; no se declara CI aprobado hasta ver un run concluido.
+- GitHub Actions run #59 finalizó correctamente (`success`) sobre el HEAD documental `b646148cb8dd053fdceae9a2a182d179a272cb53`, incluyendo `node --check` de los módulos JavaScript y `node --test tests/*.test.cjs`: https://github.com/jdgarzoncam-bit/MIRAtuterritorio/actions/runs/42718784604.
 - No se pudo hacer una prueba visual de Control Administrativo: la aplicación no estaba abierta en el navegador disponible y esta rama aún no está publicada en GitHub Pages.
 
 ## Próximas etapas sugeridas
