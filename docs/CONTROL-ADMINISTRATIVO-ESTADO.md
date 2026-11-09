@@ -83,6 +83,28 @@ Se preparó una nueva migración para producción, aún no aplicada:
 - En esa misma rama temporal se probó la nueva definición de `mira.enforce_profile_activation_requirements()`, pero esa definición se ejecutó como una prueba independiente y no forma parte del script de migración preparado. Para producción requerirá una instrucción SQL separada después de aprobación explícita.
 - Producción conserva todavía el ACL original sin UPDATE sobre `user_profiles` y la versión histórica del trigger de activación. La interfaz está corregida, pero la aprobación no quedará operativa hasta autorizar los dos cambios de base de datos.
 
+
+## Revisión transversal de seguridad de Neon — solo lectura
+
+- Se inspeccionaron las 16 tablas base del esquema `mira`: las 16 tienen RLS habilitada.
+- Ninguna tabla concede SELECT al rol `anonymous`.
+- Las inserciones anónimas detectadas están limitadas a flujos públicos: `pqrs`, `reportes_ciudadanos`, `reportes_operativos` y `testigos_publicos`. La tabla `testigos_publicos` mantiene actualmente INSERT anónimo, aunque sus pantallas web están temporalmente desactivadas. Por tanto, su desactivación aún no es un bloqueo completo del lado del servidor.
+- Las tablas de Actividades, Asistencias, Concejal, Personas e InfoMIRA conceden privilegios SQL de escritura a `authenticated`, pero sus políticas RLS invocan `mira.has_module_permission` con las acciones correspondientes. La cuenta autenticada no obtiene acceso efectivo solo por tener el GRANT.
+- Las tablas `module_catalog` y `module_permissions` tienen grants de escritura para `authenticated`, pero sus políticas de escritura requieren `mira.is_active_admin()`.
+- Las funciones `SECURITY DEFINER` del esquema `mira` revisadas tienen `search_path` fijado.
+- Neon Auth: registro por correo y contraseña habilitado; confirmación de correo requerida con OTP; el registro público está habilitado y la aplicación exige aprobación del administrador después de confirmar el correo. La configuración indica que el restablecimiento de contraseña no revoca otras sesiones (`revoke_sessions_on_password_reset=false`) y que localhost está permitido. No se cambió ninguna opción de Neon Auth durante esta revisión.
+- La política de lectura de PQRS está limitada al propietario o al administrador; asignar Consulta en la matriz no amplía por sí solo la lectura de PQRS ajenas.
+
+## Próximas etapas sugeridas
+
+1. Cerrar Control Administrativo: aplicar los cambios pendientes de `user_profiles` y del trigger de activación, completar pruebas de navegador y CI.
+2. Cierre de servidor para Testigos temporalmente inactivo: bloquear también las rutas/API y el INSERT anónimo de `testigos_publicos`, sin borrar datos ni reconstruir todavía el módulo.
+3. Revisión de autorización efectiva: comprobar, módulo por módulo, que los permisos de la interfaz y las políticas RLS coincidan; reforzar `has_module_permission` para que respete el estado activo del catálogo.
+4. Blindaje de formularios públicos: validar límites, abuso automatizado, trazabilidad y retención de PQRS y reportes ciudadanos, manteniendo los formularios públicos que sí deben funcionar.
+5. Pruebas funcionales de los módulos operativos: Actividades/Asistencias, Concejal, InfoMIRA, Centro de Operaciones, Reportes y PQRS, incluyendo permisos de consulta/creación/edición/eliminación.
+6. Continuidad y privacidad de datos: respaldos, exportación controlada, recuperación, retención de datos personales y pruebas de restauración.
+7. Integración y publicación: actualizar esta rama desde `main` (actualmente está 13 commits por detrás), resolver conflictos, abrir PR, ejecutar CI, revisar y solo entonces integrar y desplegar Pages.
+
 ## Límites pendientes
 
 1. Autorizar o rechazar la migración ACL pendiente y la actualización del trigger de activación.
