@@ -115,6 +115,14 @@ El usuario autorizó ambos ajustes el 2026-11-09. Los cambios se aplicaron en la
 - Neon Auth: registro por correo y contraseña habilitado; confirmación de correo requerida con OTP; el registro público está habilitado y la aplicación exige aprobación del administrador después de confirmar el correo. La configuración indica que el restablecimiento de contraseña no revoca otras sesiones (`revoke_sessions_on_password_reset=false`) y que localhost está permitido. No se cambió ninguna opción de Neon Auth durante esta revisión.
 - La política de lectura de PQRS está limitada al propietario o al administrador; asignar Consulta en la matriz no amplía por sí solo la lectura de PQRS ajenas.
 
+## Limpieza de entorno de pruebas — 2026-11-09
+
+- Tras finalizar las pruebas, se eliminó la rama Neon temporal `qa-admin-control-2026-11-09` (`br-dark-heart-b79coo8b`), que contenía los perfiles ficticios y permisos de QA.
+- Se confirmó que la búsqueda de ramas por ese nombre ya no devuelve resultados.
+- Las ramas temporales de migración anteriores también fueron eliminadas por el proceso de finalización de cada migración.
+- La rama de producción `br-winter-night-b758ke2j` no se eliminó ni se cambió de nombre.
+- El código del proyecto permanece en `feat/landing-reportes-testigos-e14`; `main` no fue modificado y no hay publicación nueva de GitHub Pages.
+
 ## Próximas etapas sugeridas
 
 1. Cerrar Control Administrativo: completar pruebas de navegador y CI; los dos ajustes de base de datos ya están aplicados y verificados en producción.
