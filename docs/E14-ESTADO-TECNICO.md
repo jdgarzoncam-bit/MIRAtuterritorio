@@ -90,7 +90,7 @@ Solo se realizaron lecturas de repositorio, metadatos, esquema, RLS, trigger, fu
 
 - En `mira-data.js` se instaló un guard de cierre antes de solicitar tokens o llamar a red para listar/actualizar testigos, consultar archivos y ejecutar operaciones E-14 (consulta, carga y descarga).
 - Se añadió una suite Node de regresión en `tests/testigos-inactive.test.cjs`, que prueba que las siete operaciones fallan cerradas y que Actividades continúa consultando normalmente.
-- El workflow de validación se amplió para ejecutar la suite en cada push a `feat/landing-reportes-testigos-e14` y en pull requests hacia `main`. Aún no se cuenta con un resultado de CI concluido verificado.
+- El workflow de validación se amplió para ejecutar la suite en cada push a `feat/landing-reportes-testigos-e14` y en pull requests hacia `main`. GitHub Actions run #59 finalizó `success` sobre el HEAD `b646148cb8dd053fdceae9a2a182d179a272cb53`; ejecutó las comprobaciones `node --check` y `node --test tests/*.test.cjs`: https://github.com/jdgarzoncam-bit/MIRAtuterritorio/actions/runs/42718784604.
 
 ### Deployment antiguo e14secure
 
