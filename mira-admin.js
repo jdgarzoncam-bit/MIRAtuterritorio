@@ -26,7 +26,14 @@ function notice(message, error=false) {
 }
 function clearNotice(){const n=$("adminPermissionsNotice");if(n){n.textContent="";n.classList.add("hidden");}}
 function hasUsableModuleAccess(rows){
-  return Array.isArray(rows)&&rows.some(p=>p.allowed===true&&p.action_key==="view"&&p.module_key!=="testigos"&&p.module_key!=="control_administrativo");
+  const activeModules=new Set(modules.filter(module=>module.active===true).map(module=>module.module_key));
+  return Array.isArray(rows)&&rows.some(p=>
+    p.allowed===true &&
+    p.action_key==="view" &&
+    activeModules.has(p.module_key) &&
+    p.module_key!=="testigos" &&
+    p.module_key!=="control_administrativo"
+  );
 }
 const PRIMARY_ADMIN_AUTH_ID="beef5bf3-82a8-4c35-a12c-17771be59da1";
 function isAdmin(){const user=window.MIRA_CURRENT_USER;return user?.role==="admin"&&user?.authUserId===PRIMARY_ADMIN_AUTH_ID;}
@@ -117,7 +124,7 @@ function renderApprovalControls(user){
   const label=user.active?"Desaprobar cuenta":"Aprobar y habilitar cuenta";
   let hint;
   if(!user.email_verified)hint="La persona debe confirmar su correo electrónico antes de continuar.";
-  else if(!hasModuleAccess&&!user.active)hint="Asigna al menos un módulo con Consulta. Los demás permanecerán restringidos.";
+  else if(!hasModuleAccess&&!user.active)hint="Asigna al menos un módulo activo y disponible con permiso Consulta.";
   else if(user.active&&!hasModuleAccess)hint="La cuenta está activa, pero no tiene módulos autorizados. El ingreso permanece bloqueado.";
   else hint="Correo confirmado y módulos asignados. La cuenta puede habilitarse.";
   return '<section class="admin-approval-card"><div><strong>Estado y aprobación</strong><small>'+hint+'</small></div><label class="admin-role-picker"><span>Rol de la cuenta</span><select id="adminRoleSelect">'+options+'</select></label><button type="button" class="admin-approval-button" data-profile-approval="'+action+'" '+(!user.active&&!canApprove?"disabled":"")+'>'+label+'</button><button type="button" class="admin-approval-button admin-role-save" data-profile-approval="save-role">Guardar rol</button></section><div class="admin-approval-divider"></div>';
@@ -128,7 +135,7 @@ async function changeUserApproval(button){
  const activate=action==="activate";
  if(activate&&!target.email_verified){notice("No puedes activar una cuenta cuyo correo no está confirmado.",true);return;}
  const hasModuleAccess=hasUsableModuleAccess(permissionRows);
- if(activate&&!hasModuleAccess){notice("No puedes aprobar esta cuenta: asigna al menos un módulo con Consulta.",true);return;}
+ if(activate&&!hasModuleAccess){notice("No puedes aprobar esta cuenta: asigna al menos un módulo activo y disponible con Consulta.",true);return;}
  const nextActive=action==="save-role"?target.active:activate;
  const role=$("adminRoleSelect")?.value||target.role;button.disabled=true;
  try{
