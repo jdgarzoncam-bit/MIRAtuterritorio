@@ -25,6 +25,9 @@ function notice(message, error=false) {
   node.classList.add(error?"is-error":"is-success");
 }
 function clearNotice(){const n=$("adminPermissionsNotice");if(n){n.textContent="";n.classList.add("hidden");}}
+function hasUsableModuleAccess(rows){
+  return Array.isArray(rows)&&rows.some(p=>p.allowed===true&&p.action_key==="view"&&p.module_key!=="testigos"&&p.module_key!=="control_administrativo");
+}
 const PRIMARY_ADMIN_AUTH_ID="beef5bf3-82a8-4c35-a12c-17771be59da1";
 function isAdmin(){const user=window.MIRA_CURRENT_USER;return user?.role==="admin"&&user?.authUserId===PRIMARY_ADMIN_AUTH_ID;}
 function openPanel(){
@@ -108,7 +111,7 @@ async function selectUser(profileId){
 function renderApprovalControls(user){
   const roles=[["viewer","Consulta"],["operator","Operador"],["witness","Testigo"]];
   const options=roles.map(([value,label])=>'<option value="'+value+'" '+(user.role===value?"selected":"")+'>'+label+'</option>').join("");
-  const hasModuleAccess=permissionRows.some(p=>p.action_key==="view"&&p.allowed===true);
+  const hasModuleAccess=hasUsableModuleAccess(permissionRows);
   const canApprove=user.email_verified===true&&hasModuleAccess;
   const action=user.active?"suspend":"activate";
   const label=user.active?"Desaprobar cuenta":"Aprobar y habilitar cuenta";
@@ -124,7 +127,7 @@ async function changeUserApproval(button){
  const target={...selectedProfile},targetId=selectedProfile.id,action=button.dataset.profileApproval;
  const activate=action==="activate";
  if(activate&&!target.email_verified){notice("No puedes activar una cuenta cuyo correo no está confirmado.",true);return;}
- const hasModuleAccess=permissionRows.some(p=>p.action_key==="view"&&p.allowed===true);
+ const hasModuleAccess=hasUsableModuleAccess(permissionRows);
  if(activate&&!hasModuleAccess){notice("No puedes aprobar esta cuenta: asigna al menos un módulo con Consulta.",true);return;}
  const nextActive=action==="save-role"?target.active:activate;
  const role=$("adminRoleSelect")?.value||target.role;button.disabled=true;
