@@ -16,8 +16,13 @@ import { MIRA_DATA } from "./mira-data.js";
   const user=currentUser();
   if(!user||!["viewer","operator"].includes(user.role))return false;
   if(!MIRA_DATA?.listMyModulePermissions)return false;
-  const rows=await MIRA_DATA.listMyModulePermissions();
-  return Array.isArray(rows)&&rows.some(p=>p.module_key==="pqrs"&&p.action_key==="view"&&p.allowed===true);
+  try{
+   const rows=await MIRA_DATA.listMyModulePermissions();
+   return Array.isArray(rows)&&rows.some(p=>p.module_key==="pqrs"&&p.action_key==="view"&&p.allowed===true);
+  }catch(error){
+   console.warn("[MIRA PQRS] No fue posible consultar los permisos.",error);
+   return false;
+  }
  }
  async function syncAdminVisibility(){
   const version=++accessCheckVersion,item=$("dropdown-pqrs-admin");
