@@ -25,9 +25,14 @@ function notice(message, error=false) {
   node.classList.add(error?"is-error":"is-success");
 }
 function clearNotice(){const n=$("adminPermissionsNotice");if(n){n.textContent="";n.classList.add("hidden");}}
-function hasUsableModuleAccess(rows){
+function roleAllowsAction(role,action){
+  if(role==="operator")return ["view","create","edit"].includes(action);
+  if(role==="viewer")return action==="view";
+  return false;
+}
+function hasUsableModuleAccess(rows,role="operator"){
   const activeModules=new Set(modules.filter(module=>module.active===true).map(module=>module.module_key));
-  return Array.isArray(rows)&&rows.some(p=>
+  return roleAllowsAction(role,"view")&&Array.isArray(rows)&&rows.some(p=>
     p.allowed===true &&
     p.action_key==="view" &&
     activeModules.has(p.module_key) &&
@@ -39,7 +44,7 @@ function userApprovalStatus(user){
   const ownPermissions=allPermissionRows.filter(row=>row.user_profile_id===user.id);
   if(user.email_verified!==true)return {bucket:"pending",key:"email",label:"Correo sin confirmar"};
   if(user.active!==true)return {bucket:"pending",key:"inactive",label:"Cuenta inactiva · acceso bloqueado"};
-  if(!hasUsableModuleAccess(ownPermissions))return {bucket:"pending",key:"no_access",label:"Activo · sin acceso efectivo"};
+  if(!hasUsableModuleAccess(ownPermissions,user.role))return {bucket:"pending",key:"no_access",label:"Activo · sin acceso efectivo"};
   return {bucket:"approved",key:"approved",label:"Aprobado · acceso habilitado"};
 }
 const PRIMARY_ADMIN_AUTH_ID="beef5bf3-82a8-4c35-a12c-17771be59da1";
@@ -125,9 +130,10 @@ async function selectUser(profileId){
  }
 }
 function renderApprovalControls(user){
-  const roles=[["viewer","Consulta"],["operator","Operador"],["witness","Testigo"]];
+  const roles=[["viewer","Consulta"],["operator","Operador"]];
+  if(user.role==="witness")roles.push(["witness","Testigo (reservado; no asignable)"]);
   const options=roles.map(([value,label])=>'<option value="'+value+'" '+(user.role===value?"selected":"")+'>'+label+'</option>').join("");
-  const hasModuleAccess=hasUsableModuleAccess(permissionRows);
+  const hasModuleAccess=hasUsableModuleAccess(permissionRows,user.role);
   const canApprove=user.email_verified===true&&hasModuleAccess;
   const action=user.active?"suspend":"activate";
   const label=user.active?"Desaprobar cuenta":"Aprobar y habilitar cuenta";
@@ -143,10 +149,12 @@ async function changeUserApproval(button){
  const target={...selectedProfile},targetId=selectedProfile.id,action=button.dataset.profileApproval;
  const activate=action==="activate";
  if(activate&&!target.email_verified){notice("No puedes activar una cuenta cuyo correo no está confirmado.",true);return;}
- const hasModuleAccess=hasUsableModuleAccess(permissionRows);
+ const hasModuleAccess=hasUsableModuleAccess(permissionRows,target.role);
  if(activate&&!hasModuleAccess){notice("No puedes aprobar esta cuenta: asigna al menos un módulo activo y disponible con Consulta.",true);return;}
  const nextActive=action==="save-role"?target.active:activate;
- const role=$("adminRoleSelect")?.value||target.role;button.disabled=true;
+ const role=$("adminRoleSelect")?.value||target.role;
+ if(!["viewer","operator"].includes(role)&&role!==target.role){notice("El rol Testigo está reservado y no se puede asignar.",true);return;}
+ button.disabled=true;
  try{
   const updated=await window.MIRA_DATA.updateUserProfile(targetId,{active:nextActive,role});
   const row=Array.isArray(updated)?updated[0]:null;
@@ -156,7 +164,7 @@ async function changeUserApproval(button){
    selectedProfile=merged;
    $("adminSelectedUser").innerHTML='<strong>'+escapeHtml(merged.display_name||merged.email||"Usuario")+'</strong><span>'+escapeHtml(merged.email||"")+' · '+escapeHtml(userApprovalStatus(merged).label)+'</span>';
    renderUsers();renderMatrix();
-   notice(action==="save-role"?"Rol actualizado. Los permisos de los módulos se conservan.":activate?"Cuenta aprobada y habilitada con los módulos autorizados.":"Cuenta desaprobada. Sus permisos se conservan, pero el acceso queda bloqueado.");
+   notice(action==="save-role"?"Rol guardado. Se conservan los permisos existentes; el rol limita las acciones efectivas.":activate?"Cuenta aprobada y habilitada con los módulos autorizados.":"Cuenta desaprobada. Sus permisos se conservan, pero el acceso queda bloqueado.");
   }
  }catch(error){if(selectedProfile?.id===targetId)notice(error.message||"No fue posible actualizar el estado de la cuenta.",true);}
  finally{if(button.isConnected)button.disabled=false;}
@@ -169,15 +177,19 @@ function renderMatrix(){
   const actions=MODULE_ACTIONS[m.module_key]||[["view","Consulta"]];
   const controls=actions.map(([key,label])=>{
    const checked=allowed.has(m.module_key+"::"+key);
-   return '<label class="admin-action-check"><input type="checkbox" data-module="'+escapeHtml(m.module_key)+'" data-action="'+escapeHtml(key)+'" '+(checked?"checked":"")+'><span>'+escapeHtml(label)+'</span></label>';
+   const effective=roleAllowsAction(selectedProfile?.role,key);
+   const disabled=effective?"":"disabled";
+   const suffix=effective?"":'<small class="admin-role-restriction">No permitido por el rol</small>';
+   return '<label class="admin-action-check"><input type="checkbox" data-module="'+escapeHtml(m.module_key)+'" data-action="'+escapeHtml(key)+'" '+(checked?"checked ":"")+disabled+'><span>'+escapeHtml(label)+'</span>'+suffix+'</label>';
   }).join("");
-  const activeCount=actions.filter(([key])=>allowed.has(m.module_key+"::"+key)).length;
+  const activeCount=actions.filter(([key])=>allowed.has(m.module_key+"::"+key)&&roleAllowsAction(selectedProfile?.role,key)).length;
   return '<article class="admin-module-permission"><div class="admin-module-permission-title"><strong>'+escapeHtml(m.module_name)+'</strong><small>'+escapeHtml(m.description||"Permisos del módulo")+'</small><small class="admin-permission-summary">'+activeCount+' de '+actions.length+' acciones habilitadas</small></div><div class="admin-module-access-control"><div class="admin-action-checks">'+controls+'</div></div></article>';
  }).join("")||'<p class="admin-permissions-empty">No hay módulos configurados.</p>';
 }
 async function changePermission(input){
  if(!isAdmin()||!selectedProfile||selectedProfile.role==="admin")return;
  const targetProfileId=selectedProfile.id,moduleKey=input.dataset.module,actionKey=input.dataset.action,nextValue=input.checked;
+ if(!roleAllowsAction(selectedProfile.role,actionKey)){input.checked=!nextValue;notice("El rol "+(selectedProfile.role==="viewer"?"Consulta":"actual")+" no permite esta acción. Cambia el rol para habilitarla.",true);return;}
  input.disabled=true;
  try{
   const saved=await window.MIRA_DATA.setModulePermission(targetProfileId,moduleKey,actionKey,nextValue);
