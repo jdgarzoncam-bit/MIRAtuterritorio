@@ -5,6 +5,7 @@
 - Repositorio: `jdgarzoncam-bit/MIRAtuterritorio`.
 - Rama de trabajo: `feat/landing-reportes-testigos-e14`.
 - Base de datos: Neon project `soft-bar-53270058`, branch de producción `br-winter-night-b758ke2j`, database `neondb`.
+- Auditoría general de seguridad, permisos, datos y funcionamiento: [AUDITORIA-TRANSVERSAL-2026-11-10.md](./AUDITORIA-TRANSVERSAL-2026-11-10.md).
 - No se integró la rama a `main`, no se creó pull request y no se publicó GitHub Pages.
 - Testigos y Auditoría E-14 continúan temporalmente inactivos. El 2026-11-10 se aplicó en producción el bloqueo de servidor: `testigos.active=false`, `has_module_permission()` deniega Testigos incluso al administrador y se revocó INSERT anónimo en `mira.testigos_publicos`.
 
@@ -166,6 +167,7 @@ El usuario autorizó ambos ajustes el 2026-11-09. Los cambios se aplicaron en la
 ## Límites pendientes
 
 1. Probar visualmente la interfaz en escritorio y móvil, incluidos estados vacíos, errores de red, actualización del historial y cambio rápido entre usuarios.
-2. Ejecutar CI mediante un pull request de validación antes de cualquier integración.
-3. Verificar los flujos en la aplicación desplegada después de integrar a `main`; esta rama no se ha desplegado.
-4. No declarar Control Administrativo completamente certificado hasta completar las pruebas de navegador y el flujo real de inicio de sesión.
+2. Verificar el flujo real de inicio de sesión, aprobación, suspensión, cambio de rol y matriz de permisos con cuentas de prueba controladas.
+3. Ejecutar CI mediante un pull request de validación antes de cualquier integración.
+4. Verificar los flujos en la aplicación desplegada después de integrar a `main`; esta rama no se ha desplegado.
+5. No declarar Control Administrativo completamente certificado hasta completar pruebas de navegador y de identidad real.
