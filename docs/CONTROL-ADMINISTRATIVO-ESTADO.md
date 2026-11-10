@@ -210,3 +210,36 @@ Las plantillas deben servir para aplicar un conjunto inicial de permisos al crea
 3. Ejecutar CI mediante un pull request de validación antes de cualquier integración.
 4. Verificar los flujos en la aplicación desplegada después de integrar a `main`; esta rama no se ha desplegado.
 5. No declarar Control Administrativo completamente certificado hasta completar pruebas de navegador y de identidad real.
+
+
+
+## Modelo funcional de roles — implementación en rama y validación QA 2026-11-10
+
+El usuario autorizó implementar el modelo de roles y pidió que pueda retirarse si no resulta útil. Los cambios se trabajan primero en `feat/landing-reportes-testigos-e14` y se validan en la rama Neon aislada `qa-role-capabilities-2026-11-10` (`br-wild-surf-b74rsbpz`), derivada de producción. No se aplicó esta lógica a producción ni se cambió `main`.
+
+### Capacidades efectivas
+- `viewer` (Consulta): solo `view`.
+- `operator` (Operador): `view`, `create`, `edit`; no `delete`, `export` ni `manage`.
+- `witness`: reservado; no se puede asignar mientras Testigos/E-14 siga inactivo. Un perfil histórico con ese rol no obtiene acceso a módulos operativos.
+- `admin`: reservado a la cuenta principal identificada por `beef5bf3-82a8-4c35-a12c-17771be59da1`.
+
+Los permisos por módulo siguen siendo necesarios: el rol no concede automáticamente acceso a todos los módulos. Centro de Operaciones conserva solo Consulta. Los permisos guardados fuera del límite del rol no se borran; permanecen almacenados, pero no son efectivos. La interfaz deshabilita las acciones que el rol no permite y lo explica al administrador. Cambiar de rol no elimina personalizaciones.
+
+### Botón Guardar rol
+El botón existente `Guardar rol` utiliza `updateUserProfile` para persistir `role` en `mira.user_profiles`, valida la fila devuelta por Neon y actualiza el panel solo después de recibir confirmación. Los roles asignables desde la interfaz son Consulta y Operador. Testigo se muestra solo si existe un perfil histórico con ese valor, y permanece deshabilitado.
+
+### Protección PostgreSQL probada en QA
+- `mira.has_module_permission` ahora aplica el límite del rol además del permiso individual, estado activo/verificado del perfil y catálogo activo del módulo; conserva el bloqueo absoluto de Testigos y el bypass exclusivo del administrador principal.
+- El trigger `user_profiles_role_model_guard` impide asignar `admin` a otra cuenta y bloquea nuevas asignaciones de `witness`.
+- Se ajustó el gate de activación para que la comprobación de correo y permiso se ejecute al crear/activar una cuenta, no al guardar cambios de rol con `active=true` sin transición de estado. La aprobación sigue exigiendo correo confirmado y al menos un permiso Consulta efectivo de un módulo activo.
+- Pruebas con JWT simulado en la rama QA: para `viewer`, `view=true`, `create=false`, `delete=false` incluso con permiso create almacenado; para `operator`, `view=true`, `create=true` cuando el permiso individual está concedido, `edit=false` sin permiso individual, `delete=false`, y Testigos siempre false.
+- La rama QA se creó a partir de producción y contiene únicamente pruebas aisladas. No se ha limpiado todavía; eliminarla al terminar la validación completa.
+
+### Reversibilidad
+La reversión se hará en una migración versionada que restaure la definición anterior de `mira.has_module_permission`, retire el trigger `user_profiles_role_model_guard` y restaure la función anterior de activación. Los valores de `role` y los permisos individuales no se borran ni se convierten automáticamente. En el cliente, revertir los cambios de `mira-admin.js`, `mira-data.js` y sus versiones de caché. No se debe revertir directamente en producción sin autorización expresa.
+
+### Pendiente antes de producción
+- Completar pruebas de Guardar rol desde interfaz real, aprobación, suspensión y permisos con cuentas controladas.
+- Revisar las políticas RLS de cada módulo para confirmar que todas invocan `mira.has_module_permission` donde corresponda.
+- Revisar las columnas/grants de `user_profiles`: el grant UPDATE actual cubre todas las columnas; reducirlo a `active` y `role` en una migración separada después de validar PostgREST.
+- No aplicar aún esta migración a producción ni publicar el código hasta superar QA y sincronizar la rama con `main`.
