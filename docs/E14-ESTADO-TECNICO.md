@@ -1,5 +1,7 @@
 # Estado técnico E-14 — revisión 2026-11-05
 
+> Informe general actualizado: [Auditoría transversal del 2026-11-10](./AUDITORIA-TRANSVERSAL-2026-11-10.md).
+
 ## Hallazgos verificados
 
 - Rama revisada: `feat/landing-reportes-testigos-e14`.
