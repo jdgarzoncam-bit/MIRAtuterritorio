@@ -64,7 +64,8 @@ test("Guardar rol usa la actualización de perfil y valida la respuesta de Neon"
 });
 
 test("la matriz deshabilita acciones fuera del límite del rol y no borra permisos existentes", () => {
-  assert.match(adminSource, /const effective=roleAllowsAction\(selectedProfile\?\.role,key\)/);
+  assert.match(adminSource, /const roleAllowed=roleAllowsAction\(selectedProfile\?\.role,key\)/);
+  assert.match(adminSource, /const effective=roleAllowed&&\(key==="view"\|\|hasView\)/);
   assert.match(adminSource, /const disabled=effective\?"":"disabled"/);
   assert.match(adminSource, /Los permisos guardados se conservan/);
 });
