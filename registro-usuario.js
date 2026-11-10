@@ -1,5 +1,5 @@
 import {createAuthClient} from "https://esm.sh/@neondatabase/auth@0.7.0-beta";
-const AUTH_URL="https://ep-round-dawn-b7l3ya3h.neonauth.c-13.us-east-1.aws.neon.tech/neondb/auth";
+const AUTH_URL="https://ep-mute-grass-b7qan4n6.neonauth.c-13.us-east-1.aws.neon.tech/neondb/auth";
 const auth=createAuthClient(AUTH_URL);
 const form=document.getElementById("signupForm");
 const status=document.getElementById("status");
