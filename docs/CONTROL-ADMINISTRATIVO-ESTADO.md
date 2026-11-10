@@ -254,3 +254,17 @@ La reversión se hará en una migración versionada que restaure la definición 
 
 ### Regla adicional de acceso efectivo por módulo
 Las acciones `create` y `edit` requieren también que el mismo usuario tenga `view=true` en ese mismo módulo. Esta condición se aplica en PostgreSQL dentro de `mira.has_module_permission` y se refleja en la matriz: las casillas de escritura permanecen bloqueadas hasta asignar Consulta. Prueba QA: al retirar temporalmente `actividades:view` al perfil de prueba Operador, `actividades:create` devolvió false aunque su permiso create permanecía permitido; al restaurar view, la prueba de create volvió a permitir el acceso si la asignación individual estaba activa.
+
+
+## Actualización 2026-11-10 — consulta delegada de PQRS
+
+- Se implementó en la rama de trabajo la habilitación de la bandeja PQRS para perfiles `viewer` u `operator` que tengan expresamente `pqrs:view=true`.
+- La cuenta administradora principal conserva acceso completo a la bandeja y la gestión de estados.
+- La interfaz delegada muestra las solicitudes y sus filtros en modo de solo lectura; no presenta controles de cambio de estado.
+- `MIRA_DATA.updatePQRS()` incorpora una comprobación adicional de cliente que reserva la modificación a la cuenta administradora principal. Esta comprobación complementa, pero no sustituye, RLS.
+- Se añadió la migración `migrations/20261110_pqrs_delegated_readonly.sql`: reemplaza únicamente la política SELECT de PQRS para incluir `mira.has_module_permission('pqrs','view')`. Las políticas `pqrs_admin_update` y `pqrs_admin_delete` permanecen reservadas a `mira.is_active_admin()`.
+- QA Neon: se aplicó la política en `br-wild-surf-b74rsbpz`. Con un JWT de usuario viewer con `pqrs:view`, la fila de prueba fue visible (1 fila). Sin ese permiso, la misma fila no fue visible (0 filas). El UPDATE delegado devolvió cero filas; el administrador principal sí pudo actualizar el estado y eliminar los registros temporales de prueba. No se modificaron datos persistentes de PQRS.
+- Se agregó `tests/pqrs-delegated-readonly.test.cjs` para comprobar la correspondencia entre interfaz, capa de datos, matriz y migración.
+- Se actualizó el texto de la bandeja para diferenciar consulta y gestión administrativa y se agregaron estilos para el indicador de solo lectura.
+- Se añadieron comprobaciones de sintaxis de `pqrs.js` y `reportes.js` al workflow de validación.
+- **No se aplicó la migración a producción ni se integró la rama en `main`.** La aplicación en producción requiere una revisión final de la migración, pruebas completas y autorización específica.
