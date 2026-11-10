@@ -188,6 +188,8 @@ export const MIRA_DATA = {
     return miraRequest("pqrs",{method:"POST",anonymous:true,prefer:"return=minimal",body:{tipo:payload.tipo,modulo_key:payload.modulo_key,asunto:payload.asunto.trim(),descripcion:payload.descripcion.trim()}});
   },
   updatePQRS(id,payload) {
+    const user=window.MIRA_CURRENT_USER;
+    if(user?.role!=="admin"||user?.authUserId!=="beef5bf3-82a8-4c35-a12c-17771be59da1") throw new Error("La consulta delegada de PQRS es de solo lectura. No tienes autorización para modificar solicitudes.");
     const allowed={}; if(["recibida","en_revision","respondida","cerrada"].includes(payload.estado)) allowed.estado=payload.estado;
     if(!Object.keys(allowed).length) throw new Error("No hay cambios válidos para guardar.");
     return miraRequest("pqrs",{method:"PATCH",query:qs({id:"eq."+id}),body:{...allowed,updated_at:new Date().toISOString()}});
