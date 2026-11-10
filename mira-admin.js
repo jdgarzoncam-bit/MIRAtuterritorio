@@ -153,7 +153,7 @@ async function changeUserApproval(button){
  if(activate&&!hasModuleAccess){notice("No puedes aprobar esta cuenta: asigna al menos un módulo activo y disponible con Consulta.",true);return;}
  const nextActive=action==="save-role"?target.active:activate;
  const role=$("adminRoleSelect")?.value||target.role;
- if(!["viewer","operator"].includes(role)&&role!==target.role){notice("El rol Testigo está reservado y no se puede asignar.",true);return;}
+ if(!["viewer","operator"].includes(role)){notice("El rol Testigo está reservado. Selecciona Consulta u Operador para reemplazarlo.",true);return;}
  button.disabled=true;
  try{
   const updated=await window.MIRA_DATA.updateUserProfile(targetId,{active:nextActive,role});
