@@ -6,6 +6,7 @@
 - Rama de trabajo: `feat/landing-reportes-testigos-e14`.
 - Base de datos: Neon project `soft-bar-53270058`, branch de producción `br-winter-night-b758ke2j`, database `neondb`.
 - Auditoría general de seguridad, permisos, datos y funcionamiento: [AUDITORIA-TRANSVERSAL-2026-11-10.md](./AUDITORIA-TRANSVERSAL-2026-11-10.md).
+- Auditoría específica del panel y permisos de Control Administrativo: [CONTROL-ADMINISTRATIVO-AUDITORIA-2026-11-10.md](./CONTROL-ADMINISTRATIVO-AUDITORIA-2026-11-10.md).
 - No se integró la rama a `main`, no se creó pull request y no se publicó GitHub Pages.
 - Testigos y Auditoría E-14 continúan temporalmente inactivos. El 2026-11-10 se aplicó en producción el bloqueo de servidor: `testigos.active=false`, `has_module_permission()` deniega Testigos incluso al administrador y se revocó INSERT anónimo en `mira.testigos_publicos`.
 
