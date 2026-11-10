@@ -37,3 +37,11 @@ test("RLS concede SELECT granular y mantiene UPDATE/DELETE reservados al adminis
 test("la matriz ofrece PQRS únicamente como permiso de consulta", () => {
   assert.match(adminSource, /pqrs:\[\["view","Consulta"\]\]/);
 });
+
+test("el formulario público envía todas las PQRS a la bandeja única sin pedir módulo", () => {
+  const indexSource = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
+  assert.doesNotMatch(indexSource, /id="pqrsModule"/);
+  assert.match(indexSource, /Canal único de atención/);
+  assert.match(pqrsSource, /modulo_key:"pqrs"/);
+  assert.match(dataSource, /body:\{tipo:payload\.tipo,modulo_key:"pqrs",asunto:payload\.asunto\.trim\(\),descripcion:payload\.descripcion\.trim\(\)\}/);
+});
