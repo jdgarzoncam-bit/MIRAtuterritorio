@@ -251,3 +251,6 @@ La reversión se hará en una migración versionada que restaure la definición 
 - Se probó el límite de privilegios SQL por columna: authenticated conserva UPDATE únicamente sobre `active` y `role`, sin UPDATE sobre `email` ni `email_verified`.
 - Se simuló el JWT de la cuenta administradora principal y se ejecutó `SET LOCAL ROLE authenticated` dentro de una transacción en QA. El UPDATE de `user_profiles.role` devolvió la fila esperada (`operator`), confirmando en conjunto RLS, el trigger de rol y el privilegio UPDATE limitado a columnas.
 - Las pruebas de navegador y CI del nuevo commit siguen pendientes de confirmación; el flujo no se considera certificado todavía.
+
+### Regla adicional de acceso efectivo por módulo
+Las acciones `create` y `edit` requieren también que el mismo usuario tenga `view=true` en ese mismo módulo. Esta condición se aplica en PostgreSQL dentro de `mira.has_module_permission` y se refleja en la matriz: las casillas de escritura permanecen bloqueadas hasta asignar Consulta. Prueba QA: al retirar temporalmente `actividades:view` al perfil de prueba Operador, `actividades:create` devolvió false aunque su permiso create permanecía permitido; al restaurar view, la prueba de create volvió a permitir el acceso si la asignación individual estaba activa.
