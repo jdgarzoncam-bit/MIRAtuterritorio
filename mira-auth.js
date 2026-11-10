@@ -52,7 +52,7 @@ async function establishAuthenticatedUser(authUser) {
   const profile=await getOwnProfile(token,authUser.id);
   if(!profile || profile.auth_user_id!==authUser.id) throw new Error("La identidad de la cuenta no coincide con su perfil. El acceso fue bloqueado.");
   if(profile.role==="admin" && profile.auth_user_id!==PRIMARY_ADMIN_AUTH_ID) throw new Error("La cuenta administradora no corresponde al administrador principal autorizado.");
-  if(profile.active!==true || profile.email_verified!==true || !["admin","operator","viewer","witness"].includes(profile.role)) {
+  if(profile.active!==true || profile.email_verified!==true || !["admin","operator","viewer"].includes(profile.role)) {
     throw new Error("Tu cuenta todavía no está aprobada. Solicita al administrador que habilite tu perfil.");
   }
   let permissions=[];
