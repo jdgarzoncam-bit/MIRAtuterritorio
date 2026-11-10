@@ -268,3 +268,11 @@ Las acciones `create` y `edit` requieren también que el mismo usuario tenga `vi
 - Se actualizó el texto de la bandeja para diferenciar consulta y gestión administrativa y se agregaron estilos para el indicador de solo lectura.
 - Se añadieron comprobaciones de sintaxis de `pqrs.js` y `reportes.js` al workflow de validación.
 - **No se aplicó la migración a producción ni se integró la rama en `main`.** La aplicación en producción requiere una revisión final de la migración, pruebas completas y autorización específica.
+
+
+### Protección del último acceso de consulta — migración en revisión
+- Se preparó `migrations/20261110_guard_last_view_permission.sql` con triggers para impedir retirar el último permiso `view` de una cuenta activa y para impedir desactivar un módulo si deja cuentas activas sin otro módulo de consulta.
+- La migración está versionada y cuenta con pruebas estáticas; **todavía no se ha aplicado ni validado en Neon QA**. La ejecución de DDL de triggers fue bloqueada por los controles de seguridad de la herramienta. No se intentó ejecutar en producción ni se buscó eludir ese bloqueo.
+- La clasificación de interfaz ya separa `Activo · sin acceso efectivo` de `Aprobado · acceso habilitado`, y ubica el primer caso en la pestaña `Pendientes / sin acceso`. La base de datos aún permite que existan perfiles históricos activos sin permiso view; deben corregirse individualmente desde el panel, sin cambios masivos ni suspensión automática.
+- El workflow de GitHub Actions #109 (commit `dda1db75d82fa8cb99545c309cb08df1f3203691`) finalizó correctamente: sintaxis y 28 pruebas, 28 aprobadas y 0 fallidas. Incluye las pruebas de PQRS delegada y de la migración de protección como validación estática, no como ejecución real del SQL.
+- La prueba visual en navegador sigue pendiente. Las verificaciones funcionales de PQRS delegada se hicieron en Neon QA mediante JWT simulado y RLS, no mediante clics en la interfaz.
