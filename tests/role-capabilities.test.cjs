@@ -82,3 +82,8 @@ test("Guardar rol exige seleccionar un rol asignable y evita falso éxito con Te
   assert.match(adminSource, /if\(!\["viewer","operator"\]\.includes\(role\)\)/);
   assert.match(adminSource, /El rol Testigo está reservado/);
 });
+
+test("la matriz exige permiso Consulta antes de habilitar acciones de escritura", () => {
+  assert.match(adminSource, /const hasView=allowed\.has\(m\.module_key\+"::view"\)/);
+  assert.match(adminSource, /roleAllowed\?"Requiere permiso Consulta":"No permitido por el rol"/);
+});
