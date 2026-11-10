@@ -255,7 +255,8 @@ const MODULE_TARGETS = {
   centro_operaciones:["dropdown-puestos","dropdown-barrios-puestos"],
   actividades:["dropdown-actividades"],
   concejal:["dropdown-concejal"],
-  pqrs:["dropdown-pqrs-admin"]
+  pqrs:["dropdown-pqrs-admin"],
+  reportes:["dropdown-reportes-operativos"]
 };
 function setModuleRestricted(element,restricted){
   if(!element)return;
