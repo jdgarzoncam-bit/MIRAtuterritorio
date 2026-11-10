@@ -5842,3 +5842,21 @@ input, select, textarea, button { max-width: 100%; }
 .admin-action-check:has(input:disabled){cursor:not-allowed;opacity:.72}
 .admin-approval-button.admin-role-save{background:rgba(42,116,151,.18);border-color:rgba(89,177,211,.35);color:#bfeaff}
 .admin-approval-button.admin-role-save:hover{background:rgba(42,116,151,.3)}
+
+/* Reportes Operativos · bandeja de consulta delegada */
+.operational-reports-content{display:flex;flex-direction:column;gap:12px}
+.operational-reports-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.operational-reports-heading>div{display:flex;flex-direction:column;gap:4px}
+.operational-reports-heading strong{font-size:.9rem;color:var(--text-main)}
+.operational-reports-heading small,.operational-reports-summary span{font-size:.74rem;color:var(--text-muted)}
+.operational-reports-filters{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(150px,1fr);gap:10px}
+.operational-reports-filters label{display:flex;flex-direction:column;gap:5px;font-size:.76rem;color:var(--text-muted)}
+.operational-reports-filters input,.operational-reports-filters select{width:100%;min-width:0;box-sizing:border-box;padding:9px 10px;border:1px solid var(--neo-border-subtle);border-radius:9px;background:var(--neo-surface-pressed);color:var(--text-main)}
+.operational-reports-summary{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;padding:8px 10px;border-radius:9px;background:var(--neo-surface-pressed)}
+.operational-report-card{margin-bottom:10px}
+.operational-report-meta{display:flex;gap:14px;flex-wrap:wrap;margin:8px 0;color:var(--text-muted);font-size:.78rem}
+.operational-report-readonly{display:inline-block;margin-top:6px;color:var(--text-muted);font-size:.72rem;font-weight:700}
+#operationalReportsNotice{padding:9px 11px;border:1px solid var(--neo-border-subtle);border-radius:9px;font-size:.78rem}
+#operationalReportsNotice.is-error{border-color:rgba(248,113,113,.5);color:#f87171}
+#operationalReportsNotice.is-success{border-color:rgba(45,212,191,.35);color:var(--text-muted)}
+@media(max-width:560px){.operational-reports-filters{grid-template-columns:1fr}.operational-reports-heading{align-items:flex-start}}
