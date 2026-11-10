@@ -6,7 +6,7 @@
 - Rama de trabajo: `feat/landing-reportes-testigos-e14`.
 - Base de datos: Neon project `soft-bar-53270058`, branch de producción `br-winter-night-b758ke2j`, database `neondb`.
 - No se integró la rama a `main`, no se creó pull request y no se publicó GitHub Pages.
-- Testigos y Auditoría E-14 continúan temporalmente bloqueados. No se modificaron sus políticas, grants ni datos de producción.
+- Testigos y Auditoría E-14 continúan temporalmente inactivos. El 2026-11-10 se aplicó en producción el bloqueo de servidor: `testigos.active=false`, `has_module_permission()` deniega Testigos incluso al administrador y se revocó INSERT anónimo en `mira.testigos_publicos`.
 
 ## Diagnóstico de seguridad existente
 
@@ -42,7 +42,7 @@ Se inspeccionaron las políticas RLS, ACL, funciones y triggers de `mira.user_pr
 
 - Los workflows de validación y publicación incluyen ahora `node --check mira-admin.js` junto con las comprobaciones que ya existían.
 - La sintaxis de `mira-admin.js`, `mira-auth.js` y `mira-data.js` se comprobó mediante análisis sintáctico V8. Para esta comprobación se retiraron únicamente las declaraciones `import`/`export` al compilar el texto, sin ejecutar el código.
-- No se ha realizado todavía una prueba funcional visual en navegador ni una ejecución CI del HEAD actual. El workflow de validación se dispara en pull requests a `main`, y el de Pages en `main`; no se creó PR ni se publicó esta rama.
+- No se ha realizado todavía una prueba funcional visual en navegador ni un flujo real de aprobación de cuentas desde la interfaz. GitHub Actions run #61 finalizó correctamente (`success`) en el commit `a3d6d0d962e70ba15b41a9536ff19c5a89d9eab7`, ejecutando sintaxis y pruebas `node --test tests/*.test.cjs`.
 - La sintaxis de `app.js`, `mira-data.js`, `mira-auth.js` y `mira-admin.js` se validó estáticamente con V8 después de los últimos cambios.
 
 ## Migración de protección del historial — aplicada en producción
@@ -108,7 +108,7 @@ El usuario autorizó ambos ajustes el 2026-11-09. Los cambios se aplicaron en la
 
 - Se inspeccionaron las 16 tablas base del esquema `mira`: las 16 tienen RLS habilitada.
 - Ninguna tabla concede SELECT al rol `anonymous`.
-- Las inserciones anónimas detectadas están limitadas a flujos públicos: `pqrs`, `reportes_ciudadanos`, `reportes_operativos` y `testigos_publicos`. La tabla `testigos_publicos` mantiene actualmente INSERT anónimo, aunque sus pantallas web están temporalmente desactivadas. Por tanto, su desactivación aún no es un bloqueo completo del lado del servidor.
+- Las inserciones anónimas se mantienen únicamente para flujos públicos: `pqrs`, `reportes_ciudadanos` y `reportes_operativos`. El INSERT anónimo en `testigos_publicos` fue revocado el 2026-11-10 y su política `witnesses_public_insert` fue eliminada.
 - Las tablas de Actividades, Asistencias, Concejal, Personas e InfoMIRA conceden privilegios SQL de escritura a `authenticated`, pero sus políticas RLS invocan `mira.has_module_permission` con las acciones correspondientes. La cuenta autenticada no obtiene acceso efectivo solo por tener el GRANT.
 - Las tablas `module_catalog` y `module_permissions` tienen grants de escritura para `authenticated`, pero sus políticas de escritura requieren `mira.is_active_admin()`.
 - Las funciones `SECURITY DEFINER` del esquema `mira` revisadas tienen `search_path` fijado.
@@ -123,9 +123,9 @@ El usuario autorizó ambos ajustes el 2026-11-09. Los cambios se aplicaron en la
 - La rama de producción `br-winter-night-b758ke2j` no se eliminó ni se cambió de nombre.
 - El código del proyecto permanece en `feat/landing-reportes-testigos-e14`; `main` no fue modificado y no hay publicación nueva de GitHub Pages.
 
-## Bloqueo reforzado de Testigos y permisos por módulo — 2026-11-09
+## Bloqueo reforzado de Testigos y permisos por módulo — aplicado en producción 2026-11-10
 
-### Migración preparada y probada en rama temporal; pendiente de aplicar en producción
+### Migración preparada, probada y aplicada
 
 - Migration ID: `ac69dbd6-3cf5-4cc5-82aa-d3d01764d4a7`.
 - Rama temporal de validación: `br-dry-snow-b704rkb5`; rama padre: producción `br-winter-night-b758ke2j`.
@@ -134,7 +134,7 @@ El usuario autorizó ambos ajustes el 2026-11-09. Los cambios se aplicaron en la
 - Pruebas en la rama temporal: `testigos.active=false`; privilegio INSERT anónimo=false; política pública ausente; permisos de Testigos false sin identidad y también con el JWT simulado del administrador principal; Actividades y Control Administrativo siguen habilitados para el administrador; Logística (inactivo) y acciones no permitidas devuelven false.
 - Se confirmó que la función mantiene `SECURITY DEFINER` y `search_path=pg_catalog,mira,auth`.
 - El resultado de prueba conserva 0 filas tanto en `mira.testigos_publicos` como en `mira.evidencias_e14`. No se insertaron registros de prueba.
-- **Producción aún no se ha modificado con esta migración.** La aplicación de `ac69dbd6-3cf5-4cc5-82aa-d3d01764d4a7` queda pendiente de aprobación expresa.
+- **Aplicación en producción confirmada el 2026-11-10.** Migration ID `ac69dbd6-3cf5-4cc5-82aa-d3d01764d4a7`; Neon confirmó que la migración se aplicó a `br-winter-night-b758ke2j` y eliminó la rama temporal `br-dry-snow-b704rkb5`.
 
 ### Servicio E-14 antiguo identificado
 
@@ -154,13 +154,13 @@ El usuario autorizó ambos ajustes el 2026-11-09. Los cambios se aplicaron en la
 
 ## Próximas etapas sugeridas
 
-1. Aplicar en producción la migración preparada y probada `ac69dbd6-3cf5-4cc5-82aa-d3d01764d4a7`, previa aprobación expresa.
-2. Resolver el deployment `e14secure` de la rama antigua `br-lucky-boat-b70mmt53`: decidir si se elimina solo la función o también la rama completa, después de valorar que la rama contiene una copia de base de datos.
-3. Completar las pruebas de Control Administrativo en navegador: aprobación, suspensión, cambio de rol, asignación/retirada de permisos, historial y cambios rápidos de usuario. Después verificar el inicio de sesión real.
-4. Confirmar CI en GitHub Actions; el workflow ya incorpora pruebas de seguridad del cliente y sintaxis.
-5. Probar los módulos operativos: Actividades/Asistencias, Concejal, InfoMIRA, Centro de Operaciones, Reportes y PQRS, incluidos sus permisos y límites.
-6. Completar respaldos, exportación controlada, recuperación, retención de datos personales y prueba de restauración.
-7. Sincronizar esta rama con `main` (la comparación actual indica 13 commits por detrás y 36 por delante), resolver conflictos y abrir un PR revisable. Integrar y publicar Pages únicamente después de CI y validación.
+1. Corregir el alta/actualización de personas para generar `cedula_normalizada` y reforzar esa regla también en PostgreSQL; probar búsquedas y deduplicación en Actividades.
+2. Limitar el portal de Actividades a eventos `activa` y bloquear en servidor la asistencia a actividades finalizadas o canceladas.
+3. Resolver el flujo de reportes: conectar `reportes_operativos` a una bandeja interna o unificarlo de forma controlada con `reportes_ciudadanos`; aclarar el permiso `reportes` en la matriz.
+4. Completar pruebas de Control Administrativo en navegador e inicio de sesión real: aprobación, suspensión, cambio de rol, matriz de permisos, historial y cambios rápidos de usuario.
+5. Resolver inconsistencias entre matriz y RLS para Reportes y PQRS; añadir control de abuso para los formularios públicos y auditoría de cambios al catálogo de módulos.
+6. Revisar calidad de datos del directorio InfoMIRA, contratos de almacenamiento y permisos por módulo; no eliminar ni fusionar registros hasta reconciliar el origen.
+7. Revisar `e14secure` en la rama antigua `br-lucky-boat-b70mmt53` y decidir la limpieza menos destructiva. Después, probar respaldos/restauración y sincronizar la rama con `main` (13 commits por detrás y 40 por delante), abrir PR, ejecutar CI, revisar e integrar solo tras validación.
 
 
 ## Límites pendientes
