@@ -22,6 +22,8 @@ jobs:
           node --check mira-data.js
           node --check mira-auth.js
           node --check mira-admin.js
+          node --check pqrs.js
+          node --check reportes.js
           node --check pmu-navigation.js
       - name: Ejecutar pruebas de seguridad del cliente
         run: node --test tests/*.test.cjs
