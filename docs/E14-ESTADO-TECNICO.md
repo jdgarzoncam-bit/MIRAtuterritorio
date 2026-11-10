@@ -56,7 +56,7 @@ Solo se realizaron lecturas de repositorio, metadatos, esquema, RLS, trigger, fu
 - Las rutas directas `testigo-publico.html` y `testigos-admin.html` se convirtieron en pantallas estáticas de módulo inactivo y ya no cargan los JavaScript antiguos.
 - Se actualizaron los parámetros de caché de `mira-data.js`, `app.js` y `mira-admin.js`.
 - La revisión de Neon confirmó 0 filas en `mira.evidencias_e14` y 0 filas en `mira.testigos_publicos`. No se eliminaron datos.
-- Los permisos y políticas de PostgreSQL todavía no se modificaron. Las políticas/grants existentes fueron inspeccionados: la tabla E-14 permite SELECT a `authenticated`; `testigos_publicos` permite INSERT a `anonymous` y SELECT/UPDATE a `authenticated`. RLS permanece habilitada.
+- En la revisión del 2026-11-05 todavía no se habían modificado permisos y políticas. **Actualización:** el 2026-11-10 se aplicó en producción la migración `ac69dbd6-3cf5-4cc5-82aa-d3d01764d4a7`: Testigos quedó inactivo en el catálogo, `has_module_permission()` deniega todas sus acciones incluso al administrador y se revocó INSERT anónimo en `testigos_publicos`; su política pública de inserción fue eliminada. Las verificaciones posteriores confirmaron los cambios.
 - La revocación temporal de esos privilegios/políticas queda pendiente de definir el alcance exacto de reconstrucción de autenticación/seguridad. La autenticación global Neon Auth y las políticas RLS de los demás módulos se conservaron.
 
 ## Estado de GitHub tras la desactivación
@@ -75,7 +75,7 @@ Solo se realizaron lecturas de repositorio, metadatos, esquema, RLS, trigger, fu
 - `authenticated` tiene SELECT y UPDATE en `testigos_publicos`, pero las políticas RLS los condicionan a `mira.has_module_permission('testigos', ...)`.
 - Las tablas `evidencias_e14` y `testigo_archivos` también dependen de esa función para autorizar consulta/escritura.
 
-### Migración preparada y probada, pendiente de aprobación
+### Migración preparada, probada y aplicada en producción — 2026-11-10
 
 - Migration ID: `ac69dbd6-3cf5-4cc5-82aa-d3d01764d4a7`.
 - Rama temporal: `br-dry-snow-b704rkb5`, creada desde producción.
@@ -84,7 +84,7 @@ Solo se realizaron lecturas de repositorio, metadatos, esquema, RLS, trigger, fu
 - Las pruebas aisladas confirmaron que Testigos queda denegado incluso para el administrador; Actividades y Control Administrativo siguen habilitados para el administrador; Logística inactiva y acciones inválidas quedan denegadas.
 - La función conserva `SECURITY DEFINER` y `search_path=pg_catalog,mira,auth`.
 - En la rama temporal, las tablas públicas y E-14 continuaron con 0 filas.
-- **Esta migración no se ha aplicado en producción.** Las políticas y grants productivos siguen como estaban hasta recibir aprobación expresa.
+- **Producción aplicada:** Neon confirmó la aplicación de la migración a `br-winter-night-b758ke2j`; la rama temporal `br-dry-snow-b704rkb5` fue eliminada al finalizar.
 
 ### Barreras de interfaz/API
 
@@ -103,3 +103,15 @@ Solo se realizaron lecturas de repositorio, metadatos, esquema, RLS, trigger, fu
 
 - No se cargaron ni descargaron evidencias reales.
 - No se hizo prueba visual de Testigos ni Control Administrativo en navegador; la rama de trabajo no está desplegada y la aplicación no se encontraba abierta en el navegador conectado.
+
+
+## Verificación posterior en producción — 2026-11-10
+
+- `mira.module_catalog` muestra `testigos.active=false`.
+- `mira.has_module_permission('testigos', 'view'|'create'|'delete')` devuelve `false` para el administrador principal y sin identidad.
+- El administrador conserva Consulta en Actividades y Control Administrativo; Logística inactiva y acciones no reconocidas son denegadas.
+- `anonymous` ya no tiene INSERT en `mira.testigos_publicos`; la política `witnesses_public_insert` no existe.
+- `mira.testigos_publicos` y `mira.evidencias_e14` siguen con 0 filas. No se borraron datos.
+- La rama temporal de la migración fue eliminada por el proceso de finalización.
+- La rama de producción no tiene una Neon Function `e14secure` desplegada. Se conserva el bloqueo de rutas en la interfaz y los guards de `mira-data.js`.
+
