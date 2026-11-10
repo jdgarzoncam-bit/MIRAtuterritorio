@@ -154,7 +154,7 @@ async function changeUserApproval(button){
   const merged={...target,...row};users=users.map(u=>u.id===targetId?merged:u);
   if(selectedProfile?.id===targetId){
    selectedProfile=merged;
-   $("adminSelectedUser").innerHTML='<strong>'+escapeHtml(merged.display_name||merged.email||"Usuario")+'</strong><span>'+escapeHtml(merged.email||"")+' · '+(merged.email_verified?"Correo confirmado":"Correo sin confirmar")+' · '+(merged.active?"Cuenta activa":"Pendiente de aprobación")+'</span>';
+   $("adminSelectedUser").innerHTML='<strong>'+escapeHtml(merged.display_name||merged.email||"Usuario")+'</strong><span>'+escapeHtml(merged.email||"")+' · '+escapeHtml(userApprovalStatus(merged).label)+'</span>';
    renderUsers();renderMatrix();
    notice(action==="save-role"?"Rol actualizado. Los permisos de los módulos se conservan.":activate?"Cuenta aprobada y habilitada con los módulos autorizados.":"Cuenta desaprobada. Sus permisos se conservan, pero el acceso queda bloqueado.");
   }
