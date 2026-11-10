@@ -38,7 +38,7 @@ function hasUsableModuleAccess(rows){
 function userApprovalStatus(user){
   const ownPermissions=allPermissionRows.filter(row=>row.user_profile_id===user.id);
   if(user.email_verified!==true)return {bucket:"pending",key:"email",label:"Correo sin confirmar"};
-  if(user.active!==true)return {bucket:"pending",key:"inactive",label:"Pendiente de aprobación"};
+  if(user.active!==true)return {bucket:"pending",key:"inactive",label:"Cuenta inactiva · acceso bloqueado"};
   if(!hasUsableModuleAccess(ownPermissions))return {bucket:"pending",key:"no_access",label:"Activo · sin acceso efectivo"};
   return {bucket:"approved",key:"approved",label:"Aprobado · acceso habilitado"};
 }
@@ -94,7 +94,7 @@ function renderUsers(){
   const approved=candidates.filter(u=>userApprovalStatus(u).bucket==="approved");
   const shown=activeUserTab==="approved"?approved:pending;
   const pendingTab=$("adminUsersPendingTab"), approvedTab=$("adminUsersApprovedTab");
-  if(pendingTab){pendingTab.classList.toggle("is-active",activeUserTab==="pending");pendingTab.setAttribute("aria-selected",String(activeUserTab==="pending"));pendingTab.textContent="Por aprobar · "+pending.length;}
+  if(pendingTab){pendingTab.classList.toggle("is-active",activeUserTab==="pending");pendingTab.setAttribute("aria-selected",String(activeUserTab==="pending"));pendingTab.textContent="Pendientes / sin acceso · "+pending.length;}
   if(approvedTab){approvedTab.classList.toggle("is-active",activeUserTab==="approved");approvedTab.setAttribute("aria-selected",String(activeUserTab==="approved"));approvedTab.textContent="Aprobados · "+approved.length;}
   if(!shown.length){$("adminUsersList").innerHTML=activeUserTab==="approved"?'<p class="admin-permissions-empty">Todavía no hay cuentas aprobadas y activas.</p>':'<p class="admin-permissions-empty">No hay solicitudes pendientes de aprobación.</p>';return;}
   $("adminUsersList").innerHTML=shown.map(u=>{
