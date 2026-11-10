@@ -180,9 +180,11 @@ function renderMatrix(){
   const actions=MODULE_ACTIONS[m.module_key]||[["view","Consulta"]];
   const controls=actions.map(([key,label])=>{
    const checked=allowed.has(m.module_key+"::"+key);
-   const effective=roleAllowsAction(selectedProfile?.role,key);
+   const roleAllowed=roleAllowsAction(selectedProfile?.role,key);
+   const hasView=allowed.has(m.module_key+"::view");
+   const effective=roleAllowed&&(key==="view"||hasView);
    const disabled=effective?"":"disabled";
-   const suffix=effective?"":'<small class="admin-role-restriction">No permitido por el rol</small>';
+   const suffix=effective?"":'<small class="admin-role-restriction">'+(roleAllowed?"Requiere permiso Consulta":"No permitido por el rol")+'</small>';
    return '<label class="admin-action-check"><input type="checkbox" data-module="'+escapeHtml(m.module_key)+'" data-action="'+escapeHtml(key)+'" '+(checked?"checked ":"")+disabled+'><span>'+escapeHtml(label)+'</span>'+suffix+'</label>';
   }).join("");
   const activeCount=actions.filter(([key])=>allowed.has(m.module_key+"::"+key)&&roleAllowsAction(selectedProfile?.role,key)).length;
