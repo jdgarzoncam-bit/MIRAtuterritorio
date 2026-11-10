@@ -40,6 +40,17 @@ AS $function$
           (u.role = 'operator' AND p_action_key IN ('view','create','edit'))
           OR (u.role = 'viewer' AND p_action_key = 'view')
         )
+        AND (
+          p_action_key = 'view'
+          OR EXISTS (
+            SELECT 1
+            FROM mira.module_permissions pv
+            WHERE pv.user_profile_id = u.id
+              AND pv.module_key = p_module_key
+              AND pv.action_key = 'view'
+              AND pv.allowed = true
+          )
+        )
     )
   END
 $function$;
