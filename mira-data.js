@@ -167,6 +167,9 @@ export const MIRA_DATA = {
   async listModulePermissions(profileId) {
     return miraRequest("module_permissions",{query:qs({select:"id,user_profile_id,module_key,action_key,allowed",user_profile_id:"eq."+profileId,limit:"500"})});
   },
+  async listAllModulePermissions() {
+    return miraRequest("module_permissions",{query:qs({select:"user_profile_id,module_key,action_key,allowed",limit:"1000"})});
+  },
   async listMyModulePermissions() {
     return miraRequest("module_permissions",{query:qs({select:"module_key,action_key,allowed",limit:"500"})});
   },
