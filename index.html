@@ -13,7 +13,7 @@
     <!-- SheetJS -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
-    <link rel="stylesheet" href="style.css?v=20261110-operational-reports-1">
+    <link rel="stylesheet" href="style.css?v=20261110-pqrs-centralized-1">
 </head>
 <body class="theme-dark">
 
@@ -170,7 +170,7 @@
         <div class="pqrs-intro"><span class="pqrs-intro-icon">💬</span><div><h2>Cuéntanos cómo podemos mejorar</h2><p>Tu comentario quedará registrado para revisión por el equipo administrador.</p></div></div>
         <form id="pqrsSubmitForm"><div class="pqrs-form-grid">
           <label>Tipo de solicitud<select id="pqrsType" required><option value="peticion">Petición</option><option value="queja">Queja</option><option value="reclamo">Reclamo</option><option value="sugerencia">Sugerencia</option></select></label>
-          <label>Módulo relacionado<select id="pqrsModule" required><option value="">Selecciona un módulo</option><option value="infomira">InfoMIRA</option><option value="logistica">Logística &amp; Transporte</option><option value="info_electoral">Info Electoral</option><option value="barrios_puestos">Barrios y puestos</option><option value="actividades">Actividades</option><option value="concejal">Concejal · Gestión territorial</option><option value="centro_operaciones">Centro de Operaciones</option><option value="pqrs">PQRS</option><option value="otro">Otro / General</option></select></label>
+          <div class="pqrs-full-field pqrs-routing-notice"><strong>Canal único de atención</strong><p>Todas las solicitudes se reciben en la bandeja PQRS del Centro de Operaciones y se organizan allí por tipo: petición, queja, reclamo o sugerencia.</p></div>
           <label class="pqrs-full-field">Asunto<input id="pqrsSubject" type="text" maxlength="160" minlength="4" placeholder="Resume el motivo de tu comentario" required></label>
           <label class="pqrs-full-field">Descripción<textarea id="pqrsDescription" rows="7" minlength="10" maxlength="5000" placeholder="Describe tu petición, queja, reclamo o sugerencia con el mayor detalle posible…" required></textarea><small class="pqrs-field-help">Entre 10 y 5.000 caracteres. No incluyas contraseñas ni datos personales sensibles.</small></label>
         </div><div id="pqrsSubmitNotice" class="activity-notice hidden" role="status" aria-live="polite"></div><div class="activity-actions"><button id="pqrsSendBtn" class="login-btn" type="submit">Enviar PQRS ↗</button><button id="pqrsClearBtn" class="activity-secondary-btn" type="reset">Limpiar formulario</button></div></form>
@@ -784,7 +784,7 @@
     <script src="reportes-operativos.js?v=20261110-delegated-readonly-1"></script>
     <script type="module" src="mira-admin.js?v=20261110-role-capabilities-2"></script>
     <script type="module" src="reportes.js?v=20261103-anon-submit-minimal-2"></script>
-    <script type="module" src="pqrs.js?v=20261110-pqrs-delegated-readonly-1"></script>
+    <script type="module" src="pqrs.js?v=20261110-pqrs-centralized-1"></script>
     <script src="pmu-navigation.js?v=20261031-vertical-glass"></script>
     <script src="electoral-dashboard.js"></script>
     <script src="mobile-operations.js?v=20261031-mobile-map-panel-1"></script>
