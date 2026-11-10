@@ -77,3 +77,8 @@ test("el inicio de sesión no acepta el rol Testigo reservado", () => {
   assert.match(fs.readFileSync(path.join(__dirname, "..", "mira-auth.js"), "utf8"),
     /!\["admin","operator","viewer"\]\.includes\(profile\.role\)/);
 });
+
+test("Guardar rol exige seleccionar un rol asignable y evita falso éxito con Testigo", () => {
+  assert.match(adminSource, /if\(!\["viewer","operator"\]\.includes\(role\)\)/);
+  assert.match(adminSource, /El rol Testigo está reservado/);
+});
