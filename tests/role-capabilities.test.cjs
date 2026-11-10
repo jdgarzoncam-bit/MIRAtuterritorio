@@ -72,3 +72,8 @@ test("la matriz deshabilita acciones fuera del límite del rol y no borra permis
 test("Centro de Operaciones mantiene únicamente Consulta", () => {
   assert.match(adminSource, /centro_operaciones:\[\["view","Consulta"\]\]/);
 });
+
+test("el inicio de sesión no acepta el rol Testigo reservado", () => {
+  assert.match(fs.readFileSync(path.join(__dirname, "..", "mira-auth.js"), "utf8"),
+    /!\["admin","operator","viewer"\]\.includes\(profile\.role\)/);
+});
