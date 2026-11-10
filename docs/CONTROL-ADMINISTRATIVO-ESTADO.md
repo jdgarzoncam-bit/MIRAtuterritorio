@@ -249,5 +249,5 @@ La reversión se hará en una migración versionada que restaure la definición 
 - Un UPDATE de perfil en la rama QA guardó correctamente el rol `viewer` y devolvió la fila actualizada.
 - Intentar asignar `witness` fue rechazado por `user_profiles_role_model_guard` con SQLSTATE `23514` y mensaje de rol reservado.
 - Se probó el límite de privilegios SQL por columna: authenticated conserva UPDATE únicamente sobre `active` y `role`, sin UPDATE sobre `email` ni `email_verified`.
-- La prueba de actualización como rol SQL `authenticated` no pudo ejecutarse con el conector porque la conexión solicitó credenciales de contraseña; no se presenta como prueba funcional PostgREST. La escritura fue verificada con el propietario en QA y los privilegios por columna se verificaron mediante catálogo PostgreSQL.
+- Se simuló el JWT de la cuenta administradora principal y se ejecutó `SET LOCAL ROLE authenticated` dentro de una transacción en QA. El UPDATE de `user_profiles.role` devolvió la fila esperada (`operator`), confirmando en conjunto RLS, el trigger de rol y el privilegio UPDATE limitado a columnas.
 - Las pruebas de navegador y CI del nuevo commit siguen pendientes de confirmación; el flujo no se considera certificado todavía.
