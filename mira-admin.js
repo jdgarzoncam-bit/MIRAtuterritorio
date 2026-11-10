@@ -6,7 +6,7 @@ const MODULE_ACTIONS = {
   centro_operaciones:[["view","Consulta"]], reportes:[["view","Consulta"]], pqrs:[["view","Consulta"]]
 };
 const $ = (id) => document.getElementById(id);
-let users = [], modules = [], selectedProfile = null, permissionRows = [];
+let users = [], modules = [], selectedProfile = null, permissionRows = [], allPermissionRows = [];
 let activeUserTab = "pending";
 let activePanelView = "users";
 let selectionRequestVersion = 0;
@@ -35,6 +35,13 @@ function hasUsableModuleAccess(rows){
     p.module_key!=="control_administrativo"
   );
 }
+function userApprovalStatus(user){
+  const ownPermissions=allPermissionRows.filter(row=>row.user_profile_id===user.id);
+  if(user.email_verified!==true)return {bucket:"pending",key:"email",label:"Correo sin confirmar"};
+  if(user.active!==true)return {bucket:"pending",key:"inactive",label:"Pendiente de aprobación"};
+  if(!hasUsableModuleAccess(ownPermissions))return {bucket:"pending",key:"no_access",label:"Activo · sin acceso efectivo"};
+  return {bucket:"approved",key:"approved",label:"Aprobado · acceso habilitado"};
+}
 const PRIMARY_ADMIN_AUTH_ID="beef5bf3-82a8-4c35-a12c-17771be59da1";
 function isAdmin(){const user=window.MIRA_CURRENT_USER;return user?.role==="admin"&&user?.authUserId===PRIMARY_ADMIN_AUTH_ID;}
 function openPanel(){
@@ -60,12 +67,14 @@ async function loadUsers(){
   $("adminUsersList").innerHTML='<p class="admin-permissions-loading">Consultando perfiles…</p>';
   try{
     const timeout=(promise,label)=>Promise.race([promise,new Promise((_,reject)=>setTimeout(()=>reject(new Error("Tiempo de espera agotado al consultar "+label+". Intenta actualizar nuevamente.")),15000))]);
-    const [profileRows,moduleRows]=await Promise.all([
+    const [profileRows,moduleRows,permissionRowsAll]=await Promise.all([
       timeout(window.MIRA_DATA.listUserProfiles(),"perfiles"),
-      timeout(window.MIRA_DATA.listModuleCatalog(),"catálogo de módulos")
+      timeout(window.MIRA_DATA.listModuleCatalog(),"catálogo de módulos"),
+      timeout(window.MIRA_DATA.listAllModulePermissions(),"permisos asignados")
     ]);
     users=Array.isArray(profileRows)?profileRows:[];
     modules=Array.isArray(moduleRows)?moduleRows:[];
+    allPermissionRows=Array.isArray(permissionRowsAll)?permissionRowsAll:[];
     renderUsers();
     if(selectedProfile){
       const stillThere=users.find(u=>u.id===selectedProfile.id);
@@ -81,8 +90,8 @@ async function loadUsers(){
 }
 function renderUsers(){
   const candidates=users.filter(u=>u.role!=="admin");
-  const pending=candidates.filter(u=>u.email_verified!==true||u.active!==true);
-  const approved=candidates.filter(u=>u.email_verified===true&&u.active===true);
+  const pending=candidates.filter(u=>userApprovalStatus(u).bucket==="pending");
+  const approved=candidates.filter(u=>userApprovalStatus(u).bucket==="approved");
   const shown=activeUserTab==="approved"?approved:pending;
   const pendingTab=$("adminUsersPendingTab"), approvedTab=$("adminUsersApprovedTab");
   if(pendingTab){pendingTab.classList.toggle("is-active",activeUserTab==="pending");pendingTab.setAttribute("aria-selected",String(activeUserTab==="pending"));pendingTab.textContent="Por aprobar · "+pending.length;}
@@ -93,7 +102,7 @@ function renderUsers(){
     const label=u.display_name||u.email||"Usuario";
     return '<button type="button" class="admin-user-row '+(selected?"is-selected":"")+'" data-profile-id="'+escapeHtml(u.id)+'" '+(u.role==="admin"?'data-is-admin="true"':'')+'>'+
       '<span class="admin-user-avatar">'+escapeHtml((label.trim()[0]||"U").toUpperCase())+'</span>'+
-      '<span class="admin-user-copy"><strong>'+escapeHtml(label)+'</strong><small>'+escapeHtml(u.email||"Sin correo")+'</small><em>'+(u.role==="admin"?"Administradora":u.role==="operator"?"Operador":u.role==="viewer"?"Consulta":u.role==="witness"?"Testigo":escapeHtml(u.role||"Sin rol"))+' · '+(u.email_verified?(u.active?"Aprobado · Activo":"Pendiente de aprobación"):"Correo sin confirmar")+'</em></span>'+
+      '<span class="admin-user-copy"><strong>'+escapeHtml(label)+'</strong><small>'+escapeHtml(u.email||"Sin correo")+'</small><em>'+(u.role==="admin"?"Administradora":u.role==="operator"?"Operador":u.role==="viewer"?"Consulta":u.role==="witness"?"Testigo":escapeHtml(u.role||"Sin rol"))+' · '+escapeHtml(userApprovalStatus(u).label)+'</em></span>'+
       (u.role==="admin"?'<span class="admin-user-lock" title="Cuenta protegida">🔒</span>':'<span class="admin-user-arrow">›</span>')+'</button>';
   }).join("");
 }
@@ -101,7 +110,7 @@ async function selectUser(profileId){
  const user=users.find(u=>u.id===profileId); if(!user)return;
  const version=++selectionRequestVersion;
  selectedProfile=user;permissionRows=[];clearNotice();renderUsers();
- $("adminSelectedUser").innerHTML='<strong>'+escapeHtml(user.display_name||user.email||"Usuario")+'</strong><span>'+escapeHtml(user.email||"")+' · '+(user.email_verified?"Correo confirmado":"Correo sin confirmar")+' · '+(user.active?"Cuenta activa":"Pendiente de aprobación")+'</span>';
+ $("adminSelectedUser").innerHTML='<strong>'+escapeHtml(user.display_name||user.email||"Usuario")+'</strong><span>'+escapeHtml(user.email||"")+' · '+escapeHtml(userApprovalStatus(user).label)+'</span>';
  if(user.role==="admin"){
   $("adminPermissionsMatrix").innerHTML='<div class="admin-permissions-protected"><strong>🔒 Cuenta administradora protegida</strong><p>Esta cuenta conserva todos los permisos y no puede modificarse desde este panel.</p></div>';return;
  }
@@ -177,6 +186,9 @@ async function changePermission(input){
   if(selectedProfile?.id!==targetProfileId)return;
   const existing=permissionRows.find(p=>p.module_key===moduleKey&&p.action_key===actionKey);
   if(existing)Object.assign(existing,row);else permissionRows.push(row);
+  const globalExisting=allPermissionRows.find(p=>p.user_profile_id===targetProfileId&&p.module_key===moduleKey&&p.action_key===actionKey);
+  if(globalExisting)Object.assign(globalExisting,row);else allPermissionRows.push(row);
+  renderUsers();
   notice(nextValue?"Permiso habilitado.":"Permiso retirado; la base de datos bloqueará esa acción.");renderMatrix();
  }catch(error){
   if(input.isConnected)input.checked=!nextValue;
@@ -293,7 +305,7 @@ function init(){
     $("adminSelectedUser").innerHTML='<strong>Selecciona un usuario</strong><span>Sus permisos aparecerán aquí.</span>';
     $("adminPermissionsMatrix").innerHTML='<p class="admin-permissions-empty">Selecciona un usuario para consultar sus permisos.</p>';
     renderUsers();
-    const first=users.find(u=>u.role!=="admin"&&(tab==="approved"?(u.email_verified===true&&u.active===true):(u.email_verified!==true||u.active!==true)));
+    const first=users.find(u=>u.role!=="admin"&&userApprovalStatus(u).bucket===tab);
     if(first)selectUser(first.id);
   };
   $("adminUsersPendingTab")?.addEventListener("click",()=>switchUserTab("pending"));
