@@ -132,7 +132,7 @@ async function selectUser(profileId){
 function renderApprovalControls(user){
   const roles=[["viewer","Consulta"],["operator","Operador"]];
   if(user.role==="witness")roles.push(["witness","Testigo (reservado; no asignable)"]);
-  const options=roles.map(([value,label])=>'<option value="'+value+'" '+(user.role===value?"selected":"")+'>'+label+'</option>').join("");
+  const options=roles.map(([value,label])=>'<option value="'+value+'" '+(user.role===value?"selected ":"")+(value==="witness"?"disabled":"")+'>'+label+'</option>').join("");
   const hasModuleAccess=hasUsableModuleAccess(permissionRows,user.role);
   const canApprove=user.email_verified===true&&hasModuleAccess;
   const action=user.active?"suspend":"activate";
@@ -173,7 +173,10 @@ function renderMatrix(){
  const allowed=new Set(permissionRows.filter(p=>p.allowed).map(p=>p.module_key+"::"+p.action_key));
  const visibleModules=modules.filter(m=>m.module_key!=="control_administrativo"&&m.module_key!=="testigos"&&m.active!==false);
  const approval=selectedProfile&&selectedProfile.role!=="admin"?renderApprovalControls(selectedProfile):"";
- $("adminPermissionsMatrix").innerHTML=approval+visibleModules.map(m=>{
+ const roleNote=selectedProfile&&selectedProfile.role!=="admin"
+  ? '<p class="admin-permissions-hint">El rol limita las acciones efectivas: Consulta solo permite ver; Operador permite consultar, crear y editar. Eliminar, exportar y administrar no están habilitados para estos roles. Los permisos guardados se conservan si cambias el rol, pero las acciones fuera de su límite no tendrán efecto.</p>'
+  : "";
+ $("adminPermissionsMatrix").innerHTML=approval+roleNote+visibleModules.map(m=>{
   const actions=MODULE_ACTIONS[m.module_key]||[["view","Consulta"]];
   const controls=actions.map(([key,label])=>{
    const checked=allowed.has(m.module_key+"::"+key);
@@ -288,6 +291,11 @@ async function applyModuleAccess(){
       setModuleRestricted($(id),temporaryLock);
       $(id)?.classList.remove("hidden");
     });
+    return;
+  }
+  if(!["operator","viewer"].includes(current.role)){
+    allTargets.forEach(id=>{setModuleRestricted($(id),true);$(id)?.classList.remove("hidden");});
+    console.warn("[MIRA permisos] El rol no tiene capacidades operativas asignables.");
     return;
   }
   try{
