@@ -45,3 +45,8 @@ test("el formulario público envía todas las PQRS a la bandeja única sin pedir
   assert.match(pqrsSource, /modulo_key:"pqrs"/);
   assert.match(dataSource, /body:\{tipo:payload\.tipo,modulo_key:"pqrs",asunto:payload\.asunto\.trim\(\),descripcion:payload\.descripcion\.trim\(\)\}/);
 });
+
+test("la bandeja PQRS no presenta una ruta a otros módulos", () => {
+  assert.doesNotMatch(pqrsSource, /modules\[r\.modulo_key\]/);
+  assert.match(pqrsSource, /Estado: '\+esc\(r\.estado\)/);
+});
