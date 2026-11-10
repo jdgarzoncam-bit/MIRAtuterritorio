@@ -5833,3 +5833,12 @@ input, select, textarea, button { max-width: 100%; }
  .admin-audit-panel{padding:14px}
  .admin-audit-event-heading{align-items:flex-start;flex-direction:column;gap:5px}
 }
+
+
+/* Control Administrativo — límites visuales de roles */
+.admin-permissions-hint{margin:0 0 13px;padding:10px 12px;border:1px solid rgba(83,177,220,.2);border-radius:10px;background:rgba(7,30,54,.48);color:#a9c2d8;font-size:.68rem;line-height:1.55}
+.admin-role-restriction{display:block;max-width:110px;color:#e5b879;font-size:.56rem;line-height:1.25;white-space:normal}
+.admin-action-check input:disabled{cursor:not-allowed;opacity:.55}
+.admin-action-check:has(input:disabled){cursor:not-allowed;opacity:.72}
+.admin-approval-button.admin-role-save{background:rgba(42,116,151,.18);border-color:rgba(89,177,211,.35);color:#bfeaff}
+.admin-approval-button.admin-role-save:hover{background:rgba(42,116,151,.3)}
