@@ -187,7 +187,7 @@ function renderMatrix(){
    const suffix=effective?"":'<small class="admin-role-restriction">'+(roleAllowed?"Requiere permiso Consulta":"No permitido por el rol")+'</small>';
    return '<label class="admin-action-check"><input type="checkbox" data-module="'+escapeHtml(m.module_key)+'" data-action="'+escapeHtml(key)+'" '+(checked?"checked ":"")+disabled+'><span>'+escapeHtml(label)+'</span>'+suffix+'</label>';
   }).join("");
-  const activeCount=actions.filter(([key])=>allowed.has(m.module_key+"::"+key)&&roleAllowsAction(selectedProfile?.role,key)).length;
+  const activeCount=actions.filter(([key])=>allowed.has(m.module_key+"::"+key)&&roleAllowsAction(selectedProfile?.role,key)&&(key==="view"||allowed.has(m.module_key+"::view"))).length;
   return '<article class="admin-module-permission"><div class="admin-module-permission-title"><strong>'+escapeHtml(m.module_name)+'</strong><small>'+escapeHtml(m.description||"Permisos del módulo")+'</small><small class="admin-permission-summary">'+activeCount+' de '+actions.length+' acciones habilitadas</small></div><div class="admin-module-access-control"><div class="admin-action-checks">'+controls+'</div></div></article>';
  }).join("")||'<p class="admin-permissions-empty">No hay módulos configurados.</p>';
 }
