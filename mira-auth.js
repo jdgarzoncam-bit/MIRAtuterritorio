@@ -1,8 +1,8 @@
 // MIRA TU TERRITORIO — autenticación Neon Auth (Better Auth administrado)
 import { createAuthClient } from "https://esm.sh/@neondatabase/auth@0.7.0-beta";
 
-const AUTH_URL = "https://ep-round-dawn-b7l3ya3h.neonauth.c-13.us-east-1.aws.neon.tech/neondb/auth";
-const DATA_API_URL = "https://ep-round-dawn-b7l3ya3h.apirest.c-13.us-east-1.aws.neon.tech/neondb/rest/v1";
+const AUTH_URL = "https://ep-mute-grass-b7qan4n6.neonauth.c-13.us-east-1.aws.neon.tech/neondb/auth";
+const DATA_API_URL = "https://ep-mute-grass-b7qan4n6.apirest.c-13.us-east-1.aws.neon.tech/neondb/rest/v1";
 const PRIMARY_ADMIN_AUTH_ID = "beef5bf3-82a8-4c35-a12c-17771be59da1";
 const auth = createAuthClient(AUTH_URL,{allowAnonymous:true});
 window.MIRA_AUTH = auth;
