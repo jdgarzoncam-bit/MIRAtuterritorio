@@ -195,13 +195,13 @@ El usuario confirma que las cuentas se gestionarán mediante correo electrónico
 
 El código actual reconoce `admin`, `operator`, `viewer` y `witness`. La cuenta `admin` está reservada al identificador de la persona administradora principal. Para las demás cuentas, el acceso real se decide por `module_permissions` y RLS; hoy `operator`, `viewer` y `witness` no imponen por sí mismos una matriz de capacidades diferente. El selector de rol guarda la etiqueta en `user_profiles.role`, mientras que la matriz granular guarda los permisos efectivos.
 
-Modelo recomendado para que los roles tengan utilidad sin duplicar ni contradecir la matriz:
-- **Consulta (`viewer`)**: plantilla inicial de permisos de solo lectura.
-- **Operador (`operator`)**: plantilla inicial de consulta, creación y edición donde el módulo realmente soporte esas acciones; sin eliminación por defecto.
-- **Testigo (`witness`)**: reservado y no asignable mientras Testigos/E-14 siga inactivo.
+Modelo funcional autorizado e implementado en la rama de trabajo:
+- **Consulta (`viewer`)**: límite máximo de solo lectura (`view`).
+- **Operador (`operator`)**: límite máximo de consulta, creación y edición (`view/create/edit)); no puede eliminar, exportar ni administrar.
+- **Testigo (`witness`)**: reservado y no asignable mientras Testigos/E-14 siga inactivo; el inicio de sesión de ese rol queda bloqueado.
 - **Administrador (`admin`)**: solo la cuenta principal; no asignable desde el panel.
 
-Las plantillas deben servir para aplicar un conjunto inicial de permisos al crear/configurar una cuenta. Después, la matriz granular sigue siendo la autoridad efectiva y permite ajustes individuales. Cambiar la etiqueta de rol no debe borrar permisos personalizados de forma silenciosa. La interfaz debe indicar qué plantilla se aplicó y qué permisos individuales se cambiaron. Centro de Operaciones continúa limitado a Consulta o sin permiso, sin importar la plantilla. No aplicar automáticamente este modelo ni cambiar datos/roles de producción hasta completar las pruebas y confirmar la regla con el usuario.
+El rol no concede acceso automático a módulos. La matriz granular define dónde se habilita cada acción y el rol establece el límite máximo. Los permisos guardados que excedan el límite del rol se conservan, pero no son efectivos. Centro de Operaciones sigue siendo exclusivamente Consulta o sin permiso. Cambiar de rol no borra asignaciones personalizadas.
 
 ## Límites pendientes
 
@@ -241,5 +241,13 @@ La reversión se hará en una migración versionada que restaure la definición 
 ### Pendiente antes de producción
 - Completar pruebas de Guardar rol desde interfaz real, aprobación, suspensión y permisos con cuentas controladas.
 - Revisar las políticas RLS de cada módulo para confirmar que todas invocan `mira.has_module_permission` donde corresponda.
-- Revisar las columnas/grants de `user_profiles`: el grant UPDATE actual cubre todas las columnas; reducirlo a `active` y `role` en una migración separada después de validar PostgREST.
+- En QA se revocó UPDATE a nivel de tabla y se concedió UPDATE únicamente sobre `active` y `role`; la verificación confirmó `table_update=false`, `active_update=true`, `role_update=true`, `email_update=false` y `email_verified_update=false`. Aplicar esta reducción a producción solo con migración aprobada.
 - No aplicar aún esta migración a producción ni publicar el código hasta superar QA y sincronizar la rama con `main`.
+
+
+### Prueba adicional de guardado y permisos por columna en QA
+- Un UPDATE de perfil en la rama QA guardó correctamente el rol `viewer` y devolvió la fila actualizada.
+- Intentar asignar `witness` fue rechazado por `user_profiles_role_model_guard` con SQLSTATE `23514` y mensaje de rol reservado.
+- Se probó el límite de privilegios SQL por columna: authenticated conserva UPDATE únicamente sobre `active` y `role`, sin UPDATE sobre `email` ni `email_verified`.
+- La prueba de actualización como rol SQL `authenticated` no pudo ejecutarse con el conector porque la conexión solicitó credenciales de contraseña; no se presenta como prueba funcional PostgREST. La escritura fue verificada con el propietario en QA y los privilegios por columna se verificaron mediante catálogo PostgreSQL.
+- Las pruebas de navegador y CI del nuevo commit siguen pendientes de confirmación; el flujo no se considera certificado todavía.
