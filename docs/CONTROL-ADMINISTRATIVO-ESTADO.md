@@ -165,6 +165,44 @@ El usuario autorizó ambos ajustes el 2026-11-09. Los cambios se aplicaron en la
 7. Revisar `e14secure` en la rama antigua `br-lucky-boat-b70mmt53` y decidir la limpieza menos destructiva. Después, probar respaldos/restauración y sincronizar la rama con `main` (13 commits por detrás y 40 por delante), abrir PR, ejecutar CI, revisar e integrar solo tras validación.
 
 
+## Acuerdos de configuración del mapa oficial y modelo de cuentas — 2026-11-10
+
+### Mapa 3D oficial del proyecto
+
+El usuario confirma que el archivo `.maps3d.json` fue construido manualmente y de forma estudiada/profesional, con fuentes adaptadas a la estructura de cada edificio y cada vivienda. Se considera la configuración oficial de referencia del mapa de MIRA TU TERRITORIO; no debe sustituirse por un mapa genérico ni por geometrías aproximadas. El archivo original debe conservarse sin sobrescritura.
+
+La captura de referencia suministrada el 2026-11-10 muestra el resultado visual del modelo y los filtros activos en la pestaña **Capas**:
+- Imágenes: activadas.
+- Edificios: activados y visibles.
+- Carreteras: activadas y visibles.
+- Agua: activada y visible.
+- Cobertura del suelo: activada y visible.
+- Árboles: activados y visibles.
+- Curvas de nivel: activadas y visibles.
+- Catastro: activado y visible.
+- Cuadrícula del terreno visible.
+- Vista de impresión mostrada: 191 mm × 220 mm × 15 mm; escala 1:28797; resolución aproximada de 38,1 m de terreno y 0,2 m vertical.
+
+El JSON asociado registra, entre otros parámetros, el área delimitada aproximadamente entre NE 4.84004, -74.32652 y SW 4.78275, -74.37598; imagen `satlas-superes-2023`; terreno de elevación `mapterhorn-global`; exageración vertical 1; edificios OSM con alturas configuradas entre 3 y 25 m y etiquetas activas; carreteras extruidas; agua extruida; categorías de cobertura de suelo WOOD, GRASS, FARMLAND, WETLAND, SAND, ICE, ROCK y URBAN; parcelas/catastro, curvas de nivel y árboles activos. Los marcadores y tracks están vacíos en el archivo de referencia.
+
+**Regla de implementación:** conservar el archivo original como maestro, adaptar su configuración al visor y a los datos/servicios existentes de MIRA, y mantener estos filtros como estado inicial reproducible. Cualquier cambio futuro debe partir de una copia/versionado y registrar los parámetros modificados. No degradar el nivel de detalle ni afirmar precisión catastral/registral sin validación de las fuentes y licencias. La captura de pantalla es referencia visual adicional; el JSON es el archivo de configuración que se debe preservar.
+
+### Cuentas y correo electrónico
+
+El usuario confirma que las cuentas se gestionarán mediante correo electrónico, sin nombres de usuario independientes. El proyecto es interno, para un grupo reducido de personas y sin presupuesto adicional. Priorizar Neon Auth ya integrado y servicios gratuitos ya disponibles; no proponer servicios pagos como requisito. La verificación por correo y la aprobación administrativa se mantienen como barreras distintas. El remitente actual de Neon es compartido; el uso de una dirección institucional propia dependerá de si se dispone de SMTP institucional sin costo adicional.
+
+### Roles — estado y propuesta funcional pendiente de aprobación
+
+El código actual reconoce `admin`, `operator`, `viewer` y `witness`. La cuenta `admin` está reservada al identificador de la persona administradora principal. Para las demás cuentas, el acceso real se decide por `module_permissions` y RLS; hoy `operator`, `viewer` y `witness` no imponen por sí mismos una matriz de capacidades diferente. El selector de rol guarda la etiqueta en `user_profiles.role`, mientras que la matriz granular guarda los permisos efectivos.
+
+Modelo recomendado para que los roles tengan utilidad sin duplicar ni contradecir la matriz:
+- **Consulta (`viewer`)**: plantilla inicial de permisos de solo lectura.
+- **Operador (`operator`)**: plantilla inicial de consulta, creación y edición donde el módulo realmente soporte esas acciones; sin eliminación por defecto.
+- **Testigo (`witness`)**: reservado y no asignable mientras Testigos/E-14 siga inactivo.
+- **Administrador (`admin`)**: solo la cuenta principal; no asignable desde el panel.
+
+Las plantillas deben servir para aplicar un conjunto inicial de permisos al crear/configurar una cuenta. Después, la matriz granular sigue siendo la autoridad efectiva y permite ajustes individuales. Cambiar la etiqueta de rol no debe borrar permisos personalizados de forma silenciosa. La interfaz debe indicar qué plantilla se aplicó y qué permisos individuales se cambiaron. Centro de Operaciones continúa limitado a Consulta o sin permiso, sin importar la plantilla. No aplicar automáticamente este modelo ni cambiar datos/roles de producción hasta completar las pruebas y confirmar la regla con el usuario.
+
 ## Límites pendientes
 
 1. Probar visualmente la interfaz en escritorio y móvil, incluidos estados vacíos, errores de red, actualización del historial y cambio rápido entre usuarios.
