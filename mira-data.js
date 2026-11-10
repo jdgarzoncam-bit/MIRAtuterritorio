@@ -157,7 +157,7 @@ export const MIRA_DATA = {
   updateUserProfile(profileId, changes) {
     const allowed = {};
     if (typeof changes.active === "boolean") allowed.active = changes.active;
-    if (["operator","viewer","witness"].includes(changes.role)) allowed.role = changes.role;
+    if (["operator","viewer"].includes(changes.role)) allowed.role = changes.role;
     if (!Object.keys(allowed).length) throw new Error("No hay cambios de perfil válidos.");
     return miraRequest("user_profiles",{method:"PATCH",query:qs({id:"eq."+profileId}),body:allowed,prefer:"return=representation",requireRows:true});
   },
