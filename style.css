@@ -5892,3 +5892,43 @@ input, select, textarea, button { max-width: 100%; }
 .database-workspace-panel .activity-form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 body.database-workspace-open{overflow:hidden}
 @media(max-width:560px){.database-action-grid{gap:6px}.database-action-card{min-height:68px;padding:8px;column-gap:7px}.database-action-card>span{width:27px;height:27px}.database-action-card strong{font-size:.72rem}.database-action-card small{font-size:.62rem}.database-workspace{padding:9px 8px 18px}.database-workspace-header{padding:11px}.database-workspace-panel{padding:10px}.database-workspace-panel .activity-form-grid{grid-template-columns:1fr}}
+
+
+/* Base de datos general · coherencia visual con los accesos laterales de Concejal y Actividades */
+.database-action-card{
+  border:1px solid rgba(49,220,239,.42)!important;
+  border-radius:11px!important;
+  background:rgba(11,28,44,.78)!important;
+  box-shadow:none!important;
+  transform:none;
+  min-height:72px;
+  padding:9px 10px;
+}
+.database-action-card:hover,.database-action-card:focus-visible{
+  border-color:#36e4f4!important;
+  background:rgba(16,49,66,.95)!important;
+  transform:translateY(-1px);
+}
+.database-action-card>span{
+  width:31px;height:31px;border-radius:9px;
+  background:rgba(41,111,239,.22)!important;
+  color:#41e5f3!important;
+}
+.database-action-card strong{font-size:.76rem;line-height:1.25}
+.database-action-card small{font-size:.64rem;line-height:1.3;color:var(--text-muted)}
+.database-workspace{
+  position:fixed!important;inset:0!important;left:0!important;top:0!important;
+  width:100vw!important;height:100vh!important;height:100dvh!important;
+  max-width:none!important;max-height:none!important;margin:0!important;
+  border-radius:0!important;z-index:10050!important;
+  overflow-x:hidden!important;overflow-y:auto!important;
+  box-sizing:border-box!important;
+}
+.database-workspace.hidden{display:none!important}
+body.database-workspace-open{overflow:hidden!important}
+@media(max-width:560px){
+  .database-action-card{min-height:68px;padding:8px 9px}
+  .database-workspace{padding:12px 10px 22px!important}
+  .database-workspace-header{width:100%;max-width:none;margin:0 0 12px}
+  .database-workspace-panel{width:100%;max-width:none;min-height:calc(100dvh - 110px);margin:0;padding:12px}
+}
