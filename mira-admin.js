@@ -2,6 +2,7 @@
 const MODULE_ACTIONS = {
   actividades:[["view","Consulta"],["create","Crear"],["edit","Editar"],["annul","Anular asistencia"],["export","Exportar Excel"],["delete","Eliminar"]],
   personas:[["view","Consultar personas"],["create","Incorporar personas"],["edit","Completar / editar fichas"]],
+  base_datos_general:[["view","Consultar bases autorizadas"],["create","Crear registros autorizados"],["edit","Editar registros autorizados"],["export","Exportar información"],["manage","Administrar conjuntos y accesos"]],
   concejal:[["view","Consulta"],["create","Crear"],["edit","Editar"],["delete","Eliminar"]],
   infomira:[["view","Consulta"],["create","Crear"],["edit","Editar"],["delete","Eliminar"]],
   centro_operaciones:[["view","Consulta"]], pqrs:[["view","Consulta"]]
@@ -269,6 +270,7 @@ const MODULE_TARGETS = {
   infomira:["dropdown-infomira"],
   testigos:["dropdown-testigos"],
   centro_operaciones:["dropdown-puestos","dropdown-barrios-puestos"],
+  base_datos_general:["dropdown-base-datos-general"],
   actividades:["dropdown-actividades"],
   concejal:["dropdown-concejal"],
   pqrs:["dropdown-pqrs-admin"]
