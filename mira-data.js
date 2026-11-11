@@ -143,6 +143,8 @@ export const MIRA_DATA = {
   deleteAttendance(id) { return miraRequest("asistencias",{method:"DELETE",query:qs({id:`eq.${id}`}),prefer:"return=representation",requireRows:true}); },
   annulAttendance(id,reason) { if(!id||!reason?.trim()) throw new Error("Selecciona la asistencia e indica el motivo."); return miraRequest("rpc/annul_attendance",{method:"POST",body:{p_attendance_id:id,p_reason:reason.trim()},requireRows:true}); },
   async listPeopleAudit({personaId,limit=100,offset=0}={}) { const params={select:"*",order:"created_at.desc",limit:String(Math.min(Math.max(limit,1),500)),offset:String(Math.max(0,Number(offset)||0))}; if(personaId) params.persona_id=`eq.${personaId}`; return miraRequest("personas_change_audit",{query:qs(params)}); },
+  async listAttendanceAudit({attendanceId,limit=100,offset=0}={}) { const params={select:"*",order:"created_at.desc",limit:String(Math.min(Math.max(limit,1),500)),offset:String(Math.max(0,Number(offset)||0))}; if(attendanceId) params.asistencia_id=`eq.${attendanceId}`; return miraRequest("asistencias_change_audit",{query:qs(params)}); },
+  async listActivitiesAudit({activityId,limit=100,offset=0}={}) { const params={select:"*",order:"created_at.desc",limit:String(Math.min(Math.max(limit,1),500)),offset:String(Math.max(0,Number(offset)||0))}; if(activityId) params.actividad_id=`eq.${activityId}`; return miraRequest("actividades_change_audit",{query:qs(params)}); },
   async listPublicWitnesses({limit=100}={}) {
     assertTestigosEnabled();
     return miraRequest("testigos_publicos",{query:qs({select:"*",order:"created_at.desc",limit:String(Math.min(Math.max(limit,1),100))})});
