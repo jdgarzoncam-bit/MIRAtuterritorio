@@ -6,6 +6,9 @@ const vm = require("node:vm");
 
 const adminSource = fs.readFileSync(path.join(__dirname, "..", "mira-admin.js"), "utf8");
 const dataSource = fs.readFileSync(path.join(__dirname, "..", "mira-data.js"), "utf8");
+const appSource = fs.readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
+const exportMigration = fs.readFileSync(path.join(__dirname, "..", "migrations", "20261111_activities_granular_export_permission.sql"), "utf8");
+const atomicMigration = fs.readFileSync(path.join(__dirname, "..", "migrations", "20261111_activities_atomic_create.sql"), "utf8");
 
 function loadRolePolicy() {
   const context = vm.createContext({
@@ -104,4 +107,23 @@ test("la exportación está bloqueada sin view y export", () => {
   const appSource = fs.readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
   assert.match(appSource, /!canManageActivities\("view"\)\|\|!canManageActivities\("export"\)/);
   assert.match(appSource, /const exportAllowed=canManageActivities\("view"\)&&canManageActivities\("export"\)/);
+});
+
+test("Neon autoriza exportación solo a operadores con permiso explícito", () => {
+  assert.match(exportMigration, /u\.role = 'operator' and p_action_key in \('view','create','edit','export'\)/);
+  assert.match(exportMigration, /p_action_key = 'view'/);
+});
+
+test("crear actividad utiliza una función transaccional y no finaliza actividades antes del INSERT", () => {
+  assert.match(dataSource, /rpc\/create_activity_atomic/);
+  assert.match(atomicMigration, /security invoker/);
+  assert.match(atomicMigration, /has_module_permission\('actividades','create'\)/);
+  assert.match(atomicMigration, /has_module_permission\('actividades','edit'\)/);
+  assert.match(atomicMigration, /update mira\.actividades[\s\S]*insert into mira\.actividades/);
+  assert.doesNotMatch(appSource, /Promise\.all\(activitiesState\.activities\.filter\(a=>a\.status==='active'\)/);
+});
+
+test("el catálogo de actividades también admite paginación", () => {
+  assert.match(dataSource, /listActivities\(\{limit=100,offset=0\}/);
+  assert.match(appSource, /loadAllPages\(\(\{limit,offset\}\)=>window\.MIRA_DATA\.listActivities/);
 });
