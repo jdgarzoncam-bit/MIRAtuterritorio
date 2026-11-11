@@ -597,18 +597,24 @@ function initDatabaseExplorer(){
  const root=document.getElementById("databaseExplorer"),workspace=document.getElementById("databaseWorkspace");
  if(!root||!workspace)return;
  const title=document.getElementById("databaseWorkspaceTitle"),description=document.getElementById("databaseWorkspaceDescription"),content=document.getElementById("databaseWorkspaceContent"),notice=document.getElementById("databaseExplorerNotice");
+ // El panel debe vivir directamente en body para no heredar overflow/transform del dropdown.
+ if(workspace.parentElement!==document.body)document.body.appendChild(workspace);
  let permissions=new Set(),datasets=[],activeView="";
  const admin=()=>isPrimaryMiraAdmin();
  const allowed=(module,action="view")=>admin()||permissions.has(module+"::"+action);
  const esc=value=>escapeActivityHtml(value===null||value===undefined?"—":typeof value==="object"?JSON.stringify(value):String(value));
  const say=(message,error=false)=>{notice.textContent=message||"";notice.style.color=error?"#ff8b8b":"var(--text-muted)";};
  async function refreshPermissions(){
+  if(!window.MIRA_DATA)throw new Error("El servicio de datos aún se está inicializando. Espera un momento e inténtalo de nuevo.");
+  if(!admin()&&typeof window.MIRA_DATA.listMyModulePermissions!=="function")throw new Error("No está disponible la consulta de permisos. El acceso permanece bloqueado.");
   const rows=admin()?[]:await window.MIRA_DATA.listMyModulePermissions();
   permissions=new Set((rows||[]).filter(p=>p.allowed===true).map(p=>p.module_key+"::"+p.action_key));
   datasets=window.MIRA_DATA.getExplorerDatasets().filter(d=>allowed("base_datos_general","view")&&allowed(d.module,"view"));
  }
- function open(view){
+ async function open(view){
   activeView=view;root.classList.add("hidden");workspace.classList.remove("hidden");
+  workspace.setAttribute("aria-hidden","false");
+  document.body.classList.add("database-workspace-open");
   const configs={
    incorporate:["Incorporar persona","Formulario de incorporación de una ficha completa en la base general."],
    pending:["Datos pendientes","Personas marcadas con información pendiente de completar."],
@@ -616,9 +622,10 @@ function initDatabaseExplorer(){
    all:["Todos los registros","Explorador de los conjuntos de datos autorizados para tu cuenta."]
   };
   title.textContent=configs[view][0];description.textContent=configs[view][1];content.innerHTML='<p class="admin-permissions-loading">Consultando permisos…</p>';
-  render(view).catch(error=>{content.innerHTML='<p class="admin-permissions-error">'+esc(error.message||"No fue posible abrir este espacio.")+'</p>';});
+  try{await refreshPermissions();await render(view);}
+  catch(error){content.innerHTML='<p class="admin-permissions-error">'+esc(error.message||"No fue posible abrir este espacio.")+'</p>';}
  }
- function back(){workspace.classList.add("hidden");root.classList.remove("hidden");activeView="";}
+ function back(){workspace.classList.add("hidden");workspace.setAttribute("aria-hidden","true");document.body.classList.remove("database-workspace-open");root.classList.remove("hidden");activeView="";}
  async function render(view){
   if(!allowed("base_datos_general","view"))throw new Error("No tienes permiso para consultar Base de datos general.");
   if(view==="incorporate")return renderIncorporate();
@@ -688,7 +695,7 @@ function initDatabaseExplorer(){
  document.getElementById("databaseWorkspaceClose")?.addEventListener("click",back);document.getElementById("databaseWorkspaceBack")?.addEventListener("click",back);
  window.addEventListener("mira:authenticated",()=>refreshPermissions().catch(e=>say(e.message,true)));
  window.addEventListener("mira:signed-out",()=>{permissions.clear();datasets=[];back();});
- refreshPermissions().then(()=>say("4 herramientas disponibles. Los contenidos se habilitan según los permisos asignados.")).catch(e=>say(e.message,true));
+ say("Selecciona una herramienta. El contenido se habilita según los permisos asignados.");
 }
 initDatabaseExplorer();
 
