@@ -166,7 +166,7 @@ begin
   insert into mira.asistencias_change_audit(asistencia_id,actor_auth_user_id,action_key,reason) values(NEW.id,coalesce(auth.user_id()::text,'unknown'),'updated','Datos de asistencia modificados');
  end if;
  return NEW;
-end $;
+end $$;
 drop trigger if exists trg_audit_asistencia_changes on mira.asistencias;
 create trigger trg_audit_asistencia_changes after insert or update or delete on mira.asistencias for each row execute function mira.audit_asistencia_changes();
 create or replace function mira.has_module_permission(p_module_key text,p_action_key text)
@@ -183,7 +183,7 @@ select case
   and ((u.role='operator' and p_action_key in ('view','create','edit','export','annul')) or (u.role='viewer' and p_action_key='view'))
   and (p_action_key='view' or exists(select 1 from mira.module_permissions pv where pv.user_profile_id=u.id and pv.module_key=p_module_key and pv.action_key='view' and pv.allowed=true)))
 end $function$;
-create or replace function mira.audit_actividad_changes() returns trigger language plpgsql security definer set search_path=pg_catalog,mira,auth as $
+create or replace function mira.audit_actividad_changes() returns trigger language plpgsql security definer set search_path=pg_catalog,mira,auth as $$
 declare v_fields text[] := '{}';
 begin
  if TG_OP='INSERT' then
@@ -196,7 +196,7 @@ begin
  if NEW.estado is distinct from OLD.estado then v_fields:=array_append(v_fields,'estado'); end if;
  if cardinality(v_fields)>0 then insert into mira.actividades_change_audit(actividad_id,actor_auth_user_id,action_key,changed_fields) values(NEW.id,coalesce(auth.user_id()::text,'unknown'),'updated',v_fields); end if;
  return NEW;
-end $;
+end $$;
 drop trigger if exists trg_audit_actividad_changes on mira.actividades;
 create trigger trg_audit_actividad_changes after insert or update on mira.actividades for each row execute function mira.audit_actividad_changes();
 create or replace function mira.annul_attendance(p_attendance_id uuid,p_reason text)
