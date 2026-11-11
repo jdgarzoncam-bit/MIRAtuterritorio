@@ -116,15 +116,21 @@ create policy personas_permission_create on mira.personas for insert to authenti
 create policy personas_permission_edit on mira.personas for update to authenticated using (mira.has_module_permission('personas','edit')) with check (mira.has_module_permission('personas','edit'));
 -- Personas are archived through the controlled workflow; direct DELETE is intentionally unavailable.
 drop policy if exists asistencias_permission_edit on mira.asistencias;
-create policy asistencias_permission_edit on mira.asistencias for update to authenticated using (mira.has_module_permission('actividades','edit') or mira.has_module_permission('actividades','annul')) with check (mira.has_module_permission('actividades','edit') or mira.has_module_permission('actividades','annul'));
+drop policy if exists asistencias_permission_delete on mira.asistencias;
+create policy asistencias_permission_edit on mira.asistencias for update to authenticated using (mira.has_module_permission('actividades','edit')) with check (mira.has_module_permission('actividades','edit'));
+-- Las anulaciones se ejecutan exclusivamente mediante la RPC SECURITY DEFINER, con validación granular.
 create table if not exists mira.personas_change_audit(id uuid primary key default gen_random_uuid(),persona_id uuid not null,actor_auth_user_id text,action_key text not null,changed_fields text[] not null default '{}',created_at timestamptz not null default now());
 create table if not exists mira.asistencias_change_audit(id uuid primary key default gen_random_uuid(),asistencia_id uuid not null,actor_auth_user_id text,action_key text not null,reason text,created_at timestamptz not null default now());
+create table if not exists mira.actividades_change_audit(id uuid primary key default gen_random_uuid(),actividad_id uuid not null,actor_auth_user_id text,action_key text not null,changed_fields text[] not null default '{}',created_at timestamptz not null default now());
 alter table mira.personas_change_audit enable row level security;
 alter table mira.asistencias_change_audit enable row level security;
+alter table mira.actividades_change_audit enable row level security;
 drop policy if exists personas_change_audit_admin_read on mira.personas_change_audit;
 drop policy if exists asistencias_change_audit_admin_read on mira.asistencias_change_audit;
+drop policy if exists actividades_change_audit_read on mira.actividades_change_audit;
 create policy personas_change_audit_admin_read on mira.personas_change_audit for select to authenticated using (mira.has_module_permission('base_datos_general','view') and mira.has_module_permission('personas','view'));
 create policy asistencias_change_audit_admin_read on mira.asistencias_change_audit for select to authenticated using (mira.has_module_permission('base_datos_general','view') and mira.has_module_permission('actividades','view'));
+create policy actividades_change_audit_read on mira.actividades_change_audit for select to authenticated using (mira.has_module_permission('base_datos_general','view') and mira.has_module_permission('actividades','view'));
 create or replace function mira.audit_persona_changes() returns trigger language plpgsql security definer set search_path=pg_catalog,mira,auth as $$
 declare v_fields text[] := '{}'; v_actor text;
 begin
@@ -146,15 +152,23 @@ begin
 end $$;
 drop trigger if exists trg_audit_persona_changes on mira.personas;
 create trigger trg_audit_persona_changes after insert or update on mira.personas for each row execute function mira.audit_persona_changes();
-create or replace function mira.audit_asistencia_changes() returns trigger language plpgsql security definer set search_path=pg_catalog,mira,auth as $$
+create or replace function mira.audit_asistencia_changes() returns trigger language plpgsql security definer set search_path=pg_catalog,mira,auth as $
 begin
- if NEW.estado is distinct from OLD.estado then
+ if TG_OP='INSERT' then
+  insert into mira.asistencias_change_audit(asistencia_id,actor_auth_user_id,action_key) values(NEW.id,coalesce(auth.user_id()::text,'unknown'),'created');
+  return NEW;
+ elsif TG_OP='DELETE' then
+  insert into mira.asistencias_change_audit(asistencia_id,actor_auth_user_id,action_key,reason) values(OLD.id,coalesce(auth.user_id()::text,'unknown'),'deleted','Eliminación registrada por trigger');
+  return OLD;
+ elsif NEW.estado is distinct from OLD.estado then
   insert into mira.asistencias_change_audit(asistencia_id,actor_auth_user_id,action_key,reason) values(NEW.id,coalesce(auth.user_id()::text,'unknown'),case when NEW.estado='anulada' then 'annulled' else 'reactivated' end,NEW.motivo_anulacion);
+ elsif (NEW.persona_id,NEW.actividad_id,NEW.observaciones) is distinct from (OLD.persona_id,OLD.actividad_id,OLD.observaciones) then
+  insert into mira.asistencias_change_audit(asistencia_id,actor_auth_user_id,action_key,reason) values(NEW.id,coalesce(auth.user_id()::text,'unknown'),'updated','Datos de asistencia modificados');
  end if;
  return NEW;
-end $$;
+end $;
 drop trigger if exists trg_audit_asistencia_changes on mira.asistencias;
-create trigger trg_audit_asistencia_changes after update on mira.asistencias for each row execute function mira.audit_asistencia_changes();
+create trigger trg_audit_asistencia_changes after insert or update or delete on mira.asistencias for each row execute function mira.audit_asistencia_changes();
 create or replace function mira.has_module_permission(p_module_key text,p_action_key text)
 returns boolean language sql stable security definer set search_path to 'pg_catalog','mira','auth' as $function$
 select case
@@ -169,9 +183,30 @@ select case
   and ((u.role='operator' and p_action_key in ('view','create','edit','export','annul')) or (u.role='viewer' and p_action_key='view'))
   and (p_action_key='view' or exists(select 1 from mira.module_permissions pv where pv.user_profile_id=u.id and pv.module_key=p_module_key and pv.action_key='view' and pv.allowed=true)))
 end $function$;
-create or replace function mira.annul_attendance(p_attendance_id uuid,p_reason text)
-returns setof mira.asistencias language plpgsql security invoker set search_path=pg_catalog,mira,auth as $$
+create or replace function mira.audit_actividad_changes() returns trigger language plpgsql security definer set search_path=pg_catalog,mira,auth as $
+declare v_fields text[] := '{}';
 begin
+ if TG_OP='INSERT' then
+  insert into mira.actividades_change_audit(actividad_id,actor_auth_user_id,action_key,changed_fields) values(NEW.id,coalesce(auth.user_id()::text,'unknown'),'created',array['nombre','fecha','lugar','estado']);
+  return NEW;
+ end if;
+ if NEW.nombre is distinct from OLD.nombre then v_fields:=array_append(v_fields,'nombre'); end if;
+ if NEW.fecha is distinct from OLD.fecha then v_fields:=array_append(v_fields,'fecha'); end if;
+ if NEW.lugar is distinct from OLD.lugar then v_fields:=array_append(v_fields,'lugar'); end if;
+ if NEW.estado is distinct from OLD.estado then v_fields:=array_append(v_fields,'estado'); end if;
+ if cardinality(v_fields)>0 then insert into mira.actividades_change_audit(actividad_id,actor_auth_user_id,action_key,changed_fields) values(NEW.id,coalesce(auth.user_id()::text,'unknown'),'updated',v_fields); end if;
+ return NEW;
+end $;
+drop trigger if exists trg_audit_actividad_changes on mira.actividades;
+create trigger trg_audit_actividad_changes after insert or update on mira.actividades for each row execute function mira.audit_actividad_changes();
+create or replace function mira.annul_attendance(p_attendance_id uuid,p_reason text)
+returns setof mira.asistencias
+language plpgsql
+security definer
+set search_path=pg_catalog,mira,auth
+as $$
+begin
+ if auth.user_id() is null then raise exception using errcode='42501',message='Se requiere una sesión autenticada.'; end if;
  if nullif(btrim(p_reason),'') is null then raise exception using errcode='22023',message='Indica el motivo de anulación.'; end if;
  if not mira.has_module_permission('actividades','annul') then raise exception using errcode='42501',message='No tienes permiso para anular asistencias.'; end if;
  return query update mira.asistencias set estado='anulada',anulada_at=now(),anulada_por=auth.user_id()::text,motivo_anulacion=btrim(p_reason) where id=p_attendance_id and estado='activa' returning *;
