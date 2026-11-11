@@ -512,23 +512,19 @@ async function loadActivitiesFromNeon(){
   activitiesLoading=true;
   try{
     if(!window.MIRA_DATA)throw new Error('El cliente de Neon todavía no está disponible.');
+    // Resolver permisos antes de consultar datos. Si no existe Consulta, se cierra el módulo.
+    if(isPrimaryMiraAdmin()){
+      activityPermissions=new Set(["view","create","edit","delete","export","manage"]);
+    }else{
+      const rows=await window.MIRA_DATA.listMyModulePermissions();
+      activityPermissions=new Set((rows||[]).filter(p=>p.module_key==="actividades"&&p.allowed===true).map(p=>p.action_key));
+    }
+    if(!activityPermissions.has("view")) throw new Error("No tienes permiso de Consulta en Actividades.");
     const [peopleRows,activityRows,attendanceRows]=await Promise.all([
       window.MIRA_DATA.listPeople({limit:1000}),
       window.MIRA_DATA.listActivities({limit:100}),
       window.MIRA_DATA.listAttendances({limit:1000})
     ]);
-    // La cuenta administradora principal no depende de consultar su propia matriz de permisos.
-    if(isPrimaryMiraAdmin()){
-      activityPermissions=new Set(["view","create","edit","delete","export","manage"]);
-    }else{
-      try{
-        const rows=await window.MIRA_DATA.listMyModulePermissions();
-        activityPermissions=new Set((rows||[]).filter(p=>p.module_key==="actividades"&&p.allowed===true).map(p=>p.action_key));
-      }catch(permissionError){
-        activityPermissions=new Set();
-        console.warn("[MIRA Actividades] No se pudieron consultar permisos; se mantiene solo el acceso permitido por RLS.",permissionError);
-      }
-    }
     activitiesState.people=(peopleRows||[]).map(p=>{const parsed=splitLegacyPersonName(p.nombres,p.apellidos);return {id:p.id,cedula:p.cedula||p.cedula_normalizada||'',names:parsed.names,surnames:parsed.surnames,phone:p.telefono||'',infoMira:p.info_mira===true?'si':p.info_mira===false?'no':'',type:p.tipo_participacion||''};});
     activitiesState.activities=(activityRows||[]).map(a=>({id:a.id,name:a.nombre,date:a.fecha,place:a.lugar||'',status:["activa","active","en_curso"].includes(String(a.estado||"").toLowerCase())?"active":["finalizada","finished","cerrada"].includes(String(a.estado||"").toLowerCase())?"finished":String(a.estado||"").toLowerCase()==="cancelada"?"cancelada":a.estado,createdAt:a.created_at}));
     activitiesState.attendances=(attendanceRows||[]).map(a=>({id:a.id,personId:a.persona_id,activityId:a.actividad_id,createdAt:a.fecha_registro||a.created_at}));
@@ -560,7 +556,22 @@ function splitLegacyPersonName(nombres,apellidos){
 function escapeActivityHtml(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function currentActivity(){return activitiesState.activities.find(a=>a.id===activitiesState.currentActivityId&&a.status==='active')||null;}
 let activitiesReturnContext = 'landing';
-async function openActivities(view='registration'){activitiesReturnContext=(document.getElementById('landing-hero-overlay').style.display==='none')?'platform':'landing';activitiesPlaceholder.classList.remove('hidden');document.getElementById('landing-hero-overlay').style.display='none';document.getElementById('landingHeaderControls').style.display='none';if(!activitiesBackendReady)await loadActivitiesFromNeon();renderActivities();showActivityView(view);}
+async function openActivities(view='registration'){
+  if(!isPrimaryMiraAdmin()){
+    try{
+      const rows=await window.MIRA_DATA.listMyModulePermissions();
+      activityPermissions=new Set((rows||[]).filter(p=>p.module_key==="actividades"&&p.allowed===true).map(p=>p.action_key));
+    }catch(error){activityPermissions=new Set();alert("No fue posible validar tus permisos de Actividades. El acceso permanece bloqueado.");return;}
+  }
+  if(!activityPermissions.has("view")&&!isPrimaryMiraAdmin()){alert("No tienes permiso de Consulta en Actividades.");return;}
+  if(!activitiesBackendReady)await loadActivitiesFromNeon();
+  if(!activitiesBackendReady){alert("No se pudo abrir Actividades. Verifica tu sesión, conexión y permisos.");return;}
+  activitiesReturnContext=(document.getElementById('landing-hero-overlay').style.display==='none')?'platform':'landing';
+  activitiesPlaceholder.classList.remove('hidden');
+  document.getElementById('landing-hero-overlay').style.display='none';
+  document.getElementById('landingHeaderControls').style.display='none';
+  renderActivities();showActivityView(view);
+}
 function closeActivities(){activitiesPlaceholder.classList.add('hidden');if(activitiesReturnContext==='platform'){document.getElementById('landing-hero-overlay').style.display='none';document.getElementById('landingHeaderControls').style.display='none';}else{document.getElementById('landing-hero-overlay').style.display='flex';document.getElementById('landingHeaderControls').style.display='flex';}}
 function showActivityView(view){const target={registration:'activityRegistrationView',recent:'activityRecentPanel',all:'activityAllView',detail:'activityDetailView'}[view]||'activityRegistrationView';['activityRegistrationView','activityRecentPanel','activityAllView','activityDetailView'].forEach(id=>document.getElementById(id).classList.toggle('hidden',id!==target));document.getElementById('activityScreenSubtitle').textContent=({registration:'Registro de participación territorial.',recent:'Consulta en vivo y rectificación de registros.',all:'Archivo de actividades y sus hojas de cálculo.',detail:'Registros guardados en esta actividad.'})[view]||'Registro de participación territorial.';document.querySelectorAll('.activity-mobile-tab').forEach(tab=>tab.classList.toggle('is-active',tab.dataset.activityView===(view==='detail'?'all':view)));}
 document.getElementById('btnSelectActividades')?.addEventListener('click',()=>openActivities('registration'));
