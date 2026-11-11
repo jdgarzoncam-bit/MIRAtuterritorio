@@ -1309,8 +1309,8 @@ function inicializarSistemaMapa() {
         if (container) container.innerHTML = '<p class="loading-text">Cargando sectores y geometrías territoriales…</p>';
 
         const fuentes = [
-            new URL('./barrios_poligonos_kml_aportado.geojson?v=20261031-geojson-recovery', document.baseURI).href,
-            'https://raw.githubusercontent.com/jdgarzoncam-bit/MIRAtuterritorio/main/barrios_poligonos_kml_aportado.geojson'
+            new URL('./barrios_poligonos_kml_aportado.geojson?v=20261111-map-fusion', document.baseURI).href,
+            'https://raw.githubusercontent.com/jdgarzoncam-bit/MIRAtuterritorio/preview/neon-qa-control-admin/barrios_poligonos_kml_aportado.geojson'
         ];
         const errores = [];
         let data = null;
