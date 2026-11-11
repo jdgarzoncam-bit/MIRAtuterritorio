@@ -582,10 +582,14 @@ document.querySelectorAll('.activity-mobile-tab').forEach(tab=>tab.addEventListe
 document.getElementById('sideAllActivitiesBtn').addEventListener('click',()=>openActivities('all'));
 document.getElementById('sideOpenActivityModuleBtn').addEventListener('click',()=>{openActivities('registration');showNewActivity();});
 
-function syncMiraQuickModules(){
+let quickModulesSyncVersion=0;
+async function syncMiraQuickModules(){
+  const version=++quickModulesSyncVersion;
   const root=document.getElementById('miraQuickModules');
   const testigos=document.getElementById('miraQuickTestigosBtn');
   const status=document.getElementById('miraQuickTestigosStatus');
+  const activities=document.getElementById('miraQuickActivitiesBtn');
+  const activitiesStatus=activities?.querySelector('small');
   const user=window.MIRA_CURRENT_USER;
   if(root)root.classList.toggle('hidden',!user?.authUserId);
   if(testigos){
@@ -595,6 +599,24 @@ function syncMiraQuickModules(){
     testigos.title='Módulo temporalmente inactivo';
   }
   if(status)status.textContent='En renovación · Acceso bloqueado';
+  if(!activities)return;
+  activities.disabled=true;
+  activities.setAttribute('aria-disabled','true');
+  if(activitiesStatus)activitiesStatus.textContent='Verificando permisos…';
+  let allowed=false;
+  if(user?.authUserId){
+    if(isPrimaryMiraAdmin())allowed=true;
+    else if(window.MIRA_DATA?.listMyModulePermissions){
+      try{
+        const rows=await window.MIRA_DATA.listMyModulePermissions();
+        allowed=Array.isArray(rows)&&rows.some(p=>p.module_key==='actividades'&&p.action_key==='view'&&p.allowed===true);
+      }catch(error){console.warn('[MIRA] No se pudo verificar el acceso rápido a Actividades.',error);}
+    }
+  }
+  if(version!==quickModulesSyncVersion)return;
+  activities.disabled=!allowed;
+  activities.setAttribute('aria-disabled',String(!allowed));
+  if(activitiesStatus)activitiesStatus.textContent=allowed?'Registro y seguimiento':'Sin permiso de consulta';
 }
 document.getElementById('miraQuickModulesToggle')?.addEventListener('click',()=>{
   const panel=document.getElementById('miraQuickModulesPanel');
