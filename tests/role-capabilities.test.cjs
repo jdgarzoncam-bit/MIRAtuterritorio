@@ -8,7 +8,7 @@ const adminSource = fs.readFileSync(path.join(__dirname, "..", "mira-admin.js"),
 const dataSource = fs.readFileSync(path.join(__dirname, "..", "mira-data.js"), "utf8");
 const appSource = fs.readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
 const exportMigration = fs.readFileSync(path.join(__dirname, "..", "migrations", "20261111_activities_granular_export_permission.sql"), "utf8");
-const atomicMigration = fs.readFileSync(path.join(__dirname, "..", "migrations", "20261111_activities_atomic_create.sql"), "utf8");
+const atomicMigration = exportMigration;
 
 function loadRolePolicy() {
   const context = vm.createContext({
