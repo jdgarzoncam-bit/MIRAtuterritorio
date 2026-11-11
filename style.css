@@ -5869,3 +5869,23 @@ input, select, textarea, button { max-width: 100%; }
 .admin-audit-pagination{display:flex;align-items:center;justify-content:center;gap:12px;padding:14px 0;color:var(--text-secondary,#9aa4b2);font-size:12px}
 .admin-audit-pagination button{border:1px solid rgba(148,163,184,.25);border-radius:9px;padding:7px 12px;background:rgba(15,23,42,.55);color:inherit;cursor:pointer}
 .admin-audit-pagination button:disabled{opacity:.35;cursor:not-allowed}
+
+
+/* Base de datos general: accesos y paneles de trabajo */
+.database-home{width:100%;min-width:0}
+.database-intro{font-size:.8rem;color:var(--text-muted);line-height:1.5;margin:8px 0 14px}
+.database-action-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.database-action-card{display:flex;flex-direction:column;align-items:flex-start;gap:7px;min-height:118px;padding:13px;text-align:left;border:1px solid var(--neo-border-glow);border-radius:13px;background:linear-gradient(155deg,rgba(18,37,61,.95),rgba(5,13,29,.98));color:var(--text-main);cursor:pointer;transition:transform .18s,border-color .18s,box-shadow .18s}
+.database-action-card:hover,.database-action-card:focus-visible{transform:translateY(-2px);border-color:var(--cyan-tactile);box-shadow:0 0 18px rgba(49,220,239,.12);outline:none}
+.database-action-card>span{display:grid;place-items:center;width:30px;height:30px;border-radius:9px;background:rgba(49,220,239,.12);color:var(--cyan-tactile);font-size:1.25rem;font-weight:800}
+.database-action-card strong{font-size:.82rem;line-height:1.25}
+.database-action-card small{font-size:.7rem;line-height:1.4;color:var(--text-muted)}
+.database-workspace{position:fixed;inset:0;z-index:4900;overflow:auto;padding:22px clamp(12px,3vw,42px) 30px;background:radial-gradient(circle at 10% 0%,rgba(56,189,248,.12),transparent 35%),radial-gradient(circle at 95% 30%,rgba(129,140,248,.12),transparent 32%),var(--bg-main);color:var(--text-main)}
+.database-workspace.hidden{display:none!important}
+.database-workspace-header{max-width:1400px;margin:0 auto 20px;padding:18px;border:1px solid var(--neo-border-glow);border-radius:18px;background:var(--neo-glass-bg);backdrop-filter:blur(18px)}
+.database-workspace-header h2{font-family:var(--font-title);font-size:clamp(1.7rem,4vw,2.8rem);margin:10px 0 4px;color:var(--cyan-tactile)}
+.database-workspace-header p{margin:4px 0;color:var(--text-muted)}
+.database-workspace-panel{max-width:1400px;min-height:300px;margin:0 auto;padding:20px}
+.database-back-row{margin-top:22px;padding-top:16px;border-top:1px solid var(--neo-border-subtle)}
+.database-workspace-panel .activity-form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media(max-width:560px){.database-action-grid{gap:7px}.database-action-card{min-height:125px;padding:10px}.database-workspace{padding:10px 8px 22px}.database-workspace-header{padding:13px}.database-workspace-panel{padding:13px}.database-workspace-panel .activity-form-grid{grid-template-columns:1fr}}
