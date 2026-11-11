@@ -1,9 +1,9 @@
 import { createAuthClient } from "https://esm.sh/@neondatabase/auth@0.7.0-beta";
 import { MIRA_DATA } from "./mira-data.js?v=20261103-activity-auth-2";
 
-const AUTH_URL = "https://ep-round-dawn-b7l3ya3h.neonauth.c-13.us-east-1.aws.neon.tech/neondb/auth";
-const DATA_API_URL = "https://ep-round-dawn-b7l3ya3h.apirest.c-13.us-east-1.aws.neon.tech/neondb/rest/v1";
-const auth = createAuthClient(AUTH_URL);
+const AUTH_URL = "https://ep-mute-grass-b7qan4n6.neonauth.c-13.us-east-1.aws.neon.tech/neondb/auth";
+const DATA_API_URL = "https://ep-mute-grass-b7qan4n6.apirest.c-13.us-east-1.aws.neon.tech/neondb/rest/v1";
+const auth = createAuthClient(AUTH_URL);\nwindow.MIRA_AUTH = auth;
 const $ = (id) => document.getElementById(id);
 const cleanCedula = value => String(value || "").replace(/\D/g, "");
 const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
