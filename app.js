@@ -532,7 +532,7 @@ async function loadActivitiesFromNeon(){
     };
     const [peopleRows,activityRows,attendanceRows]=await Promise.all([
       loadAllPages(({limit,offset})=>window.MIRA_DATA.listPeople({limit,offset})),
-      window.MIRA_DATA.listActivities({limit:100}),
+      loadAllPages(({limit,offset})=>window.MIRA_DATA.listActivities({limit,offset})),
       loadAllPages(({limit,offset})=>window.MIRA_DATA.listAttendances({limit,offset}))
     ]);
     activitiesState.people=(peopleRows||[]).map(p=>{const parsed=splitLegacyPersonName(p.nombres,p.apellidos);return {id:p.id,cedula:p.cedula||p.cedula_normalizada||'',names:parsed.names,surnames:parsed.surnames,phone:p.telefono||'',infoMira:p.info_mira===true?'si':p.info_mira===false?'no':'',type:p.tipo_participacion||''};});
