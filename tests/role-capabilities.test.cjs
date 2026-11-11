@@ -32,12 +32,12 @@ test("Consulta solo permite view", () => {
   }
 });
 
-test("Operador permite view, create y edit, pero no delete/export/manage", () => {
+test("Operador permite view, create, edit y export, pero no delete/manage", () => {
   const allows = loadRolePolicy();
-  for (const action of ["view", "create", "edit"]) {
+  for (const action of ["view", "create", "edit", "export"]) {
     assert.equal(allows("operator", action), true, action);
   }
-  for (const action of ["delete", "export", "manage"]) {
+  for (const action of ["delete", "manage"]) {
     assert.equal(allows("operator", action), false, action);
   }
 });
@@ -87,4 +87,21 @@ test("Guardar rol exige seleccionar un rol asignable y evita falso éxito con Te
 test("la matriz exige permiso Consulta antes de habilitar acciones de escritura", () => {
   assert.match(adminSource, /const hasView=allowed\.has\(m\.module_key\+"::view"\)/);
   assert.match(adminSource, /roleAllowed\?"Requiere permiso Consulta":"No permitido por el rol"/);
+});
+
+test("la exportación de Actividades se define como permiso granular", () => {
+  assert.match(adminSource, /actividades:\[\["view","Consulta"\],\["create","Crear"\],\["edit","Editar"\],\["export","Exportar Excel"\]/);
+  assert.match(adminSource, /actionKey==="export"&&nextValue/);
+  assert.match(adminSource, /actionKey==="view"&&!nextValue/);
+});
+
+test("el cliente de datos pagina personas y asistencias", () => {
+  assert.match(dataSource, /listPeople\(\{cedula="", search="", limit=100, offset=0/);
+  assert.match(dataSource, /listAttendances\(\{activityId,limit=100,offset=0/);
+});
+
+test("la exportación está bloqueada sin view y export", () => {
+  const appSource = fs.readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
+  assert.match(appSource, /!canManageActivities\("view"\)\|\|!canManageActivities\("export"\)/);
+  assert.match(appSource, /const exportAllowed=canManageActivities\("view"\)&&canManageActivities\("export"\)/);
 });
