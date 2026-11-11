@@ -123,8 +123,8 @@ alter table mira.personas_change_audit enable row level security;
 alter table mira.asistencias_change_audit enable row level security;
 drop policy if exists personas_change_audit_admin_read on mira.personas_change_audit;
 drop policy if exists asistencias_change_audit_admin_read on mira.asistencias_change_audit;
-create policy personas_change_audit_admin_read on mira.personas_change_audit for select to authenticated using (mira.is_active_admin());
-create policy asistencias_change_audit_admin_read on mira.asistencias_change_audit for select to authenticated using (mira.is_active_admin());
+create policy personas_change_audit_admin_read on mira.personas_change_audit for select to authenticated using (mira.has_module_permission('base_datos_general','view') and mira.has_module_permission('personas','view'));
+create policy asistencias_change_audit_admin_read on mira.asistencias_change_audit for select to authenticated using (mira.has_module_permission('base_datos_general','view') and mira.has_module_permission('actividades','view'));
 create or replace function mira.audit_persona_changes() returns trigger language plpgsql security definer set search_path=pg_catalog,mira,auth as $$
 declare v_fields text[] := '{}'; v_actor text;
 begin
