@@ -63,7 +63,7 @@ export const MIRA_DATA = {
     return miraRequest("infomira_red",{query:qs(params)});
   },
   async listPeople({cedula="", search="", limit=100, offset=0, tipoParticipacion=""}={}) {
-    const params = {select:"id,cedula,cedula_normalizada,nombres,apellidos,telefono,correo,info_mira,puesto_votacion,mesa_votacion,requiere_transporte,edad,tipo_participacion,observaciones,activo,created_at,updated_at",order:"updated_at.desc",limit:String(Math.min(Math.max(limit,1),1000)),offset:String(Math.max(0,Number(offset)||0))};
+    const params = {select:"id,cedula,cedula_normalizada,nombres,apellidos,telefono,correo,info_mira,barrio,puesto_votacion,mesa_votacion,requiere_transporte,edad,tipo_participacion,observaciones,activo,datos_pendientes,fuente_registro,created_at,updated_at",order:"updated_at.desc",limit:String(Math.min(Math.max(limit,1),1000)),offset:String(Math.max(0,Number(offset)||0))};
     if (tipoParticipacion) params.tipo_participacion = `eq.${tipoParticipacion}`;
     if (cedula) params.cedula_normalizada = `eq.${cleanCedula(cedula)}`;
     else if (search.trim()) {
@@ -109,7 +109,9 @@ export const MIRA_DATA = {
     return miraRequest("asistencias",{method:"POST",body:payload});
   },
   updateAttendance(id,payload) { return miraRequest("asistencias",{method:"PATCH",query:qs({id:`eq.${id}`}),body:payload}); },
-  deleteAttendance(id) { return miraRequest("asistencias",{method:"DELETE",query:qs({id:`eq.${id}`})}); },
+  deleteAttendance(id) { return miraRequest("asistencias",{method:"DELETE",query:qs({id:`eq.${id}`}),prefer:"return=representation",requireRows:true}); },
+  annulAttendance(id,reason) { if(!id||!reason?.trim()) throw new Error("Selecciona la asistencia e indica el motivo."); return miraRequest("rpc/annul_attendance",{method:"POST",body:{p_attendance_id:id,p_reason:reason.trim()},requireRows:true}); },
+  async listPeopleAudit({personaId,limit=100,offset=0}={}) { const params={select:"*",order:"created_at.desc",limit:String(Math.min(Math.max(limit,1),500)),offset:String(Math.max(0,Number(offset)||0))}; if(personaId) params.persona_id=`eq.${personaId}`; return miraRequest("personas_change_audit",{query:qs(params)}); },
   async listPublicWitnesses({limit=100}={}) {
     assertTestigosEnabled();
     return miraRequest("testigos_publicos",{query:qs({select:"*",order:"created_at.desc",limit:String(Math.min(Math.max(limit,1),100))})});
