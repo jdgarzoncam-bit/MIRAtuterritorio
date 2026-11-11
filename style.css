@@ -5865,3 +5865,7 @@ input, select, textarea, button { max-width: 100%; }
 .pqrs-routing-notice{padding:14px 16px;border:1px solid rgba(56,189,248,.28);border-radius:12px;background:rgba(14,116,190,.09)}
 .pqrs-routing-notice strong{display:block;color:var(--cyan-tactile);margin-bottom:5px}
 .pqrs-routing-notice p{margin:0;color:var(--text-muted);line-height:1.5;font-size:.84rem}
+
+.admin-audit-pagination{display:flex;align-items:center;justify-content:center;gap:12px;padding:14px 0;color:var(--text-secondary,#9aa4b2);font-size:12px}
+.admin-audit-pagination button{border:1px solid rgba(148,163,184,.25);border-radius:9px;padding:7px 12px;background:rgba(15,23,42,.55);color:inherit;cursor:pointer}
+.admin-audit-pagination button:disabled{opacity:.35;cursor:not-allowed}
