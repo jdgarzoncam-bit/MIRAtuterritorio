@@ -1,6 +1,7 @@
 // MIRA TU TERRITORIO — Control Administrativo: permisos granulares.
 const MODULE_ACTIONS = {
-  actividades:[["view","Consulta"],["create","Crear"],["edit","Editar"],["export","Exportar Excel"],["delete","Eliminar"]],
+  actividades:[["view","Consulta"],["create","Crear"],["edit","Editar"],["annul","Anular asistencia"],["export","Exportar Excel"],["delete","Eliminar"]],
+  personas:[["view","Consultar personas"],["create","Incorporar personas"],["edit","Completar / editar fichas"]],
   concejal:[["view","Consulta"],["create","Crear"],["edit","Editar"],["delete","Eliminar"]],
   infomira:[["view","Consulta"],["create","Crear"],["edit","Editar"],["delete","Eliminar"]],
   centro_operaciones:[["view","Consulta"]], pqrs:[["view","Consulta"]]
@@ -29,7 +30,7 @@ function notice(message, error=false) {
 }
 function clearNotice(){const n=$("adminPermissionsNotice");if(n){n.textContent="";n.classList.add("hidden");}}
 function roleAllowsAction(role,action){
-  if(role==="operator")return ["view","create","edit","export"].includes(action);
+  if(role==="operator")return ["view","create","edit","export","annul"].includes(action);
   if(role==="viewer")return action==="view";
   return false;
 }
@@ -177,7 +178,7 @@ function renderMatrix(){
  const visibleModules=modules.filter(m=>m.module_key!=="control_administrativo"&&m.module_key!=="testigos"&&m.active!==false);
  const approval=selectedProfile&&selectedProfile.role!=="admin"?renderApprovalControls(selectedProfile):"";
  const roleNote=selectedProfile&&selectedProfile.role!=="admin"
-  ? '<p class="admin-permissions-hint">El rol limita las acciones efectivas: Consulta solo permite ver; Operador permite consultar, crear y editar. La exportación requiere autorización independiente del administrador. Eliminar y administrar no están habilitados para estos roles. Los permisos guardados se conservan si cambias el rol, pero las acciones fuera de su límite no tendrán efecto.</p>'
+  ? '<p class="admin-permissions-hint">El rol limita las acciones efectivas: Consulta solo permite ver; Operador permite consultar, crear, editar y anular cuando se autoriza. La exportación requiere autorización independiente. Eliminar y administrar no están habilitados para estos roles. Los permisos guardados se conservan si cambias el rol, pero las acciones fuera de su límite no tendrán efecto.</p>'
   : "";
  $("adminPermissionsMatrix").innerHTML=approval+roleNote+visibleModules.map(m=>{
   const actions=MODULE_ACTIONS[m.module_key]||[["view","Consulta"]];
