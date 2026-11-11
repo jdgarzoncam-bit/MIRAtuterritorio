@@ -657,10 +657,21 @@ function initDatabaseExplorer(){
   editor.querySelector("form").addEventListener("submit",async event=>{event.preventDefault();const payload=Object.fromEntries(new FormData(event.currentTarget).entries());if(payload.edad==="")delete payload.edad;else payload.edad=Number(payload.edad);try{const stillPending=!String(payload.telefono||"").trim()||!String(payload.barrio||"").trim();await window.MIRA_DATA.updatePerson(person.id,{...payload,datos_pendientes:stillPending});document.getElementById("databasePendingNotice").textContent="Ficha actualizada. Se retiró la marca de datos pendientes.";await renderPending();}catch(error){document.getElementById("databasePendingNotice").textContent=error.message||"No fue posible actualizar la ficha.";}} ,{once:true});
  }
  async function renderHistory(){
-  if(!allowed("personas","view"))throw new Error("No tienes permiso para consultar la auditoría de Personas.");
-  const rows=await window.MIRA_DATA.listPeopleAudit({limit:100});
-  content.innerHTML='<div class="activity-toolbar"><div><h3>Historial de personas</h3><p>Eventos disponibles de creación y edición, con identificador de usuario y fecha del servidor.</p></div></div><div class="activity-table-wrap"><table class="activity-table"><thead><tr><th>Acción</th><th>Usuario (ID)</th><th>Fecha y hora</th><th>Campos</th><th>Registro</th></tr></thead><tbody>'+(rows.length?rows.map(item=>'<tr><td>'+esc(item.action_key)+'</td><td>'+esc(item.actor_auth_user_id)+'</td><td>'+esc(item.created_at?new Date(item.created_at).toLocaleString():"—")+'</td><td>'+esc((item.changed_fields||[]).join(", "))+'</td><td><button class="activity-secondary-btn" type="button" data-history-person="'+esc(item.persona_id)+'">Ver persona</button></td></tr>').join(""):'<tr><td colspan="5">No hay eventos de auditoría de personas disponibles.</td></tr>')+'</tbody></table></div><p class="activity-local-warning">La auditoría actual no cubre todavía todos los módulos ni registra todas las eliminaciones. No se mostrarán eventos que la base no haya auditado.</p>';
-  content.querySelectorAll("[data-history-person]").forEach(button=>button.addEventListener("click",()=>{open("pending");}));
+  const canPeople=allowed("personas","view"),canActivities=allowed("actividades","view");
+  if(!canPeople&&!canActivities)throw new Error("No tienes permiso para consultar historiales de los módulos de origen.");
+  const results=await Promise.all([
+   canPeople?window.MIRA_DATA.listPeopleAudit({limit:100}):Promise.resolve([]),
+   canActivities?window.MIRA_DATA.listActivitiesAudit({limit:100}):Promise.resolve([]),
+   canActivities?window.MIRA_DATA.listAttendanceAudit({limit:100}):Promise.resolve([])
+  ]);
+  const events=[];
+  results[0].forEach(x=>events.push({source:"Personas",action:x.action_key,actor:x.actor_auth_user_id,date:x.created_at,detail:(x.changed_fields||[]).join(", "),id:x.persona_id}));
+  results[1].forEach(x=>events.push({source:"Actividades",action:x.action_key,actor:x.actor_auth_user_id,date:x.created_at,detail:(x.changed_fields||[]).join(", "),id:x.actividad_id}));
+  results[2].forEach(x=>events.push({source:"Asistencias",action:x.action_key,actor:x.actor_auth_user_id,date:x.created_at,detail:x.reason||"—",id:x.asistencia_id}));
+  events.sort((a,b)=>new Date(b.date)-new Date(a.date));
+  content.innerHTML='<div class="activity-toolbar"><div><h3>Historial de cambios</h3><p>Eventos registrados por la base de datos desde la activación de sus auditorías.</p></div></div><div class="activity-table-wrap"><table class="activity-table"><thead><tr><th>Módulo</th><th>Acción</th><th>Usuario (ID)</th><th>Fecha</th><th>Detalle</th><th>Registro</th></tr></thead><tbody></tbody></table></div><p class="activity-local-warning">El historial cubre Personas, Actividades y Asistencias. No reconstruye eventos anteriores a la activación de los triggers ni incluye todavía PQRS y otros módulos.</p>';
+  const body=content.querySelector("tbody");
+  body.innerHTML=events.length?events.map(x=>"<tr><td>"+esc(x.source)+"</td><td>"+esc(x.action)+"</td><td>"+esc(x.actor||"—")+"</td><td>"+esc(x.date?new Date(x.date).toLocaleString("es-CO"):"—")+"</td><td>"+esc(x.detail||"—")+"</td><td>"+esc(x.id)+"</td></tr>").join(""):'<tr><td colspan="6">No hay eventos disponibles para los módulos autorizados.</td></tr>';
  }
  async function renderAll(){
   if(!datasets.length)throw new Error("No hay conjuntos de datos de origen autorizados.");
