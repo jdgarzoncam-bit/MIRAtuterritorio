@@ -62,8 +62,8 @@ export const MIRA_DATA = {
     }
     return miraRequest("infomira_red",{query:qs(params)});
   },
-  async listPeople({cedula="", search="", limit=100, tipoParticipacion=""}={}) {
-    const params = {select:"id,cedula,cedula_normalizada,nombres,apellidos,telefono,correo,info_mira,puesto_votacion,mesa_votacion,requiere_transporte,edad,tipo_participacion,observaciones,activo,created_at,updated_at",order:"updated_at.desc",limit:String(Math.min(Math.max(limit,1),1000))};
+  async listPeople({cedula="", search="", limit=100, offset=0, tipoParticipacion=""}={}) {
+    const params = {select:"id,cedula,cedula_normalizada,nombres,apellidos,telefono,correo,info_mira,puesto_votacion,mesa_votacion,requiere_transporte,edad,tipo_participacion,observaciones,activo,created_at,updated_at",order:"updated_at.desc",limit:String(Math.min(Math.max(limit,1),1000)),offset:String(Math.max(0,Number(offset)||0))};
     if (tipoParticipacion) params.tipo_participacion = `eq.${tipoParticipacion}`;
     if (cedula) params.cedula_normalizada = `eq.${cleanCedula(cedula)}`;
     else if (search.trim()) {
@@ -90,8 +90,8 @@ export const MIRA_DATA = {
   updateActivity(id,payload) { return miraRequest("actividades",{method:"PATCH",query:qs({id:`eq.${id}`}),body:payload}); },
   cancelActivity(id) { return this.updateActivity(id,{estado:"cancelada"}); },
   deleteActivity(id) { if(!id) throw new Error("Identificador de actividad no válido."); return miraRequest("actividades",{method:"DELETE",query:qs({id:`eq.${id}`}),prefer:"return=representation",requireRows:true}); },
-  async listAttendances({activityId,limit=100}={}) {
-    const params={select:"*",order:"fecha_registro.desc",limit:String(Math.min(Math.max(limit,1),1000))};
+  async listAttendances({activityId,limit=100,offset=0}={}) {
+    const params={select:"*",order:"fecha_registro.desc",limit:String(Math.min(Math.max(limit,1),1000)),offset:String(Math.max(0,Number(offset)||0))};
     if(activityId) params.actividad_id=`eq.${activityId}`;
     return miraRequest("asistencias",{query:qs(params)});
   },
