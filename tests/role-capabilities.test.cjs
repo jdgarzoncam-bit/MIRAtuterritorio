@@ -93,7 +93,7 @@ test("la matriz exige permiso Consulta antes de habilitar acciones de escritura"
 });
 
 test("la exportación de Actividades se define como permiso granular", () => {
-  assert.match(adminSource, /actividades:\[\["view","Consulta"\],\["create","Crear"\],\["edit","Editar"\],\["export","Exportar Excel"\]/);
+  assert.match(adminSource, /actividades:\[\["view","Consulta"\],\["create","Crear"\],\["edit","Editar"\],(?:\["annul","Anular asistencia"\],)?\["export","Exportar Excel"\]/);
   assert.match(adminSource, /actionKey==="export"&&nextValue/);
   assert.match(adminSource, /actionKey==="view"&&!nextValue/);
 });
