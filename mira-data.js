@@ -80,8 +80,8 @@ export const MIRA_DATA = {
   },
   updatePerson(id,payload) { const {cedula_normalizada, ...personData} = payload; const cedula=personData.cedula===undefined?undefined:cleanCedula(personData.cedula); return miraRequest("personas",{method:"PATCH",query:qs({id:`eq.${id}`}),body:{...personData,...(cedula!==undefined?{cedula}:{})}}); },
   archivePerson(id) { return this.updatePerson(id,{activo:false}); },
-  async listActivities({limit=100}={}) {
-    return miraRequest("actividades",{query:qs({select:"*",order:"fecha.desc",limit:String(Math.min(Math.max(limit,1),100))})});
+  async listActivities({limit=100,offset=0}={}) {
+    return miraRequest("actividades",{query:qs({select:"*",order:"fecha.desc",limit:String(Math.min(Math.max(limit,1),1000)),offset:String(Math.max(0,Number(offset)||0))})});
   },
   createActivity(payload) {
     if (!payload.nombre?.trim() || !payload.fecha) throw new Error("Nombre y fecha son obligatorios.");
