@@ -592,6 +592,93 @@ document.querySelectorAll('.activity-mobile-tab').forEach(tab=>tab.addEventListe
 document.getElementById('sideAllActivitiesBtn').addEventListener('click',()=>openActivities('all'));
 document.getElementById('sideOpenActivityModuleBtn').addEventListener('click',()=>{openActivities('registration');showNewActivity();});
 
+// Explorador de Base de datos general: navegación limitada por permisos del módulo y del origen.
+(function initDatabaseExplorer(){
+  const root=document.getElementById("databaseExplorer");
+  if(!root)return;
+  const datasetSelect=document.getElementById("databaseExplorerDataset");
+  const searchInput=document.getElementById("databaseExplorerSearch");
+  const searchBtn=document.getElementById("databaseExplorerSearchBtn");
+  const body=root.querySelector("#databaseExplorerTable tbody");
+  const head=root.querySelector("#databaseExplorerTable thead");
+  const meta=document.getElementById("databaseExplorerMeta");
+  const notice=document.getElementById("databaseExplorerNotice");
+  const prev=document.getElementById("databaseExplorerPrev");
+  const next=document.getElementById("databaseExplorerNext");
+  const pageLabel=document.getElementById("databaseExplorerPage");
+  const PAGE_SIZE=25;
+  let datasets=[],permissions=new Set(),page=0,hasMore=false,requestVersion=0;
+  const admin=()=>isPrimaryMiraAdmin();
+  const allowed=(module,action="view")=>admin()||permissions.has(module+"::"+action);
+  const setNotice=(message,isError=false)=>{notice.textContent=message||"";notice.style.color=isError?"#ff8b8b":"var(--text-muted)";};
+  const activeDataset=()=>datasets.find(item=>item.key===datasetSelect.value);
+  function renderRows(rows,dataset){
+    head.innerHTML="<tr>"+dataset.columns.map(col=>"<th>"+escapeActivityHtml(col[1])+"</th>").join("")+"<th>Detalle</th></tr>";
+    if(!rows.length){body.innerHTML='<tr><td colspan="'+(dataset.columns.length+1)+'">No se encontraron registros.</td></tr>';return;}
+    body.innerHTML=rows.map(row=>{
+      const cells=dataset.columns.map(([key])=>"<td>"+escapeActivityHtml(row[key]===null||row[key]===undefined?"—":typeof row[key]==="object"?JSON.stringify(row[key]):String(row[key]))+"</td>").join("");
+      const detail=escapeActivityHtml(JSON.stringify(row,null,2));
+      return "<tr>"+cells+'<td><details><summary>Ver ficha</summary><pre style="white-space:pre-wrap;max-width:340px;overflow-wrap:anywhere;">'+detail+"</pre></details></td></tr>";
+    }).join("");
+  }
+  async function loadRows(reset=false){
+    const dataset=activeDataset();
+    if(!dataset)return;
+    if(reset)page=0;
+    if(!allowed("base_datos_general","view")||!allowed(dataset.module,"view")){
+      body.innerHTML='<tr><td colspan="8">No tienes autorización para consultar este conjunto de datos.</td></tr>';
+      setNotice("Acceso restringido por permisos.",true);return;
+    }
+    const version=++requestVersion;
+    body.innerHTML='<tr><td colspan="8">Consultando Neon…</td></tr>';
+    try{
+      const rows=await window.MIRA_DATA.listExplorerRows({datasetKey:dataset.key,search:searchInput.value,limit:PAGE_SIZE+1,offset:page*PAGE_SIZE});
+      if(version!==requestVersion)return;
+      const visible=Array.isArray(rows)?rows.slice(0,PAGE_SIZE):[];
+      hasMore=Array.isArray(rows)&&rows.length>PAGE_SIZE;
+      renderRows(visible,dataset);
+      meta.textContent=dataset.label+" · "+visible.length+" registros en esta página";
+      pageLabel.textContent="Página "+(page+1);
+      prev.disabled=page===0;next.disabled=!hasMore;
+      setNotice(allowed("base_datos_general","edit")&&allowed(dataset.module,"edit")
+        ?"Consulta habilitada. La edición se realiza desde el módulo de origen para conservar sus validaciones."
+        :"Modo consulta. No tienes permisos de edición para este conjunto.");
+    }catch(error){
+      if(version!==requestVersion)return;
+      body.innerHTML='<tr><td colspan="8">No fue posible consultar este conjunto.</td></tr>';
+      setNotice(error.message||"Error al consultar la base de datos.",true);
+      prev.disabled=true;next.disabled=true;
+    }
+  }
+  async function refreshDatasets(){
+    requestVersion++;
+    datasetSelect.innerHTML='<option value="">Validando permisos…</option>';
+    try{
+      const rows=admin()?[]:await window.MIRA_DATA.listMyModulePermissions();
+      permissions=new Set((rows||[]).filter(p=>p.allowed===true).map(p=>p.module_key+"::"+p.action_key));
+      if(!allowed("base_datos_general","view"))throw new Error("No tienes permiso de consulta en Base de datos general.");
+      datasets=window.MIRA_DATA.getExplorerDatasets().filter(item=>allowed(item.module,"view"));
+      datasetSelect.innerHTML='<option value="">Selecciona un conjunto…</option>'+datasets.map(item=>'<option value="'+escapeActivityHtml(item.key)+'">'+escapeActivityHtml(item.label)+'</option>').join("");
+      if(!datasets.length)throw new Error("No hay conjuntos de datos de origen autorizados para tu cuenta.");
+      setNotice("Se muestran únicamente los conjuntos permitidos por tus permisos de origen.");
+      meta.textContent=datasets.length+" conjuntos de datos disponibles.";
+      body.innerHTML='<tr><td colspan="8">Selecciona un conjunto para comenzar.</td></tr>';
+    }catch(error){
+      datasets=[];datasetSelect.innerHTML='<option value="">Sin acceso disponible</option>';
+      body.innerHTML='<tr><td colspan="8">'+escapeActivityHtml(error.message||"Acceso no disponible.")+"</td></tr>";
+      setNotice(error.message||"No fue posible validar permisos.",true);
+    }
+  }
+  datasetSelect.addEventListener("change",()=>loadRows(true));
+  searchBtn.addEventListener("click",()=>loadRows(true));
+  searchInput.addEventListener("keydown",event=>{if(event.key==="Enter")loadRows(true);});
+  prev.addEventListener("click",()=>{if(page>0){page--;loadRows();}});
+  next.addEventListener("click",()=>{if(hasMore){page++;loadRows();}});
+  window.addEventListener("mira:authenticated",refreshDatasets);
+  window.addEventListener("mira:signed-out",()=>{requestVersion++;datasets=[];permissions.clear();datasetSelect.innerHTML='<option value="">Inicia sesión para consultar</option>';body.innerHTML='<tr><td colspan="8">Sesión cerrada.</td></tr>';});
+  refreshDatasets();
+})();
+
 let quickModulesSyncVersion=0;
 async function syncMiraQuickModules(){
   const version=++quickModulesSyncVersion;
