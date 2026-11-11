@@ -592,8 +592,8 @@ document.querySelectorAll('.activity-mobile-tab').forEach(tab=>tab.addEventListe
 document.getElementById('sideAllActivitiesBtn').addEventListener('click',()=>openActivities('all'));
 document.getElementById('sideOpenActivityModuleBtn').addEventListener('click',()=>{openActivities('registration');showNewActivity();});
 
-// Explorador de Base de datos general: navegación limitada por permisos del módulo y del origen.
-(function initDatabaseExplorer(){
+// Base de datos general: paneles independientes con permisos granulares.
+function initDatabaseExplorer(){
  const root=document.getElementById("databaseExplorer"),workspace=document.getElementById("databaseWorkspace");
  if(!root||!workspace)return;
  const title=document.getElementById("databaseWorkspaceTitle"),description=document.getElementById("databaseWorkspaceDescription"),content=document.getElementById("databaseWorkspaceContent"),notice=document.getElementById("databaseExplorerNotice");
