@@ -604,15 +604,44 @@ function initDatabaseExplorer(){
  const allowed=(module,action="view")=>admin()||permissions.has(module+"::"+action);
  const esc=value=>escapeActivityHtml(value===null||value===undefined?"—":typeof value==="object"?JSON.stringify(value):String(value));
  const say=(message,error=false)=>{notice.textContent=message||"";notice.style.color=error?"#ff8b8b":"var(--text-muted)";};
+ async function waitForMiraData(timeoutMs=15000){
+  const ready=()=>window.MIRA_DATA&&typeof window.MIRA_DATA.getExplorerDatasets==="function";
+  if(ready())return window.MIRA_DATA;
+  await new Promise((resolve,reject)=>{
+   let settled=false;
+   const cleanup=()=>{window.removeEventListener("mira:data-ready",onReady);clearTimeout(timer);};
+   const onReady=()=>{if(!settled&&ready()){settled=true;cleanup();resolve();}};
+   const timer=setTimeout(()=>{if(!settled){settled=true;cleanup();reject(new Error("El cliente de datos no terminó de inicializar. Recarga la página y verifica que mira-data.js cargue correctamente."));}},timeoutMs);
+   window.addEventListener("mira:data-ready",onReady);
+   // Cubre el caso en que el módulo termina de cargar entre la primera comprobación y el listener.
+   onReady();
+  });
+  return window.MIRA_DATA;
+ }
  async function refreshPermissions(){
-  if(!window.MIRA_DATA)throw new Error("El servicio de datos aún se está inicializando. Espera un momento e inténtalo de nuevo.");
-  if(!admin()&&typeof window.MIRA_DATA.listMyModulePermissions!=="function")throw new Error("No está disponible la consulta de permisos. El acceso permanece bloqueado.");
-  const rows=admin()?[]:await window.MIRA_DATA.listMyModulePermissions();
+  const data=await waitForMiraData();
+  if(!admin()&&typeof data.listMyModulePermissions!=="function")throw new Error("La versión del cliente de permisos no está disponible. Actualiza la aplicación y vuelve a ingresar.");
+  if(typeof data.getExplorerDatasets!=="function")throw new Error("No está disponible el catálogo autorizado de conjuntos de datos.");
+  const rows=admin()?[]:await data.listMyModulePermissions();
   permissions=new Set((rows||[]).filter(p=>p.allowed===true).map(p=>p.module_key+"::"+p.action_key));
-  datasets=window.MIRA_DATA.getExplorerDatasets().filter(d=>allowed("base_datos_general","view")&&allowed(d.module,"view"));
+  datasets=data.getExplorerDatasets().filter(d=>allowed("base_datos_general","view")&&allowed(d.module,"view"));
  }
  async function open(view){
-  activeView=view;root.classList.add("hidden");workspace.classList.remove("hidden");
+  activeView=view;root.classList.add("hidden");
+  // Fijar el espacio de trabajo al viewport real y sacarlo del contenedor lateral.
+  if(workspace.parentElement!==document.body)document.body.appendChild(workspace);
+  workspace.style.setProperty("position","fixed","important");
+  workspace.style.setProperty("inset","0","important");
+  workspace.style.setProperty("left","0","important");
+  workspace.style.setProperty("top","0","important");
+  workspace.style.setProperty("width","100vw","important");
+  workspace.style.setProperty("height","100vh","important");
+  workspace.style.setProperty("height","100dvh","important");
+  workspace.style.setProperty("max-width","none","important");
+  workspace.style.setProperty("max-height","none","important");
+  workspace.style.setProperty("z-index","10050","important");
+  workspace.style.setProperty("overflow-y","auto","important");
+  workspace.classList.remove("hidden");
   workspace.setAttribute("aria-hidden","false");
   document.body.classList.add("database-workspace-open");
   const configs={
