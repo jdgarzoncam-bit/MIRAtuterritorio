@@ -59,7 +59,7 @@ async function refreshActivities() {
   const select = $("pubActivity");
   const previous = select.value;
   select.innerHTML = '<option value="">Seleccionar actividad…</option>' + activities
-    .filter(a => a.estado !== "cancelada")
+    .filter(a => a.estado === "activa")
     .sort((a,b) => String(b.fecha).localeCompare(String(a.fecha)))
     .map(a => `<option value="${escapeHtml(a.id)}">${escapeHtml(a.nombre)} · ${escapeHtml(String(a.fecha).slice(0,10))}${a.estado === "activa" ? " · En curso" : ""}</option>`).join("");
   if (activities.some(a => a.id === previous)) select.value = previous;
