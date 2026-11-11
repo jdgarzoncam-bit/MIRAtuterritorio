@@ -1,0 +1,498 @@
+{
+  "format": "maps3d-project",
+  "configVersion": 5,
+  "savedAt": "2026-11-10T20:30:24.299Z",
+  "trackOmitted": false,
+  "params": {
+    "areaSelected": {
+      "ne": {
+        "lat": 4.84004,
+        "lng": -74.32652
+      },
+      "sw": {
+        "lat": 4.78275,
+        "lng": -74.37598
+      },
+      "polygon": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -74.35125,
+              4.84004
+            ],
+            [
+              -74.32652,
+              4.82572
+            ],
+            [
+              -74.32653,
+              4.79707
+            ],
+            [
+              -74.35126,
+              4.78275
+            ],
+            [
+              -74.37598,
+              4.79708
+            ],
+            [
+              -74.37598,
+              4.82572
+            ],
+            [
+              -74.35125,
+              4.84004
+            ]
+          ]
+        ]
+      },
+      "shapeType": "hexagon"
+    },
+    "imagerySelected": "satlas-superes-2023",
+    "groundMaterialMode": "imagery",
+    "groundColor": "#F5F0EF",
+    "terrainColorMode": "solid",
+    "elevationLayers": [
+      {
+        "color": "#4ade80",
+        "heightPercent": 40
+      },
+      {
+        "color": "#9ca3af",
+        "heightPercent": 75
+      },
+      {
+        "color": "#ffffff",
+        "heightPercent": 100
+      }
+    ],
+    "buildings": {
+      "show": true,
+      "source": "auto",
+      "detailed": false,
+      "extrudedHeightExaggerationRatio": 1,
+      "heightRandomnessPercent": 0,
+      "heightSource": "osm",
+      "color": "#E8AC4A",
+      "minHeight": 3,
+      "maxHeight": 25,
+      "offset": 0,
+      "hideSmallBuildings": false,
+      "minWidthM": null,
+      "minAreaM2": null,
+      "keepTallerThanM": 50,
+      "edgeRendering": false,
+      "edgeWidth": 30,
+      "placement": "raised",
+      "carveDepth": null,
+      "labels": true,
+      "labelsAll": false
+    },
+    "roads": {
+      "show": true,
+      "color": "#5C636B",
+      "widthScale": 1,
+      "extrudedHeight": 23.037446403981164,
+      "renderMode": "extruded",
+      "offset": -21.537446403981164,
+      "placement": "raised",
+      "carveDepth": null,
+      "showFeature": null,
+      "groups": {
+        "arterial": {
+          "enabled": true,
+          "width": 10,
+          "color": "#5C636B",
+          "renderMode": "extruded",
+          "extrudedHeight": 23.037446403981164
+        },
+        "collector": {
+          "enabled": true,
+          "width": 6,
+          "color": "#5C636B",
+          "renderMode": "extruded",
+          "extrudedHeight": 23.037446403981164
+        },
+        "local": {
+          "enabled": true,
+          "width": 4,
+          "color": "#5C636B",
+          "renderMode": "extruded",
+          "extrudedHeight": 23.037446403981164
+        },
+        "service": {
+          "enabled": true,
+          "width": 2,
+          "color": "#5C636B",
+          "renderMode": "extruded",
+          "extrudedHeight": 23.037446403981164
+        },
+        "paths": {
+          "enabled": true,
+          "width": 1,
+          "color": "#5C636B",
+          "renderMode": "extruded",
+          "extrudedHeight": 23.037446403981164
+        },
+        "rail": {
+          "enabled": false,
+          "width": 3,
+          "color": "#5C636B",
+          "renderMode": "extruded",
+          "extrudedHeight": 23.037446403981164
+        },
+        "ferry": {
+          "enabled": false,
+          "width": 3,
+          "color": "#5C636B",
+          "renderMode": "extruded",
+          "extrudedHeight": 23.037446403981164
+        },
+        "tunnel": {
+          "enabled": false,
+          "width": 4,
+          "color": "#5C636B",
+          "renderMode": "extruded",
+          "extrudedHeight": 23.037446403981164
+        },
+        "bridge": {
+          "enabled": true,
+          "width": 6,
+          "color": "#5C636B",
+          "renderMode": "extruded",
+          "extrudedHeight": 23.037446403981164
+        },
+        "sidewalk": {
+          "enabled": false,
+          "width": 1,
+          "color": "#5C636B",
+          "renderMode": "extruded",
+          "extrudedHeight": 23.037446403981164
+        },
+        "crosswalk": {
+          "enabled": false,
+          "width": 1,
+          "color": "#5C636B",
+          "renderMode": "extruded",
+          "extrudedHeight": 23.037446403981164
+        },
+        "parking": {
+          "enabled": false,
+          "width": 2,
+          "color": "#5C636B",
+          "renderMode": "extruded",
+          "extrudedHeight": 23.037446403981164
+        }
+      }
+    },
+    "water": {
+      "show": true,
+      "color": "#3B9FD9",
+      "extrudedHeight": 23.037446403981164,
+      "opacity": 1,
+      "renderMode": "extruded",
+      "offset": 0.02,
+      "placement": "inlaid",
+      "carveDepth": 23.037446403981164,
+      "showFeature": null,
+      "flatten": "off",
+      "hideSmallBodies": true,
+      "minWidthM": null,
+      "minAreaM2": null,
+      "groups": {
+        "ocean": {
+          "enabled": true,
+          "width": null,
+          "color": null,
+          "renderMode": null,
+          "extrudedHeight": null,
+          "placement": null,
+          "carveDepth": null
+        },
+        "lakes": {
+          "enabled": true,
+          "width": null,
+          "color": null,
+          "renderMode": null,
+          "extrudedHeight": null,
+          "placement": null,
+          "carveDepth": null
+        },
+        "rivers": {
+          "enabled": true,
+          "width": null,
+          "color": null,
+          "renderMode": null,
+          "extrudedHeight": null,
+          "placement": null,
+          "carveDepth": null
+        },
+        "streams": {
+          "enabled": true,
+          "width": null,
+          "color": null,
+          "renderMode": null,
+          "extrudedHeight": null,
+          "placement": null,
+          "carveDepth": null
+        },
+        "canals": {
+          "enabled": true,
+          "width": null,
+          "color": null,
+          "renderMode": null,
+          "extrudedHeight": null,
+          "placement": null,
+          "carveDepth": null
+        },
+        "ditches": {
+          "enabled": true,
+          "width": null,
+          "color": null,
+          "renderMode": null,
+          "extrudedHeight": null,
+          "placement": null,
+          "carveDepth": null
+        },
+        "reservoirs": {
+          "enabled": true,
+          "width": null,
+          "color": null,
+          "renderMode": null,
+          "extrudedHeight": null,
+          "placement": null,
+          "carveDepth": null
+        },
+        "ponds": {
+          "enabled": true,
+          "width": null,
+          "color": null,
+          "renderMode": null,
+          "extrudedHeight": null,
+          "placement": null,
+          "carveDepth": null
+        },
+        "pools": {
+          "enabled": true,
+          "width": null,
+          "color": null,
+          "renderMode": null,
+          "extrudedHeight": null,
+          "placement": null,
+          "carveDepth": null
+        },
+        "other": {
+          "enabled": true,
+          "width": null,
+          "color": null,
+          "renderMode": null,
+          "extrudedHeight": null,
+          "placement": null,
+          "carveDepth": null
+        }
+      }
+    },
+    "landCover": {
+      "show": true,
+      "extrudedHeight": 1,
+      "opacity": 1,
+      "renderMode": "extruded",
+      "offset": 0.02,
+      "minUrbanAreaM2": null,
+      "urbanPads": false,
+      "categories": {
+        "WOOD": {
+          "height": 24.47728680422999,
+          "enabled": true,
+          "color": null,
+          "renderMode": null,
+          "placement": "inlaid",
+          "carveDepth": 23.037446403981164,
+          "showFeature": null
+        },
+        "GRASS": {
+          "height": 24.47728680422999,
+          "enabled": true,
+          "color": null,
+          "renderMode": null,
+          "placement": "inlaid",
+          "carveDepth": 23.037446403981164,
+          "showFeature": null
+        },
+        "FARMLAND": {
+          "height": 24.47728680422999,
+          "enabled": true,
+          "color": null,
+          "renderMode": null,
+          "placement": "inlaid",
+          "carveDepth": 23.037446403981164,
+          "showFeature": null
+        },
+        "WETLAND": {
+          "height": 24.47728680422999,
+          "enabled": true,
+          "color": null,
+          "renderMode": null,
+          "placement": "inlaid",
+          "carveDepth": 23.037446403981164,
+          "showFeature": null
+        },
+        "SAND": {
+          "height": 24.47728680422999,
+          "enabled": true,
+          "color": null,
+          "renderMode": null,
+          "placement": "inlaid",
+          "carveDepth": 23.037446403981164,
+          "showFeature": null
+        },
+        "ICE": {
+          "height": 24.47728680422999,
+          "enabled": true,
+          "color": null,
+          "renderMode": null,
+          "placement": "inlaid",
+          "carveDepth": 23.037446403981164,
+          "showFeature": null
+        },
+        "ROCK": {
+          "height": 24.47728680422999,
+          "enabled": true,
+          "color": null,
+          "renderMode": null,
+          "placement": "inlaid",
+          "carveDepth": 23.037446403981164,
+          "showFeature": null
+        },
+        "URBAN": {
+          "height": 24.47728680422999,
+          "enabled": true,
+          "color": null,
+          "renderMode": null,
+          "placement": "inlaid",
+          "carveDepth": 23.037446403981164,
+          "showFeature": null
+        }
+      }
+    },
+    "parcels": {
+      "show": true,
+      "color": "#646464",
+      "labels": true,
+      "labelsAll": false
+    },
+    "contour": {
+      "show": true,
+      "interval": null,
+      "color": "#8b6f47",
+      "renderMode": "extruded",
+      "width": null,
+      "extrudedHeight": null,
+      "labels": false,
+      "labels2d": true,
+      "placement": "raised",
+      "carveDepth": null,
+      "offset": -11.51872320199058
+    },
+    "trees": {
+      "show": true,
+      "color": "#4a7c3a",
+      "scale": 0.9,
+      "style": "canopy",
+      "sources": {
+        "chm": false,
+        "osm": false,
+        "fill": true
+      },
+      "density": 0.012,
+      "clearanceM": 4
+    },
+    "sideTexture": "dirt",
+    "sideColor": "#F5F0EF",
+    "sideMaterial": "color",
+    "printing": {
+      "base": 20,
+      "baseMm": 2,
+      "largestSideScaling": {
+        "enabled": true,
+        "targetSize": 220
+      },
+      "straightenNorth": null,
+      "zMode": "exaggeration",
+      "targetModelHeightMm": 17,
+      "plateSize": 220,
+      "splitting": {
+        "mode": "none",
+        "autoFit": true,
+        "columns": 2,
+        "rows": 2
+      }
+    },
+    "printFrame": {
+      "baseElevation": null,
+      "frameCenter": null,
+      "fixedScale": null
+    },
+    "exportCrs": "UTM",
+    "exportUnit": "m",
+    "exportAbsoluteCoordinates": false,
+    "elevationDataset": "mapterhorn-global",
+    "elevationVerticalResolution": null,
+    "elevationExaggeration": 1,
+    "wireframe": false,
+    "gridOverlay": {
+      "visible": true
+    },
+    "planGrid": {
+      "visible": false
+    },
+    "section": {
+      "line": null,
+      "depthM": 40,
+      "display": {
+        "dimensions": true,
+        "streetNames": true,
+        "floorLines": true,
+        "terrainBehind": true
+      }
+    },
+    "sun": {
+      "shadows": false,
+      "azimuthDeg": 134,
+      "elevationDeg": 46,
+      "timeHours": null,
+      "date": null
+    },
+    "renderingPreset": null,
+    "palette": "3dprinting",
+    "elevationZoom": 11,
+    "textureZoom": 14,
+    "markers": [],
+    "markers3d": {
+      "show": true,
+      "items": []
+    },
+    "tracks": [],
+    "tracksShow": true,
+    "frame": {
+      "enabled": false,
+      "style": "rounded",
+      "color": "#C8A96A",
+      "thickness": 3,
+      "fuseToModel": true,
+      "clearance": 0.3,
+      "height": 5,
+      "title": "",
+      "subtitle": "",
+      "font": "montserrat",
+      "customFontName": "",
+      "textColor": "#222222",
+      "textEdge": "bottom",
+      "textSize": 6,
+      "textHeight": 0.8,
+      "textPlacement": "raised"
+    }
+  }
+}
