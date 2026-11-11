@@ -132,14 +132,14 @@ test("anular asistencia es una capacidad separada y no habilita UPDATE directo p
   const allows = loadRolePolicy();
   assert.equal(allows("operator", "annul"), true);
   assert.equal(allows("viewer", "annul"), false);
-  assert.match(exportMigration, /drop policy if exists asistencias_permission_delete on mira\\.asistencias/);
-  assert.match(exportMigration, /create policy asistencias_permission_edit on mira\\.asistencias for update[\\s\\S]*has_module_permission\\('actividades','edit'\\)/);
-  assert.match(exportMigration, /function mira\\.annul_attendance[\\s\\S]*security definer[\\s\\S]*has_module_permission\\('actividades','annul'\\)/);
+  assert.match(exportMigration, /drop policy if exists asistencias_permission_delete on mira\.asistencias/);
+  assert.match(exportMigration, /create policy asistencias_permission_edit on mira\.asistencias for update[\\s\\S]*has_module_permission\\('actividades','edit'\\)/);
+  assert.match(exportMigration, /function mira\.annul_attendance[\\s\\S]*security definer[\\s\\S]*has_module_permission\\('actividades','annul'\\)/);
 });
 test("la auditoría contempla Actividades y cambios de estado en Asistencias", () => {
-  assert.match(exportMigration, /create table if not exists mira\\.actividades_change_audit/);
+  assert.match(exportMigration, /create table if not exists mira\.actividades_change_audit/);
   assert.match(exportMigration, /trg_audit_actividad_changes/);
-  assert.match(exportMigration, /after insert or update or delete on mira\\.asistencias/);
+  assert.match(exportMigration, /after insert or update or delete on mira\.asistencias/);
   assert.match(dataSource, /listActivitiesAudit/);
   assert.match(dataSource, /listAttendanceAudit/);
 });
