@@ -670,8 +670,8 @@ document.getElementById('saveActivityBtn').addEventListener('click',async()=>{
   try{
     const date=document.getElementById('activityDate').value||new Date().toISOString().slice(0,10);
     const place=document.getElementById('activityPlace').value.trim();
-    await Promise.all(activitiesState.activities.filter(a=>a.status==='active').map(a=>window.MIRA_DATA.updateActivity(a.id,{estado:'finalizada'})));
-    await window.MIRA_DATA.createActivity({nombre:name,fecha:date,lugar:place||null,estado:'activa',creado_por:window.MIRA_CURRENT_USER?.email||null});
+    const created=await window.MIRA_DATA.createActivity({nombre:name,fecha:date,lugar:place||null,creado_por:window.MIRA_CURRENT_USER?.email||null});
+    if(!Array.isArray(created)||created.length!==1||created[0]?.estado!=="activa")throw new Error("Neon no confirmó la creación atómica de la actividad.");
     await loadActivitiesFromNeon();
     document.getElementById('newActivityForm').classList.add('hidden');
     ['activityName','activityDate','activityPlace'].forEach(id=>document.getElementById(id).value='');
