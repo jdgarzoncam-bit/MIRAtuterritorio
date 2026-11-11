@@ -101,9 +101,6 @@ export const MIRA_DATA = {
   },
   updateAttendance(id,payload) { return miraRequest("asistencias",{method:"PATCH",query:qs({id:`eq.${id}`}),body:payload}); },
   deleteAttendance(id) { return miraRequest("asistencias",{method:"DELETE",query:qs({id:`eq.${id}`})}); },
-  async listOperationalReports({limit=100}={}) {
-    return miraRequest("reportes_operativos",{query:qs({select:"*",order:"created_at.desc",limit:String(Math.min(Math.max(limit,1),100))})});
-  },
   async listPublicWitnesses({limit=100}={}) {
     assertTestigosEnabled();
     return miraRequest("testigos_publicos",{query:qs({select:"*",order:"created_at.desc",limit:String(Math.min(Math.max(limit,1),100))})});
@@ -135,21 +132,6 @@ export const MIRA_DATA = {
     const params={select:"*",order:"created_at.desc",limit:String(Math.min(Math.max(limit,1),100))};
     if(witnessId) params.testigo_id=`eq.${witnessId}`;
     return miraRequest("testigo_archivos",{query:qs(params)});
-  },
-  submitPublicReport(payload) {
-    const allowed={
-      puesto_votacion:String(payload?.puesto_votacion||"").trim(),
-      mesa_votacion:String(payload?.mesa_votacion||"").trim(),
-      tipo_reporte:String(payload?.tipo_reporte||"").trim(),
-      descripcion:String(payload?.descripcion||"").trim()
-    };
-    if(!["novedad","acta","logistica","otro"].includes(allowed.tipo_reporte)) {
-      throw new Error("Selecciona un tipo de reporte válido.");
-    }
-    if(allowed.puesto_votacion.length<3 || allowed.mesa_votacion.length<1 || allowed.descripcion.length<5) {
-      throw new Error("Completa puesto, mesa y descripción.");
-    }
-    return miraRequest("reportes_operativos",{method:"POST",body:allowed,anonymous:true});
   },
   async listUserProfiles() {
     return miraRequest("user_profiles",{query:qs({select:"id,auth_user_id,email,display_name,role,active,email_verified,created_at",order:"created_at.asc",limit:"500"})});
