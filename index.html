@@ -381,15 +381,6 @@
     <!-- CONTENEDOR PRINCIPAL DEL SISTEMA (PMU / ADMIN) -->
     <div id="app-container">
         
-        <div id="miraQuickModules" class="mira-quick-modules hidden">
-            <button id="miraQuickModulesToggle" class="mira-quick-toggle" type="button" aria-expanded="false" aria-controls="miraQuickModulesPanel" aria-label="Abrir menú de módulos">
-                <span class="mira-quick-toggle-icon" aria-hidden="true">☰</span><span>Módulos</span>
-            </button>
-            <nav id="miraQuickModulesPanel" class="mira-quick-panel hidden" aria-label="Módulos principales">
-                <button type="button" class="mira-quick-item is-locked" id="miraQuickTestigosBtn" disabled aria-disabled="true" title="Módulo temporalmente inactivo"><span aria-hidden="true">🗳️</span><span><strong>Testigos</strong><small id="miraQuickTestigosStatus">En renovación · Acceso bloqueado</small></span><span class="mira-quick-lock" aria-hidden="true">🔒</span></button>
-                <button type="button" class="mira-quick-item" id="miraQuickActivitiesBtn"><span aria-hidden="true">📋</span><span><strong>Actividades</strong><small>Registro y seguimiento</small></span><span aria-hidden="true">›</span></button>
-            </nav>
-        </div>
 
         <div id="mainSidebar" class="sidebar-wrapper-group">
             
@@ -714,6 +705,18 @@
 
         <div id="map"></div>
     </div>
+
+    <!-- Menú global de módulos: fuera de Centro de Operaciones -->
+        <div id="miraQuickModules" class="mira-quick-modules hidden">
+            <button id="miraQuickModulesToggle" class="mira-quick-toggle" type="button" aria-expanded="false" aria-controls="miraQuickModulesPanel" aria-label="Abrir menú de módulos">
+                <span class="mira-quick-toggle-icon" aria-hidden="true">☰</span><span>Módulos</span>
+            </button>
+            <nav id="miraQuickModulesPanel" class="mira-quick-panel hidden" aria-label="Módulos principales">
+                <button type="button" class="mira-quick-item is-locked" id="miraQuickTestigosBtn" disabled aria-disabled="true" title="Módulo temporalmente inactivo"><span aria-hidden="true">🗳️</span><span><strong>Testigos</strong><small id="miraQuickTestigosStatus">En renovación · Acceso bloqueado</small></span><span class="mira-quick-lock" aria-hidden="true">🔒</span></button>
+                <button type="button" class="mira-quick-item" id="miraQuickActivitiesBtn"><span aria-hidden="true">📋</span><span><strong>Actividades</strong><small>Registro y seguimiento</small></span><span aria-hidden="true">›</span></button>
+            </nav>
+        </div>
+
 
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
