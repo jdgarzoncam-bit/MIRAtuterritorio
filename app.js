@@ -594,99 +594,91 @@ document.getElementById('sideOpenActivityModuleBtn').addEventListener('click',()
 
 // Explorador de Base de datos general: navegación limitada por permisos del módulo y del origen.
 (function initDatabaseExplorer(){
-  const root=document.getElementById("databaseExplorer");
-  if(!root)return;
-  const datasetSelect=document.getElementById("databaseExplorerDataset");
-  const searchInput=document.getElementById("databaseExplorerSearch");
-  const searchBtn=document.getElementById("databaseExplorerSearchBtn");
-  const filterField=document.getElementById("databaseExplorerFilterField");
-  const filterValue=document.getElementById("databaseExplorerFilterValue");
-  const body=root.querySelector("#databaseExplorerTable tbody");
-  const head=root.querySelector("#databaseExplorerTable thead");
-  const meta=document.getElementById("databaseExplorerMeta");
-  const notice=document.getElementById("databaseExplorerNotice");
-  const prev=document.getElementById("databaseExplorerPrev");
-  const next=document.getElementById("databaseExplorerNext");
-  const pageLabel=document.getElementById("databaseExplorerPage");
-  const PAGE_SIZE=25;
-  let datasets=[],permissions=new Set(),page=0,hasMore=false,requestVersion=0;
-  const admin=()=>isPrimaryMiraAdmin();
-  const allowed=(module,action="view")=>admin()||permissions.has(module+"::"+action);
-  const setNotice=(message,isError=false)=>{notice.textContent=message||"";notice.style.color=isError?"#ff8b8b":"var(--text-muted)";};
-  const activeDataset=()=>datasets.find(item=>item.key===datasetSelect.value);
-  function renderRows(rows,dataset){
-    head.innerHTML="<tr>"+dataset.columns.map(col=>"<th>"+escapeActivityHtml(col[1])+"</th>").join("")+"<th>Detalle</th></tr>";
-    if(!rows.length){body.innerHTML='<tr><td colspan="'+(dataset.columns.length+1)+'">No se encontraron registros.</td></tr>';return;}
-    body.innerHTML=rows.map(row=>{
-      const cells=dataset.columns.map(([key])=>"<td>"+escapeActivityHtml(row[key]===null||row[key]===undefined?"—":typeof row[key]==="object"?JSON.stringify(row[key]):String(row[key]))+"</td>").join("");
-      const detail=escapeActivityHtml(JSON.stringify(row,null,2));
-      return "<tr>"+cells+'<td><details><summary>Ver ficha</summary><pre style="white-space:pre-wrap;max-width:340px;overflow-wrap:anywhere;">'+detail+"</pre></details></td></tr>";
-    }).join("");
-  }
-  async function loadRows(reset=false){
-    const dataset=activeDataset();
-    if(!dataset)return;
-    if(reset)page=0;
-    if(!allowed("base_datos_general","view")||!allowed(dataset.module,"view")){
-      body.innerHTML='<tr><td colspan="8">No tienes autorización para consultar este conjunto de datos.</td></tr>';
-      setNotice("Acceso restringido por permisos.",true);return;
-    }
-    const version=++requestVersion;
-    body.innerHTML='<tr><td colspan="8">Consultando Neon…</td></tr>';
-    try{
-      const rows=await window.MIRA_DATA.listExplorerRows({datasetKey:dataset.key,search:searchInput.value,filterField:filterField.value,filterValue:filterValue.value,limit:PAGE_SIZE+1,offset:page*PAGE_SIZE});
-      if(version!==requestVersion)return;
-      const visible=Array.isArray(rows)?rows.slice(0,PAGE_SIZE):[];
-      hasMore=Array.isArray(rows)&&rows.length>PAGE_SIZE;
-      renderRows(visible,dataset);
-      meta.textContent=dataset.label+" · "+visible.length+" registros en esta página";
-      pageLabel.textContent="Página "+(page+1);
-      prev.disabled=page===0;next.disabled=!hasMore;
-      setNotice(allowed("base_datos_general","edit")&&allowed(dataset.module,"edit")
-        ?"Consulta habilitada. La edición se realiza desde el módulo de origen para conservar sus validaciones."
-        :"Modo consulta. No tienes permisos de edición para este conjunto.");
-    }catch(error){
-      if(version!==requestVersion)return;
-      body.innerHTML='<tr><td colspan="8">No fue posible consultar este conjunto.</td></tr>';
-      setNotice(error.message||"Error al consultar la base de datos.",true);
-      prev.disabled=true;next.disabled=true;
-    }
-  }
-  async function refreshDatasets(){
-    requestVersion++;
-    datasetSelect.innerHTML='<option value="">Validando permisos…</option>';
-    try{
-      const rows=admin()?[]:await window.MIRA_DATA.listMyModulePermissions();
-      permissions=new Set((rows||[]).filter(p=>p.allowed===true).map(p=>p.module_key+"::"+p.action_key));
-      if(!allowed("base_datos_general","view"))throw new Error("No tienes permiso de consulta en Base de datos general.");
-      datasets=window.MIRA_DATA.getExplorerDatasets().filter(item=>allowed(item.module,"view"));
-      datasetSelect.innerHTML='<option value="">Selecciona un conjunto…</option>'+datasets.map(item=>'<option value="'+escapeActivityHtml(item.key)+'">'+escapeActivityHtml(item.label)+'</option>').join("");
-      if(!datasets.length)throw new Error("No hay conjuntos de datos de origen autorizados para tu cuenta.");
-      setNotice("Se muestran únicamente los conjuntos permitidos por tus permisos de origen.");
-      meta.textContent=datasets.length+" conjuntos de datos disponibles.";
-      body.innerHTML='<tr><td colspan="8">Selecciona un conjunto para comenzar.</td></tr>';
-    }catch(error){
-      datasets=[];datasetSelect.innerHTML='<option value="">Sin acceso disponible</option>';
-      body.innerHTML='<tr><td colspan="8">'+escapeActivityHtml(error.message||"Acceso no disponible.")+"</td></tr>";
-      setNotice(error.message||"No fue posible validar permisos.",true);
-    }
-  }
-  datasetSelect.addEventListener("change",()=>{
-    const dataset=activeDataset();
-    filterField.innerHTML='<option value="">Sin filtro por campo</option>'+(dataset?.columns||[]).map(([key,label])=>'<option value="'+escapeActivityHtml(key)+'">'+escapeActivityHtml(label)+'</option>').join("");
-    filterValue.value="";
-    loadRows(true);
+ const root=document.getElementById("databaseExplorer"),workspace=document.getElementById("databaseWorkspace");
+ if(!root||!workspace)return;
+ const title=document.getElementById("databaseWorkspaceTitle"),description=document.getElementById("databaseWorkspaceDescription"),content=document.getElementById("databaseWorkspaceContent"),notice=document.getElementById("databaseExplorerNotice");
+ let permissions=new Set(),datasets=[],activeView="";
+ const admin=()=>isPrimaryMiraAdmin();
+ const allowed=(module,action="view")=>admin()||permissions.has(module+"::"+action);
+ const esc=value=>escapeActivityHtml(value===null||value===undefined?"—":typeof value==="object"?JSON.stringify(value):String(value));
+ const say=(message,error=false)=>{notice.textContent=message||"";notice.style.color=error?"#ff8b8b":"var(--text-muted)";};
+ async function refreshPermissions(){
+  const rows=admin()?[]:await window.MIRA_DATA.listMyModulePermissions();
+  permissions=new Set((rows||[]).filter(p=>p.allowed===true).map(p=>p.module_key+"::"+p.action_key));
+  datasets=window.MIRA_DATA.getExplorerDatasets().filter(d=>allowed("base_datos_general","view")&&allowed(d.module,"view"));
+ }
+ function open(view){
+  activeView=view;root.classList.add("hidden");workspace.classList.remove("hidden");
+  const configs={
+   incorporate:["Incorporar persona","Formulario de incorporación de una ficha completa en la base general."],
+   pending:["Datos pendientes","Personas marcadas con información pendiente de completar."],
+   history:["Historial de cambios","Trazabilidad disponible de cambios registrados por la plataforma."],
+   all:["Todos los registros","Explorador de los conjuntos de datos autorizados para tu cuenta."]
+  };
+  title.textContent=configs[view][0];description.textContent=configs[view][1];content.innerHTML='<p class="admin-permissions-loading">Consultando permisos…</p>';
+  render(view).catch(error=>{content.innerHTML='<p class="admin-permissions-error">'+esc(error.message||"No fue posible abrir este espacio.")+'</p>';});
+ }
+ function back(){workspace.classList.add("hidden");root.classList.remove("hidden");activeView="";}
+ async function render(view){
+  if(!allowed("base_datos_general","view"))throw new Error("No tienes permiso para consultar Base de datos general.");
+  if(view==="incorporate")return renderIncorporate();
+  if(view==="pending")return renderPending();
+  if(view==="history")return renderHistory();
+  if(view==="all")return renderAll();
+ }
+ function renderIncorporate(){
+  if(!allowed("personas","create"))throw new Error("No tienes permiso para incorporar personas en el módulo Personas.");
+  const fields=[["cedula","Cédula","text",true],["nombres","Nombres","text",true],["apellidos","Apellidos","text",true],["telefono","Teléfono","tel",false],["correo","Correo electrónico","email",false],["barrio","Barrio","text",false],["puesto_votacion","Puesto de votación","text",false],["mesa_votacion","Mesa","text",false],["edad","Edad","number",false],["tipo_participacion","Tipo de participación","text",false],["info_mira","InfoMIRA","text",false],["requiere_transporte","¿Requiere transporte?","text",false],["observaciones","Observaciones","text",false]];
+  content.innerHTML='<form id="databasePersonForm"><div class="activity-form-grid">'+fields.map(([key,label,type,required])=>'<label>'+label+'<input name="'+key+'" type="'+type+'" '+(required?'required':'')+'></label>').join('')+'</div><div class="activity-actions"><button class="login-btn" type="submit">Guardar persona</button><button class="activity-secondary-btn" type="reset">Limpiar</button></div><p id="databasePersonNotice" class="activity-local-warning" role="status"></p></form>';
+  document.getElementById("databasePersonForm").addEventListener("submit",async event=>{
+   event.preventDefault();const form=event.currentTarget,button=form.querySelector('[type="submit"]'),payload=Object.fromEntries(new FormData(form).entries());
+   ["edad"].forEach(k=>{if(payload[k]==="")delete payload[k];else payload[k]=Number(payload[k]);});
+   ["telefono","correo","barrio","puesto_votacion","mesa_votacion","tipo_participacion","info_mira","requiere_transporte","observaciones"].forEach(k=>{if(!payload[k])delete payload[k];});
+   button.disabled=true;
+   try{await window.MIRA_DATA.createPerson({...payload,activo:true,datos_pendientes:false,fuente_registro:"base_datos_general"});form.reset();document.getElementById("databasePersonNotice").textContent="Persona incorporada correctamente."; }
+   catch(error){document.getElementById("databasePersonNotice").textContent=error.message||"No fue posible guardar la persona.";}
+   finally{button.disabled=false;}
   });
-  searchBtn.addEventListener("click",()=>loadRows(true));
-  searchInput.addEventListener("keydown",event=>{if(event.key==="Enter")loadRows(true);});
-  filterValue.addEventListener("keydown",event=>{if(event.key==="Enter")loadRows(true);});
-  filterField.addEventListener("change",()=>loadRows(true));
-  prev.addEventListener("click",()=>{if(page>0){page--;loadRows();}});
-  next.addEventListener("click",()=>{if(hasMore){page++;loadRows();}});
-  window.addEventListener("mira:authenticated",refreshDatasets);
-  window.addEventListener("mira:signed-out",()=>{requestVersion++;datasets=[];permissions.clear();datasetSelect.innerHTML='<option value="">Inicia sesión para consultar</option>';body.innerHTML='<tr><td colspan="8">Sesión cerrada.</td></tr>';});
-  refreshDatasets();
-})();
+ }
+ async function renderPending(){
+  if(!allowed("personas","view"))throw new Error("No tienes permiso de consulta en Personas.");
+  const rows=await window.MIRA_DATA.listPeople({limit:1000});
+  const pending=rows.filter(p=>p.datos_pendientes===true);
+  content.innerHTML='<div class="activity-toolbar"><div><h3>Fichas por completar</h3><p>'+pending.length+' registros marcados con datos pendientes.</p></div></div><div class="activity-table-wrap"><table class="activity-table"><thead><tr><th>Persona</th><th>Cédula</th><th>Barrio</th><th>Acción</th></tr></thead><tbody>'+ (pending.length?pending.map(p=>'<tr><td>'+esc((p.nombres||"")+" "+(p.apellidos||""))+'</td><td>'+esc(p.cedula)+'</td><td>'+esc(p.barrio)+'</td><td><button type="button" class="activity-secondary-btn" data-pending-edit="'+esc(p.id)+'">Completar ficha</button></td></tr>').join(""):'<tr><td colspan="4">No hay fichas marcadas con datos pendientes.</td></tr>')+'</tbody></table></div><div id="databasePendingEditor"></div>';
+  content.querySelectorAll("[data-pending-edit]").forEach(button=>button.addEventListener("click",()=>editPending(pending.find(p=>p.id===button.dataset.pendingEdit))));
+ }
+ function editPending(person){
+  if(!allowed("personas","edit")){alert("No tienes permiso para editar fichas de Personas.");return;}
+  const editor=document.getElementById("databasePendingEditor");
+  const fields=["cedula","nombres","apellidos","telefono","correo","barrio","puesto_votacion","mesa_votacion","edad","tipo_participacion","observaciones"];
+  editor.innerHTML='<form id="databasePendingForm" class="activity-panel"><h3>Completar ficha: '+esc(person.nombres+" "+person.apellidos)+'</h3><div class="activity-form-grid">'+fields.map(k=>'<label>'+k.replaceAll("_"," ")+'<input name="'+k+'" value="'+esc(person[k]??"")+'"></label>').join("")+'</div><div class="activity-actions"><button class="login-btn" type="submit">Guardar cambios</button></div><p id="databasePendingNotice" class="activity-local-warning"></p></form>';
+  editor.scrollIntoView({behavior:"smooth",block:"start"});
+  editor.querySelector("form").addEventListener("submit",async event=>{event.preventDefault();const payload=Object.fromEntries(new FormData(event.currentTarget).entries());if(payload.edad==="")delete payload.edad;else payload.edad=Number(payload.edad);try{await window.MIRA_DATA.updatePerson(person.id,{...payload,datos_pendientes:false});document.getElementById("databasePendingNotice").textContent="Ficha actualizada. Se retiró la marca de datos pendientes.";await renderPending();}catch(error){document.getElementById("databasePendingNotice").textContent=error.message||"No fue posible actualizar la ficha.";}} ,{once:true});
+ }
+ async function renderHistory(){
+  if(!allowed("personas","view"))throw new Error("No tienes permiso para consultar la auditoría de Personas.");
+  const rows=await window.MIRA_DATA.listPeopleAudit({limit:100});
+  content.innerHTML='<div class="activity-toolbar"><div><h3>Historial de personas</h3><p>Eventos disponibles de creación y edición, con identificador de usuario y fecha del servidor.</p></div></div><div class="activity-table-wrap"><table class="activity-table"><thead><tr><th>Acción</th><th>Usuario (ID)</th><th>Fecha y hora</th><th>Campos</th><th>Registro</th></tr></thead><tbody>'+(rows.length?rows.map(item=>'<tr><td>'+esc(item.action_key)+'</td><td>'+esc(item.actor_auth_user_id)+'</td><td>'+esc(item.created_at?new Date(item.created_at).toLocaleString():"—")+'</td><td>'+esc((item.changed_fields||[]).join(", "))+'</td><td><button class="activity-secondary-btn" type="button" data-history-person="'+esc(item.persona_id)+'">Ver persona</button></td></tr>').join(""):'<tr><td colspan="5">No hay eventos de auditoría de personas disponibles.</td></tr>')+'</tbody></table></div><p class="activity-local-warning">La auditoría actual no cubre todavía todos los módulos ni registra todas las eliminaciones. No se mostrarán eventos que la base no haya auditado.</p>';
+  content.querySelectorAll("[data-history-person]").forEach(button=>button.addEventListener("click",()=>{open("pending");}));
+ }
+ async function renderAll(){
+  if(!datasets.length)throw new Error("No hay conjuntos de datos de origen autorizados.");
+  content.innerHTML='<div class="activity-toolbar"><div><h3>Explorador de información</h3><p>Los resultados se limitan a tus permisos de Base de datos general y del módulo de origen.</p></div><button id="databaseExportBtn" class="login-btn" type="button">⇩ Exportar Excel</button></div><div class="activity-form-grid"><label>Conjunto de datos<select id="databaseAllSet">'+datasets.map(d=>'<option value="'+esc(d.key)+'">'+esc(d.label)+'</option>').join("")+'</select></label><label>Buscar<input id="databaseAllSearch" placeholder="Nombre, documento o término…"></label><label>Campo de filtro<select id="databaseAllField"></select></label><label>Valor exacto<input id="databaseAllValue" placeholder="Valor del filtro"></label></div><div id="databaseAllMeta" class="mira-label"></div><div class="activity-table-wrap"><table class="activity-table"><thead></thead><tbody></tbody></table></div><div class="activity-actions"><button id="databaseAllPrev" class="activity-secondary-btn">← Anterior</button><span id="databaseAllPage">Página 1</span><button id="databaseAllNext" class="activity-secondary-btn">Siguiente →</button></div>';
+  const $id=id=>document.getElementById(id),set=$id("databaseAllSet"),search=$id("databaseAllSearch"),field=$id("databaseAllField"),value=$id("databaseAllValue"),table=content.querySelector("table"),head=table.querySelector("thead"),body=table.querySelector("tbody");
+  let page=0,more=false,lastRows=[],dataset=datasets[0];
+  const updateFields=()=>{dataset=datasets.find(d=>d.key===set.value);field.innerHTML='<option value="">Sin filtro</option>'+dataset.columns.map(([k,l])=>'<option value="'+esc(k)+'">'+esc(l)+'</option>').join("");};
+  const load=async()=>{updateFields();const rows=await window.MIRA_DATA.listExplorerRows({datasetKey:dataset.key,search:search.value,filterField:field.value,filterValue:value.value,limit:26,offset:page*25});lastRows=rows.slice(0,25);more=rows.length>25;head.innerHTML="<tr>"+dataset.columns.map(c=>"<th>"+esc(c[1])+"</th>").join("")+"</tr>";body.innerHTML=lastRows.map(row=>"<tr>"+dataset.columns.map(([k])=>"<td>"+esc(row[k])+"</td>").join("")+"</tr>").join("")||'<tr><td colspan="8">No se encontraron registros.</td></tr>';$id("databaseAllMeta").textContent=dataset.label+" · "+lastRows.length+" registros en esta página";$id("databaseAllPage").textContent="Página "+(page+1);$id("databaseAllPrev").disabled=page===0;$id("databaseAllNext").disabled=!more;};
+  set.addEventListener("change",()=>{page=0;load().catch(e=>say(e.message,true));});$id("databaseAllSearch").addEventListener("keydown",e=>{if(e.key==="Enter"){page=0;load().catch(x=>say(x.message,true));}});value.addEventListener("keydown",e=>{if(e.key==="Enter"){page=0;load().catch(x=>say(x.message,true));}});field.addEventListener("change",()=>{page=0;load().catch(e=>say(e.message,true));});$id("databaseAllPrev").addEventListener("click",()=>{if(page){page--;load().catch(e=>say(e.message,true));}});$id("databaseAllNext").addEventListener("click",()=>{if(more){page++;load().catch(e=>say(e.message,true));}});
+  $id("databaseExportBtn").addEventListener("click",()=>{if(!allowed("base_datos_general","export")||!allowed(dataset.module,"export")){say("La exportación requiere permiso explícito en Base de datos general y en el módulo de origen.",true);return;}const filtered=Boolean(search.value.trim()||field.value&&value.value.trim());const summary="Conjunto: "+dataset.label+"\nFiltros: "+(filtered?[search.value.trim()?"Búsqueda: "+search.value.trim():"",field.value?field.options[field.selectedIndex].text+": "+value.value:""].filter(Boolean).join("\n"):"Sin filtros") +"\nRegistros incluidos: "+lastRows.length+" (página actual).\n\n¿Deseas descargar este archivo?";if(!window.confirm(summary))return;if(!window.XLSX){say("No está disponible el componente de exportación Excel.",true);return;}const sheet=XLSX.utils.json_to_sheet(lastRows);const book=XLSX.utils.book_new();XLSX.utils.book_append_sheet(book,sheet,dataset.label.slice(0,31));XLSX.writeFile(book,"MIRA_"+dataset.key+"_pagina_"+(page+1)+".xlsx");});
+  await load();
+ }
+ root.querySelectorAll("[data-database-view]").forEach(button=>button.addEventListener("click",()=>open(button.dataset.databaseView)));
+ document.getElementById("databaseWorkspaceClose")?.addEventListener("click",back);document.getElementById("databaseWorkspaceBack")?.addEventListener("click",back);
+ window.addEventListener("mira:authenticated",()=>refreshPermissions().catch(e=>say(e.message,true)));
+ window.addEventListener("mira:signed-out",()=>{permissions.clear();datasets=[];back();});
+ refreshPermissions().then(()=>say("4 herramientas disponibles. Los contenidos se habilitan según los permisos asignados.")).catch(e=>say(e.message,true));
+}
+initDatabaseExplorer();
 
 let quickModulesSyncVersion=0;
 async function syncMiraQuickModules(){
