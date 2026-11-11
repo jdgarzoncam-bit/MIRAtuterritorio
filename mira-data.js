@@ -85,7 +85,16 @@ export const MIRA_DATA = {
   },
   createActivity(payload) {
     if (!payload.nombre?.trim() || !payload.fecha) throw new Error("Nombre y fecha son obligatorios.");
-    return miraRequest("actividades",{method:"POST",body:payload});
+    return miraRequest("rpc/create_activity_atomic",{
+      method:"POST",
+      body:{
+        p_nombre:payload.nombre.trim(),
+        p_fecha:payload.fecha,
+        p_lugar:payload.lugar||null,
+        p_creado_por:payload.creado_por||null
+      },
+      requireRows:true
+    });
   },
   updateActivity(id,payload) { return miraRequest("actividades",{method:"PATCH",query:qs({id:`eq.${id}`}),body:payload}); },
   cancelActivity(id) { return this.updateActivity(id,{estado:"cancelada"}); },
