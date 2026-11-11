@@ -11,6 +11,9 @@ let activeUserTab = "pending";
 let activePanelView = "users";
 let selectionRequestVersion = 0;
 let auditRequestVersion = 0;
+let auditOffset = 0;
+let auditHasMore = false;
+const AUDIT_PAGE_SIZE = 50;
 let busy = false;
 let reloadUsersAfterBusy = false;
 
@@ -235,17 +238,27 @@ function renderAudit(rows){
   return '<article class="admin-audit-event"><div class="admin-audit-event-heading"><strong>'+escapeHtml(auditActionLabel(item.action_key))+'</strong><time>'+dateLabel+'</time></div><div class="admin-audit-identities"><span><b>Actor:</b> '+escapeHtml(item.actor_auth_user_id||"Sistema")+'</span><span><b>Objetivo:</b> '+escapeHtml(item.target_auth_user_id||"—")+'</span></div><details><summary>Ver detalles del evento</summary><pre>'+escapeHtml(JSON.stringify(item.details||{},null,2))+'</pre></details></article>';
  }).join("");
 }
-async function loadAudit(){
+function renderAuditPagination(){
+ const node=$("adminAuditPagination");if(!node)return;
+ const page=Math.floor(auditOffset/AUDIT_PAGE_SIZE)+1;
+ node.innerHTML='<button type="button" data-audit-page="previous" '+(auditOffset===0?"disabled":"")+'>Anterior</button><span>Página '+page+'</span><button type="button" data-audit-page="next" '+(!auditHasMore?"disabled":"")+'>Siguiente</button>';
+}
+async function loadAudit(reset=false){
  if(!isAdmin()||!window.MIRA_DATA?.listAdminAudit)return;
+ if(reset)auditOffset=0;
  const version=++auditRequestVersion,node=$("adminAuditList");
  if(node)node.innerHTML='<p class="admin-permissions-loading">Consultando historial…</p>';
  try{
-  const rows=await window.MIRA_DATA.listAdminAudit({limit:100});
+  const rows=await window.MIRA_DATA.listAdminAudit({limit:AUDIT_PAGE_SIZE+1,offset:auditOffset});
   if(version!==auditRequestVersion||activePanelView!=="audit")return;
-  renderAudit(Array.isArray(rows)?rows:[]);
+  const pageRows=Array.isArray(rows)?rows.slice(0,AUDIT_PAGE_SIZE):[];
+  auditHasMore=Array.isArray(rows)&&rows.length>AUDIT_PAGE_SIZE;
+  renderAudit(pageRows);
+  renderAuditPagination();
  }catch(error){
   if(version!==auditRequestVersion||activePanelView!=="audit")return;
   if(node)node.innerHTML='<p class="admin-permissions-error">'+escapeHtml(error.message||"No fue posible consultar el historial de auditoría.")+'</p>';
+  const pager=$("adminAuditPagination");if(pager)pager.innerHTML="";
  }
 }
 
@@ -334,7 +347,13 @@ function init(){
   $("adminUsersApprovedTab")?.addEventListener("click",()=>switchUserTab("approved"));
   $("closeAdminPermissionsBtn")?.addEventListener("click",closePanel);
   $("adminViewToggleBtn")?.addEventListener("click",()=>switchPanelView(activePanelView==="audit"?"users":"audit"));
-  $("refreshAdminAuditBtn")?.addEventListener("click",loadAudit);
+  $("refreshAdminAuditBtn")?.addEventListener("click",()=>loadAudit(true));
+  $("adminAuditPagination")?.addEventListener("click",event=>{
+    const button=event.target.closest("[data-audit-page]");if(!button||button.disabled)return;
+    if(button.dataset.auditPage==="previous")auditOffset=Math.max(0,auditOffset-AUDIT_PAGE_SIZE);
+    else if(button.dataset.auditPage==="next"&&auditHasMore)auditOffset+=AUDIT_PAGE_SIZE;
+    loadAudit();
+  });
   $("refreshAdminUsersBtn")?.addEventListener("click",()=>{selectedProfile=null;$("adminSelectedUser").innerHTML='<strong>Selecciona un usuario</strong><span>Sus permisos aparecerán aquí.</span>';$("adminPermissionsMatrix").innerHTML='<p class="admin-permissions-empty">Selecciona un usuario.</p>';loadUsers();});
   $("adminUsersList")?.addEventListener("click",event=>{
     const button=event.target.closest("[data-profile-id]");
