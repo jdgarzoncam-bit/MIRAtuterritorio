@@ -1,5 +1,5 @@
 import { createAuthClient } from "https://esm.sh/@neondatabase/auth@0.7.0-beta";
-import { MIRA_DATA } from "./mira-data.js?v=20261103-activity-auth-2";
+import { MIRA_DATA } from "./mira-data.js?v=20261111-activities-pagination-1";
 
 const AUTH_URL = "https://ep-mute-grass-b7qan4n6.neonauth.c-13.us-east-1.aws.neon.tech/neondb/auth";
 const DATA_API_URL = "https://ep-mute-grass-b7qan4n6.apirest.c-13.us-east-1.aws.neon.tech/neondb/rest/v1";
