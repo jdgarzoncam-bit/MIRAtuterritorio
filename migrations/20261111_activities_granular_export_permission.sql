@@ -12,7 +12,7 @@ as $function$
   select case
     when p_module_key is null or p_action_key is null then false
     when p_module_key = 'testigos' then false
-    when p_action_key not in ('view','create','edit','delete','export','manage') then false
+    when p_action_key not in ('view','create','edit','delete','export','manage','annul') then false
     when not exists (
       select 1 from mira.module_catalog mc
       where mc.module_key = p_module_key and mc.active = true
@@ -109,16 +109,20 @@ values('personas','Base general de personas','Incorporación, consulta y actuali
 on conflict(module_key) do update set module_name=excluded.module_name,description=excluded.description,active=true;
 drop policy if exists personas_permission_create on mira.personas;
 drop policy if exists personas_permission_edit on mira.personas;
+drop policy if exists personas_permission_delete on mira.personas;
 drop policy if exists personas_permission_read on mira.personas;
 create policy personas_permission_read on mira.personas for select to authenticated using (mira.has_module_permission('personas','view'));
 create policy personas_permission_create on mira.personas for insert to authenticated with check (mira.has_module_permission('personas','create'));
 create policy personas_permission_edit on mira.personas for update to authenticated using (mira.has_module_permission('personas','edit')) with check (mira.has_module_permission('personas','edit'));
+-- Personas are archived through the controlled workflow; direct DELETE is intentionally unavailable.
 drop policy if exists asistencias_permission_edit on mira.asistencias;
 create policy asistencias_permission_edit on mira.asistencias for update to authenticated using (mira.has_module_permission('actividades','edit') or mira.has_module_permission('actividades','annul')) with check (mira.has_module_permission('actividades','edit') or mira.has_module_permission('actividades','annul'));
 create table if not exists mira.personas_change_audit(id uuid primary key default gen_random_uuid(),persona_id uuid not null,actor_auth_user_id text,action_key text not null,changed_fields text[] not null default '{}',created_at timestamptz not null default now());
 create table if not exists mira.asistencias_change_audit(id uuid primary key default gen_random_uuid(),asistencia_id uuid not null,actor_auth_user_id text,action_key text not null,reason text,created_at timestamptz not null default now());
 alter table mira.personas_change_audit enable row level security;
 alter table mira.asistencias_change_audit enable row level security;
+drop policy if exists personas_change_audit_admin_read on mira.personas_change_audit;
+drop policy if exists asistencias_change_audit_admin_read on mira.asistencias_change_audit;
 create policy personas_change_audit_admin_read on mira.personas_change_audit for select to authenticated using (mira.is_active_admin());
 create policy asistencias_change_audit_admin_read on mira.asistencias_change_audit for select to authenticated using (mira.is_active_admin());
 create or replace function mira.audit_persona_changes() returns trigger language plpgsql security definer set search_path=pg_catalog,mira,auth as $$
