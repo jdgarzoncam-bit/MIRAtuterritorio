@@ -1,6 +1,6 @@
 // MIRA TU TERRITORIO — Control Administrativo: permisos granulares.
 const MODULE_ACTIONS = {
-  actividades:[["view","Consulta"],["create","Crear"],["edit","Editar"],["delete","Eliminar"]],
+  actividades:[["view","Consulta"],["create","Crear"],["edit","Editar"],["export","Exportar Excel"],["delete","Eliminar"]],
   concejal:[["view","Consulta"],["create","Crear"],["edit","Editar"],["delete","Eliminar"]],
   infomira:[["view","Consulta"],["create","Crear"],["edit","Editar"],["delete","Eliminar"]],
   centro_operaciones:[["view","Consulta"]], pqrs:[["view","Consulta"]]
@@ -29,7 +29,7 @@ function notice(message, error=false) {
 }
 function clearNotice(){const n=$("adminPermissionsNotice");if(n){n.textContent="";n.classList.add("hidden");}}
 function roleAllowsAction(role,action){
-  if(role==="operator")return ["view","create","edit"].includes(action);
+  if(role==="operator")return ["view","create","edit","export"].includes(action);
   if(role==="viewer")return action==="view";
   return false;
 }
@@ -177,7 +177,7 @@ function renderMatrix(){
  const visibleModules=modules.filter(m=>m.module_key!=="control_administrativo"&&m.module_key!=="testigos"&&m.active!==false);
  const approval=selectedProfile&&selectedProfile.role!=="admin"?renderApprovalControls(selectedProfile):"";
  const roleNote=selectedProfile&&selectedProfile.role!=="admin"
-  ? '<p class="admin-permissions-hint">El rol limita las acciones efectivas: Consulta solo permite ver; Operador permite consultar, crear y editar. Eliminar, exportar y administrar no están habilitados para estos roles. Los permisos guardados se conservan si cambias el rol, pero las acciones fuera de su límite no tendrán efecto.</p>'
+  ? '<p class="admin-permissions-hint">El rol limita las acciones efectivas: Consulta solo permite ver; Operador permite consultar, crear y editar. La exportación requiere autorización independiente del administrador. Eliminar y administrar no están habilitados para estos roles. Los permisos guardados se conservan si cambias el rol, pero las acciones fuera de su límite no tendrán efecto.</p>'
   : "";
  $("adminPermissionsMatrix").innerHTML=approval+roleNote+visibleModules.map(m=>{
   const actions=MODULE_ACTIONS[m.module_key]||[["view","Consulta"]];
@@ -198,6 +198,8 @@ async function changePermission(input){
  if(!isAdmin()||!selectedProfile||selectedProfile.role==="admin")return;
  const targetProfileId=selectedProfile.id,moduleKey=input.dataset.module,actionKey=input.dataset.action,nextValue=input.checked;
  if(!roleAllowsAction(selectedProfile.role,actionKey)){input.checked=!nextValue;notice("El rol "+(selectedProfile.role==="viewer"?"Consulta":"actual")+" no permite esta acción. Cambia el rol para habilitarla.",true);return;}
+ if(moduleKey==="actividades"&&actionKey==="export"&&nextValue&&!permissionRows.some(p=>p.module_key===moduleKey&&p.action_key==="view"&&p.allowed===true)){input.checked=false;notice("Para autorizar exportaciones primero debes conceder Consulta en Actividades.",true);return;}
+ if(moduleKey==="actividades"&&actionKey==="view"&&!nextValue&&permissionRows.some(p=>p.module_key===moduleKey&&p.action_key==="export"&&p.allowed===true)){input.checked=true;notice("Retira primero el permiso Exportar Excel antes de retirar Consulta.",true);return;}
  input.disabled=true;
  try{
   const saved=await window.MIRA_DATA.setModulePermission(targetProfileId,moduleKey,actionKey,nextValue);
