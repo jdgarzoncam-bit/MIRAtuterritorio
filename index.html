@@ -456,6 +456,33 @@
                         </div>
                     </details>
 
+                    <!-- EXPLORADOR CENTRAL DE BASES AUTORIZADAS -->
+                    <details class="custom-dropdown" id="dropdown-base-datos-general">
+                        <summary><span class="summary-title"><i class="neo-icon">🗄️</i> Base de datos general</span><svg class="arrow-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></summary>
+                        <div class="dropdown-content">
+                            <section class="mira-filter-box" id="databaseExplorer" aria-label="Explorador de bases de datos">
+                                <div class="mira-label">EXPLORADOR DE INFORMACIÓN AUTORIZADA</div>
+                                <p style="font-size:.78rem;color:var(--text-muted);line-height:1.5;">Selecciona un conjunto de datos para navegar sus registros. La disponibilidad depende de tus permisos en Base de datos general y en el módulo de origen.</p>
+                                <label class="mira-label" for="databaseExplorerDataset">Conjunto de datos</label>
+                                <select id="databaseExplorerDataset" class="mira-select"><option value="">Cargando conjuntos disponibles…</option></select>
+                                <div class="mira-input-group" style="margin-top:10px;">
+                                    <input id="databaseExplorerSearch" type="search" placeholder="Buscar en los registros…" autocomplete="off">
+                                    <button id="databaseExplorerSearchBtn" type="button" aria-label="Buscar">⌕</button>
+                                </div>
+                                <div id="databaseExplorerMeta" class="mira-label" style="margin-top:12px;" aria-live="polite">Selecciona un conjunto de datos.</div>
+                                <div id="databaseExplorerTableWrap" style="overflow:auto;max-width:100%;margin-top:8px;">
+                                    <table class="activity-table" id="databaseExplorerTable"><thead></thead><tbody><tr><td>Selecciona un conjunto para comenzar.</td></tr></tbody></table>
+                                </div>
+                                <div class="activity-actions" style="justify-content:space-between;margin-top:10px;">
+                                    <button id="databaseExplorerPrev" class="activity-secondary-btn" type="button" disabled>← Anterior</button>
+                                    <span id="databaseExplorerPage" class="mira-label">Página 1</span>
+                                    <button id="databaseExplorerNext" class="activity-secondary-btn" type="button" disabled>Siguiente →</button>
+                                </div>
+                                <p id="databaseExplorerNotice" class="activity-local-warning" role="status" aria-live="polite"></p>
+                            </section>
+                        </div>
+                    </details>
+
                     <!-- MÓDULO TEMPORALMENTE BLOQUEADO: TESTIGOS / AUDITORÍA E-14 -->
                     <details class="custom-dropdown module-access-restricted" id="dropdown-testigos" aria-disabled="true">
                         <summary>
@@ -761,10 +788,10 @@
             <footer class="admin-permissions-footer"><span>La cuenta administradora principal conserva todos sus privilegios.</span><span>Registro abierto · correo verificado · aprobación administrativa obligatoria.</span></footer>
         </div>
     </section>
-    <script type="module" src="mira-data.js?v=20261111-activities-pagination-2"></script>
+    <script type="module" src="mira-data.js?v=20261111-database-explorer-1"></script>
     <script type="module" src="mira-auth.js?v=20261111-session-audit-1"></script>
-    <script src="app.js?v=20261111-activities-atomic-permissions-2"></script>
-    <script type="module" src="mira-admin.js?v=20261111-activities-export-permission-1"></script>
+    <script src="app.js?v=20261111-database-explorer-1"></script>
+    <script type="module" src="mira-admin.js?v=20261111-database-explorer-1"></script>
     <script type="module" src="reportes.js?v=20261103-anon-submit-minimal-2"></script>
     <script type="module" src="pqrs.js?v=20261110-pqrs-centralized-1"></script>
     <script src="pmu-navigation.js?v=20261031-vertical-glass"></script>
