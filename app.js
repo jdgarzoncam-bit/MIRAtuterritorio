@@ -632,7 +632,8 @@ function initDatabaseExplorer(){
   content.innerHTML='<form id="databasePersonForm"><div class="activity-form-grid">'+fields.map(([key,label,type,required])=>'<label>'+label+(type==='boolean'?'<select name="'+key+'"><option value="">Sin especificar</option><option value="true">Sí</option><option value="false">No</option></select>':'<input name="'+key+'" type="'+type+'" '+(required?'required':'')+'>')+'</label>').join('')+'</div><div class="activity-actions"><button class="login-btn" type="submit">Guardar persona</button><button class="activity-secondary-btn" type="reset">Limpiar</button></div><p id="databasePersonNotice" class="activity-local-warning" role="status"></p></form>';
   document.getElementById("databasePersonForm").addEventListener("submit",async event=>{
    event.preventDefault();const form=event.currentTarget,button=form.querySelector('[type="submit"]'),payload=Object.fromEntries(new FormData(form).entries());
-   ["edad"].forEach(k=>{if(payload[k]==="")delete payload[k];else payload[k]=Number(payload[k]);});\n   ["info_mira","requiere_transporte"].forEach(k=>{if(payload[k]==="")delete payload[k];else payload[k]=payload[k]==="true";});
+   ["edad"].forEach(k=>{if(payload[k]==="")delete payload[k];else payload[k]=Number(payload[k]);});
+   ["info_mira","requiere_transporte"].forEach(k=>{if(payload[k]==="")delete payload[k];else payload[k]=payload[k]==="true";});
    ["telefono","correo","barrio","puesto_votacion","mesa_votacion","tipo_participacion","info_mira","requiere_transporte","observaciones"].forEach(k=>{if(!payload[k])delete payload[k];});
    button.disabled=true;
    try{await window.MIRA_DATA.createPerson({...payload,activo:true,datos_pendientes:false,fuente_registro:"base_datos_general"});form.reset();document.getElementById("databasePersonNotice").textContent="Persona incorporada correctamente."; }
