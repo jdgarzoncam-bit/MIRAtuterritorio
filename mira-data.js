@@ -60,7 +60,7 @@ const EXPLORER_DATASETS = Object.freeze([
 function getExplorerDataset(key){return EXPLORER_DATASETS.find(item=>item.key===key)||null;}
 export const MIRA_DATA = {
   getExplorerDatasets() { return EXPLORER_DATASETS.map(({key,label,module,columns})=>({key,label,module,columns})); },
-  async listExplorerRows({datasetKey,search="",limit=25,offset=0}={}) {
+  async listExplorerRows({datasetKey,search="",filterField="",filterValue="",limit=25,offset=0}={}) {
     const dataset=getExplorerDataset(datasetKey);
     if(!dataset) throw new Error("Conjunto de datos no autorizado para el explorador.");
     const safeLimit=Math.min(Math.max(Number(limit)||25,1),100);
@@ -69,6 +69,12 @@ export const MIRA_DATA = {
     if(term){
       const clauses=dataset.search.map(column=>column+".ilike.*"+term+"*");
       params.or="("+clauses.join(",")+")";
+    }
+    if(filterField&&filterValue!==undefined&&String(filterValue).trim()){
+      const allowedFields=new Set(dataset.columns.map(column=>column[0]));
+      if(!allowedFields.has(filterField)) throw new Error("El campo de filtro no está permitido para este conjunto.");
+      const value=String(filterValue).trim().replace(/[,*()]/g," ").slice(0,100);
+      params[filterField]="eq."+value;
     }
     return miraRequest(dataset.table,{query:qs(params)});
   },
