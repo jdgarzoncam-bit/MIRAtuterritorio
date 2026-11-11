@@ -3,7 +3,7 @@ const MODULE_ACTIONS = {
   actividades:[["view","Consulta"],["create","Crear"],["edit","Editar"],["delete","Eliminar"]],
   concejal:[["view","Consulta"],["create","Crear"],["edit","Editar"],["delete","Eliminar"]],
   infomira:[["view","Consulta"],["create","Crear"],["edit","Editar"],["delete","Eliminar"]],
-  centro_operaciones:[["view","Consulta"]], reportes:[["view","Consulta"]], pqrs:[["view","Consulta"]]
+  centro_operaciones:[["view","Consulta"]], pqrs:[["view","Consulta"]]
 };
 const $ = (id) => document.getElementById(id);
 let users = [], modules = [], selectedProfile = null, permissionRows = [], allPermissionRows = [];
