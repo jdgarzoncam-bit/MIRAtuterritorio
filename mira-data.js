@@ -47,7 +47,32 @@ function assertTestigosEnabled() {
   }
 }
 
+const EXPLORER_DATASETS = Object.freeze([
+  {key:"personas",label:"Personas",table:"personas",module:"personas",select:"id,cedula,nombres,apellidos,telefono,correo,barrio,puesto_votacion,mesa_votacion,activo,datos_pendientes,created_at,updated_at",search:["cedula","nombres","apellidos","barrio"],columns:[["cedula","Cédula"],["nombres","Nombres"],["apellidos","Apellidos"],["telefono","Teléfono"],["correo","Correo"],["barrio","Barrio"],["activo","Estado"],["datos_pendientes","Datos pendientes"]]},
+  {key:"actividades",label:"Actividades",table:"actividades",module:"actividades",select:"id,nombre,fecha,lugar,estado,created_at",search:["nombre","lugar","estado"],columns:[["nombre","Actividad"],["fecha","Fecha"],["lugar","Lugar"],["estado","Estado"],["created_at","Creación"]]},
+  {key:"asistencias",label:"Asistencias",table:"asistencias",module:"actividades",select:"id,persona_id,actividad_id,fecha_registro,estado,motivo_anulacion",search:["estado","motivo_anulacion"],columns:[["persona_id","Persona ID"],["actividad_id","Actividad ID"],["fecha_registro","Fecha de registro"],["estado","Estado"],["motivo_anulacion","Motivo de anulación"]]},
+  {key:"pqrs",label:"PQRS",table:"pqrs",module:"pqrs",select:"id,tipo,modulo_key,asunto,descripcion,estado,created_at,updated_at",search:["tipo","modulo_key","asunto","descripcion","estado"],columns:[["tipo","Tipo"],["modulo_key","Módulo"],["asunto","Asunto"],["descripcion","Descripción"],["estado","Estado"],["created_at","Radicación"]]},
+  {key:"reportes_ciudadanos",label:"Reportes ciudadanos",table:"reportes_ciudadanos",module:"concejal",select:"id,categoria,sector,ubicacion,descripcion,estado,created_at,updated_at",search:["categoria","sector","ubicacion","descripcion","estado"],columns:[["categoria","Categoría"],["sector","Sector"],["ubicacion","Ubicación"],["descripcion","Descripción"],["estado","Estado"],["created_at","Creación"]]},
+  {key:"concejal_actividades",label:"Gestión territorial · Actividades",table:"concejal_actividades",module:"concejal",select:"id,barrio,descripcion,fecha,created_at,updated_at",search:["barrio","descripcion"],columns:[["barrio","Barrio"],["descripcion","Descripción"],["fecha","Fecha"],["created_at","Creación"]]},
+  {key:"concejal_compromisos",label:"Gestión territorial · Compromisos",table:"concejal_compromisos",module:"concejal",select:"id,barrio,compromiso,adquirido_con,fecha,fecha_limite,estado,resultado,logrado,created_at,updated_at",search:["barrio","compromiso","adquirido_con","estado","resultado"],columns:[["barrio","Barrio"],["compromiso","Compromiso"],["adquirido_con","Adquirido con"],["fecha","Fecha"],["fecha_limite","Fecha límite"],["estado","Estado"],["logrado","Logrado"]]},
+  {key:"infomira_red",label:"InfoMIRA · Red",table:"infomira_red",module:"infomira",select:"id,nombre_original,barrio,estado_original,cuidador_nombre,puesto_votacion,mesa_votacion,movilidad,asistencia,created_at",search:["nombre_original","barrio","estado_original","cuidador_nombre","puesto_votacion"],columns:[["nombre_original","Nombre"],["barrio","Barrio"],["estado_original","Estado"],["cuidador_nombre","Cuidador / líder"],["puesto_votacion","Puesto"],["mesa_votacion","Mesa"],["movilidad","Movilidad"],["asistencia","Asistencia"]]}
+]);
+function getExplorerDataset(key){return EXPLORER_DATASETS.find(item=>item.key===key)||null;}
 export const MIRA_DATA = {
+  getExplorerDatasets() { return EXPLORER_DATASETS.map(({key,label,module,columns})=>({key,label,module,columns})); },
+  async listExplorerRows({datasetKey,search="",limit=25,offset=0}={}) {
+    const dataset=getExplorerDataset(datasetKey);
+    if(!dataset) throw new Error("Conjunto de datos no autorizado para el explorador.");
+    const safeLimit=Math.min(Math.max(Number(limit)||25,1),100);
+    const params={select:dataset.select,order:"created_at.desc",limit:String(safeLimit),offset:String(Math.max(0,Number(offset)||0))};
+    const term=String(search||"").trim().replace(/[,*()]/g," ").slice(0,80);
+    if(term){
+      const clauses=dataset.search.map(column=>column+".ilike.*"+term+"*");
+      params.or="("+clauses.join(",")+")";
+    }
+    return miraRequest(dataset.table,{query:qs(params)});
+  },
+
   async listInfoMiraDirectory({cedula="", search="", limit=100, offset=0}={}) {
     const params = {
       select:"id,fila_origen,cedula_original,nombre_original,telefono,barrio,estado_original,cuidador_nombre,puesto_votacion,puesto_original,mesa_votacion,movilidad,asistencia,persona_id,personas(id,cedula,nombres,apellidos,telefono,correo,info_mira,puesto_votacion,mesa_votacion,requiere_transporte,edad,tipo_participacion,activo)",
