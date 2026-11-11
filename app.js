@@ -599,6 +599,8 @@ document.getElementById('sideOpenActivityModuleBtn').addEventListener('click',()
   const datasetSelect=document.getElementById("databaseExplorerDataset");
   const searchInput=document.getElementById("databaseExplorerSearch");
   const searchBtn=document.getElementById("databaseExplorerSearchBtn");
+  const filterField=document.getElementById("databaseExplorerFilterField");
+  const filterValue=document.getElementById("databaseExplorerFilterValue");
   const body=root.querySelector("#databaseExplorerTable tbody");
   const head=root.querySelector("#databaseExplorerTable thead");
   const meta=document.getElementById("databaseExplorerMeta");
@@ -632,7 +634,7 @@ document.getElementById('sideOpenActivityModuleBtn').addEventListener('click',()
     const version=++requestVersion;
     body.innerHTML='<tr><td colspan="8">Consultando Neon…</td></tr>';
     try{
-      const rows=await window.MIRA_DATA.listExplorerRows({datasetKey:dataset.key,search:searchInput.value,limit:PAGE_SIZE+1,offset:page*PAGE_SIZE});
+      const rows=await window.MIRA_DATA.listExplorerRows({datasetKey:dataset.key,search:searchInput.value,filterField:filterField.value,filterValue:filterValue.value,limit:PAGE_SIZE+1,offset:page*PAGE_SIZE});
       if(version!==requestVersion)return;
       const visible=Array.isArray(rows)?rows.slice(0,PAGE_SIZE):[];
       hasMore=Array.isArray(rows)&&rows.length>PAGE_SIZE;
@@ -669,9 +671,16 @@ document.getElementById('sideOpenActivityModuleBtn').addEventListener('click',()
       setNotice(error.message||"No fue posible validar permisos.",true);
     }
   }
-  datasetSelect.addEventListener("change",()=>loadRows(true));
+  datasetSelect.addEventListener("change",()=>{
+    const dataset=activeDataset();
+    filterField.innerHTML='<option value="">Sin filtro por campo</option>'+(dataset?.columns||[]).map(([key,label])=>'<option value="'+escapeActivityHtml(key)+'">'+escapeActivityHtml(label)+'</option>').join("");
+    filterValue.value="";
+    loadRows(true);
+  });
   searchBtn.addEventListener("click",()=>loadRows(true));
   searchInput.addEventListener("keydown",event=>{if(event.key==="Enter")loadRows(true);});
+  filterValue.addEventListener("keydown",event=>{if(event.key==="Enter")loadRows(true);});
+  filterField.addEventListener("change",()=>loadRows(true));
   prev.addEventListener("click",()=>{if(page>0){page--;loadRows();}});
   next.addEventListener("click",()=>{if(hasMore){page++;loadRows();}});
   window.addEventListener("mira:authenticated",refreshDatasets);
