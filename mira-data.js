@@ -176,8 +176,10 @@ export const MIRA_DATA = {
     if(!Object.keys(allowed).length) throw new Error("No hay cambios válidos para guardar.");
     return miraRequest("pqrs",{method:"PATCH",query:qs({id:"eq."+id}),body:{...allowed,updated_at:new Date().toISOString()}});
   },
-  async listAdminAudit({limit=30}={}) {
-    return miraRequest("admin_audit_log",{query:qs({select:"id,actor_auth_user_id,target_auth_user_id,action_key,details,created_at",order:"created_at.desc",limit:String(Math.min(Math.max(limit,1),100))})});
+  async listAdminAudit({limit=50,offset=0}={}) {
+    const safeLimit=Math.min(Math.max(Number(limit)||50,1),51);
+    const safeOffset=Math.max(Number(offset)||0,0);
+    return miraRequest("admin_audit_log",{query:qs({select:"id,actor_auth_user_id,target_auth_user_id,action_key,details,created_at",order:"created_at.desc,id.desc",limit:String(safeLimit),offset:String(safeOffset)})});
   },
   async e14Request(action, payload={}) {
     assertTestigosEnabled();
