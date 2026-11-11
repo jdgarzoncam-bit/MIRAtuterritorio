@@ -550,27 +550,6 @@
                         </div>
                     </details>
 
-                    <!-- REPORTES OPERATIVOS · CONSULTA DELEGADA -->
-                    <details class="custom-dropdown" id="dropdown-reportes-operativos">
-                        <summary>
-                            <span class="summary-title"><i class="neo-icon">📊</i> Reportes Operativos</span>
-                            <svg class="arrow-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
-                        </summary>
-                        <div class="dropdown-content operational-reports-content">
-                            <div class="operational-reports-heading">
-                                <div><strong>Reportes recibidos del Centro de Operaciones</strong><small>Consulta delegada · Esta bandeja no permite modificar ni eliminar reportes</small></div>
-                                <button type="button" id="refreshOperationalReportsBtn" class="activity-secondary-btn">↻ Actualizar</button>
-                            </div>
-                            <div class="operational-reports-filters">
-                                <label>Buscar<input id="operationalReportsSearch" type="search" placeholder="Puesto, mesa, descripción o estado"></label>
-                                <label>Tipo<select id="operationalReportsType"><option value="">Todos los tipos</option><option value="novedad">Novedad</option><option value="acta">Acta</option><option value="logistica">Logística</option><option value="otro">Otro</option></select></label>
-                            </div>
-                            <div class="operational-reports-summary"><strong id="operationalReportsCount">Sin consultar</strong><span>Se muestran hasta 100 registros recientes.</span></div>
-                            <div id="operationalReportsNotice" class="admin-permissions-notice hidden" role="status" aria-live="polite"></div>
-                            <div id="operationalReportsList" class="activity-view"><p class="admin-permissions-loading">Abre este módulo para consultar los reportes.</p></div>
-                        </div>
-                    </details>
-
                     <!-- MÓDULO 6: Actividades -->
                     <details class="custom-dropdown" id="dropdown-actividades">
                         <summary>
@@ -781,7 +760,6 @@
     <script type="module" src="mira-data.js?v=20261110-pqrs-centralized-1"></script>
     <script type="module" src="mira-auth.js?v=20261110-role-capabilities-1"></script>
     <script src="app.js?v=20261105-testigos-temporarily-locked-1"></script>
-    <script src="reportes-operativos.js?v=20261110-delegated-readonly-1"></script>
     <script type="module" src="mira-admin.js?v=20261110-role-capabilities-2"></script>
     <script type="module" src="reportes.js?v=20261103-anon-submit-minimal-2"></script>
     <script type="module" src="pqrs.js?v=20261110-pqrs-centralized-1"></script>
