@@ -175,3 +175,12 @@ begin
 end $$;
 revoke all on function mira.annul_attendance(uuid,text) from public,anonymous;
 grant execute on function mira.annul_attendance(uuid,text) to authenticated;
+
+-- Explorador de conjuntos autorizados del Centro de Operaciones.
+INSERT INTO mira.module_catalog (module_key,module_name,description,active,sort_order)
+VALUES ('base_datos_general','Base de datos general','Explorador de conjuntos de información autorizados con navegación y permisos diferenciados.',true,20)
+ON CONFLICT (module_key) DO UPDATE
+SET module_name=EXCLUDED.module_name,
+    description=EXCLUDED.description,
+    active=true,
+    sort_order=EXCLUDED.sort_order;
