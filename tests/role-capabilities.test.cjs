@@ -28,11 +28,11 @@ function loadRolePolicy() {
 }
 
 test("el menú rápido de Actividades y Testigos se muestra en la portada pública y exige sesión", () => {
-  assert.match(appSource, /landingVisible=Boolean\\(landing&&getComputedStyle\\(landing\\)\\.display!==\\'none\\'\\)/);
-  assert.match(appSource, /root\\.classList\\.toggle\\(\\'hidden\\',!landingVisible\\)/);
-  assert.match(appSource, /Inicia sesión para acceder/);
-  assert.match(appSource, /document\\.getElementById\\(\\'landingLoginBtn\\'\\)\\?\\.click\\(\\)/);
-  assert.match(appSource, /miraQuickTestigosBtn/);
+  assert.ok(appSource.includes("landingVisible=Boolean(landing&&getComputedStyle(landing).display!=='none')"));
+  assert.ok(appSource.includes("root.classList.toggle('hidden',!landingVisible)"));
+  assert.ok(appSource.includes("Inicia sesión para acceder"));
+  assert.ok(appSource.includes("document.getElementById('landingLoginBtn')?.click()"));
+  assert.ok(appSource.includes("miraQuickTestigosBtn"));
 });
 
 test("Consulta solo permite view", () => {
