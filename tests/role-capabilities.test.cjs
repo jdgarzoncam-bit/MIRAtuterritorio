@@ -158,7 +158,8 @@ test("la auditoría contempla Actividades y cambios de estado en Asistencias", (
 test("la restricción SQL acepta annul y Base de datos general controla su propia exportación", () => {
   assert.ok(exportMigration.includes("array['view','create','edit','delete','export','manage','annul']"));
   assert.match(adminSource, /pqrs:\[\["view","Consulta"\]\]/);
-  assert.ok(appSource.includes('No tienes permiso para exportar estos registros.'));
+  assert.ok(appSource.includes("window.MIRA_DATA.exportDataset("));
+  assert.ok(auditMigration.includes("No tienes permiso para exportar este conjunto de datos."));
   assert.ok(appSource.includes('no tienes permiso de Consulta en Base de datos general'));
   assert.ok(appSource.includes('no tienes permiso de Consulta en el módulo de origen'));
 });
