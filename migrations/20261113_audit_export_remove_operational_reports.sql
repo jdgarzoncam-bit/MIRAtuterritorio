@@ -2,6 +2,20 @@
 -- Auditoría común, exportación autorizada en backend y retiro de Reportes Operativos.
 -- Aplicar primero en QA y validar antes de promover a producción.
 
+-- La cuenta administradora requiere identidad principal, estado activo y correo verificado.
+CREATE OR REPLACE FUNCTION mira.is_active_admin()
+RETURNS boolean
+LANGUAGE sql STABLE SECURITY DEFINER
+SET search_path TO 'pg_catalog','mira','auth'
+AS $function$
+ SELECT EXISTS (
+  SELECT 1 FROM mira.user_profiles u
+  WHERE u.auth_user_id=auth.user_id()
+    AND u.auth_user_id='beef5bf3-82a8-4c35-a12c-17771be59da1'
+    AND u.active=true AND u.email_verified=true AND u.role='admin'
+ )
+$function$;
+
 CREATE TABLE IF NOT EXISTS mira.audit_events (
  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
  module_key text NOT NULL,
