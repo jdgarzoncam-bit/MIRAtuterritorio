@@ -107,7 +107,8 @@ export const MIRA_DATA = {
     const cedula=cleanCedula(payload.cedula);
     if (!cedula || !payload.nombres?.trim() || !payload.apellidos?.trim()) throw new Error("Cédula, nombres y apellidos son obligatorios.");
     const {cedula_normalizada, ...personData} = payload;
-    return miraRequest("personas",{method:"POST",body:{...personData,cedula}});
+    const missingFollowup=!String(payload.telefono||"").trim()||!String(payload.barrio||"").trim();
+    return miraRequest("personas",{method:"POST",body:{...personData,cedula,datos_pendientes:missingFollowup}});
   },
   updatePerson(id,payload) { const {cedula_normalizada, ...personData} = payload; const cedula=personData.cedula===undefined?undefined:cleanCedula(personData.cedula); return miraRequest("personas",{method:"PATCH",query:qs({id:`eq.${id}`}),body:{...personData,...(cedula!==undefined?{cedula}:{})}}); },
   archivePerson(id) { return this.updatePerson(id,{activo:false}); },
