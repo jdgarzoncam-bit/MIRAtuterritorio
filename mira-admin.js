@@ -179,7 +179,7 @@ function renderMatrix(){
  const visibleModules=modules.filter(m=>m.module_key!=="control_administrativo"&&m.module_key!=="testigos"&&m.active!==false);
  const approval=selectedProfile&&selectedProfile.role!=="admin"?renderApprovalControls(selectedProfile):"";
  const roleNote=selectedProfile&&selectedProfile.role!=="admin"
-  ? '<p class="admin-permissions-hint">El rol limita las acciones efectivas: Consulta solo permite ver; Operador permite consultar, crear, editar y anular cuando se autoriza. La exportación requiere autorización independiente. Eliminar y administrar no están habilitados para estos roles. Los permisos guardados se conservan si cambias el rol, pero las acciones fuera de su límite no tendrán efecto.</p>'
+  ? '<p class="admin-permissions-hint"><strong>El administrador controla cada autorización.</strong> El rol establece el límite máximo: Consulta solo puede consultar; Operador puede consultar, crear, editar, exportar y anular cuando el permiso individual está concedido. Eliminar y administrar permanecen reservados al administrador mientras no se habiliten mediante una política específica. Los permisos fuera del límite del rol quedan guardados, pero inactivos; si cambias el rol, revisa la matriz antes de aprobar la cuenta.</p>'
   : "";
  $("adminPermissionsMatrix").innerHTML=approval+roleNote+visibleModules.map(m=>{
   const actions=MODULE_ACTIONS[m.module_key]||[["view","Consulta"]];
@@ -239,7 +239,8 @@ function renderAudit(rows){
  node.innerHTML=rows.map(item=>{
   const date=new Date(item.created_at);
   const dateLabel=Number.isNaN(date.getTime())?escapeHtml(item.created_at||"Fecha no disponible"):escapeHtml(new Intl.DateTimeFormat("es-CO",{dateStyle:"medium",timeStyle:"short"}).format(date));
-  return '<article class="admin-audit-event"><div class="admin-audit-event-heading"><strong>'+escapeHtml(auditActionLabel(item.action_key))+'</strong><time>'+dateLabel+'</time></div><div class="admin-audit-identities"><span><b>Actor:</b> '+escapeHtml(item.actor_auth_user_id||"Sistema")+'</span><span><b>Objetivo:</b> '+escapeHtml(item.target_auth_user_id||"—")+'</span></div><details><summary>Ver detalles del evento</summary><pre>'+escapeHtml(JSON.stringify(item.details||{},null,2))+'</pre></details></article>';
+  const actor=users.find(u=>u.auth_user_id===item.actor_auth_user_id); const target=users.find(u=>u.auth_user_id===item.target_auth_user_id); const actorLabel=actor?(actor.display_name||actor.email||item.actor_auth_user_id):item.actor_auth_user_id||"Sistema"; const targetLabel=target?(target.display_name||target.email||item.target_auth_user_id):item.target_auth_user_id||"—";
+  return '<article class="admin-audit-event"><div class="admin-audit-event-heading"><strong>'+escapeHtml(auditActionLabel(item.action_key))+'</strong><time>'+dateLabel+'</time></div><div class="admin-audit-identities"><span><b>Actor:</b> '+escapeHtml(actorLabel)+'</span><span><b>Objetivo:</b> '+escapeHtml(targetLabel)+'</span></div><details><summary>Ver detalles del evento</summary><pre>'+escapeHtml(JSON.stringify(item.details||{},null,2))+'</pre></details></article>';
  }).join("");
 }
 function renderAuditPagination(){
