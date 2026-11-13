@@ -180,7 +180,8 @@ document.addEventListener("DOMContentLoaded",()=>{
     event.preventDefault();
     signOutCompletely().catch(err=>console.warn("[MIRA Auth] Error al cerrar sesión.",err));
   },true);
-  document.addEventListener("visibilitychange",()=>{if(!document.hidden)revalidateCurrentAuthorization();});
-  window.addEventListener("focus",()=>revalidateCurrentAuthorization());
+  document.addEventListener("visibilitychange",()=>{if(!document.hidden)revalidateCurrentAuthorization(true);});
+  window.addEventListener("focus",()=>revalidateCurrentAuthorization(true));
+  window.setInterval(()=>revalidateCurrentAuthorization(true),30000);
   restoreExistingSession();
 });
