@@ -424,6 +424,7 @@ function cerrarLoginAdmin() {
     adminCardContainer.classList.add('hidden');
     adminLoginFormInline.classList.remove('hidden');
     if (adminDefaultView) adminDefaultView.classList.add('hidden');
+    syncMiraQuickModules();
 }
 landingLoginBtn.addEventListener('click', abrirLoginAdmin);
 cancelAdminBtn.addEventListener('click', function(e) { e.preventDefault(); e.stopPropagation(); cerrarLoginAdmin(); });
