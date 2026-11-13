@@ -159,6 +159,13 @@ async function changeUserApproval(button){
  const nextActive=action==="save-role"?target.active:activate;
  const role=$("adminRoleSelect")?.value||target.role;
  if(!["viewer","operator"].includes(role)){notice("El rol Testigo está reservado. Selecciona Consulta u Operador para reemplazarlo.",true);return;}
+ if(target.role==="viewer"&&role==="operator"){
+  const dormant=permissionRows.filter(p=>p.allowed===true&&p.action_key!=="view"&&["create","edit","export","annul"].includes(p.action_key));
+  if(dormant.length){
+   const detail=dormant.map(p=>p.module_key+" · "+p.action_key).join("\n");
+   if(!window.confirm("Este usuario conserva permisos que estaban inactivos por su rol Consulta. Al cambiarlo a Operador, estos permisos individuales pasarán a estar disponibles:\n\n"+detail+"\n\n¿Confirmas que revisaste y autorizas su activación?"))return;
+  }
+ }
  button.disabled=true;
  try{
   const updated=await window.MIRA_DATA.updateUserProfile(targetId,{active:nextActive,role});
