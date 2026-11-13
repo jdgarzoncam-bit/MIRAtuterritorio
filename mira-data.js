@@ -221,6 +221,20 @@ export const MIRA_DATA = {
     if(!Object.keys(allowed).length) throw new Error("No hay cambios válidos para guardar.");
     return miraRequest("pqrs",{method:"PATCH",query:qs({id:"eq."+id}),body:{...allowed,updated_at:new Date().toISOString()}});
   },
+  async listAuditEvents({moduleKey="",actor="",operation="",search="",limit=100,offset=0}={}) {
+    return miraRequest("rpc/list_audit_events",{method:"POST",body:{
+      p_module_key:moduleKey||null,p_actor:actor||null,p_operation:operation||null,
+      p_search:search||null,p_limit:Math.min(Math.max(Number(limit)||100,1),200),
+      p_offset:Math.max(Number(offset)||0,0)
+    }});
+  },
+  async exportDataset({datasetKey,search="",filterField="",filterValue="",limit=100000}={}) {
+    if(!getExplorerDataset(datasetKey)) throw new Error("Conjunto de datos no autorizado para exportación.");
+    return miraRequest("rpc/export_dataset",{method:"POST",body:{
+      p_dataset_key:datasetKey,p_search:search,p_filter_field:filterField,
+      p_filter_value:filterValue,p_limit:Math.min(Math.max(Number(limit)||100000,1),100000)
+    }});
+  },
   async listAdminAudit({limit=50,offset=0}={}) {
     const safeLimit=Math.min(Math.max(Number(limit)||50,1),51);
     const safeOffset=Math.max(Number(offset)||0,0);
