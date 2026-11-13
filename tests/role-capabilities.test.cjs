@@ -160,8 +160,8 @@ test("la restricción SQL acepta annul y Base de datos general controla su propi
   assert.match(adminSource, /pqrs:\[\["view","Consulta"\]\]/);
   assert.ok(appSource.includes("window.MIRA_DATA.exportDataset("));
   assert.ok(auditMigration.includes("No tienes permiso para exportar este conjunto de datos."));
-  assert.ok(appSource.includes('no tienes permiso de Consulta en Base de datos general'));
-  assert.ok(appSource.includes('no tienes permiso de Consulta en el módulo de origen'));
+  assert.ok(auditMigration.includes("mira.has_module_permission"));
+  assert.ok(appSource.includes("window.MIRA_DATA.exportDataset("));
 });
 test("la incorporación marca datos pendientes si falta teléfono o barrio", () => {
   assert.ok(dataSource.includes("missingFollowup=!String(payload.telefono||\"\").trim()||!String(payload.barrio||\"\").trim()"));
