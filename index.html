@@ -463,11 +463,11 @@
                             <section class="database-home" id="databaseExplorer" aria-label="Base de datos general">
                                 <div class="mira-label">GESTIÓN CENTRALIZADA DE INFORMACIÓN</div>
                                 <p class="database-intro">Selecciona una herramienta para consultar, incorporar o completar información autorizada.</p>
-                                <div class="database-action-grid">
-                                  <button type="button" class="database-action-card" data-database-view="incorporate"><span>＋</span><strong>Incorporar persona</strong><small>Registrar una ficha completa en la base general.</small></button>
-                                  <button type="button" class="database-action-card" data-database-view="pending"><span>◷</span><strong>Datos pendientes</strong><small>Identificar y completar fichas incompletas.</small></button>
-                                  <button type="button" class="database-action-card" data-database-view="history"><span>↻</span><strong>Historial de cambios</strong><small>Consultar quién realizó cambios y cuándo.</small></button>
-                                  <button type="button" class="database-action-card" data-database-view="all"><span>▦</span><strong>Todos los registros</strong><small>Explorar conjuntos autorizados y exportar resultados.</small></button>
+                                <div class="database-action-grid" aria-label="Herramientas de Base de datos general">
+                                  <button type="button" class="database-action-card" data-database-view="incorporate"><span aria-hidden="true">＋</span><strong>Incorporar persona</strong><small>Agregar ficha</small></button>
+                                  <button type="button" class="database-action-card" data-database-view="pending"><span aria-hidden="true">◷</span><strong>Datos pendientes</strong><small>Completar datos</small></button>
+                                  <button type="button" class="database-action-card" data-database-view="history"><span aria-hidden="true">↻</span><strong>Historial de cambios</strong><small>Ver modificaciones</small></button>
+                                  <button type="button" class="database-action-card" data-database-view="all"><span aria-hidden="true">▦</span><strong>Todos los registros</strong><small>Consultar y exportar</small></button>
                                 </div>
                                 <div id="databaseExplorerNotice" class="activity-local-warning" role="status" aria-live="polite"></div>
                               </section>
@@ -791,10 +791,10 @@
             <footer class="admin-permissions-footer"><span>La cuenta administradora principal conserva todos sus privilegios.</span><span>Registro abierto · correo verificado · aprobación administrativa obligatoria.</span></footer>
         </div>
     </section>
-    <script type="module" src="mira-data.js?v=20261111-database-permissions-fix-2"></script>
-    <script type="module" src="mira-auth.js?v=20261111-session-audit-1"></script>
-    <script src="app.js?v=20261111-database-permissions-fix-2"></script>
-    <script type="module" src="mira-admin.js?v=20261111-database-permissions-fix-2"></script>
+    <script type="module" src="mira-data.js?v=20261113-database-ui-permissions-fix-1"></script>
+    <script type="module" src="mira-auth.js?v=20261113-database-ui-permissions-fix-1"></script>
+    <script src="app.js?v=20261113-database-ui-permissions-fix-1"></script>
+    <script type="module" src="mira-admin.js?v=20261113-database-ui-permissions-fix-1"></script>
     <script type="module" src="reportes.js?v=20261103-anon-submit-minimal-2"></script>
     <script type="module" src="pqrs.js?v=20261110-pqrs-centralized-1"></script>
     <script src="pmu-navigation.js?v=20261031-vertical-glass"></script>
