@@ -192,3 +192,13 @@ test("Reportes Operativos se retira de la plataforma y de Neon", () => {
   assert.ok(!dataSource.includes('key:"reportes_operativos"'));
   assert.ok(!appSource.includes("reportes_operativos"));
 });
+
+test("la sesión abierta revalida perfil y permisos al volver a la ventana", () => {
+  const authSource = fs.readFileSync(path.join(__dirname, "..", "mira-auth.js"), "utf8");
+  const adminSource = fs.readFileSync(path.join(__dirname, "..", "mira-admin.js"), "utf8");
+  assert.ok(authSource.includes("revalidateCurrentAuthorization"));
+  assert.ok(authSource.includes("document.addEventListener(\"visibilitychange\""));
+  assert.ok(authSource.includes("window.addEventListener(\"focus\""));
+  assert.ok(authSource.includes("mira:permissions-refreshed"));
+  assert.ok(adminSource.includes("mira:permissions-refreshed"));
+});
