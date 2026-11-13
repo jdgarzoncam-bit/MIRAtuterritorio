@@ -215,6 +215,10 @@ end $$;
 revoke all on function mira.annul_attendance(uuid,text) from public,anonymous;
 grant execute on function mira.annul_attendance(uuid,text) to authenticated;
 
+-- Sincronizar la restricción SQL con las capacidades granulares del panel.
+alter table mira.module_permissions drop constraint if exists module_permissions_action_key_check;
+alter table mira.module_permissions add constraint module_permissions_action_key_check check (action_key = any (array['view','create','edit','delete','export','manage','annul']::text[]));
+
 -- Explorador de conjuntos autorizados del Centro de Operaciones.
 INSERT INTO mira.module_catalog (module_key,module_name,description,active,sort_order)
 VALUES ('base_datos_general','Base de datos general','Explorador de conjuntos de información autorizados con navegación y permisos diferenciados.',true,20)
