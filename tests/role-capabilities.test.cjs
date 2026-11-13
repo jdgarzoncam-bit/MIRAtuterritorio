@@ -7,6 +7,7 @@ const vm = require("node:vm");
 const adminSource = fs.readFileSync(path.join(__dirname, "..", "mira-admin.js"), "utf8");
 const dataSource = fs.readFileSync(path.join(__dirname, "..", "mira-data.js"), "utf8");
 const appSource = fs.readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
+const styleSource = fs.readFileSync(path.join(__dirname, "..", "style.css"), "utf8");
 const exportMigration = fs.readFileSync(path.join(__dirname, "..", "migrations", "20261111_activities_granular_export_permission.sql"), "utf8");
 const atomicMigration = exportMigration;
 
