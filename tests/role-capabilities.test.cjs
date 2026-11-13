@@ -9,6 +9,7 @@ const dataSource = fs.readFileSync(path.join(__dirname, "..", "mira-data.js"), "
 const appSource = fs.readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
 const styleSource = fs.readFileSync(path.join(__dirname, "..", "style.css"), "utf8");
 const exportMigration = fs.readFileSync(path.join(__dirname, "..", "migrations", "20261111_activities_granular_export_permission.sql"), "utf8");
+const auditMigration = fs.readFileSync(path.join(__dirname, "..", "migrations", "20261113_audit_export_remove_operational_reports.sql"), "utf8");
 const atomicMigration = exportMigration;
 
 function loadRolePolicy() {
@@ -169,4 +170,24 @@ test("el menú Módulos se sincroniza al cambiar la portada y se oculta en el PM
   assert.ok(appSource.includes("miraMenuVisibilityObserver.observe(miraLandingForMenu"));
   assert.ok(appSource.includes("syncMiraQuickModules()"));
   assert.ok(styleSource.includes("body.pmu-neomorphic #miraQuickModules{display:none!important;}"));
+});
+
+test("la auditoría central registra cambios y exportaciones en PostgreSQL", () => {
+  assert.ok(auditMigration.includes("CREATE TABLE IF NOT EXISTS mira.audit_events"));
+  assert.ok(auditMigration.includes("CREATE OR REPLACE FUNCTION mira.audit_row_change()"));
+  assert.ok(auditMigration.includes("CREATE OR REPLACE FUNCTION mira.export_dataset("));
+  assert.ok(auditMigration.includes("CREATE OR REPLACE FUNCTION mira.list_audit_events("));
+  assert.ok(dataSource.includes("listAuditEvents"));
+  assert.ok(dataSource.includes("exportDataset"));
+  assert.ok(appSource.includes("auditModuleFilter"));
+  assert.ok(appSource.includes("auditActorFilter"));
+  assert.ok(appSource.includes("auditOperationFilter"));
+  assert.ok(appSource.includes("window.MIRA_DATA.exportDataset("));
+});
+
+test("Reportes Operativos se retira de la plataforma y de Neon", () => {
+  assert.ok(auditMigration.includes("DELETE FROM mira.module_catalog WHERE module_key='reportes'"));
+  assert.ok(auditMigration.includes("DROP TABLE mira.reportes_operativos"));
+  assert.ok(!dataSource.includes('key:"reportes_operativos"'));
+  assert.ok(!appSource.includes("reportes_operativos"));
 });
