@@ -696,21 +696,34 @@ function initDatabaseExplorer(){
   editor.querySelector("form").addEventListener("submit",async event=>{event.preventDefault();const payload=Object.fromEntries(new FormData(event.currentTarget).entries());if(payload.edad==="")delete payload.edad;else payload.edad=Number(payload.edad);try{const stillPending=!String(payload.telefono||"").trim()||!String(payload.barrio||"").trim();await window.MIRA_DATA.updatePerson(person.id,{...payload,datos_pendientes:stillPending});document.getElementById("databasePendingNotice").textContent=stillPending?"Ficha guardada. Sigue pendiente porque falta teléfono o barrio.":"Ficha guardada y completa según los campos de seguimiento.";await renderPending();}catch(error){document.getElementById("databasePendingNotice").textContent=error.message||"No fue posible actualizar la ficha.";}} ,{once:true});
  }
  async function renderHistory(){
-  const canPeople=allowed("personas","view"),canActivities=allowed("actividades","view");
-  if(!canPeople&&!canActivities)throw new Error("No tienes permiso para consultar historiales de los módulos de origen.");
-  const results=await Promise.all([
-   canPeople?window.MIRA_DATA.listPeopleAudit({limit:100}):Promise.resolve([]),
-   canActivities?window.MIRA_DATA.listActivitiesAudit({limit:100}):Promise.resolve([]),
-   canActivities?window.MIRA_DATA.listAttendanceAudit({limit:100}):Promise.resolve([])
-  ]);
-  const events=[];
-  results[0].forEach(x=>events.push({source:"Personas",action:x.action_key,actor:x.actor_auth_user_id,date:x.created_at,detail:(x.changed_fields||[]).join(", "),id:x.persona_id}));
-  results[1].forEach(x=>events.push({source:"Actividades",action:x.action_key,actor:x.actor_auth_user_id,date:x.created_at,detail:(x.changed_fields||[]).join(", "),id:x.actividad_id}));
-  results[2].forEach(x=>events.push({source:"Asistencias",action:x.action_key,actor:x.actor_auth_user_id,date:x.created_at,detail:x.reason||"—",id:x.asistencia_id}));
-  events.sort((a,b)=>new Date(b.date)-new Date(a.date));
-  content.innerHTML='<div class="activity-toolbar"><div><h3>Historial de cambios</h3><p>Eventos registrados por la base de datos desde la activación de sus auditorías.</p></div></div><div class="activity-table-wrap"><table class="activity-table"><thead><tr><th>Módulo</th><th>Acción</th><th>Usuario (ID)</th><th>Fecha</th><th>Detalle</th><th>Registro</th></tr></thead><tbody></tbody></table></div><p class="activity-local-warning">El historial cubre Personas, Actividades y Asistencias. No reconstruye eventos anteriores a la activación de los triggers ni incluye todavía PQRS y otros módulos.</p>';
-  const body=content.querySelector("tbody");
-  body.innerHTML=events.length?events.map(x=>"<tr><td>"+esc(x.source)+"</td><td>"+esc(x.action)+"</td><td>"+esc(x.actor||"—")+"</td><td>"+esc(x.date?new Date(x.date).toLocaleString("es-CO"):"—")+"</td><td>"+esc(x.detail||"—")+"</td><td>"+esc(x.id)+"</td></tr>").join(""):'<tr><td colspan="6">No hay eventos disponibles para los módulos autorizados.</td></tr>';
+  if(!allowed("base_datos_general","view"))throw new Error("No tienes permiso para consultar el historial de Base de datos general.");
+  content.innerHTML='<div class="activity-toolbar"><div><h3>Historial de cambios y exportaciones</h3><p>Registro centralizado de operaciones realizadas en los módulos autorizados.</p></div><button id="auditSearchReset" class="activity-secondary-btn" type="button">Limpiar filtros</button></div><div class="activity-form-grid"><label>Módulo<select id="auditModuleFilter"><option value="">Todos los módulos permitidos</option><option value="personas">Personas</option><option value="actividades">Actividades</option><option value="pqrs">PQRS</option><option value="concejal">Concejal</option><option value="infomira">InfoMIRA</option><option value="control_administrativo">Control Administrativo</option></select></label><label>Usuario (ID de cuenta)<input id="auditActorFilter" type="search" placeholder="Filtrar por usuario"></label><label>Operación<select id="auditOperationFilter"><option value="">Todas las operaciones</option><option value="INSERT">Creación</option><option value="UPDATE">Actualización</option><option value="DELETE">Eliminación</option><option value="EXPORT">Exportación</option></select></label><label>Buscar en el historial<input id="auditSearchFilter" type="search" placeholder="Tabla, registro, módulo, detalle o exportación"></label></div><div id="auditResultsMeta" class="mira-label"></div><div class="activity-table-wrap"><table class="activity-table"><thead><tr><th>Módulo</th><th>Tabla</th><th>Registro</th><th>Usuario</th><th>Operación</th><th>Campos / detalle</th><th>Fecha</th></tr></thead><tbody></tbody></table></div><div class="activity-actions"><button id="auditPrev" class="activity-secondary-btn" type="button">← Anterior</button><span id="auditPage">Página 1</span><button id="auditNext" class="activity-secondary-btn" type="button">Siguiente →</button></div><p class="activity-local-warning">La auditoría central registra operaciones desde la activación de esta versión. No reconstruye acciones históricas anteriores.</p>';
+  const $id=id=>document.getElementById(id),module=$id("auditModuleFilter"),actor=$id("auditActorFilter"),operation=$id("auditOperationFilter"),search=$id("auditSearchFilter"),body=content.querySelector("tbody");
+  let offset=0,hasMore=false,requestVersion=0;
+  const load=async()=>{
+    const version=++requestVersion;
+    body.innerHTML='<tr><td colspan="7">Consultando historial…</td></tr>';
+    const rows=await window.MIRA_DATA.listAuditEvents({moduleKey:module.value,actor:actor.value.trim(),operation:operation.value,search:search.value.trim(),limit:101,offset});
+    if(version!==requestVersion)return;
+    const pageRows=Array.isArray(rows)?rows.slice(0,100):[];
+    hasMore=Array.isArray(rows)&&rows.length>100;
+    const labels={personas:"Personas",actividades:"Actividades",pqrs:"PQRS",concejal:"Concejal",infomira:"InfoMIRA",control_administrativo:"Control Administrativo"};
+    const ops={INSERT:"Creación",UPDATE:"Actualización",DELETE:"Eliminación",EXPORT:"Exportación"};
+    body.innerHTML=pageRows.length?pageRows.map(x=>{
+      const details=x.operation==="EXPORT"?(x.details?.dataset_key||"") +" · "+(x.details?.row_count??0)+" registros · "+(x.details?.search||x.details?.filter_value||"Sin filtros"):(x.changed_fields||[]).join(", ");
+      return "<tr><td>"+esc(labels[x.module_key]||x.module_key)+"</td><td>"+esc(x.table_name)+"</td><td>"+esc(x.record_id||"—")+"</td><td>"+esc(x.actor_auth_user_id||"Sistema")+"</td><td>"+esc(ops[x.operation]||x.operation)+"</td><td>"+esc(details||"—")+"</td><td>"+esc(x.created_at?new Date(x.created_at).toLocaleString("es-CO"):"—")+"</td></tr>";
+    }).join(""):'<tr><td colspan="7">No se encontraron eventos para estos filtros o no tienes permisos para consultarlos.</td></tr>';
+    $id("auditResultsMeta").textContent=pageRows.length+" eventos en esta página";
+    $id("auditPage").textContent="Página "+(Math.floor(offset/100)+1);
+    $id("auditPrev").disabled=offset===0;$id("auditNext").disabled=!hasMore;
+  };
+  const reset=()=>{offset=0;load().catch(error=>say(error.message||"No fue posible consultar el historial.",true));};
+  [module,operation].forEach(el=>el.addEventListener("change",reset));
+  [actor,search].forEach(el=>el.addEventListener("keydown",event=>{if(event.key==="Enter")reset();}));
+  $id("auditSearchReset").addEventListener("click",()=>{module.value="";actor.value="";operation.value="";search.value="";reset();});
+  $id("auditPrev").addEventListener("click",()=>{if(offset>0){offset=Math.max(0,offset-100);load().catch(error=>say(error.message,true));}});
+  $id("auditNext").addEventListener("click",()=>{if(hasMore){offset+=100;load().catch(error=>say(error.message,true));}});
+  await load();
  }
  async function renderAll(){
   if(!datasets.length)throw new Error("No hay conjuntos de datos de origen autorizados.");
@@ -720,7 +733,24 @@ function initDatabaseExplorer(){
   const updateFields=()=>{dataset=datasets.find(d=>d.key===set.value);field.innerHTML='<option value="">Sin filtro</option>'+dataset.columns.map(([k,l])=>'<option value="'+esc(k)+'">'+esc(l)+'</option>').join("");};
   const load=async()=>{updateFields();const rows=await window.MIRA_DATA.listExplorerRows({datasetKey:dataset.key,search:search.value,filterField:field.value,filterValue:value.value,limit:26,offset:page*25});lastRows=rows.slice(0,25);more=rows.length>25;head.innerHTML="<tr>"+dataset.columns.map(c=>"<th>"+esc(c[1])+"</th>").join("")+"</tr>";body.innerHTML=lastRows.map(row=>"<tr>"+dataset.columns.map(([k])=>"<td>"+esc(row[k])+"</td>").join("")+"</tr>").join("")||'<tr><td colspan="8">No se encontraron registros.</td></tr>';$id("databaseAllMeta").textContent=dataset.label+" · "+lastRows.length+" registros en esta página";$id("databaseAllPage").textContent="Página "+(page+1);$id("databaseAllPrev").disabled=page===0;$id("databaseAllNext").disabled=!more;};
   set.addEventListener("change",()=>{page=0;load().catch(e=>say(e.message,true));});$id("databaseAllSearch").addEventListener("keydown",e=>{if(e.key==="Enter"){page=0;load().catch(x=>say(x.message,true));}});value.addEventListener("keydown",e=>{if(e.key==="Enter"){page=0;load().catch(x=>say(x.message,true));}});field.addEventListener("change",()=>{page=0;load().catch(e=>say(e.message,true));});$id("databaseAllPrev").addEventListener("click",()=>{if(page){page--;load().catch(e=>say(e.message,true));}});$id("databaseAllNext").addEventListener("click",()=>{if(more){page++;load().catch(e=>say(e.message,true));}});
-  $id("databaseExportBtn").addEventListener("click",()=>{if(!allowed("base_datos_general","view")){say("Acceso denegado: no tienes permiso de Consulta en Base de datos general. Solicita al administrador que te lo habilite.",true);return;}if(!allowed(dataset.module,"view")){say("Acceso denegado: no tienes permiso de Consulta en el módulo de origen ("+dataset.label+"). Solicita autorización al administrador.",true);return;}if(!allowed("base_datos_general","export")&&!allowed(dataset.module,"export")){say("No tienes permiso para exportar estos registros. Solicita al administrador el permiso Exportar información en Base de datos general o Exportar en "+dataset.label+".",true);return;}const filtered=Boolean(search.value.trim()||field.value&&value.value.trim());(async()=>{try{const all=[];for(let offset=0;offset<100000;offset+=100){const batch=await window.MIRA_DATA.listExplorerRows({datasetKey:dataset.key,search:search.value,filterField:field.value,filterValue:value.value,limit:100,offset});all.push(...batch);if(batch.length<100)break;if(offset>=99900)throw new Error("El volumen supera el límite seguro de exportación.");}const summary="Conjunto: "+dataset.label+"\nFiltros: "+(filtered?[search.value.trim()?"Búsqueda: "+search.value.trim():"",field.value?field.options[field.selectedIndex].text+": "+value.value:""].filter(Boolean).join("\n"):"Sin filtros")+"\nRegistros que se descargarán: "+all.length+"\n\n¿Deseas descargar este archivo?";if(!window.confirm(summary))return;if(!window.XLSX){say("No está disponible el componente de exportación Excel.",true);return;}const sheet=window.XLSX.utils.json_to_sheet(all);const book=window.XLSX.utils.book_new();window.XLSX.utils.book_append_sheet(book,sheet,dataset.label.slice(0,31));window.XLSX.writeFile(book,"MIRA_"+dataset.key+"_exportacion.xlsx");}catch(error){say(error.message||"No fue posible preparar la exportación.",true);}})();});
+  $id("databaseExportBtn").addEventListener("click",async()=>{
+    if(!window.XLSX){say("No está disponible el componente de exportación Excel.",true);return;}
+    const filtered=Boolean(search.value.trim()||(field.value&&value.value.trim()));
+    const summary="Conjunto: "+dataset.label+"\nFiltros: "+(filtered?[search.value.trim()?"Búsqueda: "+search.value.trim():"",field.value?field.options[field.selectedIndex].text+": "+value.value:""].filter(Boolean).join("\n"):"Sin filtros")+"\n\nLa autorización se verificará en el servidor y la operación quedará registrada en el historial. ¿Deseas continuar?";
+    if(!window.confirm(summary))return;
+    const button=$id("databaseExportBtn");button.disabled=true;
+    try{
+      const result=await window.MIRA_DATA.exportDataset({datasetKey:dataset.key,search:search.value,filterField:field.value,filterValue:value.value,limit:100000});
+      const all=result?.rows;
+      if(!Array.isArray(all))throw new Error("El servidor no devolvió un conjunto de datos válido.");
+      if(!all.length){say("La exportación fue autorizada y registrada, pero no hay registros que coincidan con los filtros.");return;}
+      const sheet=window.XLSX.utils.json_to_sheet(all),book=window.XLSX.utils.book_new();
+      window.XLSX.utils.book_append_sheet(book,sheet,dataset.label.slice(0,31));
+      window.XLSX.writeFile(book,"MIRA_"+dataset.key+"_exportacion.xlsx");
+      say("Exportación autorizada y registrada en el historial: "+all.length+" registros.");
+    }catch(error){say(error.message||"No fue posible autorizar la exportación.",true);}
+    finally{button.disabled=false;}
+  });
   await load();
  }
  root.querySelectorAll("[data-database-view]").forEach(button=>button.addEventListener("click",()=>open(button.dataset.databaseView)));
