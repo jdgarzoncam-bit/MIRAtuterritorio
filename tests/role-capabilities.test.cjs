@@ -89,7 +89,7 @@ test("Guardar rol exige seleccionar un rol asignable y evita falso éxito con Te
 
 test("la matriz exige permiso Consulta antes de habilitar acciones de escritura", () => {
   assert.match(adminSource, /const hasView=allowed\.has\(m\.module_key\+"::view"\)/);
-  assert.match(adminSource, /roleAllowed\?"Requiere permiso Consulta":"No permitido por el rol"/);
+  assert.match(adminSource, /restrictionLabel=roleAllowed\?"Requiere permiso Consulta":selectedProfile\?\.role==="viewer"\?"Requiere rol Operador":"Reservado al administrador"/);
 });
 
 test("la exportación de Actividades se define como permiso granular", () => {
