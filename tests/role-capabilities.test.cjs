@@ -163,3 +163,9 @@ test("la restricción SQL acepta annul y Base de datos general controla su propi
 test("la incorporación marca datos pendientes si falta teléfono o barrio", () => {
   assert.ok(dataSource.includes("missingFollowup=!String(payload.telefono||\"\").trim()||!String(payload.barrio||\"\").trim()"));
 });
+
+test("el menú Módulos se sincroniza al cambiar la portada y se oculta en el PMU", () => {
+  assert.ok(appSource.includes("miraMenuVisibilityObserver.observe(miraLandingForMenu"));
+  assert.ok(appSource.includes("syncMiraQuickModules()"));
+  assert.ok(styleSource.includes("body.pmu-neomorphic #miraQuickModules{display:none!important;}"));
+});
