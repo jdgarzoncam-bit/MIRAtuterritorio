@@ -177,8 +177,11 @@ BEGIN
   IF NOT mira.has_module_permission('base_datos_general','view') OR NOT mira.has_module_permission(v_module,'view') THEN
    RAISE EXCEPTION USING errcode='42501',message='No tienes permiso de consulta para este conjunto.';
   END IF;
-  IF NOT (mira.has_module_permission('base_datos_general','export') OR mira.has_module_permission(v_module,'export')) THEN
-   RAISE EXCEPTION USING errcode='42501',message='No tienes permiso para exportar este conjunto de datos.';
+  IF NOT mira.has_module_permission('base_datos_general','export') THEN
+   RAISE EXCEPTION USING errcode='42501',message='No tienes permiso de exportación en Base de datos general. Solicita al administrador que habilite ese permiso.';
+  END IF;
+  IF NOT mira.has_module_permission(v_module,'export') THEN
+   RAISE EXCEPTION USING errcode='42501',message='No tienes permiso de exportación en el módulo de origen ('||v_module||'). Solicita al administrador que habilite ese permiso.';
   END IF;
  END IF;
  IF nullif(btrim(coalesce(p_search,'')),'') IS NOT NULL THEN
