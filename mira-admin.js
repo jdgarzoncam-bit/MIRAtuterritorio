@@ -296,6 +296,17 @@ function setModuleRestricted(element,restricted){
     element.removeAttribute("aria-disabled");
   }
 }
+async function waitForMiraDataClient(timeoutMs=15000){
+  if(window.MIRA_DATA?.listMyModulePermissions)return window.MIRA_DATA;
+  await new Promise((resolve,reject)=>{
+    let done=false;
+    const finish=()=>{if(done)return;done=true;window.removeEventListener("mira:data-ready",ready);clearTimeout(timer);resolve();};
+    const ready=()=>{if(window.MIRA_DATA?.listMyModulePermissions)finish();};
+    const timer=setTimeout(()=>{if(done)return;done=true;window.removeEventListener("mira:data-ready",ready);reject(new Error("El cliente de permisos no terminó de cargar."));},timeoutMs);
+    window.addEventListener("mira:data-ready",ready);ready();
+  });
+  return window.MIRA_DATA;
+}
 async function applyModuleAccess(){
   const current=window.MIRA_CURRENT_USER;
   const allTargets=Object.values(MODULE_TARGETS).flat();
@@ -319,8 +330,8 @@ async function applyModuleAccess(){
     return;
   }
   try{
-    if(!window.MIRA_DATA?.listMyModulePermissions) throw new Error("El servicio de permisos no está disponible.");
-    const rows=await window.MIRA_DATA.listMyModulePermissions();
+    const data=await waitForMiraDataClient();
+    const rows=await data.listMyModulePermissions();
     if(!Array.isArray(rows)) throw new Error("La respuesta de permisos no es válida.");
     const canView=new Set(rows.filter(p=>p.allowed===true&&p.action_key==="view").map(p=>p.module_key));
     Object.entries(MODULE_TARGETS).forEach(([moduleKey,ids])=>ids.forEach(id=>{
