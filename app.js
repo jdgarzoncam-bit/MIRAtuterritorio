@@ -596,6 +596,8 @@ document.getElementById('sideOpenActivityModuleBtn').addEventListener('click',()
 function initDatabaseExplorer(){
  const root=document.getElementById("databaseExplorer"),workspace=document.getElementById("databaseWorkspace");
  if(!root||!workspace)return;
+ // Portal inmediato: evita que el panel herede recortes, scroll o stacking contexts del menú lateral.
+ if(workspace.parentElement!==document.body)document.body.appendChild(workspace);
  const title=document.getElementById("databaseWorkspaceTitle"),description=document.getElementById("databaseWorkspaceDescription"),content=document.getElementById("databaseWorkspaceContent"),notice=document.getElementById("databaseExplorerNotice");
  // El panel debe vivir directamente en body para no heredar overflow/transform del dropdown.
  if(workspace.parentElement!==document.body)document.body.appendChild(workspace);
@@ -639,7 +641,7 @@ function initDatabaseExplorer(){
   workspace.style.setProperty("height","100dvh","important");
   workspace.style.setProperty("max-width","none","important");
   workspace.style.setProperty("max-height","none","important");
-  workspace.style.setProperty("z-index","10050","important");
+  workspace.style.setProperty("z-index","2147483000","important");
   workspace.style.setProperty("overflow-y","auto","important");
   workspace.classList.remove("hidden");
   workspace.setAttribute("aria-hidden","false");
