@@ -739,7 +739,9 @@ async function syncMiraQuickModules(){
   const activities=document.getElementById('miraQuickActivitiesBtn');
   const activitiesStatus=activities?.querySelector('small');
   const user=window.MIRA_CURRENT_USER;
-  if(root)root.classList.toggle('hidden',!user?.authUserId);
+  const landing=document.getElementById('landing-hero-overlay');
+  const landingVisible=Boolean(landing&&getComputedStyle(landing).display!=='none');
+  if(root)root.classList.toggle('hidden',!landingVisible);
   if(testigos){
     testigos.disabled=true;
     testigos.setAttribute('aria-disabled','true');
@@ -748,9 +750,9 @@ async function syncMiraQuickModules(){
   }
   if(status)status.textContent='En renovación · Acceso bloqueado';
   if(!activities)return;
-  activities.disabled=true;
-  activities.setAttribute('aria-disabled','true');
-  if(activitiesStatus)activitiesStatus.textContent='Verificando permisos…';
+  activities.disabled=false;
+  activities.setAttribute('aria-disabled','false');
+  if(activitiesStatus)activitiesStatus.textContent=user?.authUserId?'Verificando permisos…':'Inicia sesión para acceder';
   let allowed=false;
   if(user?.authUserId){
     if(isPrimaryMiraAdmin())allowed=true;
@@ -762,9 +764,10 @@ async function syncMiraQuickModules(){
     }
   }
   if(version!==quickModulesSyncVersion)return;
-  activities.disabled=!allowed;
-  activities.setAttribute('aria-disabled',String(!allowed));
-  if(activitiesStatus)activitiesStatus.textContent=allowed?'Registro y seguimiento':'Sin permiso de consulta';
+  const requiresLogin=!user?.authUserId;
+  activities.disabled=!allowed&&!requiresLogin;
+  activities.setAttribute('aria-disabled',String(!allowed&&!requiresLogin));
+  if(activitiesStatus)activitiesStatus.textContent=requiresLogin?'Inicia sesión para acceder':allowed?'Registro y seguimiento':'Sin permiso de consulta';
 }
 document.getElementById('miraQuickModulesToggle')?.addEventListener('click',()=>{
   const panel=document.getElementById('miraQuickModulesPanel');
@@ -779,7 +782,13 @@ document.getElementById('miraQuickTestigosBtn')?.addEventListener('click',event=
   return;
 });
 document.getElementById('miraQuickActivitiesBtn')?.addEventListener('click',()=>{
-  if(!window.MIRA_CURRENT_USER?.authUserId)return;
+  if(!window.MIRA_CURRENT_USER?.authUserId){
+    document.getElementById('miraQuickModulesPanel')?.classList.add('hidden');
+    document.getElementById('miraQuickModulesToggle')?.setAttribute('aria-expanded','false');
+    document.getElementById('miraQuickModules')?.classList.add('hidden');
+    document.getElementById('landingLoginBtn')?.click();
+    return;
+  }
   document.getElementById('miraQuickModulesPanel')?.classList.add('hidden');
   document.getElementById('miraQuickModulesToggle')?.setAttribute('aria-expanded','false');
   openActivities('registration');
