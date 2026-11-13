@@ -756,6 +756,7 @@ function initDatabaseExplorer(){
  root.querySelectorAll("[data-database-view]").forEach(button=>button.addEventListener("click",()=>open(button.dataset.databaseView)));
  document.getElementById("databaseWorkspaceClose")?.addEventListener("click",back);document.getElementById("databaseWorkspaceBack")?.addEventListener("click",back);
  window.addEventListener("mira:authenticated",()=>refreshPermissions().catch(e=>say(e.message,true)));
+ window.addEventListener("mira:permissions-refreshed",async()=>{const before=new Set(permissions);try{await refreshPermissions();const revoked=[...before].some(key=>!permissions.has(key));if(revoked)back();}catch(e){permissions.clear();datasets=[];back();say("No fue posible revalidar permisos. El espacio quedó cerrado.",true);}});
  window.addEventListener("mira:signed-out",()=>{permissions.clear();datasets=[];back();});
  say("Selecciona una herramienta. El contenido se habilita según los permisos asignados.");
 }
