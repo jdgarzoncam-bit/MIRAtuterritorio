@@ -144,3 +144,13 @@ test("la auditoría contempla Actividades y cambios de estado en Asistencias", (
   assert.ok(dataSource.includes("listActivitiesAudit"));
   assert.ok(dataSource.includes("listAttendanceAudit"));
 });
+
+test("la restricción SQL acepta annul y el panel permite exportar conjuntos PQRS, Concejal e InfoMIRA", () => {
+  assert.ok(exportMigration.includes("array['view','create','edit','delete','export','manage','annul']"));
+  assert.match(adminSource, /pqrs:\[\["view","Consulta"\],\["export","Exportar información"\]\]/);
+  assert.match(adminSource, /concejal:\[[^\]]*\["export","Exportar información"\]/);
+  assert.match(adminSource, /infomira:\[[^\]]*\["export","Exportar información"\]/);
+});
+test("la incorporación marca datos pendientes si falta teléfono o barrio", () => {
+  assert.ok(dataSource.includes("missingFollowup=!String(payload.telefono||\"\").trim()||!String(payload.barrio||\"\").trim()"));
+});
