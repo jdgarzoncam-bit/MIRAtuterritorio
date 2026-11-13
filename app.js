@@ -801,6 +801,14 @@ window.addEventListener('mira:signed-out',()=>{
   document.getElementById('miraQuickModulesToggle')?.setAttribute('aria-expanded','false');
 });
 document.addEventListener('DOMContentLoaded',syncMiraQuickModules);
+// Mantener el menú rápido sincronizado con los cambios de pantalla (portada/PMU).
+// La transición al Centro de Operaciones modifica display directamente y no siempre emite eventos de navegación.
+const miraLandingForMenu=document.getElementById('landing-hero-overlay');
+if(miraLandingForMenu&&typeof MutationObserver!=='undefined'){
+  const miraMenuVisibilityObserver=new MutationObserver(()=>syncMiraQuickModules());
+  miraMenuVisibilityObserver.observe(miraLandingForMenu,{attributes:true,attributeFilter:['style','class']});
+}
+
 
 
 document.getElementById('backToActivityRegistration')?.addEventListener('click',()=>showActivityView('registration'));
