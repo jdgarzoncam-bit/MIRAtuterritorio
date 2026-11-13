@@ -5,7 +5,7 @@ const MODULE_ACTIONS = {
   base_datos_general:[["view","Consultar bases autorizadas"],["create","Crear registros autorizados"],["edit","Editar registros autorizados"],["export","Exportar información"],["manage","Administrar conjuntos y accesos"]],
   concejal:[["view","Consulta"],["create","Crear"],["edit","Editar"],["export","Exportar información"],["delete","Eliminar"]],
   infomira:[["view","Consulta"],["create","Crear"],["edit","Editar"],["export","Exportar información"],["delete","Eliminar"]],
-  centro_operaciones:[["view","Consulta"]], pqrs:[["view","Consulta"]]
+  centro_operaciones:[["view","Consulta"]], pqrs:[["view","Consulta"],["export","Exportar información"]]
 };
 const $ = (id) => document.getElementById(id);
 let users = [], modules = [], selectedProfile = null, permissionRows = [], allPermissionRows = [];
