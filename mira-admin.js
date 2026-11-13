@@ -420,6 +420,7 @@ function init(){
     if(!$("adminPermissionsPanel")?.classList.contains("hidden"))loadUsers();
   });
   window.addEventListener("mira:signed-out",()=>{syncVisibility();applyModuleAccess();});
+  window.addEventListener("mira:permissions-refreshed",()=>{syncVisibility();applyModuleAccess();});
   syncVisibility();
   applyModuleAccess();
 }
