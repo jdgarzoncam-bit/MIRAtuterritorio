@@ -148,7 +148,7 @@ test("la auditoría contempla Actividades y cambios de estado en Asistencias", (
 test("la restricción SQL acepta annul y Base de datos general controla su propia exportación", () => {
   assert.ok(exportMigration.includes("array['view','create','edit','delete','export','manage','annul']"));
   assert.match(adminSource, /pqrs:\[\["view","Consulta"\]\]/);
-  assert.ok(appSource.includes('allowed("base_datos_general","export")||!allowed(dataset.module,"view")'));
+  assert.ok(appSource.includes('(!allowed("base_datos_general","export")&&!allowed(dataset.module,"export"))||!allowed("base_datos_general","view")||!allowed(dataset.module,"view")'));
 });
 test("la incorporación marca datos pendientes si falta teléfono o barrio", () => {
   assert.ok(dataSource.includes("missingFollowup=!String(payload.telefono||\"\").trim()||!String(payload.barrio||\"\").trim()"));
