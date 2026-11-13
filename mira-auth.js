@@ -81,6 +81,37 @@ async function restoreExistingSession() {
     console.warn("[MIRA Auth] La sesión guardada no superó la validación; se requiere iniciar sesión.",error);
   }
 }
+let revalidationRunning=false,lastRevalidationAt=0;
+async function revalidateCurrentAuthorization(force=false) {
+  if(revalidationRunning||!window.MIRA_CURRENT_USER)return;
+  if(!force&&Date.now()-lastRevalidationAt<15000)return;
+  revalidationRunning=true;lastRevalidationAt=Date.now();
+  try {
+    const result=await auth.getSession();
+    if(result?.error)throw result.error;
+    const sessionData=result?.data;
+    const authUser=sessionData?.user||sessionData?.session?.user||null;
+    if(!authUser?.id){clearAuthenticatedState();return;}
+    if(authUser.emailVerified!==true)throw new Error("La verificación de correo ya no está vigente.");
+    const token=await bearerToken();
+    const profile=await getOwnProfile(token,authUser.id);
+    if(!profile||profile.auth_user_id!==authUser.id||profile.active!==true||profile.email_verified!==true||
+       !["admin","operator","viewer"].includes(profile.role)||
+       (profile.role==="admin"&&profile.auth_user_id!==PRIMARY_ADMIN_AUTH_ID)){
+      throw new Error("La cuenta fue desactivada o sus condiciones de acceso cambiaron.");
+    }
+    const previous=window.MIRA_CURRENT_USER;
+    window.MIRA_CURRENT_USER={role:profile.role,authUserId:profile.auth_user_id,displayName:profile.display_name||authUser.name||profile.email,email:profile.email||authUser.email};
+    if(previous.role!==profile.role||previous.authUserId!==profile.auth_user_id){
+      window.dispatchEvent(new Event("mira:permissions-refreshed"));
+    } else {
+      window.dispatchEvent(new Event("mira:permissions-refreshed"));
+    }
+  } catch(error) {
+    console.warn("[MIRA Auth] La revalidación de la sesión no fue superada; se cerrará el acceso.",error);
+    await signOutCompletely();
+  } finally { revalidationRunning=false; }
+}
 async function signOutCompletely() {
   try { await auth.signOut(); }
   finally { clearAuthenticatedState(); }
@@ -149,5 +180,7 @@ document.addEventListener("DOMContentLoaded",()=>{
     event.preventDefault();
     signOutCompletely().catch(err=>console.warn("[MIRA Auth] Error al cerrar sesión.",err));
   },true);
+  document.addEventListener("visibilitychange",()=>{if(!document.hidden)revalidateCurrentAuthorization();});
+  window.addEventListener("focus",()=>revalidateCurrentAuthorization());
   restoreExistingSession();
 });
