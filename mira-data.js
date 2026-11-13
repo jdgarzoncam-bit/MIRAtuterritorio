@@ -23,14 +23,14 @@ async function miraRequest(table, {method="GET", query="", body, anonymous=false
   if (body !== undefined) headers.set("Content-Type", "application/json");
   if (method !== "GET") headers.set("Prefer", prefer || "return=representation");
   const response = await fetch(`${MIRA_DATA_API_URL}/${table}${query ? `?${query}` : ""}`, {
-    method, headers, body: body === undefined ? undefined : JSON.stringify(body)
+    method, headers, body: body === undefined ? undefined : JSON.stringify(body), cache: "no-store"
   });
   const text = await response.text();
   let data = null;
   try { data = text ? JSON.parse(text) : null; } catch { data = text; }
   if (!response.ok) {
     const message = data?.message || data?.details || data?.hint || `Error HTTP ${response.status}`;
-    throw new Error(message);
+    const error = new Error(message); error.status=response.status; error.code=data?.code||null; throw error;
   }
   if (requireRows && (!Array.isArray(data) || data.length !== 1)) {
     throw new Error("La base de datos no confirmó el cambio. No se actualizará la interfaz.");
