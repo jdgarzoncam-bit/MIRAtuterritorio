@@ -179,7 +179,7 @@ function renderMatrix(){
  const visibleModules=modules.filter(m=>m.module_key!=="control_administrativo"&&m.module_key!=="testigos"&&m.active!==false);
  const approval=selectedProfile&&selectedProfile.role!=="admin"?renderApprovalControls(selectedProfile):"";
  const roleNote=selectedProfile&&selectedProfile.role!=="admin"
-  ? '<p class="admin-permissions-hint"><strong>El administrador controla cada autorización.</strong> El rol establece el límite máximo: Consulta solo puede consultar; Operador puede consultar, crear, editar, exportar y anular cuando el permiso individual está concedido. Eliminar y administrar permanecen reservados al administrador mientras no se habiliten mediante una política específica. Los permisos fuera del límite del rol quedan guardados, pero inactivos; si cambias el rol, revisa la matriz antes de aprobar la cuenta.</p>'
+  ? '<p class="admin-permissions-hint"><strong>El administrador controla cada autorización.</strong> El rol establece el límite máximo: Consulta solo puede consultar; Operador puede consultar, crear, editar, exportar y anular cuando el permiso individual está concedido. Eliminar y administrar permanecen reservados al administrador mientras no se habiliten mediante una política específica. Los permisos guardados se conservan aunque queden fuera del límite del rol y permanecen inactivos; si cambias el rol, revisa la matriz antes de aprobar la cuenta.</p>'
   : "";
  $("adminPermissionsMatrix").innerHTML=approval+roleNote+visibleModules.map(m=>{
   const actions=MODULE_ACTIONS[m.module_key]||[["view","Consulta"]];
