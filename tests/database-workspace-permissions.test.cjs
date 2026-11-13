@@ -12,7 +12,7 @@ test("retirar Exportar no cierra Base de datos general si se conserva Consulta",
 });
 
 test("los cambios de permisos actualizan la vista activa sin cerrar la sesión", () => {
-  assert.match(app, /if\(activeView\)\{try\{await render\(activeView\);/);
+  assert.match(app, /const viewPermissionsChanged=wasAdmin!==admin\(\)\|\|/);\n  assert.match(app, /if\(viewPermissionsChanged&&activeView\)\{try\{await render\(activeView\);/);
   assert.match(app, /La sesión permanece activa/);
 });
 
