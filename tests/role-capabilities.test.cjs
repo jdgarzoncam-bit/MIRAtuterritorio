@@ -173,6 +173,15 @@ test("el menú Módulos se sincroniza al cambiar la portada y se oculta en el PM
   assert.ok(styleSource.includes("body.pmu-neomorphic #miraQuickModules{display:none!important;}"));
 });
 
+test("la exportación exige permisos vigentes en Base de datos general y en el módulo de origen", () => {
+  assert.ok(auditMigration.includes("IF NOT mira.has_module_permission('base_datos_general','export')"));
+  assert.ok(auditMigration.includes("IF NOT mira.has_module_permission(v_module,'export')"));
+  assert.ok(!auditMigration.includes("mira.has_module_permission('base_datos_general','export') OR mira.has_module_permission(v_module,'export')"));
+  assert.ok(appSource.includes("await refreshPermissions();"));
+  assert.ok(appSource.includes('No tienes permiso para exportar desde Base de datos general.'));
+  assert.ok(appSource.includes('No tienes permiso para exportar los datos del módulo '));
+  assert.ok(dataSource.includes('cache: "no-store"'));
+});
 test("la auditoría central registra cambios y exportaciones en PostgreSQL", () => {
   assert.ok(auditMigration.includes("CREATE TABLE IF NOT EXISTS mira.audit_events"));
   assert.ok(auditMigration.includes("CREATE OR REPLACE FUNCTION mira.audit_row_change()"));
