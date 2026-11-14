@@ -5935,3 +5935,45 @@ body.database-workspace-open{overflow:hidden!important}
   .database-workspace-header{width:100%;max-width:none;margin:0 0 12px}
   .database-workspace-panel{width:100%;max-width:none;min-height:calc(100dvh - 110px);margin:0;padding:12px}
 }
+
+
+/* MIRA 3D · capa experimental. El contenedor solo se muestra con ?mapa3d=1. */
+#map3d {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    background: #0f172a;
+}
+#map3d[hidden] { display: none !important; }
+#map.mira-map-3d-hidden { display: none !important; }
+.mira-map3d-status {
+    position: absolute;
+    z-index: 5;
+    left: 420px;
+    bottom: 18px;
+    max-width: min(420px, calc(100% - 440px));
+    padding: 8px 12px;
+    border: 1px solid rgba(255,255,255,.22);
+    border-radius: 10px;
+    color: #fff;
+    background: rgba(15,23,42,.78);
+    backdrop-filter: blur(12px);
+    font: 600 11px/1.4 system-ui, sans-serif;
+    pointer-events: none;
+}
+#map3d .maplibregl-ctrl-group {
+    border-radius: 10px;
+    overflow: hidden;
+}
+@media (max-width: 600px) {
+    .mira-map3d-status {
+        left: 12px;
+        bottom: 12px;
+        max-width: calc(100% - 24px);
+    }
+}
