@@ -34,12 +34,12 @@ test("un fallo temporal de autenticación no cierra la sesión automáticamente"
 });
 
 test("el navegador carga las versiones corregidas de autenticación y permisos", () => {
-  assert.ok(index.includes("mira-auth.js?v=20261114-jwt-helper-1"));
+  assert.ok(index.includes("mira-auth.js?v=20261114-auth-wrapper-2"));
   assert.ok(index.includes("mira-admin.js?v=20261114-module-refresh-safe-1"));
 });
 
-test("autenticación y datos usan el helper oficial getJWTToken de Neon Auth", () => {
-  assert.match(auth, /auth\.getJWTToken\(\)/);
+test("el cliente Better Auth y el wrapper interno Neon Auth comparten el JWT correcto", () => {
+  assert.match(auth, /createInternalNeonAuth\(AUTH_URL/);\n  assert.match(auth, /const auth = neonAuth\.adapter/);\n  assert.match(auth, /neonAuth\.getJWTToken\(\)/);
   assert.match(data, /auth\.getJWTToken\(\)/);
   assert.doesNotMatch(data, /await auth\.token\(\)/);
   assert.match(data, /NEON_AUTH_JWT_MISSING/);
