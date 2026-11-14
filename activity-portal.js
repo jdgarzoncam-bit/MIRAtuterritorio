@@ -48,6 +48,7 @@ async function validateSession(user) {
     throw new Error("La cuenta no está activa o no ha sido autorizada por el administrador.");
   }
   if (profile.role !== "admin" || profile.auth_user_id !== PRIMARY_ADMIN_AUTH_ID) {
+    if (profile.role !== "operator") throw new Error("El portal de registro requiere el rol Operador y permisos de Consulta y Creación en Actividades.");
     const permissionsResponse = await fetch(`${DATA_API_URL}/module_permissions?select=module_key,action_key,allowed&limit=500`, {
       headers: { Authorization: `Bearer ${jwt}`, "Accept-Profile": "mira" }
     });
