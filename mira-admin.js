@@ -316,16 +316,19 @@ async function waitForMiraDataClient(timeoutMs=15000){
   });
   return window.MIRA_DATA;
 }
+let moduleAccessRequestVersion=0;
+let lastAppliedModuleAccessUserId=null;
 async function applyModuleAccess(){
   const current=window.MIRA_CURRENT_USER;
   const allTargets=Object.values(MODULE_TARGETS).flat();
+  const requestVersion=++moduleAccessRequestVersion;
   if(!current){
+    lastAppliedModuleAccessUserId=null;
     allTargets.forEach(id=>setModuleRestricted($(id),true));
     return;
   }
-  // Cerrar todos los módulos antes de resolver permisos: nunca mostrar acceso provisional.
-  allTargets.forEach(id=>setModuleRestricted($(id),true));
   if(current.role==="admin"&&current.authUserId===PRIMARY_ADMIN_AUTH_ID){
+    lastAppliedModuleAccessUserId=current.authUserId;
     allTargets.forEach(id=>{
       const temporaryLock=id==="dropdown-testigos";
       setModuleRestricted($(id),temporaryLock);
@@ -334,26 +337,36 @@ async function applyModuleAccess(){
     return;
   }
   if(!["operator","viewer"].includes(current.role)){
+    lastAppliedModuleAccessUserId=null;
     allTargets.forEach(id=>{setModuleRestricted($(id),true);$(id)?.classList.remove("hidden");});
     console.warn("[MIRA permisos] El rol no tiene capacidades operativas asignables.");
     return;
   }
+  const sameIdentity=lastAppliedModuleAccessUserId===current.authUserId;
+  // En una identidad nueva, mantener cierre preventivo hasta obtener permisos.
+  // En revalidaciones de la misma sesión, conservar la última vista válida mientras se consulta:
+  // las operaciones y los datos siguen protegidos por Neon/RLS.
+  if(!sameIdentity)allTargets.forEach(id=>setModuleRestricted($(id),true));
   try{
     const data=await waitForMiraDataClient();
     const rows=await data.listMyModulePermissions();
+    if(requestVersion!==moduleAccessRequestVersion||window.MIRA_CURRENT_USER?.authUserId!==current.authUserId)return;
     if(!Array.isArray(rows)) throw new Error("La respuesta de permisos no es válida.");
     const canView=new Set(rows.filter(p=>p.allowed===true&&p.action_key==="view").map(p=>p.module_key));
     Object.entries(MODULE_TARGETS).forEach(([moduleKey,ids])=>ids.forEach(id=>{
       const element=$(id);
-      // Auditoría Testigos: restricción temporal única por rol de administrador.
-      // No se habilita mediante permisos granulares mientras el módulo está en ejecución.
       const allowed=moduleKey==="testigos"?false:canView.has(moduleKey);
       setModuleRestricted(element,!allowed);
       if(element)element.classList.remove("hidden");
     }));
+    lastAppliedModuleAccessUserId=current.authUserId;
   }catch(error){
-    allTargets.forEach(id=>{setModuleRestricted($(id),true);$(id)?.classList.remove("hidden");});
-    console.warn("[MIRA permisos] No fue posible cargar permisos; todos los módulos quedan restringidos.",error);
+    if(requestVersion!==moduleAccessRequestVersion||window.MIRA_CURRENT_USER?.authUserId!==current.authUserId)return;
+    if(!sameIdentity){
+      allTargets.forEach(id=>{setModuleRestricted($(id),true);$(id)?.classList.remove("hidden");});
+    }
+    console.warn("[MIRA permisos] No fue posible actualizar permisos; se conserva el último estado seguro de esta sesión.",error);
+    window.dispatchEvent(new CustomEvent("mira:module-access-refresh-failed",{detail:{message:error?.message||"No fue posible actualizar los permisos."}}));
   }
 }
 function init(){
