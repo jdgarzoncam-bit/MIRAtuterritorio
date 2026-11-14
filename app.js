@@ -645,7 +645,13 @@ function initDatabaseExplorer(){
   if(!admin()&&typeof data.listMyModulePermissions!=="function")throw new Error("La versión del cliente de permisos no está disponible. Actualiza la aplicación y vuelve a ingresar.");
   if(typeof data.getExplorerDatasets!=="function")throw new Error("No está disponible el catálogo autorizado de conjuntos de datos.");
   const rows=admin()?[]:await data.listMyModulePermissions();
-  permissions=new Set((rows||[]).filter(p=>p.allowed===true).map(p=>p.module_key+"::"+p.action_key));
+  const role=window.MIRA_CURRENT_USER?.role;
+  const roleActions=role==="operator"
+    ?["view","create","edit","export","annul"]
+    :role==="viewer"?["view"]:[];
+  permissions=new Set((rows||[])
+    .filter(p=>p.allowed===true&&roleActions.includes(p.action_key))
+    .map(p=>p.module_key+"::"+p.action_key));
   datasets=data.getExplorerDatasets().filter(d=>allowed("base_datos_general","view")&&allowed(d.module,"view"));
  }
  async function open(view){
