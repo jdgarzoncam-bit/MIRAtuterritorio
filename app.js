@@ -781,11 +781,11 @@ function initDatabaseExplorer(){
       if(error?.code==="42501"||/no tienes permiso|permission denied|autorización.*export/i.test(error?.message||"")){
         const detail=String(error?.message||"");
         if(/base de datos general/i.test(detail)){
-          say("Exportación bloqueada\\nNo tienes permiso para exportar desde Base de datos general. El administrador retiró o no asignó esta autorización. Puedes seguir consultando los registros si conservas el permiso Consulta.",true);
+          say("Exportación bloqueada\nNo tienes permiso para exportar desde Base de datos general. El administrador retiró o no asignó esta autorización. Puedes seguir consultando los registros si conservas el permiso Consulta.",true);
         }else if(/módulo de origen|modulo de origen/i.test(detail)){
-          say("Exportación bloqueada\\nNo tienes permiso para exportar los datos del módulo "+dataset.label+". Solicita al administrador que habilite Exportar en ese módulo.",true);
+          say("Exportación bloqueada\nNo tienes permiso para exportar los datos del módulo "+dataset.label+". Solicita al administrador que habilite Exportar en ese módulo.",true);
         }else{
-          say("Exportación bloqueada\\n"+(detail||"No tienes permiso para realizar esta exportación. Solicita la autorización al administrador."),true);
+          say("Exportación bloqueada\n"+(detail||"No tienes permiso para realizar esta exportación. Solicita la autorización al administrador."),true);
         }
       }else{
         console.error("[MIRA Exportación] Falló la solicitud de exportación.",error);
