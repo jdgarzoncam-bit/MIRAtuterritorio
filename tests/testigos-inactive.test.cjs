@@ -3,6 +3,9 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
+const inactiveAdminHtml = fs.readFileSync(path.join(__dirname, "..", "testigos-admin.html"), "utf8");
+const inactivePublicHtml = fs.readFileSync(path.join(__dirname, "..", "testigo-publico.html"), "utf8");
+const indexHtml = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
 
 function loadDataApi(disabledValue = true) {
   const sourcePath = path.join(__dirname, "..", "mira-data.js");
@@ -85,4 +88,12 @@ test("los módulos operativos no quedan bloqueados por la barrera temporal de Te
   assert.equal(Array.from(rows).length, 0);
   assert.equal(metrics.tokenCalls, 1);
   assert.equal(metrics.fetchCalls, 1);
+});
+
+test("las páginas de Testigos permanecen como pantallas estáticas sin cargar clientes de autenticación", () => {
+  for (const html of [inactiveAdminHtml, inactivePublicHtml]) {
+    assert.match(html, /Módulo temporalmente inactivo/);
+    assert.doesNotMatch(html, /<script\b/i);
+  }
+  assert.doesNotMatch(indexHtml, /testigos-admin\.js|testigo-publico\.js/);
 });
