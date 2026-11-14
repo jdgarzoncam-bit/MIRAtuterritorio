@@ -64,7 +64,9 @@ function clearAuthenticatedState() {
 function isDefinitiveAuthorizationFailure(error) {
   if(error?.definitive===true)return true;
   const status=Number(error?.status||error?.statusCode||0);
-  return status===401||status===403||status===404;
+  // Un 404 puede indicar una ruta, vista o recurso mal configurado; no demuestra
+  // que la sesión sea inválida. La ausencia del perfil se marca explícitamente.
+  return status===401||status===403;
 }
 function markDefinitive(error) {
   error.definitive=true;
@@ -93,13 +95,17 @@ async function establishAuthenticatedUser(authUser) {
   window.activarPMUAutenticado();
 }
 async function restoreExistingSession() {
+  if(restoreRunning)return;
+  restoreRunning=true;
   try {
+    if(restoreRetryTimer){window.clearTimeout(restoreRetryTimer);restoreRetryTimer=null;}
     const result=await auth.getSession();
     if(result?.error) throw result.error;
     const sessionData=result?.data;
     const authUser=sessionData?.user||sessionData?.session?.user||null;
-    if(!authUser) { clearAuthenticatedState(); return; }
+    if(!authUser) { restoreRetryCount=0; clearAuthenticatedState(); return; }
     await establishAuthenticatedUser(authUser);
+    restoreRetryCount=0;
   } catch(error) {
     if(isDefinitiveAuthorizationFailure(error)){
       clearAuthenticatedState();
@@ -107,11 +113,24 @@ async function restoreExistingSession() {
       console.warn("[MIRA Auth] La sesión guardada no superó la validación; se requiere iniciar sesión.",error);
     } else {
       console.warn("[MIRA Auth] No fue posible validar la sesión por un problema temporal. Se conserva la sesión y se mantienen bloqueadas las acciones que no puedan verificarse.",error);
-      showLoginError("No fue posible comprobar la conexión con el servicio de autenticación. Verifica tu conexión e inténtalo de nuevo; no se cerró tu sesión.");
+      showLoginError("No fue posible comprobar la conexión con el servicio de autenticación. Verifica tu conexión; conservamos la sesión y volveremos a intentarlo.");
+      scheduleSessionRestore();
     }
+  } finally {
+    restoreRunning=false;
   }
 }
 let revalidationRunning=false,lastRevalidationAt=0;
+let restoreRunning=false,restoreRetryTimer=null,restoreRetryCount=0;
+function scheduleSessionRestore(){
+  if(restoreRetryTimer||restoreRetryCount>=5||!navigator.onLine)return;
+  const delay=Math.min(1000*(2**restoreRetryCount),15000);
+  restoreRetryCount++;
+  restoreRetryTimer=window.setTimeout(()=>{
+    restoreRetryTimer=null;
+    restoreExistingSession();
+  },delay);
+}
 async function revalidateCurrentAuthorization(force=false) {
   if(revalidationRunning||!window.MIRA_CURRENT_USER)return;
   if(!force&&Date.now()-lastRevalidationAt<15000)return;
@@ -157,6 +176,7 @@ function showLoginError(message) {
   if(error){error.textContent=message;error.style.display="block";}
 }
 async function loginWithNeon() {
+  let signInCompleted=false;
   const email=document.getElementById("username")?.value.trim();
   const password=document.getElementById("password")?.value;
   const button=document.getElementById("loginBtn");
@@ -170,14 +190,26 @@ async function loginWithNeon() {
       if(code.includes("EMAIL_NOT_VERIFIED")||status===403) throw new Error("Primero confirma tu correo electrónico. Revisa tu bandeja de entrada y Spam.");
       throw new Error("No fue posible iniciar sesión. Verifica tus credenciales.");
     }
+    signInCompleted=true;
     await establishAuthenticatedUser(result?.data?.user);
     const error=document.getElementById("loginError");
     if(error) error.style.display="none";
     const pass=document.getElementById("password"); if(pass) pass.value="";
   } catch(error) {
-    clearAuthenticatedState();
-    try { await auth.signOut(); } catch(signOutError) { console.warn("[MIRA Auth] No se pudo limpiar la sesión tras un acceso rechazado.",signOutError); }
-    showLoginError(error?.message || "No fue posible iniciar sesión.");
+    if(isDefinitiveAuthorizationFailure(error)){
+      clearAuthenticatedState();
+      if(signInCompleted){
+        try { await auth.signOut(); } catch(signOutError) { console.warn("[MIRA Auth] No se pudo limpiar una sesión no autorizada.",signOutError); }
+      }
+    } else if(signInCompleted) {
+      // Neon ya aceptó las credenciales: no destruir una sesión por un fallo
+      // temporal al recuperar el JWT, consultar el perfil o activar la interfaz.
+      showLoginError("La autenticación fue aceptada, pero no pudimos completar la validación. Conservamos la sesión e intentaremos recuperarla.");
+      scheduleSessionRestore();
+    } else {
+      clearAuthenticatedState();
+    }
+    showLoginError(error?.message || "No fue posible completar el inicio de sesión.");
   } finally { if(button) button.disabled=false; }
 }
 
@@ -216,8 +248,24 @@ document.addEventListener("DOMContentLoaded",()=>{
     event.preventDefault();
     signOutCompletely().catch(err=>console.warn("[MIRA Auth] Error al cerrar sesión.",err));
   },true);
-  document.addEventListener("visibilitychange",()=>{if(!document.hidden)revalidateCurrentAuthorization(true);});
-  window.addEventListener("focus",()=>revalidateCurrentAuthorization(true));
-  window.setInterval(()=>revalidateCurrentAuthorization(true),30000);
+  document.addEventListener("visibilitychange",()=>{
+    if(!document.hidden){
+      if(window.MIRA_CURRENT_USER)revalidateCurrentAuthorization(true);
+      else restoreExistingSession();
+    }
+  });
+  window.addEventListener("focus",()=>{
+    if(window.MIRA_CURRENT_USER)revalidateCurrentAuthorization(true);
+    else restoreExistingSession();
+  });
+  window.addEventListener("online",()=>{
+    restoreRetryCount=0;
+    if(window.MIRA_CURRENT_USER)revalidateCurrentAuthorization(true);
+    else restoreExistingSession();
+  });
+  window.setInterval(()=>{
+    if(window.MIRA_CURRENT_USER)revalidateCurrentAuthorization(true);
+    else restoreExistingSession();
+  },30000);
   restoreExistingSession();
 });
