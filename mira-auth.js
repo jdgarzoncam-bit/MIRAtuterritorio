@@ -1,18 +1,24 @@
 // MIRA TU TERRITORIO — autenticación Neon Auth (Better Auth administrado)
-import { createAuthClient } from "https://esm.sh/@neondatabase/auth@0.7.0-beta";
+import { createInternalNeonAuth } from "https://esm.sh/@neondatabase/auth@0.7.0-beta";
 
 const AUTH_URL = "https://ep-mute-grass-b7qan4n6.neonauth.c-13.us-east-1.aws.neon.tech/neondb/auth";
 const DATA_API_URL = "https://ep-mute-grass-b7qan4n6.apirest.c-13.us-east-1.aws.neon.tech/neondb/rest/v1";
 const PRIMARY_ADMIN_AUTH_ID = "beef5bf3-82a8-4c35-a12c-17771be59da1";
-const auth = createAuthClient(AUTH_URL,{allowAnonymous:true});
-window.MIRA_AUTH = auth;
+const neonAuth = createInternalNeonAuth(AUTH_URL,{allowAnonymous:true});
+const auth = neonAuth.adapter;
+// Exponer al cliente de datos las dos operaciones de token del wrapper oficial,
+// sin perder los métodos Better Auth usados por el flujo de inicio/cierre de sesión.
+window.MIRA_AUTH = {
+  getJWTToken: () => neonAuth.getJWTToken(),
+  getAnonymousToken: (...args) => auth.getAnonymousToken(...args)
+};
 
 async function bearerToken() {
   // getJWTToken() devuelve el JWT de la sesión (o anónimo si está permitido).
-  if(typeof auth.getJWTToken!=="function"){
+  if(typeof neonAuth.getJWTToken!=="function"){
     throw new Error("La versión cargada de Neon Auth no expone getJWTToken(). Actualiza el cliente de autenticación.");
   }
-  const token=await auth.getJWTToken();
+  const token=await neonAuth.getJWTToken();
   if(typeof token!=="string"||!token.trim()){
     const error=new Error("Neon Auth no entregó un JWT válido para consultar el perfil.");
     error.code="NEON_AUTH_JWT_MISSING";
