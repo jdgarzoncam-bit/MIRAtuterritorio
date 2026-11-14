@@ -234,3 +234,14 @@ test("el portal independiente de Actividades obtiene el JWT desde el wrapper ofi
   assert.match(activityPortalSource, /profile\.auth_user_id !== PRIMARY_ADMIN_AUTH_ID/);
   assert.doesNotMatch(activityPortalSource, /createAuthClient|auth\.token\(\)|"witness"/);
 });
+
+test("la interfaz de Actividades respeta los límites efectivos de cada rol", () => {
+  assert.match(appSource, /function effectiveActivityPermissions\(rows\)/);
+  assert.match(appSource, /role==="operator"[\s\S]*?\["view","create","edit","export","annul"\]/);
+  assert.match(appSource, /role==="viewer"\?\["view"\]/);
+  assert.match(activityPortalSource, /profile\.role !== "operator"\) throw new Error/);
+});
+
+test("la bandeja de reportes solo habilita edición para Operador o administrador principal", () => {
+  assert.match(reportesSource, /canEdit=window\.MIRA_CURRENT_USER\.role==="operator"&&p\.some/);
+});
