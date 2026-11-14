@@ -34,6 +34,11 @@ test("la revalidación consulta los permisos granulares incluso si el rol no cam
   assert.match(revalidation, /La cuenta ya no tiene módulos autorizados/);
 });
 
+test("los errores HTTP de la consulta de permisos conservan su código para distinguir revocación de fallos temporales", () => {
+  assert.match(auth, /const failedResponse=!permissionsResponse\.ok\?permissionsResponse:catalogResponse/);
+  assert.match(auth, /error\.status=failedResponse\.status/);
+});
+
 test("un fallo temporal de autenticación no cierra la sesión automáticamente", () => {
   assert.match(auth, /function isDefinitiveAuthorizationFailure/);
   assert.match(auth, /if\(isDefinitiveAuthorizationFailure\(error\)\)\{[\s\S]*?await signOutCompletely\(\);\s*\} else \{/);
