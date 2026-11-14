@@ -3,6 +3,7 @@ import { MIRA_DATA } from "./mira-data.js?v=20261114-central-client-2";
 
 const AUTH_URL = "https://ep-mute-grass-b7qan4n6.neonauth.c-13.us-east-1.aws.neon.tech/neondb/auth";
 const DATA_API_URL = "https://ep-mute-grass-b7qan4n6.apirest.c-13.us-east-1.aws.neon.tech/neondb/rest/v1";
+const PRIMARY_ADMIN_AUTH_ID = "beef5bf3-82a8-4c35-a12c-17771be59da1";
 const neonAuth = createInternalNeonAuth(AUTH_URL,{allowAnonymous:true});
 const auth = neonAuth.adapter;
 window.MIRA_AUTH = {
@@ -43,10 +44,10 @@ async function validateSession(user) {
   if (!response.ok) throw new Error("No fue posible validar el perfil institucional.");
   const rows = await response.json();
   const profile = rows?.[0];
-  if (!profile || profile.active !== true || profile.email_verified !== true || !["admin","operator","viewer","witness"].includes(profile.role)) {
+  if (!profile || profile.auth_user_id !== user.id || profile.active !== true || profile.email_verified !== true || !["admin","operator","viewer"].includes(profile.role) || (profile.role === "admin" && profile.auth_user_id !== PRIMARY_ADMIN_AUTH_ID)) {
     throw new Error("La cuenta no está activa o no ha sido autorizada por el administrador.");
   }
-  if (profile.role !== "admin") {
+  if (profile.role !== "admin" || profile.auth_user_id !== PRIMARY_ADMIN_AUTH_ID) {
     const permissionsResponse = await fetch(`${DATA_API_URL}/module_permissions?select=module_key,action_key,allowed&limit=500`, {
       headers: { Authorization: `Bearer ${jwt}`, "Accept-Profile": "mira" }
     });
