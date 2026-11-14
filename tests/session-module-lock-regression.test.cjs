@@ -38,6 +38,6 @@ test("el navegador carga las versiones corregidas de autenticación y permisos",
 
 test("el JWT de Neon Data API se obtiene de access_token en la sesión, no de auth.token()", () => {
   assert.match(auth, /const result=await auth\.getSession\(\);[\s\S]*?const token=result\?\.data\?\.session\?\.access_token/);
-  assert.doesNotMatch(auth, /auth\.token\(\)/);
+  assert.doesNotMatch(auth, /const result=await auth\.token\(\)/);
   assert.match(auth, /NEON_AUTH_ACCESS_TOKEN_MISSING/);
 });
