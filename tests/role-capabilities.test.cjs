@@ -10,6 +10,9 @@ const appSource = fs.readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
 const styleSource = fs.readFileSync(path.join(__dirname, "..", "style.css"), "utf8");
 const exportMigration = fs.readFileSync(path.join(__dirname, "..", "migrations", "20261111_activities_granular_export_permission.sql"), "utf8");
 const auditMigration = fs.readFileSync(path.join(__dirname, "..", "migrations", "20261113_audit_export_remove_operational_reports.sql"), "utf8");
+const reportesSource = fs.readFileSync(path.join(__dirname, "..", "reportes.js"), "utf8");
+const activityPortalSource = fs.readFileSync(path.join(__dirname, "..", "activity-portal.js"), "utf8");
+const dataSourceCurrent = dataSource;
 const atomicMigration = exportMigration;
 
 function loadRolePolicy() {
@@ -213,4 +216,20 @@ test("la sesión abierta revalida perfil y permisos al volver a la ventana", () 
   assert.ok(authSource.includes("window.addEventListener(\"focus\""));
   assert.ok(authSource.includes("mira:permissions-refreshed"));
   assert.ok(adminSource.includes("mira:permissions-refreshed"));
+});
+
+test("Reportes ciudadanos utiliza el cliente central y no una segunda instancia Neon", () => {
+  assert.doesNotMatch(reportesSource, /createAuthClient|ep-round-dawn|auth\.token\(/);
+  assert.match(reportesSource, /createCitizenReport/);
+  assert.match(reportesSource, /listCitizenReports/);
+  assert.match(reportesSource, /updateCitizenReportStatus/);
+  assert.match(dataSourceCurrent, /async listCitizenReports/);
+  assert.match(dataSourceCurrent, /createCitizenReport\(payload/);
+  assert.match(dataSourceCurrent, /updateCitizenReportStatus\(id,status\)/);
+});
+
+test("el portal independiente de Actividades obtiene el JWT desde el wrapper oficial de Neon Auth", () => {
+  assert.match(activityPortalSource, /createInternalNeonAuth\(AUTH_URL/);
+  assert.match(activityPortalSource, /neonAuth\.getJWTToken\(\)/);
+  assert.doesNotMatch(activityPortalSource, /createAuthClient|auth\.token\(\)/);
 });
