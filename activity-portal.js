@@ -1,9 +1,14 @@
-import { createAuthClient } from "https://esm.sh/@neondatabase/auth@0.7.0-beta";
+import { createInternalNeonAuth } from "https://esm.sh/@neondatabase/auth@0.7.0-beta";
 import { MIRA_DATA } from "./mira-data.js?v=20261111-activities-pagination-1";
 
 const AUTH_URL = "https://ep-mute-grass-b7qan4n6.neonauth.c-13.us-east-1.aws.neon.tech/neondb/auth";
 const DATA_API_URL = "https://ep-mute-grass-b7qan4n6.apirest.c-13.us-east-1.aws.neon.tech/neondb/rest/v1";
-const auth = createAuthClient(AUTH_URL);\nwindow.MIRA_AUTH = auth;
+const neonAuth = createInternalNeonAuth(AUTH_URL,{allowAnonymous:true});
+const auth = neonAuth.adapter;
+window.MIRA_AUTH = {
+  getJWTToken: () => neonAuth.getJWTToken(),
+  getAnonymousToken: (...args) => auth.getAnonymousToken(...args)
+};
 const $ = (id) => document.getElementById(id);
 const cleanCedula = value => String(value || "").replace(/\D/g, "");
 const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -25,9 +30,9 @@ function showAuthenticated(show) {
   $("activityIdentity").textContent = show ? (currentUser?.displayName || currentUser?.email || "Personal autorizado") : "";
 }
 async function token() {
-  const result = await auth.token();
-  if (result?.error || !result?.data?.token) throw new Error("La sesión no es válida. Inicia sesión nuevamente.");
-  return result.data.token;
+  const value = await neonAuth.getJWTToken();
+  if (typeof value !== "string" || !value.trim()) throw new Error("La sesión no es válida. Inicia sesión nuevamente.");
+  return value;
 }
 async function validateSession(user) {
   if (!user?.id || user.emailVerified !== true) throw new Error("La cuenta debe tener el correo confirmado.");
