@@ -34,7 +34,7 @@ test("un fallo temporal de autenticación no cierra la sesión automáticamente"
 });
 
 test("el navegador carga las versiones corregidas de autenticación y permisos", () => {
-  assert.ok(index.includes("mira-auth.js?v=20261114-auth-wrapper-2"));
+  assert.ok(index.includes("mira-auth.js?v=20261114-auth-wrapper-3"));
   assert.ok(index.includes("mira-admin.js?v=20261114-module-refresh-safe-1"));
 });
 
@@ -59,4 +59,11 @@ test("la denegación de exportación se comprueba antes de exigir la librería E
   assert.ok(handler.indexOf('await refreshPermissions()') < handler.indexOf('if(!window.XLSX)'));
   assert.ok(handler.includes('allowed("base_datos_general","export")'));
   assert.ok(handler.includes('allowed(dataset.module,"export")'));
+});
+
+test("la revalidación cierra sesiones cuando Neon confirma que el perfil fue desactivado o dejó de estar autorizado", () => {
+  const revalidation = auth.slice(auth.indexOf("async function revalidateCurrentAuthorization"), auth.indexOf("async function signOutCompletely"));
+  assert.match(revalidation, /authUser\.emailVerified!==true\)throw markDefinitive/);
+  assert.match(revalidation, /throw markDefinitive\(new Error\("La cuenta fue desactivada o sus condiciones de acceso cambiaron\."/);
+  assert.match(revalidation, /if\(isDefinitiveAuthorizationFailure\(error\)\)\{[\s\S]*?await signOutCompletely\(\)/);
 });
