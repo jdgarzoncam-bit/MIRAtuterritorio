@@ -22,5 +22,12 @@ test("la pérdida de Consulta sí cierra únicamente el espacio de Base de datos
 });
 
 test("el HTML solicita la versión nueva de app.js para evitar caché del navegador", () => {
-  assert.ok(index.includes("app.js?v=20261114-role-aware-export-3"));
+  assert.ok(index.includes("app.js?v=20261114-export-notice-visible-4"));
+});
+
+test("el aviso de exportación vive dentro del espacio de trabajo visible", () => {
+  const workspace = index.indexOf('<section id="databaseWorkspace"');
+  const notice = index.indexOf('id="databaseExplorerNotice"');
+  assert.ok(workspace >= 0 && notice > workspace);
+  assert.ok(index.indexOf('id="databaseExplorerNotice"', notice + 1) < 0);
 });
