@@ -64,6 +64,7 @@
 
   let map3d;
   let lastBoundsFit = false;
+  let lastSelectedName = null;
   const status = document.createElement('div');
   status.className = 'mira-map3d-status';
   status.textContent = 'Motor 3D experimental · terreno Mapterhorn';
@@ -140,7 +141,8 @@
     if (!collection) return;
     const source = map3d.getSource('mira-territories');
     if (source) source.setData(collection);
-    if (!lastBoundsFit && collection.features.length) {
+    const selectionChanged = detail.selected !== lastSelectedName;
+    if ((!lastBoundsFit || selectionChanged) && collection.features.length) {
       const bounds = new maplibregl.LngLatBounds();
       collection.features.forEach(feature => {
         const visit = coordinates => {
@@ -152,10 +154,16 @@
         visit(feature.geometry?.coordinates);
       });
       if (!bounds.isEmpty()) {
-        map3d.fitBounds(bounds, { padding: { top: 55, right: 55, bottom: 55, left: 410 }, maxZoom: 14, pitch: 58, duration: 0 });
+        map3d.fitBounds(bounds, {
+          padding: { top: 55, right: 55, bottom: 55, left: 410 },
+          maxZoom: detail.selected ? 17 : 14,
+          pitch: 58,
+          duration: selectionChanged ? 450 : 0
+        });
         lastBoundsFit = true;
       }
     }
+    lastSelectedName = detail.selected || null;
   }
 
   window.addEventListener('mira:territory-render', event => applyTerritory(event.detail));
