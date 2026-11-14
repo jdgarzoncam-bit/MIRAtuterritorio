@@ -8,15 +8,22 @@ const auth = createAuthClient(AUTH_URL,{allowAnonymous:true});
 window.MIRA_AUTH = auth;
 
 async function bearerToken() {
-  const result=await auth.token();
+  // Neon Auth expone el JWT de Data API dentro de la sesión autenticada.
+  // No usar auth.token(): no es el contrato público del cliente Better Auth
+  // que crea createAuthClient() en esta integración.
+  const result=await auth.getSession();
   if(result?.error) {
-    const error=new Error(result.error.message || "No se pudo validar la sesión.");
+    const error=new Error(result.error.message || "No se pudo recuperar la sesión autenticada.");
     error.status=result.error.status||result.error.statusCode||0;
     error.code=result.error.code||null;
     throw error;
   }
-  const token=result?.data?.token;
-  if(!token) throw new Error("No se recibió el token de acceso.");
+  const token=result?.data?.session?.access_token;
+  if(!token) {
+    const error=new Error("La sesión existe, pero Neon Auth no entregó el JWT access_token. Revisa la cookie de sesión y la respuesta de autenticación.");
+    error.code="NEON_AUTH_ACCESS_TOKEN_MISSING";
+    throw error;
+  }
   return token;
 }
 async function getOwnProfile(token,authUserId) {
