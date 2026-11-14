@@ -32,7 +32,7 @@ test("un fallo temporal de autenticación no cierra la sesión automáticamente"
 });
 
 test("el navegador carga las versiones corregidas de autenticación y permisos", () => {
-  assert.ok(index.includes("mira-auth.js?v=20261114-session-revalidation-safe-1"));
+  assert.ok(index.includes("mira-auth.js?v=20261114-session-jwt-fix-1"));
   assert.ok(index.includes("mira-admin.js?v=20261114-module-refresh-safe-1"));
 });
 
