@@ -67,3 +67,21 @@ test("la revalidación cierra sesiones cuando Neon confirma que el perfil fue de
   assert.match(revalidation, /throw markDefinitive\(new Error\("La cuenta fue desactivada o sus condiciones de acceso cambiaron\."/);
   assert.match(revalidation, /if\(isDefinitiveAuthorizationFailure\(error\)\)\{[\s\S]*?await signOutCompletely\(\)/);
 });
+
+test("un error 404 de Data API no se interpreta automáticamente como sesión revocada", () => {
+  assert.match(auth, /return status===401\|\|status===403/);
+  assert.doesNotMatch(auth, /return status===401\|\|status===403\|\|status===404/);
+});
+
+test("el inicio de sesión conserva una sesión aceptada ante fallos temporales de validación", () => {
+  assert.match(auth, /let signInCompleted=false/);
+  assert.match(auth, /signInCompleted=true/);
+  assert.match(auth, /else if\(signInCompleted\)[\s\S]*?conservamos la sesión e intentaremos recuperarla/);
+});
+
+test("la restauración de sesión se reintenta tras fallos transitorios y al recuperar conexión", () => {
+  assert.match(auth, /function scheduleSessionRestore/);
+  assert.match(auth, /restoreRetryCount>=5/);
+  assert.match(auth, /window\.addEventListener\("online"/);
+  assert.match(auth, /else restoreExistingSession\(\)/);
+});
