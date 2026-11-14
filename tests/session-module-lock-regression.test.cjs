@@ -20,10 +20,18 @@ test("las respuestas de permisos antiguas no pueden sobrescribir el estado de ot
   assert.match(admin, /requestVersion!==moduleAccessRequestVersion\|\|window\.MIRA_CURRENT_USER\?\.authUserId!==current\.authUserId/);
 });
 
-test("un fallo temporal al actualizar permisos conserva el último estado de la misma sesión", () => {
-  assert.match(admin, /if\(!sameIdentity\)\{\s*allTargets\.forEach/);
-  assert.match(admin, /se conserva el último estado seguro de esta sesión/);
+test("un fallo al actualizar permisos bloquea la interfaz hasta confirmar la matriz", () => {
+  assert.match(admin, /allTargets\.forEach\(id=>\{setModuleRestricted\(\$\(id\),true\)/);
+  assert.match(admin, /lastAppliedModuleAccessUserId=null/);
+  assert.match(admin, /se bloquea la interfaz hasta la siguiente consulta válida/);
   assert.match(admin, /mira:module-access-refresh-failed/);
+});
+test("la revalidación consulta los permisos granulares incluso si el rol no cambia", () => {
+  const revalidation = auth.slice(auth.indexOf("async function revalidateCurrentAuthorization"), auth.indexOf("async function signOutCompletely"));
+  assert.match(revalidation, /const refreshedPermissions=profile\.role==="admin"\?\[\]:await getOwnModulePermissions\(token\)/);
+  assert.match(revalidation, /refreshedPermissions\.some\(permission=>/);
+  assert.match(revalidation, /window\.dispatchEvent\(new Event\("mira:permissions-refreshed"\)\)/);
+  assert.match(revalidation, /La cuenta ya no tiene módulos autorizados/);
 });
 
 test("un fallo temporal de autenticación no cierra la sesión automáticamente", () => {
