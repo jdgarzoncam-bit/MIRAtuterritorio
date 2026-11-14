@@ -38,9 +38,13 @@ test("el navegador carga las versiones corregidas de autenticación y permisos",
   assert.ok(index.includes("mira-admin.js?v=20261114-module-refresh-safe-1"));
 });
 
-test("el cliente Better Auth y el wrapper interno Neon Auth comparten el JWT correcto", () => {
-  assert.match(auth, /createInternalNeonAuth\(AUTH_URL/);\n  assert.match(auth, /const auth = neonAuth\.adapter/);\n  assert.match(auth, /neonAuth\.getJWTToken\(\)/);
+test("el wrapper Neon Auth expone el JWT del SDK y conserva el cliente Better Auth", () => {
+  assert.match(auth, /createInternalNeonAuth\(AUTH_URL/);
+  assert.match(auth, /const auth = neonAuth\.adapter/);
+  assert.match(auth, /getJWTToken: \(\) => neonAuth\.getJWTToken\(\)/);
+  assert.match(auth, /neonAuth\.getJWTToken\(\)/);
   assert.match(data, /auth\.getJWTToken\(\)/);
+  assert.match(data, /auth\.getAnonymousToken\(\)/);
   assert.doesNotMatch(data, /await auth\.token\(\)/);
   assert.match(data, /NEON_AUTH_JWT_MISSING/);
 });
