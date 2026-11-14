@@ -60,6 +60,9 @@ async function getOwnModulePermissions(token) {
     permission.module_key!=="control_administrativo"
   );
 }
+function finishAuthBootstrap() {
+  document.documentElement.classList.remove("mira-auth-restoring");
+}
 function clearAuthenticatedState() {
   window.MIRA_CURRENT_USER=null;
   window.dispatchEvent(new Event("mira:signed-out"));
@@ -106,18 +109,21 @@ async function restoreExistingSession() {
     if(result?.error) throw result.error;
     const sessionData=result?.data;
     const authUser=sessionData?.user||sessionData?.session?.user||null;
-    if(!authUser) { restoreRetryCount=0; clearAuthenticatedState(); return; }
+    if(!authUser) { restoreRetryCount=0; clearAuthenticatedState(); finishAuthBootstrap(); return; }
     await establishAuthenticatedUser(authUser);
     restoreRetryCount=0;
+    finishAuthBootstrap();
   } catch(error) {
     if(isDefinitiveAuthorizationFailure(error)){
       clearAuthenticatedState();
       try { await auth.signOut(); } catch(signOutError) { console.warn("[MIRA Auth] No se pudo limpiar una sesión inválida.",signOutError); }
       console.warn("[MIRA Auth] La sesión guardada no superó la validación; se requiere iniciar sesión.",error);
+      finishAuthBootstrap();
     } else {
       console.warn("[MIRA Auth] No fue posible validar la sesión por un problema temporal. Se conserva la sesión y se mantienen bloqueadas las acciones que no puedan verificarse.",error);
       showLoginError("No fue posible comprobar la conexión con el servicio de autenticación. Verifica tu conexión; conservamos la sesión y volveremos a intentarlo.");
       scheduleSessionRestore();
+      if(restoreRetryCount>=5) finishAuthBootstrap();
     }
   } finally {
     restoreRunning=false;
