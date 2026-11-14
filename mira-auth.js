@@ -122,13 +122,14 @@ async function revalidateCurrentAuthorization(force=false) {
     const sessionData=result?.data;
     const authUser=sessionData?.user||sessionData?.session?.user||null;
     if(!authUser?.id){clearAuthenticatedState();return;}
-    if(authUser.emailVerified!==true)throw new Error("La verificación de correo ya no está vigente.");
+    if(authUser.emailVerified!==true)throw markDefinitive(new Error("La verificación de correo ya no está vigente."));
     const token=await bearerToken();
     const profile=await getOwnProfile(token,authUser.id);
     if(!profile||profile.auth_user_id!==authUser.id||profile.active!==true||profile.email_verified!==true||
        !["admin","operator","viewer"].includes(profile.role)||
        (profile.role==="admin"&&profile.auth_user_id!==PRIMARY_ADMIN_AUTH_ID)){
-      throw new Error("La cuenta fue desactivada o sus condiciones de acceso cambiaron.");
+      // La cuenta existe pero su perfil ya no autoriza el acceso: no es un fallo de red.
+      throw markDefinitive(new Error("La cuenta fue desactivada o sus condiciones de acceso cambiaron."));
     }
     const previous=window.MIRA_CURRENT_USER;
     window.MIRA_CURRENT_USER={role:profile.role,authUserId:profile.auth_user_id,displayName:profile.display_name||authUser.name||profile.email,email:profile.email||authUser.email};
