@@ -244,7 +244,7 @@ export const MIRA_DATA = {
   updateCitizenReportStatus(id,status) {
     if(!["recibido","en_revision","gestionado","cerrado"].includes(status))throw new Error("El estado seleccionado no es válido.");
     if(!id)throw new Error("No se identificó el reporte que deseas actualizar.");
-    return miraRequest("reportes_ciudadanos",{method:"PATCH",query:qs({id:"eq."+id}),body:{
+    return miraRequest("reportes_ciudadanos",{method:"PATCH",query:qs({id:"eq."+id}),requireRows:true,body:{
       estado:status,updated_at:new Date().toISOString()
     }});
   },
