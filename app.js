@@ -1558,6 +1558,18 @@ function inicializarSistemaMapa() {
             }
         });
         if (poligonosKmlVisibles) geojsonLayer.addTo(map);
+        // Puente de sincronización para el motor 3D experimental. Leaflet sigue
+        // siendo el renderizador principal; el motor 3D recibe el mismo GeoJSON
+        // y el mismo estado de filtros/selección, sin duplicar ni alterar datos.
+        window.dispatchEvent(new CustomEvent('mira:territory-render', {
+            detail: {
+                data: datosOriginales,
+                filters: { ...barriosFiltroEstado },
+                selected: poligonoSeleccionadoNombre,
+                matches: Array.from(poligonosCoincidenciaActiva),
+                visible: poligonosKmlVisibles
+            }
+        }));
     };
 
 
@@ -1976,6 +1988,13 @@ function inicializarSistemaMapa() {
         if (abrirFicha) mostrarFichaBarrio(feature, nombre);
         return { feature, nombre };
     }
+
+    // API pública mínima para que el mapa 3D reutilice las acciones territoriales
+    // ya existentes (selección, ficha y filtros), sin replicar su lógica.
+    window.MIRA_MAP3D_BRIDGE = {
+        selectTerritory: (nombre) => seleccionarPoligonoTerritorial(nombre, true),
+        getView: () => map ? { center: map.getCenter(), zoom: map.getZoom() } : null
+    };
 
     function aplicarFiltroTerritorialDesdePuestos(puestosSeleccionados, aislar = true) {
         if (!datosOriginales || !Array.isArray(datosOriginales.features)) return;
