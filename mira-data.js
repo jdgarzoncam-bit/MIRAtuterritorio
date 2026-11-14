@@ -221,6 +221,33 @@ export const MIRA_DATA = {
   async listMyModulePermissions() {
     return miraRequest("module_permissions",{query:qs({select:"module_key,action_key,allowed",limit:"500"})});
   },
+  async listCitizenReports({limit=500}={}) {
+    const safeLimit=Math.min(Math.max(Number(limit)||500,1),1000);
+    return miraRequest("reportes_ciudadanos",{query:qs({
+      select:"id,categoria,sector,ubicacion,descripcion,estado,created_at",
+      order:"created_at.desc",limit:String(safeLimit)
+    })});
+  },
+  createCitizenReport(payload={}) {
+    const categories=["seguridad","movilidad","servicios_publicos","espacio_publico","ambiente","convivencia","otro"];
+    const sector=String(payload.sector||"").trim();
+    const ubicacion=String(payload.ubicacion||"").trim();
+    const descripcion=String(payload.descripcion||"").trim();
+    if(!categories.includes(payload.categoria))throw new Error("Selecciona una categoría válida para el reporte.");
+    if(sector.length<2||sector.length>160)throw new Error("El sector debe tener entre 2 y 160 caracteres.");
+    if(ubicacion.length<2||ubicacion.length>240)throw new Error("La ubicación debe tener entre 2 y 240 caracteres.");
+    if(descripcion.length<10||descripcion.length>3000)throw new Error("La descripción debe tener entre 10 y 3000 caracteres.");
+    return miraRequest("reportes_ciudadanos",{method:"POST",anonymous:true,prefer:"return=minimal",body:{
+      categoria:payload.categoria,sector,ubicacion,descripcion
+    }});
+  },
+  updateCitizenReportStatus(id,status) {
+    if(!["recibido","en_revision","gestionado","cerrado"].includes(status))throw new Error("El estado seleccionado no es válido.");
+    if(!id)throw new Error("No se identificó el reporte que deseas actualizar.");
+    return miraRequest("reportes_ciudadanos",{method:"PATCH",query:qs({id:"eq."+id}),body:{
+      estado:status,updated_at:new Date().toISOString()
+    }});
+  },
   setModulePermission(profileId,moduleKey,actionKey,allowed) {
     return miraRequest("module_permissions",{method:"POST",query:qs({on_conflict:"user_profile_id,module_key,action_key"}),prefer:"resolution=merge-duplicates,return=representation",requireRows:true,body:{user_profile_id:profileId,module_key:moduleKey,action_key:actionKey,allowed:Boolean(allowed)}});
   },
