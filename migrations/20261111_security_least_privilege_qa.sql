@@ -23,3 +23,11 @@ revoke execute on function mira.sync_auth_user_profile() from public, anonymous,
 
 -- Public anonymous inserts remain intentionally limited to the citizen forms:
 -- mira.pqrs and mira.reportes_ciudadanos. RLS WITH CHECK constraints still apply.
+
+-- Additional trigger-only functions found in the QA privilege audit.
+-- These functions are invoked by PostgreSQL triggers, never by the browser/API.
+revoke execute on function mira.audit_actividad_changes() from public, anonymous, authenticated;
+revoke execute on function mira.audit_asistencia_changes() from public, anonymous, authenticated;
+revoke execute on function mira.audit_persona_changes() from public, anonymous, authenticated;
+revoke execute on function mira.audit_row_change() from public, anonymous, authenticated;
+revoke execute on function mira.set_updated_at() from public, anonymous, authenticated;
