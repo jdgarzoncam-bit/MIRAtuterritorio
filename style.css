@@ -5977,3 +5977,24 @@ body.database-workspace-open{overflow:hidden!important}
         max-width: calc(100% - 24px);
     }
 }
+
+
+/* AUTH BOOTSTRAP: evita mostrar la portada antes de resolver una sesión persistida. */
+html.mira-auth-restoring #landing-hero-overlay,
+html.mira-auth-restoring #landingHeaderControls {
+    visibility: hidden !important;
+}
+html.mira-auth-restoring body::before {
+    content: 'Verificando acceso al Centro de Operaciones…';
+    position: fixed;
+    inset: 0;
+    z-index: 20000;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    color: #e2e8f0;
+    background: #07111f;
+    font: 600 14px/1.5 system-ui, sans-serif;
+    text-align: center;
+    letter-spacing: .02em;
+}
