@@ -46,7 +46,10 @@ async function getOwnModulePermissions(token) {
     fetch(`${DATA_API_URL}/module_catalog?select=module_key&active=eq.true`,{headers})
   ]);
   if(!permissionsResponse.ok||!catalogResponse.ok) {
-    throw new Error("No fue posible comprobar los permisos o módulos activos. El acceso se mantendrá bloqueado.");
+    const failedResponse=!permissionsResponse.ok?permissionsResponse:catalogResponse;
+    const error=new Error("No fue posible comprobar los permisos o módulos activos. El acceso se mantendrá bloqueado.");
+    error.status=failedResponse.status;
+    throw error;
   }
   const [rows,catalog]=await Promise.all([permissionsResponse.json(),catalogResponse.json()]);
   if(!Array.isArray(rows)||!Array.isArray(catalog)) throw new Error("La respuesta de permisos y módulos no es válida. El acceso se mantendrá bloqueado.");
