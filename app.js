@@ -741,11 +741,11 @@ function initDatabaseExplorer(){
       // Refresca la matriz desde Neon justo antes de cada intento. No se confía en la copia al abrir el módulo.
       await refreshPermissions();
       if(!admin()&&!allowed("base_datos_general","export")){
-        say("No tienes permiso para exportar desde Base de datos general. El administrador retiró o no asignó esta autorización. Puedes seguir consultando los registros si conservas el permiso Consulta.",true);
+        say("Exportación bloqueada — No tienes permiso para exportar desde Base de datos general. El administrador retiró o no asignó esta autorización. Puedes seguir consultando los registros si conservas el permiso Consulta.",true);
         return;
       }
       if(!admin()&&!allowed(dataset.module,"export")){
-        say("No tienes permiso para exportar los datos del módulo "+dataset.label+". Solicita al administrador que habilite Exportar en ese módulo.",true);
+        say("Exportación bloqueada — No tienes permiso para exportar los datos del módulo "+dataset.label+". Solicita al administrador que habilite Exportar en ese módulo.",true);
         return;
       }
       const filtered=Boolean(search.value.trim()||(field.value&&value.value.trim()));
@@ -760,9 +760,16 @@ function initDatabaseExplorer(){
       window.XLSX.writeFile(book,"MIRA_"+dataset.key+"_exportacion.xlsx");
       say("Exportación autorizada y registrada en el historial: "+all.length+" registros.");
     }catch(error){
-      if(error?.status===401||error?.status===403||error?.code==="42501"||/no tienes permiso|autorización.*export/i.test(error?.message||"")){
-        say(error.message||"No tienes permiso para realizar esta exportación. Solicita la autorización al administrador.",true);
-      }else{
+      if(error?.code==="42501"||/no tienes permiso|permission denied|autorización.*export/i.test(error?.message||"")){
+        const detail=String(error?.message||"");
+        if(/base de datos general/i.test(detail)){
+          say("Exportación bloqueada — No tienes permiso para exportar desde Base de datos general. El administrador retiró o no asignó esta autorización. Puedes seguir consultando los registros si conservas el permiso Consulta.",true);
+        }else if(/módulo de origen|modulo de origen/i.test(detail)){
+          say("Exportación bloqueada — No tienes permiso para exportar los datos del módulo "+dataset.label+". Solicita al administrador que habilite Exportar en ese módulo.",true);
+        }else{
+          say("Exportación bloqueada — "+(detail||"No tienes permiso para realizar esta exportación. Solicita la autorización al administrador."),true);
+        }
+      }else{else{
         console.error("[MIRA Exportación] Falló la solicitud de exportación.",error);
         say("No fue posible completar la exportación por un problema técnico. Tu permiso no necesariamente fue retirado. Intenta nuevamente y, si persiste, informa al administrador.",true);
       }
