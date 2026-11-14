@@ -769,7 +769,7 @@ function initDatabaseExplorer(){
         }else{
           say("Exportación bloqueada — "+(detail||"No tienes permiso para realizar esta exportación. Solicita la autorización al administrador."),true);
         }
-      }else{else{
+      }else{
         console.error("[MIRA Exportación] Falló la solicitud de exportación.",error);
         say("No fue posible completar la exportación por un problema técnico. Tu permiso no necesariamente fue retirado. Intenta nuevamente y, si persiste, informa al administrador.",true);
       }
