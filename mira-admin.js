@@ -373,10 +373,11 @@ async function applyModuleAccess(){
     lastAppliedModuleAccessUserId=current.authUserId;
   }catch(error){
     if(requestVersion!==moduleAccessRequestVersion||window.MIRA_CURRENT_USER?.authUserId!==current.authUserId)return;
-    if(!sameIdentity){
-      allTargets.forEach(id=>{setModuleRestricted($(id),true);$(id)?.classList.remove("hidden");});
-    }
-    console.warn("[MIRA permisos] No fue posible actualizar permisos; se conserva el último estado seguro de esta sesión.",error);
+    // Si no podemos confirmar la matriz actual, no mantenemos autorizaciones
+    // visuales antiguas. Neon/RLS sigue siendo la barrera final de cada operación.
+    allTargets.forEach(id=>{setModuleRestricted($(id),true);$(id)?.classList.remove("hidden");});
+    lastAppliedModuleAccessUserId=null;
+    console.warn("[MIRA permisos] No fue posible confirmar la matriz; se bloquea la interfaz hasta la siguiente consulta válida.",error);
     window.dispatchEvent(new CustomEvent("mira:module-access-refresh-failed",{detail:{message:error?.message||"No fue posible actualizar los permisos."}}));
   }
 }
