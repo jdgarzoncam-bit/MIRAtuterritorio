@@ -76,10 +76,11 @@ test("Guardar rol usa la actualización de perfil y valida la respuesta de Neon"
   assert.match(adminSource, /action==="save-role"\?"Rol guardado/);
 });
 
-test("la matriz deshabilita acciones fuera del límite del rol y no borra permisos existentes", () => {
+test("la matriz permite retirar permisos guardados aunque estén inactivos por rol o falta de Consulta", () => {
   assert.match(adminSource, /const roleAllowed=roleAllowsAction\(selectedProfile\?\.role,key\)/);
-  assert.match(adminSource, /const effective=roleAllowed&&\(key==="view"\|\|hasView\)/);
-  assert.match(adminSource, /const disabled=effective\?"":"disabled"/);
+  assert.match(adminSource, /const canGrant=roleAllowed&&\(key==="view"\|\|hasView\)/);
+  assert.match(adminSource, /const canRevoke=checked/);
+  assert.match(adminSource, /const disabled=canGrant\|\|canRevoke\?"":"disabled"/);
   assert.match(adminSource, /Los permisos guardados se conservan/);
 });
 
@@ -102,10 +103,11 @@ test("la matriz exige permiso Consulta antes de habilitar acciones de escritura"
   assert.match(adminSource, /restrictionLabel=roleAllowed\?"Requiere permiso Consulta":selectedProfile\?\.role==="viewer"\?"Requiere rol Operador":"Reservado al administrador"/);
 });
 
-test("la exportación de Actividades se define como permiso granular", () => {
-  assert.match(adminSource, /actividades:\[\["view","Consulta"\],\["create","Crear"\],\["edit","Editar"\],(?:\["annul","Anular asistencia"\],)?\["export","Exportar Excel"\]/);
-  assert.match(adminSource, /actionKey==="export"&&nextValue/);
+test("los permisos secundarios requieren Consulta antes de concederse y deben retirarse antes de quitar Consulta", () => {
+  assert.match(adminSource, /actionKey!=="view"&&nextValue&&!permissionRows\.some/);
   assert.match(adminSource, /actionKey==="view"&&!nextValue/);
+  assert.match(adminSource, /const dependent=permissionRows\.filter\(p=>p\.module_key===moduleKey&&p\.action_key!=="view"&&p\.allowed===true\)/);
+  assert.match(adminSource, /canRevoke=checked/);
 });
 
 test("el cliente de datos pagina personas y asistencias", () => {
