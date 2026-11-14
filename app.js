@@ -15,6 +15,22 @@ let poligonoSeleccionadoNombre = null;
 let poligonosCoincidenciaActiva = new Set();
 let poligonosPorNombre = Object.create(null);
 
+// Renderer SVG dedicado para los polígonos de barrios. Evita que el renderer
+// Canvas preferido por el mapa oculte/mezcle la capa territorial.
+let miraTerritorySvgRenderer = null;
+function asegurarRenderizadorTerritorial() {
+    if (!map) return null;
+    if (!map.getPane('miraTerritoryPane')) map.createPane('miraTerritoryPane');
+    const pane = map.getPane('miraTerritoryPane');
+    pane.style.zIndex = '450';
+    pane.style.pointerEvents = 'auto';
+    if (!miraTerritorySvgRenderer) {
+        miraTerritorySvgRenderer = L.svg({ pane: 'miraTerritoryPane', padding: 0.5 });
+    }
+    return miraTerritorySvgRenderer;
+}
+
+
 let imagenBase64Seleccionada = "";
 
 // Control E-14 centralizado. No detener la propagación del clic: otros módulos
@@ -1445,6 +1461,7 @@ function inicializarSistemaMapa() {
         }
     }
     if (map) {
+        asegurarRenderizadorTerritorial();
         setTimeout(() => {
             map.invalidateSize({ pan: false, animate: false });
             // Una sesión restaurada puede volver a activar el PMU sobre un mapa
@@ -1459,6 +1476,7 @@ function inicializarSistemaMapa() {
     }
 
     map = L.map('map', { zoomControl: false, preferCanvas: true }).setView([4.8123, -74.3542], 14);
+    asegurarRenderizadorTerritorial();
     L.control.zoom({ position: 'topright' }).addTo(map);
 
     // V39: restaurar la cartografía base satelital. Sin esta capa Leaflet deja
@@ -1506,6 +1524,7 @@ function inicializarSistemaMapa() {
         poligonosPorNombre = Object.create(null);
 
         geojsonLayer = L.geoJSON(datosOriginales, {
+            renderer: asegurarRenderizadorTerritorial(),
             filter: function(feature) {
                 const index = datosOriginales.features.indexOf(feature);
                 const nombre = obtenerNombreBarrio(feature, index);
@@ -1633,7 +1652,7 @@ function inicializarSistemaMapa() {
         if (container) container.innerHTML = '<p class="loading-text">Cargando sectores y geometrías territoriales…</p>';
 
         const fuentes = [
-            new URL('./barrios_poligonos_kml_aportado.geojson?v=20261111-map-fusion', document.baseURI).href,
+            new URL('./barrios_poligonos_kml_aportado.geojson?v=20261114-territory-svg-recovery-2', document.baseURI).href,
             'https://raw.githubusercontent.com/jdgarzoncam-bit/MIRAtuterritorio/preview/neon-qa-control-admin/barrios_poligonos_kml_aportado.geojson'
         ];
         const errores = [];
@@ -1711,6 +1730,7 @@ function inicializarSistemaMapa() {
             try {
                 if (geojsonLayer && map && map.hasLayer(geojsonLayer)) map.removeLayer(geojsonLayer);
                 geojsonLayer = L.geoJSON(data, {
+                    renderer: asegurarRenderizadorTerritorial(),
                     style: () => ({
                         color: '#8B5CF6',
                         weight: 1.7,
