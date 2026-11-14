@@ -9,7 +9,12 @@ window.MIRA_AUTH = auth;
 
 async function bearerToken() {
   const result=await auth.token();
-  if(result?.error) throw new Error(result.error.message || "No se pudo validar la sesión.");
+  if(result?.error) {
+    const error=new Error(result.error.message || "No se pudo validar la sesión.");
+    error.status=result.error.status||result.error.statusCode||0;
+    error.code=result.error.code||null;
+    throw error;
+  }
   const token=result?.data?.token;
   if(!token) throw new Error("No se recibió el token de acceso.");
   return token;
