@@ -50,6 +50,13 @@ test("el wrapper Neon Auth expone el JWT del SDK y conserva el cliente Better Au
 });
 
 test("la exportación comunica explícitamente la denegación por falta de permiso", () => {
-  assert.match(app, /Exportación bloqueada — No tienes permiso para exportar desde Base de datos general/);
-  assert.match(app, /Puedes seguir consultando los registros si conservas el permiso Consulta/);
+  assert.match(app, /Exportación bloqueada\\nNo tienes permiso para exportar desde Base de datos general/);
+  assert.match(app, /Puedes seguir consultando los registros si conservas el permiso Consulta/);\n  assert.match(app, /<strong>Exportación bloqueada<\\/strong>/);
+});
+
+test("la denegación de exportación se comprueba antes de exigir la librería Excel", () => {
+  const handler = app.slice(app.indexOf('$id("databaseExportBtn").addEventListener'), app.indexOf('  });', app.indexOf('$id("databaseExportBtn").addEventListener')));
+  assert.ok(handler.indexOf('await refreshPermissions()') < handler.indexOf('if(!window.XLSX)'));
+  assert.ok(handler.includes('allowed("base_datos_general","export")'));
+  assert.ok(handler.includes('allowed(dataset.module,"export")'));
 });
