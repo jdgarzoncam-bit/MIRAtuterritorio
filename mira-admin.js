@@ -434,10 +434,14 @@ function init(){
     }
     const panel=$("adminPermissionsPanel");
     if(panel){
-      panel.classList.toggle("hidden",!authorized);
-      panel.setAttribute("aria-hidden",String(!authorized));
+      // La autorización habilita el acceso al panel, pero NO debe abrirlo.
+      // Su estado visible/oculto solo cambia mediante openPanel() y closePanel().
       panel.toggleAttribute("data-admin-visible",authorized);
-      if(!authorized)closePanel();
+      if(!authorized){
+        closePanel();
+      }else{
+        panel.setAttribute("aria-hidden",String(panel.classList.contains("hidden")));
+      }
     }
   };
   window.addEventListener("mira:authenticated",()=>{
