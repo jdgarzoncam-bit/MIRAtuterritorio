@@ -5,6 +5,8 @@ const path = require("node:path");
 
 const admin = fs.readFileSync(path.join(__dirname, "..", "mira-admin.js"), "utf8");
 const auth = fs.readFileSync(path.join(__dirname, "..", "mira-auth.js"), "utf8");
+const data = fs.readFileSync(path.join(__dirname, "..", "mira-data.js"), "utf8");
+const app = fs.readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
 const index = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
 
 test("una revalidación de la misma cuenta no bloquea visualmente todos los módulos antes de consultar permisos", () => {
@@ -32,12 +34,18 @@ test("un fallo temporal de autenticación no cierra la sesión automáticamente"
 });
 
 test("el navegador carga las versiones corregidas de autenticación y permisos", () => {
-  assert.ok(index.includes("mira-auth.js?v=20261114-session-jwt-fix-1"));
+  assert.ok(index.includes("mira-auth.js?v=20261114-jwt-helper-1"));
   assert.ok(index.includes("mira-admin.js?v=20261114-module-refresh-safe-1"));
 });
 
-test("el JWT de Neon Data API se obtiene de access_token en la sesión, no de auth.token()", () => {
-  assert.match(auth, /const result=await auth\.getSession\(\);[\s\S]*?const token=result\?\.data\?\.session\?\.access_token/);
-  assert.doesNotMatch(auth, /const result=await auth\.token\(\)/);
-  assert.match(auth, /NEON_AUTH_ACCESS_TOKEN_MISSING/);
+test("autenticación y datos usan el helper oficial getJWTToken de Neon Auth", () => {
+  assert.match(auth, /auth\.getJWTToken\(\)/);
+  assert.match(data, /auth\.getJWTToken\(\)/);
+  assert.doesNotMatch(data, /await auth\.token\(\)/);
+  assert.match(data, /NEON_AUTH_JWT_MISSING/);
+});
+
+test("la exportación comunica explícitamente la denegación por falta de permiso", () => {
+  assert.match(app, /Exportación bloqueada — No tienes permiso para exportar desde Base de datos general/);
+  assert.match(app, /Puedes seguir consultando los registros si conservas el permiso Consulta/);
 });
