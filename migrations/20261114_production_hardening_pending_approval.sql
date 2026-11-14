@@ -1,6 +1,6 @@
 -- MIRA TU TERRITORIO
 -- Endurecimiento pendiente para PRODUCCION.
--- Estado: PROPUESTA NO APLICADA. Requiere aprobacion explicita antes de ejecutarse.
+-- Estado: APLICADA en Neon produccion (br-winter-night-b758ke2j), 2026-11-14. Verificacion posterior registrada en docs/CIERRE-DEPURACION-SEGURIDAD-2026-11-14.md.
 -- Objetivo: retirar privilegios residuales del modulo reportes_operativos
 -- y cerrar EXECUTE PUBLIC en funciones SECURITY DEFINER de produccion.
 -- No elimina tablas, filas, usuarios ni historicos.
