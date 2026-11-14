@@ -47,8 +47,8 @@ test("un fallo temporal de autenticación no cierra la sesión automáticamente"
 });
 
 test("el navegador carga las versiones corregidas de autenticación y permisos", () => {
-  assert.ok(index.includes("mira-auth.js?v=20261114-auth-recovery-4"));
-  assert.ok(index.includes("mira-admin.js?v=20261114-module-refresh-safe-1"));
+  assert.ok(index.includes("mira-auth.js?v=20261114-permission-sync-5"));
+  assert.ok(index.includes("mira-admin.js?v=20261114-permission-failclosed-2"));
 });
 
 test("el wrapper Neon Auth expone el JWT del SDK y conserva el cliente Better Auth", () => {
