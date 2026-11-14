@@ -86,6 +86,16 @@
 
     map3d.on('load', () => {
       map3d.setTerrain({ source: 'mira-terrain', exaggeration: 1.15 });
+      // Registrar eventos después de que las capas existan en el estilo.
+      map3d.on('click', 'mira-territory-fill', event => {
+        const feature = event.features && event.features[0];
+        const name = feature?.properties?._miraName;
+        if (name && typeof window.MIRA_MAP3D_BRIDGE?.selectTerritory === 'function') {
+          window.MIRA_MAP3D_BRIDGE.selectTerritory(name);
+        }
+      });
+      map3d.on('mouseenter', 'mira-territory-fill', () => { map3d.getCanvas().style.cursor = 'pointer'; });
+      map3d.on('mouseleave', 'mira-territory-fill', () => { map3d.getCanvas().style.cursor = ''; });
       status.textContent = 'Terreno 3D activo · polígonos sincronizados desde MIRA';
       window.dispatchEvent(new CustomEvent('mira:map3d-ready'));
     });
@@ -153,17 +163,6 @@
     if (pendingDetail) applyTerritory(pendingDetail);
   });
 
-  // Los clics del mapa 3D delegan en la selección oficial de Leaflet/app.js:
-  // se conserva una única lógica para abrir fichas y actualizar filtros.
-  map3d.on('click', 'mira-territory-fill', event => {
-    const feature = event.features && event.features[0];
-    const name = feature?.properties?._miraName;
-    if (name && typeof window.MIRA_MAP3D_BRIDGE?.selectTerritory === 'function') {
-      window.MIRA_MAP3D_BRIDGE.selectTerritory(name);
-    }
-  });
-  map3d.on('mouseenter', 'mira-territory-fill', () => { map3d.getCanvas().style.cursor = 'pointer'; });
-  map3d.on('mouseleave', 'mira-territory-fill', () => { map3d.getCanvas().style.cursor = ''; });
 
   window.MIRA_MAP3D = {
     map: map3d,
