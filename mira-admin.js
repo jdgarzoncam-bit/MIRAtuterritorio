@@ -194,10 +194,13 @@ function renderMatrix(){
    const checked=allowed.has(m.module_key+"::"+key);
    const roleAllowed=roleAllowsAction(selectedProfile?.role,key);
    const hasView=allowed.has(m.module_key+"::view");
-   const effective=roleAllowed&&(key==="view"||hasView);
-   const disabled=effective?"":"disabled";
+   // Una autorización ya guardada siempre se puede retirar, aunque esté inactiva
+   // por falta de Consulta o por el límite del rol actual.
+   const canGrant=roleAllowed&&(key==="view"||hasView);
+   const canRevoke=checked;
+   const disabled=canGrant||canRevoke?"":"disabled";
    const restrictionLabel=roleAllowed?"Requiere permiso Consulta":selectedProfile?.role==="viewer"?"Requiere rol Operador":"Reservado al administrador";
-   const suffix=effective?"":'<small class="admin-role-restriction">'+restrictionLabel+'</small>';
+   const suffix=disabled?'<small class="admin-role-restriction">'+restrictionLabel+'</small>':"";
    return '<label class="admin-action-check"><input type="checkbox" data-module="'+escapeHtml(m.module_key)+'" data-action="'+escapeHtml(key)+'" '+(checked?"checked ":"")+disabled+'><span>'+escapeHtml(label)+'</span>'+suffix+'</label>';
   }).join("");
   const activeCount=actions.filter(([key])=>allowed.has(m.module_key+"::"+key)&&roleAllowsAction(selectedProfile?.role,key)&&(key==="view"||allowed.has(m.module_key+"::view"))).length;
@@ -207,9 +210,17 @@ function renderMatrix(){
 async function changePermission(input){
  if(!isAdmin()||!selectedProfile||selectedProfile.role==="admin")return;
  const targetProfileId=selectedProfile.id,moduleKey=input.dataset.module,actionKey=input.dataset.action,nextValue=input.checked;
- if(!roleAllowsAction(selectedProfile.role,actionKey)){input.checked=!nextValue;notice("El rol "+(selectedProfile.role==="viewer"?"Consulta":"actual")+" no permite esta acción. Cambia el rol para habilitarla.",true);return;}
- if(moduleKey==="actividades"&&actionKey==="export"&&nextValue&&!permissionRows.some(p=>p.module_key===moduleKey&&p.action_key==="view"&&p.allowed===true)){input.checked=false;notice("Para autorizar exportaciones primero debes conceder Consulta en Actividades.",true);return;}
- if(moduleKey==="actividades"&&actionKey==="view"&&!nextValue&&permissionRows.some(p=>p.module_key===moduleKey&&p.action_key==="export"&&p.allowed===true)){input.checked=true;notice("Retira primero el permiso Exportar Excel antes de retirar Consulta.",true);return;}
+ if(!roleAllowsAction(selectedProfile.role,actionKey)&&nextValue){input.checked=false;notice("El rol "+(selectedProfile.role==="viewer"?"Consulta":"actual")+" no permite conceder esta acción. Puedes retirar autorizaciones anteriores, pero no activarlas con este rol.",true);return;}
+ if(actionKey!=="view"&&nextValue&&!permissionRows.some(p=>p.module_key===moduleKey&&p.action_key==="view"&&p.allowed===true)){input.checked=false;notice("Para conceder esta acción primero debes habilitar Consulta en el módulo correspondiente.",true);return;}
+ if(actionKey==="view"&&!nextValue){
+  const dependent=permissionRows.filter(p=>p.module_key===moduleKey&&p.action_key!=="view"&&p.allowed===true);
+  if(dependent.length){
+   const detail=dependent.map(p=>p.action_key).join(", ");
+   input.checked=true;
+   notice("Retira primero las demás autorizaciones de este módulo ("+detail+"). Así evitarás que queden permisos residuales que puedan reactivarse al conceder Consulta nuevamente.",true);
+   return;
+  }
+ }
  input.disabled=true;
  try{
   const saved=await window.MIRA_DATA.setModulePermission(targetProfileId,moduleKey,actionKey,nextValue);
