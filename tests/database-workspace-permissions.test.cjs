@@ -22,7 +22,7 @@ test("la pérdida de Consulta sí cierra únicamente el espacio de Base de datos
 });
 
 test("el HTML solicita la versión nueva de app.js para evitar caché del navegador", () => {
-  assert.ok(index.includes("app.js?v=20261114-export-notice-visible-4"));
+  assert.ok(index.includes("app.js?v=20261114-base-role-aware-5"));
 });
 
 test("el aviso de exportación vive dentro del espacio de trabajo visible", () => {
@@ -30,4 +30,10 @@ test("el aviso de exportación vive dentro del espacio de trabajo visible", () =
   const notice = index.indexOf('id="databaseExplorerNotice"');
   assert.ok(workspace >= 0 && notice > workspace);
   assert.ok(index.indexOf('id="databaseExplorerNotice"', notice + 1) < 0);
+});
+
+test("Base de datos general no activa permisos residuales que el rol no permite", () => {
+  assert.match(app, /const roleActions=role==="operator"[\s\S]*?\["view","create","edit","export","annul"\]/);
+  assert.match(app, /role==="viewer"\?\["view"\]:\[\]/);
+  assert.match(app, /p\.allowed===true&&roleActions\.includes\(p\.action_key\)/);
 });
