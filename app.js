@@ -504,8 +504,17 @@ function isPrimaryMiraAdmin(){
   const user=window.MIRA_CURRENT_USER;
   return user?.role==="admin" && user?.authUserId==="beef5bf3-82a8-4c35-a12c-17771be59da1";
 }
+function effectiveActivityPermissions(rows){
+  const role=window.MIRA_CURRENT_USER?.role;
+  const actions=role==="operator"
+    ?["view","create","edit","export","annul"]
+    :role==="viewer"?["view"]:[];
+  return new Set((rows||[])
+    .filter(p=>p.module_key==="actividades"&&p.allowed===true&&actions.includes(p.action_key))
+    .map(p=>p.action_key));
+}
 function canManageActivities(action){
-  if(isPrimaryMiraAdmin()) return ["view","create","edit","delete","export","manage"].includes(action);
+  if(isPrimaryMiraAdmin()) return ["view","create","edit","delete","export","manage","annul"].includes(action);
   return activityPermissions.has(action);
 }
 async function loadActivitiesFromNeon(){
@@ -518,7 +527,7 @@ async function loadActivitiesFromNeon(){
       activityPermissions=new Set(["view","create","edit","delete","export","manage","annul"]);
     }else{
       const rows=await window.MIRA_DATA.listMyModulePermissions();
-      activityPermissions=new Set((rows||[]).filter(p=>p.module_key==="actividades"&&p.allowed===true).map(p=>p.action_key));
+      activityPermissions=effectiveActivityPermissions(rows);
     }
     if(!activityPermissions.has("view")) throw new Error("No tienes permiso de Consulta en Actividades.");
     const loadAllPages=async fetchPage=>{
@@ -571,7 +580,7 @@ async function openActivities(view='registration'){
   if(!isPrimaryMiraAdmin()){
     try{
       const rows=await window.MIRA_DATA.listMyModulePermissions();
-      activityPermissions=new Set((rows||[]).filter(p=>p.module_key==="actividades"&&p.allowed===true).map(p=>p.action_key));
+      activityPermissions=effectiveActivityPermissions(rows);
     }catch(error){activityPermissions=new Set();alert("No fue posible validar tus permisos de Actividades. El acceso permanece bloqueado.");return;}
   }
   if(!activityPermissions.has("view")&&!isPrimaryMiraAdmin()){alert("No tienes permiso de Consulta en Actividades.");return;}
