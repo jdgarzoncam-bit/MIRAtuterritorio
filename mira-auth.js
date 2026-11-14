@@ -19,7 +19,11 @@ async function getOwnProfile(token,authUserId) {
   const response=await fetch(`${DATA_API_URL}/user_profiles?select=auth_user_id,role,active,email_verified,email,display_name&auth_user_id=eq.${encodeURIComponent(authUserId)}&limit=1`,{
     headers:{Authorization:`Bearer ${token}`,"Accept-Profile":"mira"}
   });
-  if(!response.ok) throw new Error("No fue posible validar los permisos de esta cuenta.");
+  if(!response.ok) {
+    const error=new Error("No fue posible validar los permisos de esta cuenta.");
+    error.status=response.status;
+    throw error;
+  }
   const rows=await response.json();
   return rows?.[0] || null;
 }
@@ -45,21 +49,30 @@ function clearAuthenticatedState() {
   window.MIRA_CURRENT_USER=null;
   window.dispatchEvent(new Event("mira:signed-out"));
 }
+function isDefinitiveAuthorizationFailure(error) {
+  if(error?.definitive===true)return true;
+  const status=Number(error?.status||error?.statusCode||0);
+  return status===401||status===403||status===404;
+}
+function markDefinitive(error) {
+  error.definitive=true;
+  return error;
+}
 async function establishAuthenticatedUser(authUser) {
-  if(!authUser?.id) throw new Error("No fue posible identificar la cuenta autenticada.");
-  if(authUser.emailVerified!==true) throw new Error("Primero confirma tu correo electrónico. Revisa tu bandeja de entrada y Spam.");
+  if(!authUser?.id) throw markDefinitive(new Error("No fue posible identificar la cuenta autenticada."));
+  if(authUser.emailVerified!==true) throw markDefinitive(new Error("Primero confirma tu correo electrónico. Revisa tu bandeja de entrada y Spam."));
   const token=await bearerToken();
   const profile=await getOwnProfile(token,authUser.id);
-  if(!profile || profile.auth_user_id!==authUser.id) throw new Error("La identidad de la cuenta no coincide con su perfil. El acceso fue bloqueado.");
-  if(profile.role==="admin" && profile.auth_user_id!==PRIMARY_ADMIN_AUTH_ID) throw new Error("La cuenta administradora no corresponde al administrador principal autorizado.");
+  if(!profile || profile.auth_user_id!==authUser.id) throw markDefinitive(new Error("La identidad de la cuenta no coincide con su perfil. El acceso fue bloqueado."));
+  if(profile.role==="admin" && profile.auth_user_id!==PRIMARY_ADMIN_AUTH_ID) throw markDefinitive(new Error("La cuenta administradora no corresponde al administrador principal autorizado."));
   if(profile.active!==true || profile.email_verified!==true || !["admin","operator","viewer"].includes(profile.role)) {
-    throw new Error("Tu cuenta todavía no está aprobada. Solicita al administrador que habilite tu perfil.");
+    throw markDefinitive(new Error("Tu cuenta todavía no está aprobada. Solicita al administrador que habilite tu perfil."));
   }
   let permissions=[];
   if(profile.role!=="admin") {
     permissions=await getOwnModulePermissions(token);
     if(!permissions.some(permission=>permission.allowed===true && permission.action_key==="view" && permission.module_key!=="testigos" && permission.module_key!=="control_administrativo")) {
-      throw new Error("Tu cuenta está aprobada, pero todavía no tiene módulos autorizados. Solicita al administrador que habilite al menos uno.");
+      throw markDefinitive(new Error("Tu cuenta está aprobada, pero todavía no tiene módulos autorizados. Solicita al administrador que habilite al menos uno."));
     }
   }
   window.MIRA_CURRENT_USER={role:profile.role,authUserId:profile.auth_user_id,displayName:profile.display_name||authUser.name||profile.email,email:profile.email||authUser.email};
@@ -76,9 +89,14 @@ async function restoreExistingSession() {
     if(!authUser) { clearAuthenticatedState(); return; }
     await establishAuthenticatedUser(authUser);
   } catch(error) {
-    clearAuthenticatedState();
-    try { await auth.signOut(); } catch(signOutError) { console.warn("[MIRA Auth] No se pudo limpiar una sesión inválida.",signOutError); }
-    console.warn("[MIRA Auth] La sesión guardada no superó la validación; se requiere iniciar sesión.",error);
+    if(isDefinitiveAuthorizationFailure(error)){
+      clearAuthenticatedState();
+      try { await auth.signOut(); } catch(signOutError) { console.warn("[MIRA Auth] No se pudo limpiar una sesión inválida.",signOutError); }
+      console.warn("[MIRA Auth] La sesión guardada no superó la validación; se requiere iniciar sesión.",error);
+    } else {
+      console.warn("[MIRA Auth] No fue posible validar la sesión por un problema temporal. Se conserva la sesión y se mantienen bloqueadas las acciones que no puedan verificarse.",error);
+      showLoginError("No fue posible comprobar la conexión con el servicio de autenticación. Verifica tu conexión e inténtalo de nuevo; no se cerró tu sesión.");
+    }
   }
 }
 let revalidationRunning=false,lastRevalidationAt=0;
@@ -108,8 +126,13 @@ async function revalidateCurrentAuthorization(force=false) {
       window.dispatchEvent(new Event("mira:permissions-refreshed"));
     }
   } catch(error) {
-    console.warn("[MIRA Auth] La revalidación de la sesión no fue superada; se cerrará el acceso.",error);
-    await signOutCompletely();
+    if(isDefinitiveAuthorizationFailure(error)){
+      console.warn("[MIRA Auth] La revalidación detectó una sesión o autorización inválida; se cerrará el acceso.",error);
+      await signOutCompletely();
+    } else {
+      console.warn("[MIRA Auth] Falló temporalmente la revalidación. Se conserva la sesión y se reintentará en la siguiente comprobación.",error);
+      window.dispatchEvent(new CustomEvent("mira:authorization-check-failed",{detail:{message:"No fue posible verificar temporalmente la sesión. Comprueba tu conexión."}}));
+    }
   } finally { revalidationRunning=false; }
 }
 async function signOutCompletely() {
