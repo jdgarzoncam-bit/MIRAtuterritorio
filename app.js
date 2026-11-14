@@ -1445,7 +1445,16 @@ function inicializarSistemaMapa() {
         }
     }
     if (map) {
-        setTimeout(() => { map.invalidateSize(); }, 200);
+        setTimeout(() => {
+            map.invalidateSize({ pan: false, animate: false });
+            // Una sesión restaurada puede volver a activar el PMU sobre un mapa
+            // ya creado. No omitir la carga de polígonos por el retorno temprano.
+            if (!datosOriginales) {
+                cargarPoligonosTerritoriales();
+            } else if (typeof window.actualizarMapa === 'function') {
+                window.actualizarMapa();
+            }
+        }, 200);
         return;
     }
 
