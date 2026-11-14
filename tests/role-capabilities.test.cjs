@@ -10,6 +10,7 @@ const appSource = fs.readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
 const styleSource = fs.readFileSync(path.join(__dirname, "..", "style.css"), "utf8");
 const exportMigration = fs.readFileSync(path.join(__dirname, "..", "migrations", "20261111_activities_granular_export_permission.sql"), "utf8");
 const auditMigration = fs.readFileSync(path.join(__dirname, "..", "migrations", "20261113_audit_export_remove_operational_reports.sql"), "utf8");
+const leastPrivilegeMigration = fs.readFileSync(path.join(__dirname, "..", "migrations", "20261111_security_least_privilege_qa.sql"), "utf8");
 const reportesSource = fs.readFileSync(path.join(__dirname, "..", "reportes.js"), "utf8");
 const activityPortalSource = fs.readFileSync(path.join(__dirname, "..", "activity-portal.js"), "utf8");
 const dataSourceCurrent = dataSource;
@@ -244,4 +245,10 @@ test("la interfaz de Actividades respeta los límites efectivos de cada rol", ()
 
 test("la bandeja de reportes solo habilita edición para Operador o administrador principal", () => {
   assert.match(reportesSource, /canEdit=window\.MIRA_CURRENT_USER\.role==="operator"&&p\.some/);
+});
+
+test("las funciones exclusivas de triggers no conservan EXECUTE para clientes API", () => {
+  for (const fn of ["audit_actividad_changes","audit_asistencia_changes","audit_persona_changes","audit_row_change","set_updated_at","audit_admin_changes","sync_auth_user_profile"]) {
+    assert.match(leastPrivilegeMigration, new RegExp("revoke execute on function mira\\."+fn+"\\(\\) from public, anonymous, authenticated", "i"), fn);
+  }
 });
