@@ -46,9 +46,19 @@ test("un fallo temporal de autenticación no cierra la sesión automáticamente"
   assert.match(auth, /error\.status=response\.status/);
 });
 
+
+test("la sincronización de autorización no vuelve a abrir el panel administrativo", () => {
+  const sync = admin.slice(admin.indexOf("const syncVisibility=()=>"), admin.indexOf('window.addEventListener("mira:authenticated"'));
+  assert.match(sync, /panel\.toggleAttribute\("data-admin-visible",authorized\)/);
+  assert.match(sync, /if\(!authorized\)\{\s*closePanel\(\)/);
+  assert.doesNotMatch(sync, /panel\.classList\.toggle\("hidden",!authorized\)/);
+  assert.match(admin, /function openPanel\(\)[\s\S]*?classList\.remove\("hidden"\)/);
+  assert.match(admin, /function closePanel\(\)[\s\S]*?classList\.add\("hidden"\)/);
+});
+
 test("el navegador carga las versiones corregidas de autenticación y permisos", () => {
   assert.ok(index.includes("mira-auth.js?v=20261114-permission-sync-5"));
-  assert.ok(index.includes("mira-admin.js?v=20261114-permission-failclosed-2"));
+  assert.ok(index.includes("mira-admin.js?v=20261114-panel-state-3"));
 });
 
 test("el wrapper Neon Auth expone el JWT del SDK y conserva el cliente Better Auth", () => {
