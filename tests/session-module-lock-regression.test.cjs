@@ -76,7 +76,7 @@ test("un error 404 de Data API no se interpreta automáticamente como sesión re
 test("el inicio de sesión conserva una sesión aceptada ante fallos temporales de validación", () => {
   assert.match(auth, /let signInCompleted=false/);
   assert.match(auth, /signInCompleted=true/);
-  assert.match(auth, /else if\(signInCompleted\)[\s\S]*?conservamos la sesión e intentaremos recuperarla/);
+  assert.match(auth, /else if\(signInCompleted\)[\s\S]*?[Cc]onservamos la sesión e intentaremos recuperarla/);
 });
 
 test("la restauración de sesión se reintenta tras fallos transitorios y al recuperar conexión", () => {
