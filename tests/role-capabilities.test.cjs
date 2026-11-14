@@ -231,5 +231,6 @@ test("Reportes ciudadanos utiliza el cliente central y no una segunda instancia 
 test("el portal independiente de Actividades obtiene el JWT desde el wrapper oficial de Neon Auth", () => {
   assert.match(activityPortalSource, /createInternalNeonAuth\(AUTH_URL/);
   assert.match(activityPortalSource, /neonAuth\.getJWTToken\(\)/);
-  assert.doesNotMatch(activityPortalSource, /createAuthClient|auth\.token\(\)/);
+  assert.match(activityPortalSource, /profile\.auth_user_id !== PRIMARY_ADMIN_AUTH_ID/);
+  assert.doesNotMatch(activityPortalSource, /createAuthClient|auth\.token\(\)|"witness"/);
 });
