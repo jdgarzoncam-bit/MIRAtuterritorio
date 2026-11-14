@@ -14,6 +14,7 @@
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
     <link rel="stylesheet" href="style.css?v=20261113-hide-menu-pmu-1">
+    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css">
 </head>
 <body class="theme-dark">
 
@@ -735,6 +736,7 @@
         </div>
 
         <div id="map"></div>
+        <div id="map3d" hidden></div>
     </div>
 
     <!-- Menú global de módulos: fuera de Centro de Operaciones -->
@@ -748,6 +750,9 @@
             </nav>
         </div>
 
+
+    <!-- Motor 3D experimental (solo se activa con ?mapa3d=1) -->
+    <script src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
 
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
@@ -795,6 +800,7 @@
     <script type="module" src="mira-data.js?v=20261114-central-client-3"></script>
     <script type="module" src="mira-auth.js?v=20261114-permission-sync-5"></script>
     <script src="app.js?v=20261114-base-role-aware-5"></script>
+    <script src="mapa-3d.js?v=20261114-terrain-engine-1"></script>
     <script type="module" src="mira-admin.js?v=20261114-permission-failclosed-2"></script>
     <script type="module" src="reportes.js?v=20261114-role-aware-3"></script>
     <script type="module" src="pqrs.js?v=20261110-pqrs-centralized-1"></script>
