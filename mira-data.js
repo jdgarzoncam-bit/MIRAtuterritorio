@@ -5,10 +5,31 @@ const MIRA_DATA_API_URL = "https://ep-mute-grass-b7qan4n6.apirest.c-13.us-east-1
 async function miraToken({anonymous=false}={}) {
   const auth = window.MIRA_AUTH;
   if (!auth) throw new Error("El servicio de autenticación aún no está inicializado.");
-  const result = anonymous ? await auth.getAnonymousToken() : await auth.token();
-  if (result?.error) throw new Error(result.error.message || "No fue posible obtener el token.");
-  const token = result?.data?.token;
-  if (!token) throw new Error("No se recibió un token válido.");
+  let token=null;
+  if(anonymous){
+    // PQRS públicas conserva el JWT anónimo específico; no reutiliza la sesión privada.
+    const result=await auth.getAnonymousToken();
+    if(result?.error) {
+      const error=new Error(result.error.message||"No fue posible obtener el token público de Neon.");
+      error.status=result.error.status||result.error.statusCode||0;
+      error.code=result.error.code||null;
+      throw error;
+    }
+    token=result?.data?.token||null;
+  }else{
+    // API oficial del cliente Neon Auth: devuelve el JWT como string.
+    if(typeof auth.getJWTToken!=="function"){
+      throw new Error("La versión cargada de Neon Auth no expone getJWTToken(). Actualiza el cliente de autenticación.");
+    }
+    token=await auth.getJWTToken();
+  }
+  if(typeof token!=="string"||!token.trim()){
+    const error=new Error(anonymous
+      ?"Neon Auth no entregó un token anónimo válido para el registro público."
+      :"Neon Auth no entregó un JWT válido para la sesión. Comprueba la sesión e inténtalo nuevamente.");
+    error.code="NEON_AUTH_JWT_MISSING";
+    throw error;
+  }
   return token;
 }
 
