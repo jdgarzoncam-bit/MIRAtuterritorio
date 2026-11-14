@@ -606,7 +606,17 @@ function initDatabaseExplorer(){
  const admin=()=>isPrimaryMiraAdmin();
  const allowed=(module,action="view")=>admin()||permissions.has(module+"::"+action);
  const esc=value=>escapeActivityHtml(value===null||value===undefined?"—":typeof value==="object"?JSON.stringify(value):String(value));
- const say=(message,error=false)=>{notice.textContent=message||"";notice.style.color=error?"#ff8b8b":"var(--text-muted)";};
+ const say=(message,error=false)=>{
+  const text=String(message||"");
+  if(text.startsWith("Exportación bloqueada\n")){
+    const body=text.slice("Exportación bloqueada\n".length);
+    notice.innerHTML='<strong>Exportación bloqueada</strong><div>'+esc(body)+'</div>';
+    notice.style.display="grid";notice.style.gap="4px";
+  }else{
+    notice.textContent=text;notice.style.display="";notice.style.gap="";
+  }
+  notice.style.color=error?"#ff8b8b":"var(--text-muted)";
+ };
  async function waitForMiraData(timeoutMs=15000){
   const ready=()=>window.MIRA_DATA&&typeof window.MIRA_DATA.getExplorerDatasets==="function";
   if(ready())return window.MIRA_DATA;
@@ -735,19 +745,27 @@ function initDatabaseExplorer(){
   set.addEventListener("change",()=>{page=0;load().catch(e=>say(e.message,true));});$id("databaseAllSearch").addEventListener("keydown",e=>{if(e.key==="Enter"){page=0;load().catch(x=>say(x.message,true));}});value.addEventListener("keydown",e=>{if(e.key==="Enter"){page=0;load().catch(x=>say(x.message,true));}});field.addEventListener("change",()=>{page=0;load().catch(e=>say(e.message,true));});$id("databaseAllPrev").addEventListener("click",()=>{if(page){page--;load().catch(e=>say(e.message,true));}});$id("databaseAllNext").addEventListener("click",()=>{if(more){page++;load().catch(e=>say(e.message,true));}});
   $id("databaseExportBtn").addEventListener("click",async()=>{
     const button=$id("databaseExportBtn");
-    if(!window.XLSX){say("No está disponible el componente de exportación Excel. Recarga la plataforma y vuelve a intentarlo.",true);return;}
     button.disabled=true;
     try{
       // Refresca la matriz desde Neon justo antes de cada intento. No se confía en la copia al abrir el módulo.
       await refreshPermissions();
+      if(!admin()&&!allowed("base_datos_general","view")){
+        say("No tienes permiso para consultar Base de datos general. Solicita al administrador que habilite Consulta.",true);
+        return;
+      }
+      if(!admin()&&!allowed(dataset.module,"view")){
+        say("No tienes permiso para consultar los registros del módulo "+dataset.label+".",true);
+        return;
+      }
       if(!admin()&&!allowed("base_datos_general","export")){
-        say("Exportación bloqueada — No tienes permiso para exportar desde Base de datos general. El administrador retiró o no asignó esta autorización. Puedes seguir consultando los registros si conservas el permiso Consulta.",true);
+        say("Exportación bloqueada\nNo tienes permiso para exportar desde Base de datos general. El administrador retiró o no asignó esta autorización. Puedes seguir consultando los registros si conservas el permiso Consulta.",true);
         return;
       }
       if(!admin()&&!allowed(dataset.module,"export")){
-        say("Exportación bloqueada — No tienes permiso para exportar los datos del módulo "+dataset.label+". Solicita al administrador que habilite Exportar en ese módulo.",true);
+        say("Exportación bloqueada\nNo tienes permiso para exportar los datos del módulo "+dataset.label+". Solicita al administrador que habilite Exportar en ese módulo.",true);
         return;
       }
+      if(!window.XLSX){say("No está disponible el componente de exportación Excel. Recarga la plataforma y vuelve a intentarlo.",true);return;}
       const filtered=Boolean(search.value.trim()||(field.value&&value.value.trim()));
       const summary="Conjunto: "+dataset.label+"\nFiltros: "+(filtered?[search.value.trim()?"Búsqueda: "+search.value.trim():"",field.value?field.options[field.selectedIndex].text+": "+value.value:""].filter(Boolean).join("\n"):"Sin filtros")+"\n\nSe comprobarán nuevamente ambas autorizaciones en el servidor y la operación quedará registrada en el historial. ¿Deseas continuar?";
       if(!window.confirm(summary))return;
@@ -763,11 +781,11 @@ function initDatabaseExplorer(){
       if(error?.code==="42501"||/no tienes permiso|permission denied|autorización.*export/i.test(error?.message||"")){
         const detail=String(error?.message||"");
         if(/base de datos general/i.test(detail)){
-          say("Exportación bloqueada — No tienes permiso para exportar desde Base de datos general. El administrador retiró o no asignó esta autorización. Puedes seguir consultando los registros si conservas el permiso Consulta.",true);
+          say("Exportación bloqueada\\nNo tienes permiso para exportar desde Base de datos general. El administrador retiró o no asignó esta autorización. Puedes seguir consultando los registros si conservas el permiso Consulta.",true);
         }else if(/módulo de origen|modulo de origen/i.test(detail)){
-          say("Exportación bloqueada — No tienes permiso para exportar los datos del módulo "+dataset.label+". Solicita al administrador que habilite Exportar en ese módulo.",true);
+          say("Exportación bloqueada\\nNo tienes permiso para exportar los datos del módulo "+dataset.label+". Solicita al administrador que habilite Exportar en ese módulo.",true);
         }else{
-          say("Exportación bloqueada — "+(detail||"No tienes permiso para realizar esta exportación. Solicita la autorización al administrador."),true);
+          say("Exportación bloqueada\\n"+(detail||"No tienes permiso para realizar esta exportación. Solicita la autorización al administrador."),true);
         }
       }else{
         console.error("[MIRA Exportación] Falló la solicitud de exportación.",error);
