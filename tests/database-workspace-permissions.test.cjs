@@ -22,5 +22,5 @@ test("la pérdida de Consulta sí cierra únicamente el espacio de Base de datos
 });
 
 test("el HTML solicita la versión nueva de app.js para evitar caché del navegador", () => {
-  assert.ok(index.includes("app.js?v=20261113-export-revoke-live-4"));
+  assert.ok(index.includes("app.js?v=20261114-export-blocked-message-1"));
 });
