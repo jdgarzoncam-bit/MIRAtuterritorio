@@ -5728,6 +5728,12 @@ a:hover {color:#E6EDFD;}
 
 /* MIRA · Ajustes responsivos transversales (móvil, tablet y escritorio) */
 img, video, canvas, svg { max-width: 100%; }
+/* Leaflet administra el tamaño de sus superficies vectoriales; no limitar
+   sus SVG/Canvas al estilo responsive global de imágenes y documentos. */
+.leaflet-container svg,
+.leaflet-container canvas {
+  max-width: none !important;
+}
 input, select, textarea, button { max-width: 100%; }
 .table-wrap, .table-responsive, .mira-table-wrap { width: 100%; max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 #testigosModal, #testigoStandaloneContainer, #landing-hero-overlay {
