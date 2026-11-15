@@ -106,7 +106,7 @@ async function establishAuthenticatedUser(authUser,expectedRevision=null) {
   return true;
 }
 async function restoreExistingSession() {
-  if(restoreRunning || loginInProgress)return;
+  if(restoreRunning || loginInProgress || authSignOutInProgress)return;
   const revision=authFlowRevision;
   restoreRunning=true;
   try {
@@ -125,7 +125,10 @@ async function restoreExistingSession() {
     if(authFlowIsStale(revision)) return;
     if(isDefinitiveAuthorizationFailure(error)){
       clearAuthenticatedState();
+      authFlowRevision++;
+      authSignOutInProgress=true;
       try { await auth.signOut(); } catch(signOutError) { console.warn("[MIRA Auth] No se pudo limpiar una sesión inválida.",signOutError); }
+      finally { authSignOutInProgress=false; }
       console.warn("[MIRA Auth] La sesión guardada no superó la validación; se requiere iniciar sesión.",error);
       finishAuthBootstrap();
     } else {
@@ -140,9 +143,9 @@ async function restoreExistingSession() {
 }
 let revalidationRunning=false,lastRevalidationAt=0;
 let restoreRunning=false,restoreRetryTimer=null,restoreRetryCount=0;
-let authFlowRevision=0,loginInProgress=false;
+let authFlowRevision=0,loginInProgress=false,authSignOutInProgress=false;
 function authFlowIsStale(revision) {
-  return revision !== authFlowRevision || loginInProgress;
+  return revision !== authFlowRevision || loginInProgress || authSignOutInProgress;
 }
 function scheduleSessionRestore(){
   if(restoreRetryTimer||restoreRetryCount>=5||!navigator.onLine)return;
@@ -204,15 +207,22 @@ async function revalidateCurrentAuthorization(force=false) {
 async function signOutCompletely() {
   authFlowRevision++;
   loginInProgress=false;
+  authSignOutInProgress=true;
   try { await auth.signOut(); }
-  finally { clearAuthenticatedState(); }
+  finally {
+    authSignOutInProgress=false;
+    clearAuthenticatedState();
+  }
 }
 function showLoginError(message) {
   const error=document.getElementById("loginError");
   if(error){error.textContent=message;error.style.display="block";}
 }
 async function loginWithNeon() {
-  if(loginInProgress)return;
+  if(loginInProgress || authSignOutInProgress){
+    showLoginError("Estamos finalizando la validación de la sesión anterior. Intenta nuevamente en unos segundos.");
+    return;
+  }
   let signInCompleted=false;
   const email=document.getElementById("username")?.value.trim();
   const password=document.getElementById("password")?.value;
