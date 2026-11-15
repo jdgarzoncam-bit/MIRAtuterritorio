@@ -1586,6 +1586,31 @@ function inicializarSistemaMapa() {
             }
         });
         if (poligonosKmlVisibles) geojsonLayer.addTo(map);
+        const renderedLayers = geojsonLayer.getLayers();
+        const territorialBounds = geojsonLayer.getBounds();
+        const boundsValid = Boolean(territorialBounds && territorialBounds.isValid());
+        const layerAttached = Boolean(map && map.hasLayer(geojsonLayer));
+        const svgNode = miraTerritorySvgRenderer && miraTerritorySvgRenderer._container;
+        const svgPathCount = svgNode && svgNode.querySelectorAll ? svgNode.querySelectorAll('path').length : 0;
+        if (!renderedLayers.length || !boundsValid) {
+            throw new Error('La capa territorial se creó sin entidades o sin límites geográficos válidos.');
+        }
+        if (poligonosKmlVisibles && !layerAttached) {
+            throw new Error('Leaflet creó los polígonos, pero no incorporó la capa al mapa.');
+        }
+        if (poligonosKmlVisibles && svgPathCount === 0) {
+            throw new Error('La capa se incorporó, pero el renderizador SVG no produjo trazados visibles.');
+        }
+        window.MIRA_TERRITORIO_DIAGNOSTICO = {
+            estado: poligonosKmlVisibles ? 'renderizado' : 'capa_oculta_por_control',
+            fuente: window.MIRA_TERRITORIO_DIAGNOSTICO?.fuente || null,
+            entidadesGeoJSON: datosOriginales.features.length,
+            capasLeaflet: renderedLayers.length,
+            limitesValidos: boundsValid,
+            capaAgregadaAlMapa: layerAttached,
+            trazadosSVG: svgPathCount,
+            fecha: new Date().toISOString()
+        };
         // Puente de sincronización para el motor 3D experimental. Leaflet sigue
         // siendo el renderizador principal; el motor 3D recibe el mismo GeoJSON
         // y el mismo estado de filtros/selección, sin duplicar ni alterar datos.
@@ -1600,6 +1625,21 @@ function inicializarSistemaMapa() {
         }));
     };
 
+
+    // La cartografía se agenda antes de los módulos secundarios para que
+    // un fallo de InfoMIRA, Logística o Dashboard no impida cargar los barrios.
+    window.MIRA_RECARGAR_POLIGONOS = cargarPoligonosTerritoriales;
+    window.MIRA_TERRITORIO_DIAGNOSTICO = {
+        estado: 'programado',
+        fuente: null,
+        entidadesGeoJSON: 0,
+        capasLeaflet: 0,
+        limitesValidos: false,
+        capaAgregadaAlMapa: false,
+        trazadosSVG: 0,
+        fecha: new Date().toISOString()
+    };
+    setTimeout(() => cargarPoligonosTerritoriales(), 0);
 
     // Selector de vistas del módulo unificado Barrios y puestos.
     const territoryModeBarrios = document.getElementById('territoryModeBarrios');
@@ -1631,11 +1671,6 @@ function inicializarSistemaMapa() {
     cargarPuestosEnMapa(); // muestra los puestos conocidos incluso sin la base de personas
     inicializarModuloInfoMIRA();
 
-    // La cartografía territorial se agenda inmediatamente después de preparar
-    // el renderizador del mapa. Así no depende de que los módulos posteriores
-    // (Logística, Dashboard o Testigos) terminen su inicialización sin errores.
-    setTimeout(() => cargarPoligonosTerritoriales(), 0);
-
     inicializarModuloLogistica();
     actualizarDashboardKPIs();
 
@@ -1648,6 +1683,12 @@ function inicializarSistemaMapa() {
     // polígonos y coordenadas oficiales aportados; no se generan coordenadas
     // aproximadas ni se sustituye la geometría por marcadores.
     async function cargarPoligonosTerritoriales() {
+        window.MIRA_TERRITORIO_DIAGNOSTICO = {
+            ...(window.MIRA_TERRITORIO_DIAGNOSTICO || {}),
+            estado: 'descargando',
+            fecha: new Date().toISOString(),
+            error: null
+        };
         const container = document.getElementById('barrios-checkbox-container');
         if (container) container.innerHTML = '<p class="loading-text">Cargando sectores y geometrías territoriales…</p>';
 
@@ -1686,6 +1727,12 @@ function inicializarSistemaMapa() {
 
         if (!data) {
             const detail = errores.join(' | ');
+            window.MIRA_TERRITORIO_DIAGNOSTICO = {
+                ...(window.MIRA_TERRITORIO_DIAGNOSTICO || {}),
+                estado: 'error_descarga',
+                errores,
+                fecha: new Date().toISOString()
+            };
             console.error('[MIRA] No fue posible cargar la cartografía territorial:', detail);
             if (container) {
                 container.innerHTML = '<div class="loading-text" role="alert"><strong>No se pudieron cargar los barrios.</strong><p>La cartografía no se ha eliminado. Comprueba la conexión y vuelve a intentarlo.</p><button type="button" id="retryTerritoryGeoJSON" class="territory-reset-icon">Reintentar carga</button></div>';
@@ -1695,6 +1742,15 @@ function inicializarSistemaMapa() {
         }
 
         datosOriginales = data;
+        window.MIRA_TERRITORIO_DIAGNOSTICO = {
+            ...(window.MIRA_TERRITORIO_DIAGNOSTICO || {}),
+            estado: 'datos_descargados',
+            fuente: fuenteCargada,
+            entidadesGeoJSON: data.features.length,
+            tiposGeometria: [...new Set(data.features.map(feature => feature.geometry?.type || 'sin_geometria'))],
+            fecha: new Date().toISOString()
+        };
+        if (map) map.invalidateSize({ pan: false, animate: false });
         barriosFiltroEstado = Object.create(null);
         data.features.forEach((feature, index) => {
             barriosFiltroEstado[obtenerNombreBarrio(feature, index)] = true;
@@ -1721,6 +1777,12 @@ function inicializarSistemaMapa() {
                 fuente: fuenteCargada
             });
         } catch (error) {
+            window.MIRA_TERRITORIO_DIAGNOSTICO = {
+                ...(window.MIRA_TERRITORIO_DIAGNOSTICO || {}),
+                estado: 'error_renderizado',
+                error: error?.message || String(error),
+                fecha: new Date().toISOString()
+            };
             console.error('[MIRA] El GeoJSON se descargó, pero falló el renderizado avanzado:', error);
 
             // Recuperación de producción: si falla la lista o el renderizador avanzado,
@@ -1747,6 +1809,16 @@ function inicializarSistemaMapa() {
                         : { paddingTopLeft: [410, 45], paddingBottomRight: [45, 45], maxZoom: 14 });
                 }
                 fallbackRendered = true;
+                window.MIRA_TERRITORIO_DIAGNOSTICO = {
+                    ...(window.MIRA_TERRITORIO_DIAGNOSTICO || {}),
+                    estado: 'renderizado_recuperacion',
+                    capasLeaflet: geojsonLayer.getLayers().length,
+                    capaAgregadaAlMapa: map.hasLayer(geojsonLayer),
+                    limitesValidos: fallbackBounds.isValid(),
+                    trazadosSVG: miraTerritorySvgRenderer?._container?.querySelectorAll?.('path')?.length || 0,
+                    error: error?.message || String(error),
+                    fecha: new Date().toISOString()
+                };
                 console.warn('[MIRA] Se activó el renderizado territorial de recuperación.');
             } catch (fallbackError) {
                 console.error('[MIRA] También falló el renderizado territorial de recuperación:', fallbackError);
