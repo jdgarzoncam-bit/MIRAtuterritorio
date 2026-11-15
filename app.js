@@ -18,16 +18,38 @@ let poligonosPorNombre = Object.create(null);
 // Renderer SVG dedicado para los polígonos de barrios. Evita que el renderer
 // Canvas preferido por el mapa oculte/mezcle la capa territorial.
 let miraTerritorySvgRenderer = null;
+let miraTerritoryCanvasRenderer = null;
+
+// Leaflet necesita que el renderer vectorial esté montado en el mapa antes
+// de añadir los FeatureLayer. La opción renderer por sí sola no garantiza
+// que el contenedor SVG exista cuando el mapa acaba de salir del login.
 function asegurarRenderizadorTerritorial() {
-    if (!map) return null;
-    if (!map.getPane('miraTerritoryPane')) map.createPane('miraTerritoryPane');
-    const pane = map.getPane('miraTerritoryPane');
-    pane.style.zIndex = '450';
-    pane.style.pointerEvents = 'auto';
+    if (!map || !window.L || typeof L.svg !== 'function') return null;
+    const overlayPane = map.getPane('overlayPane');
+    if (overlayPane) {
+        overlayPane.style.zIndex = '400';
+        overlayPane.style.pointerEvents = 'auto';
+    }
     if (!miraTerritorySvgRenderer) {
-        miraTerritorySvgRenderer = L.svg({ pane: 'miraTerritoryPane', padding: 0.5 });
+        miraTerritorySvgRenderer = L.svg({ pane: 'overlayPane', padding: 0.5 });
+    }
+    if (!map.hasLayer(miraTerritorySvgRenderer)) miraTerritorySvgRenderer.addTo(map);
+    if (miraTerritorySvgRenderer._container) {
+        miraTerritorySvgRenderer._container.style.maxWidth = 'none';
     }
     return miraTerritorySvgRenderer;
+}
+
+function asegurarRenderizadorTerritorialCanvas() {
+    if (!map || !window.L || typeof L.canvas !== 'function') return null;
+    if (!miraTerritoryCanvasRenderer) {
+        miraTerritoryCanvasRenderer = L.canvas({ pane: 'overlayPane', padding: 0.5 });
+    }
+    if (!map.hasLayer(miraTerritoryCanvasRenderer)) miraTerritoryCanvasRenderer.addTo(map);
+    if (miraTerritoryCanvasRenderer._container) {
+        miraTerritoryCanvasRenderer._container.style.maxWidth = 'none';
+    }
+    return miraTerritoryCanvasRenderer;
 }
 
 
@@ -1523,8 +1545,8 @@ function inicializarSistemaMapa() {
         if (geojsonLayer && map.hasLayer(geojsonLayer)) map.removeLayer(geojsonLayer);
         poligonosPorNombre = Object.create(null);
 
-        geojsonLayer = L.geoJSON(datosOriginales, {
-            renderer: asegurarRenderizadorTerritorial(),
+        const territoryLayerOptions = {
+            pane: 'overlayPane',
             filter: function(feature) {
                 const index = datosOriginales.features.indexOf(feature);
                 const nombre = obtenerNombreBarrio(feature, index);
@@ -1584,22 +1606,43 @@ function inicializarSistemaMapa() {
                     mostrarFichaBarrio(feature, nombre);
                 });
             }
-        });
+        };
+
+        let territoryRenderer = asegurarRenderizadorTerritorial();
+        let territoryRendererMode = 'svg';
+        if (!territoryRenderer) {
+            territoryRenderer = asegurarRenderizadorTerritorialCanvas();
+            territoryRendererMode = 'canvas';
+        }
+        geojsonLayer = L.geoJSON(datosOriginales, { ...territoryLayerOptions, renderer: territoryRenderer });
         if (poligonosKmlVisibles) geojsonLayer.addTo(map);
+
+        let svgNode = territoryRendererMode === 'svg' ? territoryRenderer?._container : null;
+        let svgPathCount = svgNode?.querySelectorAll ? svgNode.querySelectorAll('path').length : 0;
+        if (poligonosKmlVisibles && territoryRendererMode === 'svg' && svgPathCount === 0) {
+            if (map.hasLayer(geojsonLayer)) map.removeLayer(geojsonLayer);
+            territoryRenderer = asegurarRenderizadorTerritorialCanvas();
+            territoryRendererMode = 'canvas';
+            geojsonLayer = L.geoJSON(datosOriginales, { ...territoryLayerOptions, renderer: territoryRenderer });
+            geojsonLayer.addTo(map);
+        }
+
         const renderedLayers = geojsonLayer.getLayers();
         const territorialBounds = geojsonLayer.getBounds();
         const boundsValid = Boolean(territorialBounds && territorialBounds.isValid());
         const layerAttached = Boolean(map && map.hasLayer(geojsonLayer));
-        const svgNode = miraTerritorySvgRenderer && miraTerritorySvgRenderer._container;
-        const svgPathCount = svgNode && svgNode.querySelectorAll ? svgNode.querySelectorAll('path').length : 0;
+        const activeRendererNode = territoryRenderer?._container;
+        const rendererReady = territoryRendererMode === 'svg'
+            ? svgPathCount > 0
+            : Boolean(activeRendererNode && activeRendererNode.tagName === 'CANVAS' && activeRendererNode.width > 0 && activeRendererNode.height > 0);
         if (!renderedLayers.length || !boundsValid) {
             throw new Error('La capa territorial se creó sin entidades o sin límites geográficos válidos.');
         }
         if (poligonosKmlVisibles && !layerAttached) {
             throw new Error('Leaflet creó los polígonos, pero no incorporó la capa al mapa.');
         }
-        if (poligonosKmlVisibles && svgPathCount === 0) {
-            throw new Error('La capa se incorporó, pero el renderizador SVG no produjo trazados visibles.');
+        if (poligonosKmlVisibles && !rendererReady) {
+            throw new Error('Leaflet recibió los polígonos, pero no pudo dibujarlos con SVG ni Canvas.');
         }
         window.MIRA_TERRITORIO_DIAGNOSTICO = {
             estado: poligonosKmlVisibles ? 'renderizado' : 'capa_oculta_por_control',
@@ -1609,6 +1652,8 @@ function inicializarSistemaMapa() {
             limitesValidos: boundsValid,
             capaAgregadaAlMapa: layerAttached,
             trazadosSVG: svgPathCount,
+            renderizador: territoryRendererMode,
+            tamanoMapa: map ? { ancho: map.getSize().x, alto: map.getSize().y } : null,
             fecha: new Date().toISOString()
         };
         // Puente de sincronización para el motor 3D experimental. Leaflet sigue
@@ -1791,8 +1836,10 @@ function inicializarSistemaMapa() {
             let fallbackRendered = false;
             try {
                 if (geojsonLayer && map && map.hasLayer(geojsonLayer)) map.removeLayer(geojsonLayer);
+                const recoveryRenderer = asegurarRenderizadorTerritorialCanvas();
                 geojsonLayer = L.geoJSON(data, {
-                    renderer: asegurarRenderizadorTerritorial(),
+                    pane: 'overlayPane',
+                    renderer: recoveryRenderer,
                     style: () => ({
                         color: '#8B5CF6',
                         weight: 1.7,
