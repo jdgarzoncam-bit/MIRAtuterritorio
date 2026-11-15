@@ -57,7 +57,7 @@ test("la sincronización de autorización no vuelve a abrir el panel administrat
 });
 
 test("el navegador carga las versiones corregidas de autenticación y permisos", () => {
-  assert.ok(index.includes("mira-auth.js?v=20261115-auth-restore-racefix-1"));
+  assert.ok(index.includes("mira-auth.js?v=20261115-auth-restore-racefix-2"));
   assert.ok(index.includes("mira-admin.js?v=20261114-panel-state-3"));
 });
 
