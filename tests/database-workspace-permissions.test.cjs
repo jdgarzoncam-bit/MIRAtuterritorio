@@ -22,7 +22,7 @@ test("la pérdida de Consulta sí cierra únicamente el espacio de Base de datos
 });
 
 test("el HTML solicita la versión nueva de app.js para evitar caché del navegador", () => {
-  assert.ok(index.includes("app.js?v=20261115-territory-bootstrap-diag-3"));
+  assert.ok(index.includes("app.js?v=20261115-territory-render-fallback-4"));
 });
 
 test("el aviso de exportación vive dentro del espacio de trabajo visible", () => {
