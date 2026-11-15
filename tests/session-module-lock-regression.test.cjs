@@ -112,7 +112,7 @@ test("la restauración de sesión se reintenta tras fallos transitorios y al rec
 
 test("una restauración antigua de Neon no puede cerrar un inicio de sesión más reciente", () => {
   assert.match(auth, /let authFlowRevision=0,loginInProgress=false/);
-  assert.match(auth, /if\(restoreRunning \|\| loginInProgress\)return/);
+  assert.match(auth, /if\(restoreRunning \|\| loginInProgress \|\| authSignOutInProgress\)return/);
   assert.match(auth, /const revision=authFlowRevision/);
   assert.match(auth, /authFlowIsStale\(revision\)/);
   assert.match(auth, /establishAuthenticatedUser\(authUser,revision\)/);
