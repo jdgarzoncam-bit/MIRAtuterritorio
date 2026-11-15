@@ -78,11 +78,14 @@ function markDefinitive(error) {
   error.definitive=true;
   return error;
 }
-async function establishAuthenticatedUser(authUser) {
+async function establishAuthenticatedUser(authUser,expectedRevision=null) {
+  if(expectedRevision!==null && authFlowIsStale(expectedRevision)) return false;
   if(!authUser?.id) throw markDefinitive(new Error("No fue posible identificar la cuenta autenticada."));
   if(authUser.emailVerified!==true) throw markDefinitive(new Error("Primero confirma tu correo electrónico. Revisa tu bandeja de entrada y Spam."));
   const token=await bearerToken();
+  if(expectedRevision!==null && authFlowIsStale(expectedRevision)) return false;
   const profile=await getOwnProfile(token,authUser.id);
+  if(expectedRevision!==null && authFlowIsStale(expectedRevision)) return false;
   if(!profile || profile.auth_user_id!==authUser.id) throw markDefinitive(new Error("La identidad de la cuenta no coincide con su perfil. El acceso fue bloqueado."));
   if(profile.role==="admin" && profile.auth_user_id!==PRIMARY_ADMIN_AUTH_ID) throw markDefinitive(new Error("La cuenta administradora no corresponde al administrador principal autorizado."));
   if(profile.active!==true || profile.email_verified!==true || !["admin","operator","viewer"].includes(profile.role)) {
@@ -91,6 +94,7 @@ async function establishAuthenticatedUser(authUser) {
   let permissions=[];
   if(profile.role!=="admin") {
     permissions=await getOwnModulePermissions(token);
+    if(expectedRevision!==null && authFlowIsStale(expectedRevision)) return false;
     if(!permissions.some(permission=>permission.allowed===true && permission.action_key==="view" && permission.module_key!=="testigos" && permission.module_key!=="control_administrativo")) {
       throw markDefinitive(new Error("Tu cuenta está aprobada, pero todavía no tiene módulos autorizados. Solicita al administrador que habilite al menos uno."));
     }
@@ -99,21 +103,26 @@ async function establishAuthenticatedUser(authUser) {
   window.dispatchEvent(new Event("mira:authenticated"));
   if(typeof window.activarPMUAutenticado!=="function") throw new Error("No se pudo iniciar la interfaz principal.");
   window.activarPMUAutenticado();
+  return true;
 }
 async function restoreExistingSession() {
-  if(restoreRunning)return;
+  if(restoreRunning || loginInProgress)return;
+  const revision=authFlowRevision;
   restoreRunning=true;
   try {
     if(restoreRetryTimer){window.clearTimeout(restoreRetryTimer);restoreRetryTimer=null;}
     const result=await auth.getSession();
+    if(authFlowIsStale(revision)) return;
     if(result?.error) throw result.error;
     const sessionData=result?.data;
     const authUser=sessionData?.user||sessionData?.session?.user||null;
     if(!authUser) { restoreRetryCount=0; clearAuthenticatedState(); finishAuthBootstrap(); return; }
-    await establishAuthenticatedUser(authUser);
+    const established=await establishAuthenticatedUser(authUser,revision);
+    if(!established || authFlowIsStale(revision)) return;
     restoreRetryCount=0;
     finishAuthBootstrap();
   } catch(error) {
+    if(authFlowIsStale(revision)) return;
     if(isDefinitiveAuthorizationFailure(error)){
       clearAuthenticatedState();
       try { await auth.signOut(); } catch(signOutError) { console.warn("[MIRA Auth] No se pudo limpiar una sesión inválida.",signOutError); }
@@ -131,6 +140,10 @@ async function restoreExistingSession() {
 }
 let revalidationRunning=false,lastRevalidationAt=0;
 let restoreRunning=false,restoreRetryTimer=null,restoreRetryCount=0;
+let authFlowRevision=0,loginInProgress=false;
+function authFlowIsStale(revision) {
+  return revision !== authFlowRevision || loginInProgress;
+}
 function scheduleSessionRestore(){
   if(restoreRetryTimer||restoreRetryCount>=5||!navigator.onLine)return;
   const delay=Math.min(1000*(2**restoreRetryCount),15000);
@@ -141,18 +154,22 @@ function scheduleSessionRestore(){
   },delay);
 }
 async function revalidateCurrentAuthorization(force=false) {
-  if(revalidationRunning||!window.MIRA_CURRENT_USER)return;
+  if(revalidationRunning||loginInProgress||!window.MIRA_CURRENT_USER)return;
   if(!force&&Date.now()-lastRevalidationAt<15000)return;
+  const revision=authFlowRevision;
   revalidationRunning=true;lastRevalidationAt=Date.now();
   try {
     const result=await auth.getSession();
+    if(authFlowIsStale(revision))return;
     if(result?.error)throw result.error;
     const sessionData=result?.data;
     const authUser=sessionData?.user||sessionData?.session?.user||null;
     if(!authUser?.id){clearAuthenticatedState();return;}
     if(authUser.emailVerified!==true)throw markDefinitive(new Error("La verificación de correo ya no está vigente."));
     const token=await bearerToken();
+    if(authFlowIsStale(revision))return;
     const profile=await getOwnProfile(token,authUser.id);
+    if(authFlowIsStale(revision))return;
     if(!profile||profile.auth_user_id!==authUser.id||profile.active!==true||profile.email_verified!==true||
        !["admin","operator","viewer"].includes(profile.role)||
        (profile.role==="admin"&&profile.auth_user_id!==PRIMARY_ADMIN_AUTH_ID)){
@@ -162,6 +179,7 @@ async function revalidateCurrentAuthorization(force=false) {
     // Revalidar también la matriz efectiva, no solo el perfil. Esto detecta
     // revocaciones y cambios de módulo aunque la identidad y el rol no cambien.
     const refreshedPermissions=profile.role==="admin"?[]:await getOwnModulePermissions(token);
+    if(authFlowIsStale(revision))return;
     if(profile.role!=="admin"&&!refreshedPermissions.some(permission=>
       permission.allowed===true&&permission.action_key==="view"&&
       permission.module_key!=="testigos"&&permission.module_key!=="control_administrativo"
@@ -173,6 +191,7 @@ async function revalidateCurrentAuthorization(force=false) {
     // La interfaz vuelve a consultar sus permisos en cada revalidación.
     window.dispatchEvent(new Event("mira:permissions-refreshed"));
   } catch(error) {
+    if(authFlowIsStale(revision))return;
     if(isDefinitiveAuthorizationFailure(error)){
       console.warn("[MIRA Auth] La revalidación detectó una sesión o autorización inválida; se cerrará el acceso.",error);
       await signOutCompletely();
@@ -183,6 +202,8 @@ async function revalidateCurrentAuthorization(force=false) {
   } finally { revalidationRunning=false; }
 }
 async function signOutCompletely() {
+  authFlowRevision++;
+  loginInProgress=false;
   try { await auth.signOut(); }
   finally { clearAuthenticatedState(); }
 }
@@ -191,11 +212,14 @@ function showLoginError(message) {
   if(error){error.textContent=message;error.style.display="block";}
 }
 async function loginWithNeon() {
+  if(loginInProgress)return;
   let signInCompleted=false;
   const email=document.getElementById("username")?.value.trim();
   const password=document.getElementById("password")?.value;
   const button=document.getElementById("loginBtn");
   if(!email || !password){showLoginError("Escribe tu correo electrónico y contraseña.");return;}
+  const loginRevision=++authFlowRevision;
+  loginInProgress=true;
   if(button) button.disabled=true;
   try {
     const result=await auth.signIn.email({email,password});
@@ -225,7 +249,10 @@ async function loginWithNeon() {
       clearAuthenticatedState();
     }
     showLoginError(error?.message || "No fue posible completar el inicio de sesión.");
-  } finally { if(button) button.disabled=false; }
+  } finally {
+    if(loginRevision===authFlowRevision) loginInProgress=false;
+    if(button) button.disabled=false;
+  }
 }
 
 document.addEventListener("DOMContentLoaded",()=>{
