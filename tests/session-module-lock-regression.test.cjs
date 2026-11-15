@@ -57,7 +57,7 @@ test("la sincronización de autorización no vuelve a abrir el panel administrat
 });
 
 test("el navegador carga las versiones corregidas de autenticación y permisos", () => {
-  assert.ok(index.includes("mira-auth.js?v=20261114-permission-sync-5"));
+  assert.ok(index.includes("mira-auth.js?v=20261115-auth-restore-racefix-1"));
   assert.ok(index.includes("mira-admin.js?v=20261114-panel-state-3"));
 });
 
@@ -107,4 +107,41 @@ test("la restauración de sesión se reintenta tras fallos transitorios y al rec
   assert.match(auth, /restoreRetryCount>=5/);
   assert.match(auth, /window\.addEventListener\("online"/);
   assert.match(auth, /else restoreExistingSession\(\)/);
+});
+
+
+test("una restauración antigua de Neon no puede cerrar un inicio de sesión más reciente", () => {
+  assert.match(auth, /let authFlowRevision=0,loginInProgress=false/);
+  assert.match(auth, /if\(restoreRunning \|\| loginInProgress\)return/);
+  assert.match(auth, /const revision=authFlowRevision/);
+  assert.match(auth, /authFlowIsStale\(revision\)/);
+  assert.match(auth, /establishAuthenticatedUser\(authUser,revision\)/);
+  assert.match(auth, /const loginRevision=\+\+authFlowRevision/);
+  assert.match(auth, /loginInProgress=true/);
+  assert.match(auth, /if\(loginRevision===authFlowRevision\) loginInProgress=false/);
+});
+
+test("la revalidación no puede cerrar ni sustituir una sesión durante un nuevo login", () => {
+  const revalidation = auth.slice(auth.indexOf("async function revalidateCurrentAuthorization"), auth.indexOf("async function signOutCompletely"));
+  assert.match(revalidation, /if\(revalidationRunning\|\|loginInProgress\|\|!window\.MIRA_CURRENT_USER\)return/);
+  assert.match(revalidation, /if\(authFlowIsStale\(revision\)\)return/);
+});
+
+test("el render territorial monta SVG explícitamente y dispone de recuperación Canvas", () => {
+  assert.match(app, /miraTerritorySvgRenderer\.addTo\(map\)/);
+  assert.match(app, /asegurarRenderizadorTerritorialCanvas/);
+  assert.match(app, /territoryRendererMode = 'canvas'/);
+  assert.match(app, /rendererReady/);
+  assert.match(app, /tamanoMapa: map \? \{ ancho: map\.getSize\(\)\.x, alto: map\.getSize\(\)\.y \}/);
+});
+
+test("el GeoJSON territorial conserva los 143 polígonos y el anillo interior del KML", () => {
+  const geo = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "barrios_poligonos_kml_aportado.geojson"), "utf8"));
+  const kml = fs.readFileSync(path.join(__dirname, "..", "ZONAS_LIDERES_MIRA_fuente.kml"), "utf8");
+  assert.equal(geo.features.length, 143);
+  assert.equal((kml.match(/<Placemark\b/g) || []).length, 143);
+  assert.match(kml, /<innerBoundaryIs>/);
+  const chico = geo.features.find(feature => feature.properties?.nombre === "CHICO I (FRENTE)");
+  assert.equal(chico?.geometry?.type, "Polygon");
+  assert.equal(chico?.geometry?.coordinates?.length, 2);
 });
