@@ -145,3 +145,11 @@ test("el GeoJSON territorial conserva los 143 polígonos y el anillo interior de
   assert.equal(chico?.geometry?.type, "Polygon");
   assert.equal(chico?.geometry?.coordinates?.length, 2);
 });
+
+test("el cierre de una sesión anterior bloquea temporalmente un login concurrente", () => {
+  assert.match(auth, /authSignOutInProgress=false/);
+  assert.match(auth, /if\(restoreRunning \|\| loginInProgress \|\| authSignOutInProgress\)return/);
+  assert.match(auth, /if\(loginInProgress \|\| authSignOutInProgress\)/);
+  assert.match(auth, /authSignOutInProgress=true/);
+  assert.match(auth, /finally \{\s*authSignOutInProgress=false;/);
+});
