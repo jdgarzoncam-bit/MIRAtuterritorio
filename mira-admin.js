@@ -354,10 +354,12 @@ async function applyModuleAccess(){
     return;
   }
   const sameIdentity=lastAppliedModuleAccessUserId===current.authUserId;
-  // En una identidad nueva, mantener cierre preventivo hasta obtener permisos.
-  // En revalidaciones de la misma sesión, conservar la última vista válida mientras se consulta:
-  // las operaciones y los datos siguen protegidos por Neon/RLS.
-  if(!sameIdentity)allTargets.forEach(id=>setModuleRestricted($(id),true));
+  // Barrios/Puestos y el mapa base son herramientas comunes para toda cuenta
+  // activa y aprobada del Centro de Operaciones. No dependen de permisos CRUD.
+  const commonMapTargets=new Set(MODULE_TARGETS.centro_operaciones);
+  // En identidades nuevas se bloquean preventivamente solo los módulos privados;
+  // el mapa común permanece disponible mientras se consulta la matriz.
+  if(!sameIdentity)allTargets.filter(id=>!commonMapTargets.has(id)).forEach(id=>setModuleRestricted($(id),true));
   try{
     const data=await waitForMiraDataClient();
     const rows=await data.listMyModulePermissions();
@@ -366,7 +368,7 @@ async function applyModuleAccess(){
     const canView=new Set(rows.filter(p=>p.allowed===true&&p.action_key==="view").map(p=>p.module_key));
     Object.entries(MODULE_TARGETS).forEach(([moduleKey,ids])=>ids.forEach(id=>{
       const element=$(id);
-      const allowed=moduleKey==="testigos"?false:canView.has(moduleKey);
+      const allowed=moduleKey==="testigos"?false:(moduleKey==="centro_operaciones"||canView.has(moduleKey));
       setModuleRestricted(element,!allowed);
       if(element)element.classList.remove("hidden");
     }));
@@ -375,9 +377,16 @@ async function applyModuleAccess(){
     if(requestVersion!==moduleAccessRequestVersion||window.MIRA_CURRENT_USER?.authUserId!==current.authUserId)return;
     // Si no podemos confirmar la matriz actual, no mantenemos autorizaciones
     // visuales antiguas. Neon/RLS sigue siendo la barrera final de cada operación.
-    allTargets.forEach(id=>{setModuleRestricted($(id),true);$(id)?.classList.remove("hidden");});
+    // Un fallo temporal al leer la matriz no debe quitar el mapa común.
+    // Se bloquean los módulos privados, pero Barrios/Puestos siguen visibles;
+    // sus datos sensibles continúan sujetos a las políticas RLS correspondientes.
+    allTargets.forEach(id=>{
+      const commonMap=commonMapTargets.has(id);
+      setModuleRestricted($(id),!commonMap);
+      $(id)?.classList.remove("hidden");
+    });
     lastAppliedModuleAccessUserId=null;
-    console.warn("[MIRA permisos] No fue posible confirmar la matriz; se bloquea la interfaz hasta la siguiente consulta válida.",error);
+    console.warn("[MIRA permisos] No fue posible confirmar la matriz; se mantienen disponibles las herramientas cartográficas comunes y se bloquean los módulos privados.",error);
     window.dispatchEvent(new CustomEvent("mira:module-access-refresh-failed",{detail:{message:error?.message||"No fue posible actualizar los permisos."}}));
   }
 }
