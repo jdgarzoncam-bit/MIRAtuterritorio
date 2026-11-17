@@ -42,9 +42,9 @@ test("la revalidación de identidad no depende de permisos de módulos", () => {
   assert.match(revalidation, /la matriz de módulos/);
 });
 
-test("los errores HTTP de la consulta de permisos conservan su código para distinguir revocación de fallos temporales", () => {
-  assert.match(auth, /const failedResponse=!permissionsResponse\.ok\?permissionsResponse:catalogResponse/);
-  assert.match(auth, /error\.status=failedResponse\.status/);
+test("la autenticación no realiza consultas de matriz de módulos y la API conserva códigos HTTP", () => {
+  assert.doesNotMatch(auth, /getOwnModulePermissions/);
+  assert.match(data, /error\.status=response\.status/);
 });
 
 test("un fallo temporal de autenticación no cierra la sesión automáticamente", () => {
