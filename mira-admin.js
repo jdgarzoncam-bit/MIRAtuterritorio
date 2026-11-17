@@ -185,7 +185,7 @@ function renderMatrix(){
  const visibleModules=modules.filter(m=>!['control_administrativo','testigos','centro_operaciones'].includes(m.module_key)&&m.active!==false);
  const approval=selectedProfile&&selectedProfile.role!=="admin"?renderApprovalControls(selectedProfile):"";
  const roleNote=selectedProfile&&selectedProfile.role!=="admin"
-  ? '<p class="admin-permissions-hint"><strong>Mapa común:</strong> toda cuenta activa y con correo verificado tiene acceso a Barrios y puestos de votación. No se administra desde esta matriz. El rol establece el límite máximo: Consulta solo puede consultar; Operador puede consultar, crear, editar, exportar y anular cuando el permiso individual está concedido. Eliminar y administrar permanecen reservados al administrador. Los permisos guardados fuera del límite del rol permanecen inactivos; revísalos antes de cambiar el rol.</p>'
+  ? '<p class="admin-permissions-hint"><strong>Mapa común:</strong> toda cuenta activa y con correo verificado tiene acceso a Barrios y puestos de votación. No se administra desde esta matriz. El rol establece el límite máximo: Consulta solo puede consultar; Operador puede consultar, crear, editar, exportar y anular cuando el permiso individual está concedido. Eliminar y administrar permanecen reservados al administrador. Los permisos guardados se conservan aunque queden fuera del límite del rol y permanecen inactivos; revísalos antes de cambiar el rol.</p>'
   : "";
  $("adminPermissionsMatrix").innerHTML=approval+roleNote+visibleModules.map(m=>{
   const actions=MODULE_ACTIONS[m.module_key]||[["view","Consulta"]];
