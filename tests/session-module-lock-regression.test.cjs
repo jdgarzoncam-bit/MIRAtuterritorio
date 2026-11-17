@@ -9,9 +9,9 @@ const data = fs.readFileSync(path.join(__dirname, "..", "mira-data.js"), "utf8")
 const app = fs.readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
 const index = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
 
-test("una revalidación de la misma cuenta no bloquea visualmente todos los módulos antes de consultar permisos", () => {
+test("una revalidación conserva el mapa común y evita el bloqueo visual de herramientas cartográficas", () => {
   assert.match(admin, /const sameIdentity=lastAppliedModuleAccessUserId===current\.authUserId/);
-  assert.match(admin, /if\(!sameIdentity\)allTargets\.forEach\(id=>setModuleRestricted/);
+  assert.match(admin, /if\(!sameIdentity\)allTargets\.filter\(id=>!commonMapTargets\.has\(id\)\)/);
   assert.doesNotMatch(admin, /allTargets\.forEach\(id=>setModuleRestricted\(\$\(id\),true\)\);\s*if\(current\.role/);
 });
 
@@ -19,7 +19,7 @@ test("el mapa territorial y Barrios/Puestos son comunes a todas las cuentas apro
   const establishment = auth.slice(auth.indexOf("async function establishAuthenticatedUser"), auth.indexOf("async function restoreExistingSession"));
   const access = admin.slice(admin.indexOf("async function applyModuleAccess"), admin.indexOf("function init()"));
   assert.doesNotMatch(establishment, /getOwnModulePermissions/);
-  assert.match(establishment, /Cuenta activa, verificada y aprobada/);
+  assert.match(establishment, /Una cuenta activa, verificada y aprobada/);
   assert.match(access, /moduleKey==="centro_operaciones"\|\|canView\.has\(moduleKey\)/);
   assert.match(access, /commonMapTargets\.has\(id\)/);
 });
