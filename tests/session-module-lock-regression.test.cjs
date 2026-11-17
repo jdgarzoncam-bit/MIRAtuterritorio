@@ -15,23 +15,31 @@ test("una revalidación de la misma cuenta no bloquea visualmente todos los mód
   assert.doesNotMatch(admin, /allTargets\.forEach\(id=>setModuleRestricted\(\$\(id\),true\)\);\s*if\(current\.role/);
 });
 
+test("el mapa territorial y Barrios/Puestos son comunes a todas las cuentas aprobadas", () => {
+  const establishment = auth.slice(auth.indexOf("async function establishAuthenticatedUser"), auth.indexOf("async function restoreExistingSession"));
+  const access = admin.slice(admin.indexOf("async function applyModuleAccess"), admin.indexOf("function init()"));
+  assert.doesNotMatch(establishment, /getOwnModulePermissions/);
+  assert.match(establishment, /Cuenta activa, verificada y aprobada/);
+  assert.match(access, /moduleKey==="centro_operaciones"\|\|canView\.has\(moduleKey\)/);
+  assert.match(access, /commonMapTargets\.has\(id\)/);
+});
+
 test("las respuestas de permisos antiguas no pueden sobrescribir el estado de otra sesión", () => {
   assert.match(admin, /moduleAccessRequestVersion/);
   assert.match(admin, /requestVersion!==moduleAccessRequestVersion\|\|window\.MIRA_CURRENT_USER\?\.authUserId!==current\.authUserId/);
 });
 
-test("un fallo al actualizar permisos bloquea la interfaz hasta confirmar la matriz", () => {
-  assert.match(admin, /allTargets\.forEach\(id=>\{setModuleRestricted\(\$\(id\),true\)/);
-  assert.match(admin, /lastAppliedModuleAccessUserId=null/);
-  assert.match(admin, /se bloquea la interfaz hasta la siguiente consulta válida/);
+test("un fallo al consultar permisos bloquea módulos privados pero conserva el mapa común", () => {
+  assert.match(admin, /const commonMapTargets=new Set\(MODULE_TARGETS\.centro_operaciones\)/);
+  assert.match(admin, /const commonMap=commonMapTargets\.has\(id\)/);
+  assert.match(admin, /setModuleRestricted\(\$\(id\),!commonMap\)/);
   assert.match(admin, /mira:module-access-refresh-failed/);
 });
-test("la revalidación consulta los permisos granulares incluso si el rol no cambia", () => {
+test("la revalidación de identidad no depende de permisos de módulos", () => {
   const revalidation = auth.slice(auth.indexOf("async function revalidateCurrentAuthorization"), auth.indexOf("async function signOutCompletely"));
-  assert.match(revalidation, /const refreshedPermissions=profile\.role==="admin"\?\[\]:await getOwnModulePermissions\(token\)/);
-  assert.match(revalidation, /refreshedPermissions\.some\(permission=>/);
+  assert.doesNotMatch(revalidation, /getOwnModulePermissions/);
   assert.match(revalidation, /window\.dispatchEvent\(new Event\("mira:permissions-refreshed"\)\)/);
-  assert.match(revalidation, /La cuenta ya no tiene módulos autorizados/);
+  assert.match(revalidation, /la matriz de módulos/);
 });
 
 test("los errores HTTP de la consulta de permisos conservan su código para distinguir revocación de fallos temporales", () => {
@@ -57,8 +65,8 @@ test("la sincronización de autorización no vuelve a abrir el panel administrat
 });
 
 test("el navegador carga las versiones corregidas de autenticación y permisos", () => {
-  assert.ok(index.includes("mira-auth.js?v=20261115-auth-restore-racefix-2"));
-  assert.ok(index.includes("mira-admin.js?v=20261114-panel-state-3"));
+  assert.ok(index.includes("mira-auth.js?v=20261117-common-map-access-1"));
+  assert.ok(index.includes("mira-admin.js?v=20261117-common-map-access-1"));
 });
 
 test("el wrapper Neon Auth expone el JWT del SDK y conserva el cliente Better Auth", () => {
