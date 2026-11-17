@@ -2,10 +2,10 @@
 const MODULE_ACTIONS = {
   actividades:[["view","Consulta"],["create","Crear"],["edit","Editar"],["annul","Anular asistencia"],["export","Exportar Excel"],["delete","Eliminar"]],
   personas:[["view","Consultar personas"],["create","Crear / Incorporar personas"],["edit","Completar / editar fichas"],["export","Exportar fichas"]],
-  base_datos_general:[["view","Consultar bases autorizadas"],["create","Crear registros autorizados"],["edit","Editar registros autorizados"],["export","Exportar información"],["manage","Administrar conjuntos y accesos"]],
+  base_datos_general:[["view","Consultar bases autorizadas"],["export","Exportar información"]],
   concejal:[["view","Consulta"],["create","Crear"],["edit","Editar"],["delete","Eliminar"]],
   infomira:[["view","Consulta"],["create","Crear"],["edit","Editar"],["delete","Eliminar"]],
-  centro_operaciones:[["view","Consulta"]], pqrs:[["view","Consulta"]]
+  pqrs:[["view","Consulta"]]
 };
 const $ = (id) => document.getElementById(id);
 let users = [], modules = [], selectedProfile = null, permissionRows = [], allPermissionRows = [];
@@ -49,8 +49,8 @@ function userApprovalStatus(user){
   const ownPermissions=allPermissionRows.filter(row=>row.user_profile_id===user.id);
   if(user.email_verified!==true)return {bucket:"pending",key:"email",label:"Correo sin confirmar"};
   if(user.active!==true)return {bucket:"pending",key:"inactive",label:"Cuenta inactiva · acceso bloqueado"};
-  if(!hasUsableModuleAccess(ownPermissions,user.role))return {bucket:"pending",key:"no_access",label:"Activo · sin acceso efectivo"};
-  return {bucket:"approved",key:"approved",label:"Aprobado · acceso habilitado"};
+  const hasPrivateModuleAccess=hasUsableModuleAccess(ownPermissions,user.role);
+  return {bucket:"approved",key:"approved",label:hasPrivateModuleAccess?"Aprobado · módulos autorizados":"Aprobado · acceso común al mapa"};
 }
 const PRIMARY_ADMIN_AUTH_ID="beef5bf3-82a8-4c35-a12c-17771be59da1";
 function isAdmin(){const user=window.MIRA_CURRENT_USER;return user?.role==="admin"&&user?.authUserId===PRIMARY_ADMIN_AUTH_ID;}
@@ -139,14 +139,15 @@ function renderApprovalControls(user){
   if(user.role==="witness")roles.push(["witness","Testigo (reservado; no asignable)"]);
   const options=roles.map(([value,label])=>'<option value="'+value+'" '+(user.role===value?"selected ":"")+(value==="witness"?"disabled":"")+'>'+label+'</option>').join("");
   const hasModuleAccess=hasUsableModuleAccess(permissionRows,user.role);
-  const canApprove=user.email_verified===true&&hasModuleAccess;
+  const canApprove=user.email_verified===true;
   const action=user.active?"suspend":"activate";
   const label=user.active?"Desaprobar cuenta":"Aprobar y habilitar cuenta";
   let hint;
   if(!user.email_verified)hint="La persona debe confirmar su correo electrónico antes de continuar.";
-  else if(!hasModuleAccess&&!user.active)hint="Asigna al menos un módulo activo y disponible con permiso Consulta.";
-  else if(user.active&&!hasModuleAccess)hint="La cuenta está activa, pero no tiene módulos autorizados. El ingreso permanece bloqueado.";
-  else hint="Correo confirmado y módulos asignados. La cuenta puede habilitarse.";
+  else if(!user.active&&!hasModuleAccess)hint="Correo confirmado. Puedes aprobar la cuenta para habilitar el mapa común; asigna módulos privados solo si los necesita.";
+  else if(user.active&&!hasModuleAccess)hint="Cuenta aprobada. Tiene acceso común al mapa; asigna módulos privados solo si los necesita.";
+  else if(!user.active)hint="Correo confirmado y módulos autorizados. La cuenta puede habilitarse.";
+  else hint="Cuenta activa: el mapa común y los módulos autorizados están disponibles.";
   return '<section class="admin-approval-card"><div><strong>Estado y aprobación</strong><small>'+hint+'</small></div><label class="admin-role-picker"><span>Rol de la cuenta</span><select id="adminRoleSelect">'+options+'</select></label><button type="button" class="admin-approval-button" data-profile-approval="'+action+'" '+(!user.active&&!canApprove?"disabled":"")+'>'+label+'</button><button type="button" class="admin-approval-button admin-role-save" data-profile-approval="save-role">Guardar rol</button></section><div class="admin-approval-divider"></div>';
 }
 async function changeUserApproval(button){
@@ -154,9 +155,7 @@ async function changeUserApproval(button){
  const target={...selectedProfile},targetId=selectedProfile.id,action=button.dataset.profileApproval;
  const activate=action==="activate";
  if(activate&&!target.email_verified){notice("No puedes activar una cuenta cuyo correo no está confirmado.",true);return;}
- const hasModuleAccess=hasUsableModuleAccess(permissionRows,target.role);
- if(activate&&!hasModuleAccess){notice("No puedes aprobar esta cuenta: asigna al menos un módulo activo y disponible con Consulta.",true);return;}
- const nextActive=action==="save-role"?target.active:activate;
+  const nextActive=action==="save-role"?target.active:activate;
  const role=$("adminRoleSelect")?.value||target.role;
  if(!["viewer","operator"].includes(role)){notice("El rol Testigo está reservado. Selecciona Consulta u Operador para reemplazarlo.",true);return;}
  if(target.role==="viewer"&&role==="operator"){
@@ -183,10 +182,10 @@ async function changeUserApproval(button){
 }
 function renderMatrix(){
  const allowed=new Set(permissionRows.filter(p=>p.allowed).map(p=>p.module_key+"::"+p.action_key));
- const visibleModules=modules.filter(m=>m.module_key!=="control_administrativo"&&m.module_key!=="testigos"&&m.active!==false);
+ const visibleModules=modules.filter(m=>!['control_administrativo','testigos','centro_operaciones'].includes(m.module_key)&&m.active!==false);
  const approval=selectedProfile&&selectedProfile.role!=="admin"?renderApprovalControls(selectedProfile):"";
  const roleNote=selectedProfile&&selectedProfile.role!=="admin"
-  ? '<p class="admin-permissions-hint"><strong>El administrador controla cada autorización.</strong> El rol establece el límite máximo: Consulta solo puede consultar; Operador puede consultar, crear, editar, exportar y anular cuando el permiso individual está concedido. Eliminar y administrar permanecen reservados al administrador mientras no se habiliten mediante una política específica. Los permisos guardados se conservan aunque queden fuera del límite del rol y permanecen inactivos; si cambias el rol, revisa la matriz antes de aprobar la cuenta.</p>'
+  ? '<p class="admin-permissions-hint"><strong>Mapa común:</strong> toda cuenta activa y con correo verificado tiene acceso a Barrios y puestos de votación. No se administra desde esta matriz. El rol establece el límite máximo: Consulta solo puede consultar; Operador puede consultar, crear, editar, exportar y anular cuando el permiso individual está concedido. Eliminar y administrar permanecen reservados al administrador. Los permisos guardados fuera del límite del rol permanecen inactivos; revísalos antes de cambiar el rol.</p>'
   : "";
  $("adminPermissionsMatrix").innerHTML=approval+roleNote+visibleModules.map(m=>{
   const actions=MODULE_ACTIONS[m.module_key]||[["view","Consulta"]];
