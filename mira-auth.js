@@ -91,14 +91,10 @@ async function establishAuthenticatedUser(authUser,expectedRevision=null) {
   if(profile.active!==true || profile.email_verified!==true || !["admin","operator","viewer"].includes(profile.role)) {
     throw markDefinitive(new Error("Tu cuenta todavía no está aprobada. Solicita al administrador que habilite tu perfil."));
   }
-  let permissions=[];
-  if(profile.role!=="admin") {
-    permissions=await getOwnModulePermissions(token);
-    if(expectedRevision!==null && authFlowIsStale(expectedRevision)) return false;
-    if(!permissions.some(permission=>permission.allowed===true && permission.action_key==="view" && permission.module_key!=="testigos" && permission.module_key!=="control_administrativo")) {
-      throw markDefinitive(new Error("Tu cuenta está aprobada, pero todavía no tiene módulos autorizados. Solicita al administrador que habilite al menos uno."));
-    }
-  }
+  // Una cuenta activa, verificada y aprobada puede entrar al Centro de Operaciones
+  // y utilizar el mapa territorial común. Los permisos de cada módulo se aplican
+  // después, en la interfaz y en PostgreSQL/RLS; no se exige un permiso de módulo
+  // para autenticar ni para consultar la cartografía base.
   window.MIRA_CURRENT_USER={role:profile.role,authUserId:profile.auth_user_id,displayName:profile.display_name||authUser.name||profile.email,email:profile.email||authUser.email};
   window.dispatchEvent(new Event("mira:authenticated"));
   if(typeof window.activarPMUAutenticado!=="function") throw new Error("No se pudo iniciar la interfaz principal.");
@@ -179,16 +175,10 @@ async function revalidateCurrentAuthorization(force=false) {
       // La cuenta existe pero su perfil ya no autoriza el acceso: no es un fallo de red.
       throw markDefinitive(new Error("La cuenta fue desactivada o sus condiciones de acceso cambiaron."));
     }
-    // Revalidar también la matriz efectiva, no solo el perfil. Esto detecta
-    // revocaciones y cambios de módulo aunque la identidad y el rol no cambien.
-    const refreshedPermissions=profile.role==="admin"?[]:await getOwnModulePermissions(token);
-    if(authFlowIsStale(revision))return;
-    if(profile.role!=="admin"&&!refreshedPermissions.some(permission=>
-      permission.allowed===true&&permission.action_key==="view"&&
-      permission.module_key!=="testigos"&&permission.module_key!=="control_administrativo"
-    )){
-      throw markDefinitive(new Error("La cuenta ya no tiene módulos autorizados. El acceso fue bloqueado."));
-    }
+    // La revalidación de identidad no depende de la matriz de módulos:
+    // una revocación de un módulo no debe cerrar el Centro de Operaciones ni
+    // retirar el mapa común. applyModuleAccess vuelve a consultar permisos y
+    // bloquea únicamente los módulos específicos que correspondan.
     const previous=window.MIRA_CURRENT_USER;
     window.MIRA_CURRENT_USER={role:profile.role,authUserId:profile.auth_user_id,displayName:profile.display_name||authUser.name||profile.email,email:profile.email||authUser.email};
     // La interfaz vuelve a consultar sus permisos en cada revalidación.
