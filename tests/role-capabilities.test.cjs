@@ -11,6 +11,7 @@ const styleSource = fs.readFileSync(path.join(__dirname, "..", "style.css"), "ut
 const exportMigration = fs.readFileSync(path.join(__dirname, "..", "migrations", "20261111_activities_granular_export_permission.sql"), "utf8");
 const auditMigration = fs.readFileSync(path.join(__dirname, "..", "migrations", "20261113_audit_export_remove_operational_reports.sql"), "utf8");
 const leastPrivilegeMigration = fs.readFileSync(path.join(__dirname, "..", "migrations", "20261111_security_least_privilege_qa.sql"), "utf8");
+const commonMapApprovalMigration = fs.readFileSync(path.join(__dirname, "..", "migrations", "20261117_common_map_account_approval.sql"), "utf8");
 const reportesSource = fs.readFileSync(path.join(__dirname, "..", "reportes.js"), "utf8");
 const activityPortalSource = fs.readFileSync(path.join(__dirname, "..", "activity-portal.js"), "utf8");
 const dataSourceCurrent = dataSource;
@@ -88,8 +89,35 @@ test("la matriz permite retirar permisos guardados aunque estén inactivos por r
   assert.match(adminSource, /Los permisos guardados se conservan/);
 });
 
-test("Centro de Operaciones mantiene únicamente Consulta", () => {
-  assert.match(adminSource, /centro_operaciones:\[\["view","Consulta"\]\]/);
+test("el mapa común no se administra mediante permisos privados de módulo", () => {
+  assert.doesNotMatch(adminSource, /centro_operaciones:\[\[/);
+  assert.match(adminSource, /includes\(m\.module_key\)\&\&m\.active!==false/);
+  assert.match(adminSource, /Mapa común:[\s\S]*toda cuenta activa y con correo verificado/);
+});
+
+test("la aprobación de una cuenta verificada no exige permisos de módulos privados", () => {
+  const approval = adminSource.slice(adminSource.indexOf("function renderApprovalControls"), adminSource.indexOf("function renderMatrix"));
+  assert.match(approval, /const canApprove=user\.email_verified===true/);
+  assert.doesNotMatch(approval, /canApprove=user\.email_verified===true&&hasModuleAccess/);
+  assert.doesNotMatch(approval, /if\(activate&&!hasModuleAccess\)/);
+  assert.match(adminSource, /Aprobado · acceso común al mapa/);
+});
+
+test("Base de datos general solo ofrece permisos con operación real", () => {
+  assert.match(adminSource, /base_datos_general:\[\["view","Consultar bases autorizadas"\],\["export","Exportar información"\]\]/);
+  assert.doesNotMatch(adminSource, /base_datos_general:\[\[[^\]]*create/);
+  assert.doesNotMatch(adminSource, /base_datos_general:\[\[[^\]]*manage/);
+});
+
+test("la migración permite activar cuentas verificadas sin permiso privado y elimina el bloqueo del último view", () => {
+  const start = commonMapApprovalMigration.indexOf("CREATE OR REPLACE FUNCTION mira.enforce_profile_activation_requirements()");
+  const end = commonMapApprovalMigration.indexOf("$function$;", start);
+  const activationFunction = commonMapApprovalMigration.slice(start, end);
+  assert.ok(start >= 0);
+  assert.match(activationFunction, /NEW\.email_verified IS DISTINCT FROM true/);
+  assert.doesNotMatch(activationFunction, /module_permissions|module_catalog|action_key/);
+  assert.match(commonMapApprovalMigration, /DROP TRIGGER IF EXISTS guard_last_active_module_view_permission/);
+  assert.match(commonMapApprovalMigration, /BEGIN;[\s\S]*COMMIT;/);
 });
 
 test("el inicio de sesión no acepta el rol Testigo reservado", () => {
