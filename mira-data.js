@@ -107,7 +107,7 @@ export const MIRA_DATA = {
     const safeOffset=Math.max(0,Number(offset)||0);
     const documentDigits=cleanCedula(cedula || search);
     const term=String(search || cedula || "").trim();
-    if ((cedula || /^\\s*[\\d.\\-\\s]+\\s*$/.test(term)) && !documentDigits) {
+    if ((cedula || /^\s*[\d.\-\s]+\s*$/.test(term)) && !documentDigits) {
       throw new Error("La cédula debe contener al menos un dígito.");
     }
 
@@ -121,7 +121,7 @@ export const MIRA_DATA = {
         limit:"100"
       })});
     } else if (term) {
-      const safeTerm=term.replace(/[,*()\\"]/g," ").replace(/\\s+/g," ").trim().slice(0,80);
+      const safeTerm=term.replace(/[,*()\\"]/g," ").replace(/\s+/g," ").trim().slice(0,80);
       if (!safeTerm) return [];
       const clauses=[`nombres.ilike.*${safeTerm}*`,`apellidos.ilike.*${safeTerm}*`];
       if (documentDigits) clauses.push("cedula_normalizada.eq."+documentDigits);
