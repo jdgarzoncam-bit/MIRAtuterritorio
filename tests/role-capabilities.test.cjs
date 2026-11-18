@@ -340,3 +340,17 @@ test("Bloque 5: el diagnóstico de calidad es agregado, de solo lectura y proteg
   assert.match(block5Migration, /LANGUAGE plpgsql[\s\S]*STABLE[\s\S]*SECURITY INVOKER/);
   assert.match(block5Migration, /REVOKE ALL ON FUNCTION mira\.get_data_quality_summary\(\) FROM PUBLIC,anonymous/);
 });
+
+
+test("Bloque 6: el panel de calidad tiene región accesible y estados anunciables", () => {
+  assert.match(appSource, /id="databaseQualityReport"[^>]*role="region"/);
+  assert.match(appSource, /aria-live="polite"/);
+  assert.match(appSource, /aria-label="Diagnóstico de calidad de datos"/);
+});
+
+test("Bloque 6: Base de datos general tiene ajustes responsivos y foco visible", () => {
+  assert.match(styleSource, /Bloque 6 · cierre visual accesible y adaptable de Base de datos general/);
+  assert.match(styleSource, /@media\(max-width:560px\)[\s\S]*database-workspace \.activity-toolbar/);
+  assert.match(styleSource, /database-workspace button:focus-visible/);
+  assert.match(styleSource, /database-workspace #databaseQualityReport \.activity-table\{width:100%;min-width:100%/);
+});
