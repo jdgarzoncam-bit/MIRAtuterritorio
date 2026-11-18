@@ -361,7 +361,7 @@ test("InfoMIRA: consulta normaliza documentos, limita la consulta y pagina con o
   assert.match(dataSource,/const documentDigits=cleanCedula\(cedula\)/);
   assert.match(dataSource,/order:"fila_origen.asc,id.asc"/);
   assert.match(dataSource,/Math\.min\(Math\.max\(Number\(limit\)\|\|100,1\),100\)/);
-  assert.match(dataSource,/params\\.cedula_original = `eq\\.\\$\\{documentDigits\\}`/);
+  assert.match(dataSource,/params\.cedula_original = `eq\.\$\{documentDigits\}`/);
   assert.match(dataSource,/cedula_normalizada,nombres,apellidos/);
 });
 test("InfoMIRA: el buscador recorre páginas y evita pintar respuestas obsoletas",()=>{
