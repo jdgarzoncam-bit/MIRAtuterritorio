@@ -387,3 +387,10 @@ test("InfoMIRA: el filtro Activo no incluye registros Inactivos por coincidencia
   assert.match(appSource,/role\.includes\('REFERIDO'\)/);
   assert.doesNotMatch(appSource,/role\.includes\('ACTIVO'\)/);
 });
+
+test("InfoMIRA: los nombres de puestos se normalizan para tolerar tildes, signos y espacios",()=>{
+  const info=appSource.slice(appSource.indexOf("function inicializarModuloInfoMIRA"),appSource.indexOf("function obtenerUltimaActividadPorBarrio"));
+  assert.match(info,/normalizarPuestoInfoMira = value => String\(value \|\| ''\)\.normalize\('NFD'\)/);
+  assert.match(info,/replace\(\/\[\^A-Z0-9\]\+\/g,' '\)/);
+  assert.match(info,/agrupados\.get\(normalizarPuestoInfoMira\(puesto\.matchName\)\)/);
+});
