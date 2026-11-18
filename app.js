@@ -872,6 +872,7 @@ function editPending(person){
       const result=await window.MIRA_DATA.exportDataset({datasetKey:dataset.key,search:search.value,filterField:field.value,filterValue:value.value,limit:100000,personStatus:dataset.key==="personas"?personStatus.value:"all"});
       const all=result?.rows;
       if(!Array.isArray(all))throw new Error("El servidor no devolvió un conjunto de datos válido.");
+      if(result.truncated){say("Exportación incompleta bloqueada: existen "+(result.total_count??"más de "+all.length)+" registros y el servidor entregó "+all.length+". No se generó un archivo parcial. Aplica filtros para reducir el conjunto.",true);return;}
       if(!all.length){say("La exportación fue autorizada y registrada, pero no hay registros que coincidan con los filtros.");return;}
       const sheet=window.XLSX.utils.json_to_sheet(all),book=window.XLSX.utils.book_new();
       window.XLSX.utils.book_append_sheet(book,sheet,dataset.label.slice(0,31));
