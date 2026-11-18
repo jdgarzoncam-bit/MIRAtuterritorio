@@ -63,3 +63,16 @@ No ejecutar depuración masiva, borrados, merges de personas ni conciliaciones a
 - RLS de QA se verificó en PostgreSQL: SELECT exige `personas:view`; UPDATE exige `personas:edit` tanto en USING como en WITH CHECK. No se alteraron políticas ni se aplicaron migraciones.
 - CI del commit `c8727e89326eb87b2fc22dacd5541f7693816daf`: sintaxis JavaScript y pruebas de seguridad aprobadas. Run: https://github.com/jdgarzoncam-bit/MIRAtuterritorio/actions/runs/44333614796
 - Pendiente validación real de navegador: detalle, edición desde pendientes, archivado, recuperación, persistencia tras refresco y denegación a cuentas sin `personas:edit`. El bloque no se declara cerrado.
+
+
+## Bloque 4 — auditoría y permisos (2026-11-18)
+- Auditoría de esquema QA: RLS habilitada en personas, personas_change_audit, audit_events y admin_audit_log.
+- RLS de personas: SELECT requiere personas:view; INSERT requiere personas:create; UPDATE requiere personas:edit tanto en USING como WITH CHECK. La política de module_permissions permite escrituras solo a la cuenta administradora activa.
+- audit_events: lectura mediante política que exige base_datos_general:view y permiso view del módulo de cada evento (salvo administrador activo); clientes authenticated no tienen INSERT/UPDATE/DELETE directos. list_audit_events es SECURITY INVOKER, por lo que conserva RLS; no se concede ejecución a anonymous.
+- Funciones de trigger audit_row_change y audit_persona_changes tienen EXECUTE revocado a PUBLIC/anonymous/authenticated.
+- Los cambios de user_profiles y module_permissions alimentan tanto admin_audit_log como audit_events mediante triggers distintos y destinos diferentes. No son duplicados idénticos: uno es auditoría administrativa específica y otro es transversal.
+- Hallazgos de cobertura: evidencias_e14, testigo_archivos y testigos_publicos no tienen trigger de auditoría central en QA. Testigos está inactivo por decisión del proyecto; evidencias E14 debe revisarse con el módulo Testigos antes de reactivarlo. No se añadió auditoría a tablas inactivas en este bloque.
+- La consulta actual de auditoría muestra 18 eventos; 9 no tienen actor_auth_user_id. Debe distinguirse operación SQL/administrativa de una acción de usuario; la interfaz ahora lo rotula como “Sistema / operación SQL” en vez de atribuirla a una persona.
+- `app.js`: corregido el estado de error del historial. Si falla la RPC, ya no queda la tabla indefinidamente en “Consultando”; muestra error, conserva el control de reintento por filtros y evita respuestas fuera de orden.
+- Se añadieron pruebas de regresión de UI/RLS/auditoría en `tests/role-capabilities.test.cjs`. CI del commit `51888537c15e915b3323b0f323aa731fe428ac58` estaba ejecutándose al registrar esta actualización.
+- Pendiente de validación funcional: sesión de operador con permisos de Base de datos general y módulos, cuenta sin permisos, filtros de auditoría y denegación de escrituras directas; confirmar CI verde. No modificar datos de producción.
