@@ -6261,3 +6261,100 @@ body.theme-light #mainSidebar .neo-tactile-sidebar{
  .database-workspace #databaseQualityReport{padding:9px}
  .database-workspace #databaseQualityReport .activity-table th,.database-workspace #databaseQualityReport .activity-table td{padding:9px 7px;font-size:.78rem}
 }
+
+
+/* =========================================================
+   MIRA · navegación lateral inspirada en el prototipo Figma
+   Transiciones de apertura/cierre y estados accesibles
+   ========================================================= */
+#mainSidebar{
+  transform-origin:left center;
+  transition:transform .48s cubic-bezier(.22,.8,.25,1),opacity .34s ease,filter .38s ease;
+  will-change:transform,opacity;
+}
+#mainSidebar.collapsed{
+  transform:translate3d(-108%,0,0) scale(.985);
+  opacity:0;
+  filter:blur(3px);
+  pointer-events:none;
+}
+.neo-tactile-sidebar{
+  border-radius:24px;
+  background:linear-gradient(155deg,rgba(27,22,25,.97),rgba(15,15,20,.96) 58%,rgba(29,20,25,.97));
+  border:1px solid rgba(255,255,255,.09);
+  box-shadow:0 24px 70px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.055);
+  backdrop-filter:blur(22px) saturate(135%);
+}
+.neo-tactile-sidebar .sidebar-header{
+  border-bottom:1px solid rgba(255,255,255,.075);
+}
+.neo-tactile-sidebar .section-title{
+  letter-spacing:.13em;
+  text-transform:uppercase;
+}
+.neo-tactile-sidebar .custom-dropdown{
+  border:1px solid rgba(255,255,255,.065);
+  border-radius:14px;
+  background:rgba(255,255,255,.025);
+  overflow:hidden;
+  transition:background .25s ease,border-color .25s ease,transform .25s ease,box-shadow .25s ease;
+}
+.neo-tactile-sidebar .custom-dropdown:hover{
+  background:rgba(255,255,255,.055);
+  border-color:rgba(255,126,65,.32);
+  transform:translateX(2px);
+}
+.neo-tactile-sidebar .custom-dropdown>summary{
+  min-height:48px;
+  transition:background .24s ease,color .24s ease;
+}
+.neo-tactile-sidebar .custom-dropdown[open]>summary{
+  color:#fff;
+  background:linear-gradient(90deg,rgba(255,126,65,.15),rgba(255,126,65,.025));
+}
+.neo-tactile-sidebar .custom-dropdown .arrow-icon{
+  transition:transform .34s cubic-bezier(.2,.75,.25,1),color .24s ease;
+}
+.neo-tactile-sidebar .custom-dropdown[open] .arrow-icon{
+  transform:rotate(180deg);
+  color:#ff985f;
+}
+.neo-tactile-sidebar .custom-dropdown>.dropdown-content{
+  display:block;
+  max-height:0;
+  overflow:hidden;
+  opacity:0;
+  transform:translateY(-7px);
+  padding-top:0;
+  padding-bottom:0;
+  transition:max-height .42s cubic-bezier(.2,.75,.25,1),opacity .25s ease,transform .32s ease,padding .32s ease;
+}
+.neo-tactile-sidebar .custom-dropdown[open]>.dropdown-content{
+  max-height:1800px;
+  opacity:1;
+  transform:translateY(0);
+  padding-top:10px;
+  padding-bottom:12px;
+}
+.neo-tactile-sidebar .activity-sidebar-tile,
+.neo-tactile-sidebar .database-action-card{
+  transition:transform .24s ease,border-color .24s ease,background .24s ease,box-shadow .24s ease;
+}
+.neo-tactile-sidebar .activity-sidebar-tile:hover,
+.neo-tactile-sidebar .database-action-card:hover{
+  transform:translate3d(3px,-1px,0);
+  border-color:rgba(255,126,65,.55);
+  box-shadow:0 8px 22px rgba(0,0,0,.18);
+}
+.neo-tactile-sidebar button:focus-visible,
+.neo-tactile-sidebar summary:focus-visible{
+  outline:2px solid #ff985f;
+  outline-offset:3px;
+}
+@media(prefers-reduced-motion:reduce){
+  #mainSidebar,.neo-tactile-sidebar,.neo-tactile-sidebar *{
+    transition-duration:.01ms!important;
+    animation-duration:.01ms!important;
+    scroll-behavior:auto!important;
+  }
+}
