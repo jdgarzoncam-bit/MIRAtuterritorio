@@ -1503,6 +1503,15 @@ document.getElementById('sidebarToggleBtn').addEventListener('click', function()
         }
 
         if (!details.open) {
+            if (document.getElementById('mainSidebar')?.classList.contains('collapsed')) {
+                sidebar.querySelectorAll(':scope .sidebar-content > details.custom-dropdown[open]').forEach(other => {
+                    if (other !== details) {
+                        other.open = false;
+                        const otherSummary = other.querySelector(':scope > summary');
+                        otherSummary?.setAttribute('aria-expanded', 'false');
+                    }
+                });
+            }
             details.open = true;
             summary.setAttribute('aria-expanded', 'true');
             return;
@@ -1542,29 +1551,17 @@ document.getElementById('sidebarToggleBtn').addEventListener('click', function()
 
 
 function manejarBotonFlotanteReapertura(estaContraido) {
-    let floatBtn = document.getElementById('floatingReopenBtn');
-    if (estaContraido) {
-        if (!floatBtn) {
-            floatBtn = document.createElement('button');
-            floatBtn.id = 'floatingReopenBtn';
-            floatBtn.title = 'Mostrar Menú';
-            floatBtn.setAttribute('aria-label', 'Abrir menú lateral');
-            floatBtn.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 12h18M3 6h18M3 18h18"/></svg>`;
-            floatBtn.className = 'floating-reopen-neo-btn';
-            floatBtn.addEventListener('click', function() {
-                const sidebarGroup = document.getElementById('mainSidebar');
-                sidebarGroup.classList.remove('collapsed');
-                document.getElementById('sidebarToggleBtn').setAttribute('aria-expanded', 'true');
-                floatBtn.remove();
-                setTimeout(() => { if (map) map.invalidateSize(); }, 350);
-            });
-            document.body.appendChild(floatBtn);
-        } else {
-            floatBtn.style.display = 'flex';
-        }
-    } else {
-        if (floatBtn) floatBtn.style.display = 'none';
+    // El botón de alternancia permanece integrado en el rail de iconos.
+    // Se elimina el antiguo botón flotante para evitar duplicar controles.
+    const floatBtn = document.getElementById('floatingReopenBtn');
+    if (floatBtn) floatBtn.remove();
+    const toggle = document.getElementById('sidebarToggleBtn');
+    if (toggle) {
+        toggle.setAttribute('aria-expanded', String(!estaContraido));
+        toggle.setAttribute('aria-label', estaContraido ? 'Expandir menú lateral' : 'Contraer menú lateral');
+        toggle.title = estaContraido ? 'Expandir menú' : 'Contraer menú';
     }
+    setTimeout(() => { if (map) map.invalidateSize(); }, 380);
 }
 
 // Mantener el mapa sincronizado con el tamaño real del viewport.
