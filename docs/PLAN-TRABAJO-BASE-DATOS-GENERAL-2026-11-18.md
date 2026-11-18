@@ -55,3 +55,11 @@ No ejecutar depuración masiva, borrados, merges de personas ni conciliaciones a
 - La bandeja y el explorador muestran carga, error y estado vacío; las respuestas antiguas se descartan mediante versión de solicitud.
 - CI: 87 pruebas aprobadas, 0 fallos en el commit 4d51c6bd83ab04dda7aa46e19a71ffaee1294dd1.
 - Pendiente: validación funcional con sesión y permisos reales. No se ha modificado main ni producción.
+
+## Bloque 3 — avance técnico QA (2026-11-18)
+- `mira-data.js`: se añade `getPersonById(id)` con verificación de ficha única; `listExplorerRows` filtra Personas por activas, archivadas o todas; `archivePerson` y `restorePerson` aplican cambios lógicos mediante `updatePerson` y exigen confirmación de una fila.
+- `app.js`: el explorador de Personas permite seleccionar estado Activas/Archivadas/Todas, consultar el detalle básico de una ficha, archivar y recuperar. La bandeja de pendientes conserva su formulario de edición.
+- Archivado no ejecuta DELETE y no elimina relaciones ni datos; actualiza `activo`.
+- RLS de QA se verificó en PostgreSQL: SELECT exige `personas:view`; UPDATE exige `personas:edit` tanto en USING como en WITH CHECK. No se alteraron políticas ni se aplicaron migraciones.
+- CI del commit `c8727e89326eb87b2fc22dacd5541f7693816daf`: sintaxis JavaScript y pruebas de seguridad aprobadas. Run: https://github.com/jdgarzoncam-bit/MIRAtuterritorio/actions/runs/44333614796
+- Pendiente validación real de navegador: detalle, edición desde pendientes, archivado, recuperación, persistencia tras refresco y denegación a cuentas sin `personas:edit`. El bloque no se declara cerrado.
