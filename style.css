@@ -7027,3 +7027,319 @@ body.theme-light #mainSidebar .sidebar-content > details.custom-dropdown .databa
   z-index: 9999 !important;
   isolation: isolate;
 }
+
+
+/* MIRA · Sistema visual unificado Glassmorphism minimalista
+   Superficie: ventanas flotantes y navegación; las celdas internas son planas.
+   Paleta: azul noche / pizarra / cian MIRA, coherente con el mapa satelital. */
+:root {
+  --mira-glass-panel: rgba(10, 24, 43, .88);
+  --mira-glass-panel-soft: rgba(15, 34, 55, .78);
+  --mira-glass-cell: rgba(255, 255, 255, .025);
+  --mira-glass-cell-hover: rgba(148, 190, 224, .085);
+  --mira-glass-cell-active: rgba(56, 189, 248, .13);
+  --mira-glass-cell-pressed: rgba(56, 189, 248, .18);
+  --mira-glass-hairline: rgba(190, 220, 245, .10);
+  --mira-glass-text: #e8f1fb;
+  --mira-glass-muted: #a9bdd2;
+  --mira-glass-accent: #48e8f2;
+  --mira-glass-shadow: 0 18px 48px rgba(1, 10, 22, .30);
+}
+/* Panel único por módulo: cristal azul profundo, no tarjetas apiladas. */
+#mainSidebar .neo-tactile-sidebar > .mira-module-flyout {
+  background: linear-gradient(145deg, rgba(17, 39, 62, .91), rgba(8, 22, 39, .94)) !important;
+  border: 1px solid rgba(160, 205, 238, .15) !important;
+  border-radius: 21px !important;
+  box-shadow: 0 22px 54px rgba(0, 8, 20, .34), inset 0 1px 0 rgba(235, 247, 255, .075) !important;
+  -webkit-backdrop-filter: blur(26px) saturate(138%) !important;
+  backdrop-filter: blur(26px) saturate(138%) !important;
+}
+#mainSidebar .neo-tactile-sidebar > .mira-module-flyout > .dropdown-content {
+  padding: 17px 16px !important;
+  color: var(--mira-glass-text) !important;
+}
+#mainSidebar .neo-tactile-sidebar > .mira-module-flyout h1,
+#mainSidebar .neo-tactile-sidebar > .mira-module-flyout h2,
+#mainSidebar .neo-tactile-sidebar > .mira-module-flyout h3,
+#mainSidebar .neo-tactile-sidebar > .mira-module-flyout h4 {
+  color: #edf6ff !important;
+  letter-spacing: -.018em;
+}
+#mainSidebar .neo-tactile-sidebar > .mira-module-flyout p,
+#mainSidebar .neo-tactile-sidebar > .mira-module-flyout small,
+#mainSidebar .neo-tactile-sidebar > .mira-module-flyout .mira-label,
+#mainSidebar .neo-tactile-sidebar > .mira-module-flyout .database-intro {
+  color: var(--mira-glass-muted) !important;
+}
+/* Todas las celdas/opciones existentes comparten el mismo lenguaje: lisas,
+   sin contorno, sin sombra propia y con selección por luz de fondo. */
+:is(
+  .hero-module-card,
+  .database-action-card,
+  .activity-sidebar-tile,
+  .mira-quick-item,
+  .module-card,
+  .module-pending-card,
+  .module-placeholder-card,
+  .territory-mode-option,
+  .mira-combobox-option,
+  .mira-suggestion-option,
+  .puesto-dropdown-item,
+  .testigo-card-item,
+  .testigo-thumb-item,
+  .dash-circle-item,
+  .dash-info-item,
+  .mobile-ops-card,
+  .electoral-post-card,
+  .electoral-winner-card,
+  .concejal-history-item,
+  .concejal-record-card,
+  .operational-report-card,
+  .activity-record-card,
+  .activity-file-card,
+  .activity-stat-card,
+  .activity-registration-card,
+  .sidebar-module-btn,
+  .mira-db-person-card,
+  .territory-action-btn
+) {
+  border: 0 !important;
+  outline: 0;
+  background: var(--mira-glass-cell) !important;
+  box-shadow: none !important;
+  border-radius: 13px !important;
+  color: var(--mira-glass-text);
+  transition: background .22s ease, color .22s ease, transform .24s cubic-bezier(.2,.8,.2,1), opacity .2s ease !important;
+}
+:is(
+  .hero-module-card,
+  .database-action-card,
+  .activity-sidebar-tile,
+  .mira-quick-item,
+  .module-card,
+  .module-pending-card,
+  .module-placeholder-card,
+  .territory-mode-option,
+  .mira-combobox-option,
+  .mira-suggestion-option,
+  .puesto-dropdown-item,
+  .testigo-card-item,
+  .testigo-thumb-item,
+  .dash-circle-item,
+  .dash-info-item,
+  .mobile-ops-card,
+  .electoral-post-card,
+  .electoral-winner-card,
+  .concejal-history-item,
+  .concejal-record-card,
+  .operational-report-card,
+  .activity-record-card,
+  .activity-file-card,
+  .activity-stat-card,
+  .activity-registration-card,
+  .sidebar-module-btn,
+  .mira-db-person-card,
+  .territory-action-btn
+):hover {
+  border-color: transparent !important;
+  background: var(--mira-glass-cell-hover) !important;
+  box-shadow: none !important;
+  transform: translateY(-1px);
+}
+:is(
+  .hero-module-card,
+  .database-action-card,
+  .activity-sidebar-tile,
+  .mira-quick-item,
+  .module-card,
+  .module-pending-card,
+  .module-placeholder-card,
+  .territory-mode-option,
+  .mira-combobox-option,
+  .mira-suggestion-option,
+  .puesto-dropdown-item,
+  .testigo-card-item,
+  .testigo-thumb-item,
+  .dash-circle-item,
+  .dash-info-item,
+  .mobile-ops-card,
+  .electoral-post-card,
+  .electoral-winner-card,
+  .concejal-history-item,
+  .concejal-record-card,
+  .operational-report-card,
+  .activity-record-card,
+  .activity-file-card,
+  .activity-stat-card,
+  .activity-registration-card,
+  .sidebar-module-btn,
+  .mira-db-person-card,
+  .territory-action-btn
+):is(.active, .selected, .is-active, [aria-selected="true"], [data-active="true"]) {
+  background: var(--mira-glass-cell-active) !important;
+  color: #f2fbff !important;
+  box-shadow: inset 2px 0 0 rgba(72, 232, 242, .72) !important;
+}
+:is(
+  .hero-module-card,
+  .database-action-card,
+  .activity-sidebar-tile,
+  .mira-quick-item,
+  .module-card,
+  .module-pending-card,
+  .module-placeholder-card,
+  .territory-mode-option,
+  .mira-combobox-option,
+  .mira-suggestion-option,
+  .puesto-dropdown-item,
+  .testigo-card-item,
+  .testigo-thumb-item,
+  .dash-circle-item,
+  .dash-info-item,
+  .mobile-ops-card,
+  .electoral-post-card,
+  .electoral-winner-card,
+  .concejal-history-item,
+  .concejal-record-card,
+  .operational-report-card,
+  .activity-record-card,
+  .activity-file-card,
+  .activity-stat-card,
+  .activity-registration-card,
+  .sidebar-module-btn,
+  .mira-db-person-card,
+  .territory-action-btn
+):focus-visible {
+  outline: 2px solid var(--mira-glass-accent) !important;
+  outline-offset: 2px !important;
+  box-shadow: none !important;
+}
+/* Las rejillas dejan respirar las opciones: sin mini-paneles encajados. */
+.database-action-grid,
+.hero-modules-grid,
+.mira-db-actions,
+.mira-quick-modules {
+  gap: 7px !important;
+}
+#mainSidebar .neo-tactile-sidebar > .mira-module-flyout :is(.database-action-grid, .hero-modules-grid, .mira-db-actions) > * {
+  min-width: 0;
+}
+#mainSidebar .neo-tactile-sidebar > .mira-module-flyout .database-action-card,
+#mainSidebar .neo-tactile-sidebar > .mira-module-flyout .activity-sidebar-tile,
+#mainSidebar .neo-tactile-sidebar > .mira-module-flyout .hero-module-card {
+  padding: 11px 12px !important;
+  background: rgba(255,255,255,.025) !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+#mainSidebar .neo-tactile-sidebar > .mira-module-flyout :is(.database-action-card, .activity-sidebar-tile, .hero-module-card):hover {
+  background: rgba(112, 178, 222, .10) !important;
+  transform: translateY(-1px);
+}
+#mainSidebar .neo-tactile-sidebar > .mira-module-flyout :is(.activity-side-icon, .database-action-icon, .hero-module-icon) {
+  border: 0 !important;
+  box-shadow: none !important;
+  background: rgba(56, 189, 248, .10) !important;
+  color: var(--mira-glass-accent) !important;
+}
+/* Controles de datos siguen siendo controles legibles; se aligera su marco,
+   sin convertir inputs, tablas o formularios en superficies transparentes. */
+#mainSidebar .neo-tactile-sidebar > .mira-module-flyout :is(input, select, textarea) {
+  border-color: rgba(170, 205, 235, .16) !important;
+  background: rgba(3, 13, 28, .48) !important;
+  color: #edf6ff !important;
+  box-shadow: none !important;
+  border-radius: 11px !important;
+}
+#mainSidebar .neo-tactile-sidebar > .mira-module-flyout :is(input, select, textarea):focus {
+  border-color: rgba(72, 232, 242, .58) !important;
+  box-shadow: 0 0 0 3px rgba(72, 232, 242, .09) !important;
+}
+/* El mismo tratamiento se replica en celdas fuera del menú y en los módulos
+   que se muestran sobre el espacio de trabajo. */
+body:not(.theme-light) :is(
+  .hero-module-card,
+  .database-action-card,
+  .activity-sidebar-tile,
+  .mira-quick-item,
+  .module-card,
+  .module-pending-card,
+  .module-placeholder-card,
+  .territory-mode-option,
+  .mira-combobox-option,
+  .mira-suggestion-option,
+  .puesto-dropdown-item,
+  .testigo-card-item,
+  .testigo-thumb-item,
+  .dash-circle-item,
+  .dash-info-item,
+  .mobile-ops-card,
+  .electoral-post-card,
+  .electoral-winner-card,
+  .concejal-history-item,
+  .concejal-record-card,
+  .operational-report-card,
+  .activity-record-card,
+  .activity-file-card,
+  .activity-stat-card,
+  .activity-registration-card,
+  .sidebar-module-btn,
+  .mira-db-person-card,
+  .territory-action-btn
+) {
+  border-color: transparent !important;
+}
+body.theme-light {
+  --mira-glass-cell: rgba(15, 35, 58, .018);
+  --mira-glass-cell-hover: rgba(15, 82, 130, .065);
+  --mira-glass-cell-active: rgba(2, 132, 199, .10);
+  --mira-glass-text: #17283c;
+  --mira-glass-muted: #5e7187;
+}
+body.theme-light #mainSidebar .neo-tactile-sidebar > .mira-module-flyout {
+  background: linear-gradient(145deg, rgba(242, 248, 253, .94), rgba(224, 237, 248, .94)) !important;
+  border-color: rgba(40, 84, 122, .13) !important;
+  box-shadow: 0 22px 54px rgba(15, 40, 65, .18), inset 0 1px 0 rgba(255,255,255,.9) !important;
+}
+body.theme-light #mainSidebar .neo-tactile-sidebar > .mira-module-flyout h1,
+body.theme-light #mainSidebar .neo-tactile-sidebar > .mira-module-flyout h2,
+body.theme-light #mainSidebar .neo-tactile-sidebar > .mira-module-flyout h3,
+body.theme-light #mainSidebar .neo-tactile-sidebar > .mira-module-flyout h4 {
+  color: #17283c !important;
+}
+body.theme-light #mainSidebar .neo-tactile-sidebar > .mira-module-flyout :is(input, select, textarea) {
+  background: rgba(255,255,255,.72) !important;
+  color: #17283c !important;
+  border-color: rgba(40,84,122,.16) !important;
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  #mainSidebar .neo-tactile-sidebar > .mira-module-flyout {
+    background: rgba(10, 24, 43, .97) !important;
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  #mainSidebar .neo-tactile-sidebar > .mira-module-flyout {
+    background: #0c1b2d !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+  body.theme-light #mainSidebar .neo-tactile-sidebar > .mira-module-flyout {
+    background: #edf3f8 !important;
+  }
+}
+@media (forced-colors: active) {
+  :is(
+    .hero-module-card, .database-action-card, .activity-sidebar-tile,
+    .mira-quick-item, .module-card, .module-pending-card, .module-placeholder-card,
+    .territory-mode-option, .mira-combobox-option, .mira-suggestion-option,
+    .puesto-dropdown-item, .testigo-card-item, .testigo-thumb-item,
+    .dash-circle-item, .dash-info-item, .mobile-ops-card, .electoral-post-card,
+    .electoral-winner-card, .concejal-history-item, .concejal-record-card,
+    .operational-report-card, .activity-record-card, .activity-file-card,
+    .activity-stat-card, .activity-registration-card, .sidebar-module-btn,
+    .mira-db-person-card, .territory-action-btn
+  ) {
+    border: 1px solid ButtonText !important;
+    forced-color-adjust: auto;
+  }
+}
