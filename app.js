@@ -1537,8 +1537,23 @@ document.getElementById('sidebarToggleBtn').addEventListener('click', function()
         if (!content) return;
         event.preventDefault();
 
-        const railMode = document.getElementById('mainSidebar')?.classList.contains('collapsed');
+        const rootSidebar = document.getElementById('mainSidebar');
+        const railMode = rootSidebar?.classList.contains('collapsed');
         const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        // Al seleccionar un módulo desde el menú completo, el rail se recoge
+        // y el contenido pasa al panel flotante, igual que en la referencia.
+        if (!railMode) {
+            rootSidebar?.classList.add('collapsed');
+            const toggle = document.getElementById('sidebarToggleBtn');
+            toggle?.setAttribute('aria-expanded', 'false');
+            toggle?.setAttribute('aria-label', 'Expandir menú lateral');
+            if (toggle) toggle.title = 'Expandir menú';
+            closeAllFloating();
+            requestAnimationFrame(() => openFloating(details));
+            if (typeof manejarBotonFlotanteReapertura === 'function') manejarBotonFlotanteReapertura(true);
+            return;
+        }
 
         if (railMode) {
             if (details.classList.contains('mira-floating-active')) {
