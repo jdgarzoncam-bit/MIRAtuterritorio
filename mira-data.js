@@ -129,9 +129,15 @@ export const MIRA_DATA = {
     if (!cedula || !payload.nombres?.trim() || !payload.apellidos?.trim()) throw new Error("Cédula, nombres y apellidos son obligatorios.");
     const {cedula_normalizada, ...personData} = payload;
     const missingFollowup=!String(payload.telefono||"").trim()||!String(payload.barrio||"").trim();
-    return miraRequest("personas",{method:"POST",body:{...personData,cedula,datos_pendientes:missingFollowup}});
+    return miraRequest("personas",{method:"POST",body:{...personData,cedula,datos_pendientes:missingFollowup},requireRows:true});
   },
-  updatePerson(id,payload) { const {cedula_normalizada, ...personData} = payload; const cedula=personData.cedula===undefined?undefined:cleanCedula(personData.cedula); return miraRequest("personas",{method:"PATCH",query:qs({id:`eq.${id}`}),body:{...personData,...(cedula!==undefined?{cedula}:{})}}); },
+  updatePerson(id,payload) {
+    if(!id) throw new Error("No se identificó la persona que deseas actualizar.");
+    const {cedula_normalizada, ...personData} = payload;
+    const cedula=personData.cedula===undefined?undefined:cleanCedula(personData.cedula);
+    if(cedula!==undefined&&!cedula) throw new Error("La cédula debe contener al menos un dígito.");
+    return miraRequest("personas",{method:"PATCH",query:qs({id:`eq.${id}`}),body:{...personData,...(cedula!==undefined?{cedula}:{})},requireRows:true});
+  },
   archivePerson(id) { return this.updatePerson(id,{activo:false}); },
   async listActivities({limit=100,offset=0}={}) {
     return miraRequest("actividades",{query:qs({select:"*",order:"fecha.desc",limit:String(Math.min(Math.max(limit,1),1000)),offset:String(Math.max(0,Number(offset)||0))})});
