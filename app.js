@@ -3512,9 +3512,9 @@ function inicializarSistemaMapa() {
                     if (estadoFiltro === 'TODOS') return true;
                     const person = personaDe(row);
                     const role = normalizarTexto(row.estado_original || person?.tipo_participacion || '');
-                    if (estadoFiltro === 'ACTIVO') return person?.activo === true || (person?.activo !== false && role === 'activo');
-                    if (estadoFiltro === 'LIDER') return role.includes('lider') || role.includes('cuidador');
-                    if (estadoFiltro === 'REFERIDO') return role.includes('referido');
+                    if (estadoFiltro === 'ACTIVO') return person?.activo === true || (person?.activo !== false && role === 'ACTIVO');
+                    if (estadoFiltro === 'LIDER') return role.includes('LIDER') || role.includes('CUIDADOR');
+                    if (estadoFiltro === 'REFERIDO') return role.includes('REFERIDO');
                     return false;
                 });
                 ultimaConsulta = rowsFiltered;
