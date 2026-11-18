@@ -297,4 +297,5 @@ test("la migración de Personas normaliza cédula en PostgreSQL y garantiza cons
   assert.match(migration, /personas_cedula_normalizada_consistente/);
   assert.match(migration, /VALIDATE CONSTRAINT/);
   assert.match(migration, /personas_cedula_unica/);
+  assert.match(migration, /REVOKE EXECUTE ON FUNCTION mira\.normalize_person_cedula\(\) FROM PUBLIC, anonymous, authenticated/);
 });
