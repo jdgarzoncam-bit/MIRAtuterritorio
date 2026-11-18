@@ -104,39 +104,47 @@ export const MIRA_DATA = {
 
   async listInfoMiraDirectory({cedula="", search="", limit=100, offset=0}={}) {
     const safeLimit=Math.min(Math.max(Number(limit)||100,1),100);
-    const params = {
-      select:"id,fila_origen,cedula_original,nombre_original,telefono,barrio,estado_original,cuidador_nombre,puesto_votacion,puesto_original,mesa_votacion,movilidad,asistencia,persona_id,personas(id,cedula,cedula_normalizada,nombres,apellidos,telefono,correo,info_mira,puesto_votacion,mesa_votacion,requiere_transporte,edad,tipo_participacion,activo,inactivo)",
+    const safeOffset=Math.max(0,Number(offset)||0);
+    const documentDigits=cleanCedula(cedula || search);
+    const term=String(search || cedula || "").trim();
+    if ((cedula || /^\\s*[\\d.\\-\\s]+\\s*$/.test(term)) && !documentDigits) {
+      throw new Error("La cédula debe contener al menos un dígito.");
+    }
+
+    // InfoMIRA es un visualizador: la ficha personal siempre procede de personas.
+    // Buscar primero en la fuente central y después resolver sus relaciones de red.
+    let people=[];
+    if (documentDigits) {
+      people=await miraRequest("personas",{query:qs({
+        select:"id,cedula,cedula_normalizada,nombres,apellidos,telefono,correo,info_mira,puesto_votacion,mesa_votacion,requiere_transporte,edad,tipo_participacion,activo,inactivo",
+        cedula_normalizada:"eq."+documentDigits,
+        limit:"100"
+      })});
+    } else if (term) {
+      const safeTerm=term.replace(/[,*()\\"]/g," ").replace(/\\s+/g," ").trim().slice(0,80);
+      if (!safeTerm) return [];
+      const clauses=[`nombres.ilike.*${safeTerm}*`,`apellidos.ilike.*${safeTerm}*`];
+      if (documentDigits) clauses.push("cedula_normalizada.eq."+documentDigits);
+      people=await miraRequest("personas",{query:qs({
+        select:"id,cedula,cedula_normalizada,nombres,apellidos,telefono,correo,info_mira,puesto_votacion,mesa_votacion,requiere_transporte,edad,tipo_participacion,activo,inactivo",
+        or:"("+clauses.join(",")+")",
+        limit:"100"
+      })});
+    } else {
+      return [];
+    }
+
+    const ids=[...new Set((people||[]).map(person=>person.id).filter(Boolean))];
+    if (!ids.length) return [];
+    const pageIds=ids.slice(safeOffset,safeOffset+safeLimit);
+    if (!pageIds.length) return [];
+    const rows=await miraRequest("infomira_red",{query:qs({
+      select:"id,fila_origen,barrio,estado_original,cuidador_nombre,puesto_votacion,puesto_original,mesa_votacion,movilidad,asistencia,persona_id,personas!inner(id,cedula,cedula_normalizada,nombres,apellidos,telefono,correo,info_mira,puesto_votacion,mesa_votacion,requiere_transporte,edad,tipo_participacion,activo,inactivo)",
+      persona_id:"in.("+pageIds.join(",")+")",
       order:"fila_origen.asc,id.asc",
-      limit:String(safeLimit),
-      offset:String(Math.max(0,Number(offset)||0))
-    };
-    const documentDigits=cleanCedula(cedula);
-    if (cedula && !documentDigits) throw new Error("La cédula debe contener al menos un dígito.");
-    if (documentDigits) params.cedula_original = `eq.${documentDigits}`;
-    else if (search.trim()) {
-      const term=String(search).trim().replace(/[,*()]/g," ").slice(0,80);
-      const digits=cleanCedula(term);
-      const clauses=[`nombre_original.ilike.*${term}*`,`cuidador_nombre.ilike.*${term}*`];
-      if(digits) clauses.push(`cedula_original.eq.${digits}`);
-      params.or="("+clauses.join(",")+")";
-    }
-    return miraRequest("infomira_red",{query:qs(params)});
-  },
-  updateInfoMiraRecord(id,payload) {
-    if(!id) throw new Error("No se identificó el registro InfoMIRA que deseas actualizar.");
-    const allowed=new Set(["nombre_original","telefono","barrio","estado_original","cuidador_nombre","puesto_votacion","puesto_original","mesa_votacion","movilidad","asistencia"]);
-    const body={};
-    for(const [key,value] of Object.entries(payload||{})){
-      if(!allowed.has(key)) continue;
-      body[key]=typeof value==="string"?value.trim():value;
-    }
-    if(!Object.keys(body).length) throw new Error("No hay campos válidos para actualizar.");
-    if("nombre_original" in body&&!body.nombre_original) throw new Error("El nombre del registro es obligatorio.");
-    const limits={nombre_original:180,telefono:40,barrio:120,estado_original:80,cuidador_nombre:180,puesto_votacion:180,puesto_original:180,mesa_votacion:40,movilidad:120,asistencia:120};
-    for(const [key,value] of Object.entries(body)){
-      if(typeof value==="string"&&value.length>limits[key]) throw new Error("El campo "+key+" supera la longitud permitida.");
-    }
-    return miraRequest("infomira_red",{method:"PATCH",query:qs({id:"eq."+id}),body,requireRows:true});
+      limit:String(safeLimit)
+    })});
+    return rows || [];
   },
   async listPendingPeople({limit=25,offset=0}={}) {
     const safeLimit=Math.min(Math.max(Number(limit)||25,1),100);
