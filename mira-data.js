@@ -69,7 +69,7 @@ function assertTestigosEnabled() {
 }
 
 const EXPLORER_DATASETS = Object.freeze([
-  {key:"personas",label:"Personas",table:"personas",module:"personas",select:"id,cedula,cedula_normalizada,nombres,apellidos,telefono,correo,barrio,puesto_votacion,mesa_votacion,activo,datos_pendientes,created_at,updated_at",search:["cedula","cedula_normalizada","nombres","apellidos","barrio"],columns:[["cedula","Cédula"],["nombres","Nombres"],["apellidos","Apellidos"],["telefono","Teléfono"],["correo","Correo"],["barrio","Barrio"],["activo","Estado"],["datos_pendientes","Datos pendientes"]]},
+  {key:"personas",label:"Personas",table:"personas",module:"personas",select:"id,cedula,cedula_normalizada,nombres,apellidos,telefono,correo,barrio,puesto_votacion,mesa_votacion,activo,inactivo,datos_pendientes,created_at,updated_at",search:["cedula","cedula_normalizada","nombres","apellidos","barrio"],columns:[["cedula","Cédula"],["nombres","Nombres"],["apellidos","Apellidos"],["telefono","Teléfono"],["correo","Correo"],["barrio","Barrio"],["activo","Archivado"],["inactivo","Inactivo"],["datos_pendientes","Datos pendientes"]]},
   {key:"actividades",label:"Actividades",table:"actividades",module:"actividades",select:"id,nombre,fecha,lugar,estado,created_at",search:["nombre","lugar","estado"],columns:[["nombre","Actividad"],["fecha","Fecha"],["lugar","Lugar"],["estado","Estado"],["created_at","Creación"]]},
   {key:"asistencias",label:"Asistencias",table:"asistencias",module:"actividades",select:"id,persona_id,actividad_id,fecha_registro,estado,motivo_anulacion",search:["estado","motivo_anulacion"],columns:[["persona_id","Persona ID"],["actividad_id","Actividad ID"],["fecha_registro","Fecha de registro"],["estado","Estado"],["motivo_anulacion","Motivo de anulación"]]},
   {key:"pqrs",label:"PQRS",table:"pqrs",module:"pqrs",select:"id,tipo,modulo_key,asunto,descripcion,estado,created_at,updated_at",search:["tipo","modulo_key","asunto","descripcion","estado"],columns:[["tipo","Tipo"],["modulo_key","Módulo"],["asunto","Asunto"],["descripcion","Descripción"],["estado","Estado"],["created_at","Radicación"]]},
@@ -104,7 +104,7 @@ export const MIRA_DATA = {
 
   async listInfoMiraDirectory({cedula="", search="", limit=100, offset=0}={}) {
     const params = {
-      select:"id,fila_origen,cedula_original,nombre_original,telefono,barrio,estado_original,cuidador_nombre,puesto_votacion,puesto_original,mesa_votacion,movilidad,asistencia,persona_id,personas(id,cedula,nombres,apellidos,telefono,correo,info_mira,puesto_votacion,mesa_votacion,requiere_transporte,edad,tipo_participacion,activo)",
+      select:"id,fila_origen,cedula_original,nombre_original,telefono,barrio,estado_original,cuidador_nombre,puesto_votacion,puesto_original,mesa_votacion,movilidad,asistencia,persona_id,personas(id,cedula,nombres,apellidos,telefono,correo,info_mira,puesto_votacion,mesa_votacion,requiere_transporte,edad,tipo_participacion,activo,inactivo)",
       order:"fila_origen.asc",
       limit:String(Math.min(Math.max(limit,1),100)),
       offset:String(Math.max(0,Number(offset)||0))
