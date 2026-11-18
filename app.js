@@ -3217,6 +3217,17 @@ function inicializarSistemaMapa() {
         if (!inputCuidador || !btnBuscarMira || !selectEstado || !btnResetMira || !miraInternalContainer) return;
 
         let ultimaConsulta = [];
+        let searchRequest = 0;
+        const loadAllInfoMiraPages = async ({cedula="",search=""}={}) => {
+            const pageSize=100,all=[];
+            for(let offset=0;offset<5000;offset+=pageSize){
+                const page=await window.MIRA_DATA.listInfoMiraDirectory({cedula,search,limit:pageSize,offset});
+                if(!Array.isArray(page)) throw new Error("Neon devolvió una respuesta inválida del directorio InfoMIRA.");
+                all.push(...page);
+                if(page.length<pageSize) return all;
+            }
+            throw new Error("InfoMIRA superó el límite de seguridad de paginación (5.000 registros).");
+        };
 
         // Sugerencias inteligentes del directorio centralizado.
         const searchGroup = inputCuidador.closest('.mira-input-group');
@@ -3275,6 +3286,7 @@ function inicializarSistemaMapa() {
         inputCuidador.setAttribute('aria-autocomplete','list');
         inputCuidador.setAttribute('aria-controls','miraSearchSuggestions');
         inputCuidador.addEventListener('input',() => {
+            searchRequest++;
             clearTimeout(suggestionTimer);
             const term = inputCuidador.value.trim();
             const requestId = ++suggestionRequest;
@@ -3469,6 +3481,7 @@ function inicializarSistemaMapa() {
         }
 
         async function aplicarFiltroInfoMIRA() {
+            const requestId = ++searchRequest;
             const query = inputCuidador.value.trim();
             const estadoFiltro = selectEstado.value.toUpperCase();
             if (!query && estadoFiltro === 'TODOS') {
@@ -3490,12 +3503,12 @@ function inicializarSistemaMapa() {
             miraInternalContainer.innerHTML = '<div class="mira-db-loading"><span></span> Consultando el directorio centralizado…</div>';
             try {
                 const isCedula = /^\d+$/.test(query);
-                const rows = await window.MIRA_DATA.listInfoMiraDirectory({
+                const rows = await loadAllInfoMiraPages({
                     cedula: isCedula ? query : '',
-                    search: query && !isCedula ? query : '',
-                    limit: 100
+                    search: query && !isCedula ? query : ''
                 });
-                const rowsFiltered = (rows || []).filter(row => {
+                if(requestId!==searchRequest || inputCuidador.value.trim()!==query) return;
+                const rowsFiltered = rows.filter(row => {
                     if (estadoFiltro === 'TODOS') return true;
                     const person = personaDe(row);
                     const role = String(row.estado_original || person?.tipo_participacion || '').toUpperCase();
@@ -3508,6 +3521,7 @@ function inicializarSistemaMapa() {
                 document.getElementById('adminDashboardCard')?.classList.toggle('dashboard-compact',rowsFiltered.length > 0);
                 document.getElementById('dropdown-infomira')?.classList.toggle('dropdown-expanded-full',rowsFiltered.length > 0);
             } catch (error) {
+                if(requestId!==searchRequest) return;
                 console.error('[InfoMIRA] Error consultando Neon:',error);
                 miraInternalContainer.innerHTML = '<div class="mira-db-error">No fue posible consultar Neon: '+escInfo(error.message || 'Error de conexión o permisos')+'</div>';
             } finally {
@@ -3523,6 +3537,7 @@ function inicializarSistemaMapa() {
         });
         selectEstado.addEventListener('change',aplicarFiltroInfoMIRA);
         btnResetMira.addEventListener('click',() => {
+            searchRequest++;
             clearTimeout(suggestionTimer);
             suggestionRequest++;
             closeSuggestions();
