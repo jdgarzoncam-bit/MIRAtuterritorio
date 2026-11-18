@@ -6785,3 +6785,181 @@ body.theme-light #mainSidebar .sidebar-content > details.custom-dropdown .databa
     transition-duration: .01ms !important;
   }
 }
+
+
+/* Corrección 18-11 · rail limpio, flyout real y transición orgánica tipo gota */
+#mainSidebar.sidebar-wrapper-group {
+  overflow: visible !important;
+  overflow-x: visible !important;
+  overflow-y: visible !important;
+  transition: width .82s cubic-bezier(.22,1.35,.36,1), transform .82s cubic-bezier(.22,1.35,.36,1), opacity .38s ease !important;
+  will-change: width, transform;
+}
+#mainSidebar.sidebar-wrapper-group.collapsed {
+  width: 76px !important;
+  max-width: 76px !important;
+  transform: translate3d(0,0,0) scale(1) !important;
+  opacity: 1 !important;
+  filter: none !important;
+  pointer-events: auto !important;
+}
+#mainSidebar .neo-tactile-sidebar {
+  position: relative !important;
+  overflow: visible !important;
+  transition: width .82s cubic-bezier(.22,1.35,.36,1), min-width .82s cubic-bezier(.22,1.35,.36,1), border-radius .82s cubic-bezier(.22,1.35,.36,1), filter .65s ease !important;
+}
+#mainSidebar.collapsed .neo-tactile-sidebar {
+  width: 76px !important;
+  min-width: 76px !important;
+  max-width: 76px !important;
+  height: calc(100dvh - 24px) !important;
+  max-height: calc(100dvh - 24px) !important;
+  min-height: 360px !important;
+  overflow: visible !important;
+  border-radius: 36px !important;
+  filter: drop-shadow(0 15px 26px rgba(0,0,0,.22));
+  animation: miraLiquidRail .82s cubic-bezier(.22,1.35,.36,1) both;
+}
+@keyframes miraLiquidRail {
+  0% { border-radius: 24px; transform: scaleX(1); }
+  42% { border-radius: 48% 30% 34% 48% / 18% 18% 18% 18%; transform: scaleX(.88); }
+  72% { border-radius: 40px; transform: scaleX(1.035); }
+  100% { border-radius: 36px; transform: scaleX(1); }
+}
+#mainSidebar.collapsed .sidebar-content {
+  width: 100% !important;
+  max-height: calc(100dvh - 112px) !important;
+  overflow: visible !important;
+  padding: 5px 8px 14px !important;
+  flex: 1 1 auto !important;
+}
+#mainSidebar.collapsed .sidebar-content > .section-title {
+  display: flex !important;
+  justify-content: center !important;
+  padding: 4px 0 10px !important;
+  margin: 0 !important;
+  font-size: 8px !important;
+  letter-spacing: .045em !important;
+  white-space: nowrap !important;
+}
+#mainSidebar.collapsed .sidebar-content > details.custom-dropdown {
+  position: relative !important;
+  width: 100% !important;
+  overflow: visible !important;
+}
+#mainSidebar.collapsed .sidebar-content > details.custom-dropdown > summary {
+  width: 56px !important;
+  height: 46px !important;
+  min-height: 46px !important;
+  margin: 0 auto !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 12px !important;
+  background: transparent !important;
+  justify-content: center !important;
+}
+#mainSidebar.collapsed .sidebar-content > details.custom-dropdown > summary .summary-title {
+  justify-content: center !important;
+  font-size: 0 !important;
+}
+#mainSidebar.collapsed .sidebar-content > details.custom-dropdown > summary .neo-icon {
+  width: 30px !important;
+  height: 30px !important;
+  min-width: 30px !important;
+  font-size: 20px !important;
+  background: transparent !important;
+}
+#mainSidebar.collapsed .sidebar-content > details.custom-dropdown > summary .arrow-icon {
+  display: none !important;
+}
+/* Elementos que no pertenecen al rail de iconos no deben comprimirse ni superponerse. */
+#mainSidebar.collapsed #adminDashboardCard,
+#mainSidebar.collapsed #openAdminPermissionsBtn,
+#mainSidebar.collapsed .admin-permissions-launch,
+#mainSidebar.collapsed .mira-quick-modules {
+  display: none !important;
+}
+/* El contenido se porta a este panel hermano del menú y conserva la delegación de eventos. */
+#mainSidebar .neo-tactile-sidebar > .mira-module-flyout {
+  position: absolute !important;
+  z-index: 2200 !important;
+  top: 12px;
+  left: calc(100% + 13px) !important;
+  width: min(340px, calc(100vw - 112px)) !important;
+  max-width: min(340px, calc(100vw - 112px)) !important;
+  max-height: min(76dvh, 720px) !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+  border: 1px solid rgba(155,205,238,.24) !important;
+  border-radius: 22px !important;
+  background:
+    radial-gradient(ellipse at 8% 0%, rgba(90,169,220,.16), transparent 52%),
+    linear-gradient(145deg, rgba(23,43,65,.97), rgba(12,25,42,.97)) !important;
+  box-shadow: 0 24px 62px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.1) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(155%) !important;
+  backdrop-filter: blur(28px) saturate(155%) !important;
+  opacity: 0;
+  transform: translate3d(-18px,0,0) scale(.88,.92);
+  transform-origin: left center;
+  clip-path: inset(0 100% 0 0 round 42px 20px 20px 42px);
+  transition: opacity .28s ease, transform .58s cubic-bezier(.18,1.28,.32,1), clip-path .62s cubic-bezier(.18,1.18,.32,1), border-radius .62s ease !important;
+  pointer-events: none;
+}
+#mainSidebar .neo-tactile-sidebar > .mira-module-flyout.is-visible {
+  opacity: 1;
+  transform: translate3d(0,0,0) scale(1,1);
+  clip-path: inset(0 0 0 0 round 18px);
+  pointer-events: auto;
+}
+#mainSidebar .neo-tactile-sidebar > .mira-module-flyout > .dropdown-content,
+#mainSidebar .neo-tactile-sidebar > .mira-module-flyout > .dropdown-content.mira-floating-content {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  max-height: min(76dvh, 720px) !important;
+  margin: 0 !important;
+  padding: 16px 14px !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  opacity: 1 !important;
+  transform: none !important;
+  border: 0 !important;
+  border-radius: inherit !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  transition: none !important;
+}
+#mainSidebar .neo-tactile-sidebar > .mira-module-flyout .mira-label,
+#mainSidebar .neo-tactile-sidebar > .mira-module-flyout .database-intro {
+  color: #c7d8ef !important;
+}
+#mainSidebar .neo-tactile-sidebar > .mira-module-flyout .database-action-card {
+  background: rgba(255,255,255,.055) !important;
+  border-color: rgba(160,205,238,.16) !important;
+}
+@media (max-width: 600px) {
+  #mainSidebar.sidebar-wrapper-group.collapsed {
+    width: 70px !important;
+    max-width: 70px !important;
+    left: 5px !important;
+    top: 8px !important;
+  }
+  #mainSidebar.collapsed .neo-tactile-sidebar {
+    width: 70px !important;
+    min-width: 70px !important;
+    max-width: 70px !important;
+  }
+  #mainSidebar .neo-tactile-sidebar > .mira-module-flyout {
+    left: calc(100% + 9px) !important;
+    width: min(320px, calc(100vw - 88px)) !important;
+    max-width: min(320px, calc(100vw - 88px)) !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #mainSidebar.sidebar-wrapper-group,
+  #mainSidebar .neo-tactile-sidebar,
+  #mainSidebar .neo-tactile-sidebar > .mira-module-flyout {
+    animation: none !important;
+    transition-duration: .01ms !important;
+  }
+}
