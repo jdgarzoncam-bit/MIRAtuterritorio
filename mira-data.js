@@ -69,7 +69,7 @@ function assertTestigosEnabled() {
 }
 
 const EXPLORER_DATASETS = Object.freeze([
-  {key:"personas",label:"Personas",table:"personas",module:"personas",select:"id,cedula,nombres,apellidos,telefono,correo,barrio,puesto_votacion,mesa_votacion,activo,datos_pendientes,created_at,updated_at",search:["cedula","nombres","apellidos","barrio"],columns:[["cedula","Cédula"],["nombres","Nombres"],["apellidos","Apellidos"],["telefono","Teléfono"],["correo","Correo"],["barrio","Barrio"],["activo","Estado"],["datos_pendientes","Datos pendientes"]]},
+  {key:"personas",label:"Personas",table:"personas",module:"personas",select:"id,cedula,cedula_normalizada,nombres,apellidos,telefono,correo,barrio,puesto_votacion,mesa_votacion,activo,datos_pendientes,created_at,updated_at",search:["cedula","cedula_normalizada","nombres","apellidos","barrio"],columns:[["cedula","Cédula"],["nombres","Nombres"],["apellidos","Apellidos"],["telefono","Teléfono"],["correo","Correo"],["barrio","Barrio"],["activo","Estado"],["datos_pendientes","Datos pendientes"]]},
   {key:"actividades",label:"Actividades",table:"actividades",module:"actividades",select:"id,nombre,fecha,lugar,estado,created_at",search:["nombre","lugar","estado"],columns:[["nombre","Actividad"],["fecha","Fecha"],["lugar","Lugar"],["estado","Estado"],["created_at","Creación"]]},
   {key:"asistencias",label:"Asistencias",table:"asistencias",module:"actividades",select:"id,persona_id,actividad_id,fecha_registro,estado,motivo_anulacion",search:["estado","motivo_anulacion"],columns:[["persona_id","Persona ID"],["actividad_id","Actividad ID"],["fecha_registro","Fecha de registro"],["estado","Estado"],["motivo_anulacion","Motivo de anulación"]]},
   {key:"pqrs",label:"PQRS",table:"pqrs",module:"pqrs",select:"id,tipo,modulo_key,asunto,descripcion,estado,created_at,updated_at",search:["tipo","modulo_key","asunto","descripcion","estado"],columns:[["tipo","Tipo"],["modulo_key","Módulo"],["asunto","Asunto"],["descripcion","Descripción"],["estado","Estado"],["created_at","Radicación"]]},
@@ -89,6 +89,7 @@ export const MIRA_DATA = {
     const term=String(search||"").trim().replace(/[,*()]/g," ").slice(0,80);
     if(term){
       const clauses=dataset.search.map(column=>column+".ilike.*"+term+"*");
+      if(dataset.key==="personas"){const digits=cleanCedula(search);if(digits)clauses.push("cedula_normalizada.eq."+digits);}
       params.or="("+clauses.join(",")+")";
     }
     if(filterField&&filterValue!==undefined&&String(filterValue).trim()){
@@ -113,6 +114,11 @@ export const MIRA_DATA = {
       params.or = `(nombre_original.ilike.*${term}*,cuidador_nombre.ilike.*${term}*,cedula_original.eq.${cleanCedula(term) || term})`;
     }
     return miraRequest("infomira_red",{query:qs(params)});
+  },
+  async listPendingPeople({limit=25,offset=0}={}) {
+    const safeLimit=Math.min(Math.max(Number(limit)||25,1),100);
+    const params={select:"id,cedula,cedula_normalizada,nombres,apellidos,telefono,correo,barrio,puesto_votacion,mesa_votacion,edad,tipo_participacion,observaciones,datos_pendientes,updated_at",order:"updated_at.desc",limit:String(safeLimit),offset:String(Math.max(0,Number(offset)||0)),or:'(datos_pendientes.eq.true,telefono.is.null,telefono.eq."",barrio.is.null,barrio.eq."")'};
+    return miraRequest("personas",{query:qs(params)});
   },
   async listPeople({cedula="", search="", limit=100, offset=0, tipoParticipacion=""}={}) {
     const params = {select:"id,cedula,cedula_normalizada,nombres,apellidos,telefono,correo,info_mira,barrio,puesto_votacion,mesa_votacion,requiere_transporte,edad,tipo_participacion,observaciones,activo,datos_pendientes,fuente_registro,created_at,updated_at",order:"updated_at.desc",limit:String(Math.min(Math.max(limit,1),1000)),offset:String(Math.max(0,Number(offset)||0))};
