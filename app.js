@@ -780,19 +780,28 @@ function editPending(person){
   const load=async()=>{
     const version=++requestVersion;
     body.innerHTML='<tr><td colspan="7">Consultando historial…</td></tr>';
-    const rows=await window.MIRA_DATA.listAuditEvents({moduleKey:module.value,actor:actor.value.trim(),operation:operation.value,search:search.value.trim(),limit:101,offset});
-    if(version!==requestVersion)return;
-    const pageRows=Array.isArray(rows)?rows.slice(0,100):[];
-    hasMore=Array.isArray(rows)&&rows.length>100;
-    const labels={personas:"Personas",actividades:"Actividades",pqrs:"PQRS",concejal:"Concejal",infomira:"InfoMIRA",control_administrativo:"Control Administrativo"};
-    const ops={INSERT:"Creación",UPDATE:"Actualización",DELETE:"Eliminación",EXPORT:"Exportación"};
-    body.innerHTML=pageRows.length?pageRows.map(x=>{
-      const details=x.operation==="EXPORT"?(x.details?.dataset_key||"") +" · "+(x.details?.row_count??0)+" registros · "+(x.details?.search||x.details?.filter_value||"Sin filtros"):(x.changed_fields||[]).join(", ");
-      return "<tr><td>"+esc(labels[x.module_key]||x.module_key)+"</td><td>"+esc(x.table_name)+"</td><td>"+esc(x.record_id||"—")+"</td><td>"+esc(x.actor_auth_user_id||"Sistema")+"</td><td>"+esc(ops[x.operation]||x.operation)+"</td><td>"+esc(details||"—")+"</td><td>"+esc(x.created_at?new Date(x.created_at).toLocaleString("es-CO"):"—")+"</td></tr>";
-    }).join(""):'<tr><td colspan="7">No se encontraron eventos para estos filtros o no tienes permisos para consultarlos.</td></tr>';
-    $id("auditResultsMeta").textContent=pageRows.length+" eventos en esta página";
-    $id("auditPage").textContent="Página "+(Math.floor(offset/100)+1);
-    $id("auditPrev").disabled=offset===0;$id("auditNext").disabled=!hasMore;
+    $id("auditResultsMeta").textContent="Consultando eventos…";
+    try{
+      const rows=await window.MIRA_DATA.listAuditEvents({moduleKey:module.value,actor:actor.value.trim(),operation:operation.value,search:search.value.trim(),limit:101,offset});
+      if(version!==requestVersion)return;
+      if(!Array.isArray(rows))throw new Error("Neon devolvió una respuesta de auditoría inválida.");
+      const pageRows=rows.slice(0,100);hasMore=rows.length>100;
+      const labels={personas:"Personas",actividades:"Actividades",pqrs:"PQRS",concejal:"Concejal",infomira:"InfoMIRA",control_administrativo:"Control Administrativo"};
+      const ops={INSERT:"Creación",UPDATE:"Actualización",DELETE:"Eliminación",EXPORT:"Exportación"};
+      body.innerHTML=pageRows.length?pageRows.map(x=>{
+        const details=x.operation==="EXPORT"?(x.details?.dataset_key||"") +" · "+(x.details?.row_count??0)+" registros · "+(x.details?.search||x.details?.filter_value||"Sin filtros"):(x.changed_fields||[]).join(", ");
+        return "<tr><td>"+esc(labels[x.module_key]||x.module_key)+"</td><td>"+esc(x.table_name)+"</td><td>"+esc(x.record_id||"—")+"</td><td>"+esc(x.actor_auth_user_id||"Sistema / operación SQL")+"</td><td>"+esc(ops[x.operation]||x.operation)+"</td><td>"+esc(details||"—")+"</td><td>"+esc(x.created_at?new Date(x.created_at).toLocaleString("es-CO"):"—")+"</td></tr>";
+      }).join(""):'<tr><td colspan="7">No se encontraron eventos para estos filtros o no tienes permisos para consultarlos.</td></tr>';
+      $id("auditResultsMeta").textContent=pageRows.length+" eventos en esta página";
+      $id("auditPage").textContent="Página "+(Math.floor(offset/100)+1);
+      $id("auditPrev").disabled=offset===0;$id("auditNext").disabled=!hasMore;
+    }catch(error){
+      if(version!==requestVersion)return;
+      body.innerHTML='<tr><td colspan="7">No fue posible cargar el historial. Comprueba la conexión y vuelve a intentarlo.</td></tr>';
+      $id("auditResultsMeta").textContent=error.message||"Error al consultar el historial.";
+      $id("auditPrev").disabled=offset===0;$id("auditNext").disabled=true;
+      throw error;
+    }
   };
   const reset=()=>{offset=0;load().catch(error=>say(error.message||"No fue posible consultar el historial.",true));};
   [module,operation].forEach(el=>el.addEventListener("change",reset));
