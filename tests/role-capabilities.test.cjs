@@ -304,3 +304,19 @@ test("la migración de Personas normaliza cédula en PostgreSQL y garantiza cons
 test("Bloque 2: fichas pendientes se consultan y paginan desde Neon",()=>{assert.match(dataSource,/async listPendingPeople\(\{limit=25,offset=0\}/);assert.match(dataSource,/datos_pendientes\.eq\.true/);assert.match(dataSource,/telefono\.is\.null/);assert.match(dataSource,/barrio\.is\.null/);assert.match(appSource,/listPendingPeople\(\{limit:26,offset:page\*25\}\)/);assert.doesNotMatch(appSource,/listPeople\(\{limit:1000\}\)[\s\S]{0,250}rows\.filter\(p=>p\.datos_pendientes/);assert.match(appSource,/databasePendingNext/);});
 test("Bloque 2: explorador Personas busca por cédula original y normalizada",()=>{assert.match(dataSource,/cedula_normalizada.*nombres.*apellidos/);assert.match(dataSource,/if\(dataset\.key==="personas"\)[\s\S]*cleanCedula\(search\)[\s\S]*cedula_normalizada\.eq\./);});
 test("Bloque 2: explorador controla carga, error, vacío y evita respuestas fuera de orden",()=>{assert.match(appSource,/let page=0,more=false,lastRows=\[\],dataset=datasets\[0\],requestVersion=0/);assert.match(appSource,/No se encontraron registros para los filtros seleccionados/);assert.match(appSource,/No fue posible consultar los registros/);assert.match(appSource,/if\(version!==requestVersion\)return/);});
+
+
+test("Bloque 4: el historial maneja errores de consulta y respuestas fuera de orden", () => {
+  assert.match(appSource, /No fue posible cargar el historial/);
+  assert.match(appSource, /Neon devolvió una respuesta de auditoría inválida/);
+  assert.match(appSource, /let offset=0,hasMore=false,requestVersion=0/);
+  assert.match(appSource, /if\(version!==requestVersion\)return/);
+});
+
+test("Bloque 4: auditoría central aplica RLS de lectura por módulo y no concede escritura API", () => {
+  assert.match(auditMigration, /CREATE POLICY audit_events_read_authorized[\s\S]*mira\.has_module_permission\('base_datos_general','view'\)[\s\S]*mira\.has_module_permission\(module_key,'view'\)/);
+  assert.match(auditMigration, /STABLE SECURITY INVOKER/);
+  assert.match(auditMigration, /REVOKE ALL ON mira\.audit_events FROM PUBLIC, anonymous/);
+  assert.match(auditMigration, /CREATE TRIGGER central_audit_module_permissions[\s\S]*ON mira\.module_permissions/);
+  assert.match(auditMigration, /CREATE TRIGGER central_audit_user_profiles[\s\S]*ON mira\.user_profiles/);
+});
