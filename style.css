@@ -6358,3 +6358,197 @@ body.theme-light #mainSidebar .neo-tactile-sidebar{
     scroll-behavior:auto!important;
   }
 }
+
+
+/* MIRA · Navegación de módulos — estados y transiciones del prototipo */
+#mainSidebar .neo-tactile-sidebar {
+  --menu-accent: #ff925c;
+  --menu-accent-soft: rgba(255,146,92,.14);
+  --menu-line: rgba(255,255,255,.09);
+  background:
+    radial-gradient(ellipse at 88% 4%, rgba(255,146,92,.12), transparent 38%),
+    linear-gradient(155deg, #202127 0%, #17191f 54%, #111319 100%) !important;
+  border: 1px solid rgba(255,255,255,.105) !important;
+  box-shadow: 0 28px 76px rgba(0,0,0,.48), inset 0 1px 0 rgba(255,255,255,.065) !important;
+}
+#mainSidebar .sidebar-header {
+  min-height: 68px;
+  border-bottom: 1px solid var(--menu-line) !important;
+}
+#mainSidebar .header-titles h1 {
+  letter-spacing: -.025em;
+  font-weight: 760;
+}
+#mainSidebar .header-titles p {
+  color: rgba(225,229,238,.58) !important;
+  letter-spacing: .015em;
+}
+#mainSidebar #sidebarToggleBtn,
+#mainSidebar #platformHomeBtn {
+  border: 1px solid rgba(255,255,255,.12) !important;
+  background: rgba(255,255,255,.055) !important;
+  transition: transform .22s ease, background .22s ease, border-color .22s ease, box-shadow .22s ease;
+}
+#mainSidebar #sidebarToggleBtn:hover,
+#mainSidebar #platformHomeBtn:hover {
+  transform: translateY(-1px);
+  background: var(--menu-accent-soft) !important;
+  border-color: rgba(255,146,92,.5) !important;
+  box-shadow: 0 5px 18px rgba(0,0,0,.22);
+}
+#mainSidebar .neo-live-indicator {
+  box-shadow: 0 0 0 4px rgba(69,210,145,.09), 0 0 15px rgba(69,210,145,.45);
+}
+#mainSidebar .sidebar-content > .section-title {
+  color: rgba(232,235,242,.48) !important;
+  font-size: .65rem !important;
+  letter-spacing: .16em !important;
+  padding: 14px 10px 9px !important;
+}
+#mainSidebar .sidebar-content > details.custom-dropdown {
+  margin: 3px 0 !important;
+  border: 1px solid transparent !important;
+  border-radius: 13px !important;
+  background: rgba(255,255,255,.025) !important;
+  transition: background .24s ease, border-color .24s ease, transform .24s ease, box-shadow .24s ease !important;
+}
+#mainSidebar .sidebar-content > details.custom-dropdown:hover {
+  transform: translateX(2px);
+  background: rgba(255,255,255,.052) !important;
+  border-color: rgba(255,255,255,.085) !important;
+}
+#mainSidebar .sidebar-content > details.custom-dropdown > summary {
+  min-height: 48px !important;
+  padding: 11px 12px !important;
+  gap: 12px !important;
+  color: rgba(247,248,251,.91) !important;
+  font-size: .77rem !important;
+  font-weight: 620 !important;
+  letter-spacing: .005em;
+  transition: color .22s ease, background .22s ease, padding .22s ease !important;
+}
+#mainSidebar .sidebar-content > details.custom-dropdown > summary .summary-title {
+  gap: 12px !important;
+}
+#mainSidebar .sidebar-content > details.custom-dropdown > summary .neo-icon {
+  width: 29px !important;
+  height: 29px !important;
+  min-width: 29px !important;
+  border-radius: 9px;
+  background: rgba(255,255,255,.065);
+  font-size: .95rem !important;
+  filter: none !important;
+  transition: background .22s ease, transform .22s ease;
+}
+#mainSidebar .sidebar-content > details.custom-dropdown > summary .arrow-icon {
+  color: rgba(236,239,245,.46) !important;
+  transition: transform .34s cubic-bezier(.2,.75,.25,1), color .22s ease !important;
+}
+#mainSidebar .sidebar-content > details.custom-dropdown[open] {
+  background: rgba(255,255,255,.045) !important;
+  border-color: rgba(255,146,92,.25) !important;
+  box-shadow: inset 0 0 0 1px rgba(255,146,92,.035), 0 8px 24px rgba(0,0,0,.13) !important;
+}
+#mainSidebar .sidebar-content > details.custom-dropdown[open] > summary {
+  color: #fff !important;
+  background: linear-gradient(90deg, rgba(255,146,92,.17), rgba(255,146,92,.035)) !important;
+}
+#mainSidebar .sidebar-content > details.custom-dropdown[open] > summary .neo-icon {
+  background: rgba(255,146,92,.17);
+  transform: scale(1.04);
+}
+#mainSidebar .sidebar-content > details.custom-dropdown[open] > summary .arrow-icon {
+  color: var(--menu-accent) !important;
+  transform: rotate(180deg);
+}
+/* Sobrescribe reglas heredadas de max-height:none para que la apertura sea animable. */
+#mainSidebar .neo-tactile-sidebar .sidebar-content > details.custom-dropdown > .dropdown-content {
+  display: block !important;
+  max-height: 0 !important;
+  height: auto !important;
+  overflow: hidden !important;
+  opacity: 0;
+  transform: translateY(-8px);
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  transition: max-height .48s cubic-bezier(.2,.75,.25,1), opacity .25s ease, transform .32s ease, padding .32s ease !important;
+}
+#mainSidebar .neo-tactile-sidebar .sidebar-content > details.custom-dropdown[open] > .dropdown-content {
+  max-height: 5000px !important;
+  opacity: 1;
+  transform: translateY(0);
+  padding-top: 11px !important;
+  padding-bottom: 13px !important;
+}
+#mainSidebar .neo-tactile-sidebar .sidebar-content > details.custom-dropdown.dropdown-expanded-full[open] > .dropdown-content {
+  max-height: 9000px !important;
+  overflow: visible !important;
+}
+#mainSidebar .sidebar-content > details.custom-dropdown .activity-sidebar-tile,
+#mainSidebar .sidebar-content > details.custom-dropdown .database-action-card {
+  border-color: rgba(255,255,255,.09) !important;
+  background: rgba(255,255,255,.045) !important;
+  transition: transform .22s ease, border-color .22s ease, background .22s ease, box-shadow .22s ease !important;
+}
+#mainSidebar .sidebar-content > details.custom-dropdown .activity-sidebar-tile:hover,
+#mainSidebar .sidebar-content > details.custom-dropdown .database-action-card:hover {
+  transform: translate3d(3px,-1px,0);
+  border-color: rgba(255,146,92,.52) !important;
+  background: rgba(255,146,92,.09) !important;
+  box-shadow: 0 9px 24px rgba(0,0,0,.2) !important;
+}
+#mainSidebar .sidebar-content > details.custom-dropdown .activity-side-icon {
+  border-color: rgba(255,146,92,.24) !important;
+  background: rgba(255,146,92,.1) !important;
+  color: #ffb184 !important;
+}
+#mainSidebar .sidebar-content > details.custom-dropdown.module-access-restricted > summary {
+  opacity: .62;
+}
+#mainSidebar .sidebar-content > details.custom-dropdown.module-access-restricted:hover {
+  transform: none;
+}
+#mainSidebar .sidebar-content > details.custom-dropdown > summary:focus-visible,
+#mainSidebar .neo-tactile-sidebar button:focus-visible {
+  outline: 2px solid var(--menu-accent) !important;
+  outline-offset: 3px !important;
+}
+body.theme-light #mainSidebar .neo-tactile-sidebar {
+  background: linear-gradient(155deg, #f7f8fb, #e9edf3 100%) !important;
+  border-color: rgba(35,48,67,.14) !important;
+  box-shadow: 0 22px 58px rgba(28,42,62,.18), inset 0 1px 0 rgba(255,255,255,.9) !important;
+}
+body.theme-light #mainSidebar .header-titles p,
+body.theme-light #mainSidebar .sidebar-content > .section-title {
+  color: rgba(36,47,64,.58) !important;
+}
+body.theme-light #mainSidebar .sidebar-content > details.custom-dropdown > summary {
+  color: #263246 !important;
+}
+body.theme-light #mainSidebar .sidebar-content > details.custom-dropdown[open] > summary {
+  color: #1f2937 !important;
+  background: linear-gradient(90deg, rgba(255,146,92,.2), rgba(255,146,92,.045)) !important;
+}
+body.theme-light #mainSidebar .sidebar-content > details.custom-dropdown .activity-sidebar-tile,
+body.theme-light #mainSidebar .sidebar-content > details.custom-dropdown .database-action-card {
+  background: rgba(255,255,255,.7) !important;
+  border-color: rgba(38,50,70,.1) !important;
+}
+@media (max-width: 600px) {
+  #mainSidebar .sidebar-content > details.custom-dropdown > .dropdown-content,
+  #mainSidebar .sidebar-content > details.custom-dropdown[open] > .dropdown-content {
+    max-height: none !important;
+    overflow: visible !important;
+    opacity: 1;
+    transform: none;
+    transition: none !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #mainSidebar .neo-tactile-sidebar *,
+  #mainSidebar .neo-tactile-sidebar *::before,
+  #mainSidebar .neo-tactile-sidebar *::after {
+    transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+  }
+}
