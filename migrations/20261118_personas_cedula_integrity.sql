@@ -25,6 +25,8 @@ BEGIN
 END;
 $function$;
 
+REVOKE EXECUTE ON FUNCTION mira.normalize_person_cedula() FROM PUBLIC, anonymous, authenticated;
+
 DROP TRIGGER IF EXISTS personas_normalize_cedula ON mira.personas;
 CREATE TRIGGER personas_normalize_cedula
 BEFORE INSERT OR UPDATE ON mira.personas
