@@ -3335,6 +3335,9 @@ function inicializarSistemaMapa() {
         const mostrarValor = value => value === null || value === undefined || String(value).trim() === ''
             ? 'Sin registrar' : escInfo(value);
         const personaDe = row => Array.isArray(row.personas) ? (row.personas[0] || null) : (row.personas || null);
+        const normalizarPuestoInfoMira = value => String(value || '').normalize('NFD')
+            .replace(/[\\u0300-\\u036f]/g,'').toUpperCase()
+            .replace(/[^A-Z0-9]+/g,' ').trim().replace(/\\s+/g,' ');
 
         function actualizarMapaInfoMira(rows) {
             miraMarkersGroup.clearLayers();
@@ -3345,12 +3348,12 @@ function inicializarSistemaMapa() {
             const agrupados = new Map();
             rows.forEach(row => {
                 const nombrePuesto = row.puesto_votacion || row.puesto_original || personaDe(row)?.puesto_votacion || '';
-                const clave = normalizarTexto(nombrePuesto);
+                const clave = normalizarPuestoInfoMira(nombrePuesto);
                 if (clave) agrupados.set(clave, (agrupados.get(clave) || 0) + 1);
             });
             const bounds = [];
             listaPuestosVotacion.forEach(puesto => {
-                const cantidad = agrupados.get(normalizarTexto(puesto.matchName)) || agrupados.get(normalizarTexto(puesto.nombre)) || 0;
+                const cantidad = agrupados.get(normalizarPuestoInfoMira(puesto.matchName)) || agrupados.get(normalizarPuestoInfoMira(puesto.nombre)) || 0;
                 if (!cantidad) return;
                 bounds.push([puesto.lat, puesto.lon]);
                 const icon = L.divIcon({
