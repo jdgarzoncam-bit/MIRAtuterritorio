@@ -382,8 +382,8 @@ test("InfoMIRA: las fichas y exportación escapan texto y el mapa usa puestos ex
 });
 
 test("InfoMIRA: el filtro Activo no incluye registros Inactivos por coincidencia parcial",()=>{
-  assert.match(appSource,/person\?\.activo !== false && role === 'activo'/);
-  assert.match(appSource,/role\.includes\('lider'\) \|\| role\.includes\('cuidador'\)/);
-  assert.match(appSource,/role\.includes\('referido'\)/);
+  assert.match(appSource,/person\?\.activo !== false && role === 'ACTIVO'/);
+  assert.match(appSource,/role\.includes\('LIDER'\) \|\| role\.includes\('CUIDADOR'\)/);
+  assert.match(appSource,/role\.includes\('REFERIDO'\)/);
   assert.doesNotMatch(appSource,/role\.includes\('ACTIVO'\)/);
 });
