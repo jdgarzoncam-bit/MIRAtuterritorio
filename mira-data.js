@@ -296,12 +296,17 @@ export const MIRA_DATA = {
       p_offset:Math.max(Number(offset)||0,0)
     }});
   },
-  async exportDataset({datasetKey,search="",filterField="",filterValue="",limit=100000}={}) {
+  async exportDataset({datasetKey,search="",filterField="",filterValue="",limit=100000,personStatus="all"}={}) {
     if(!getExplorerDataset(datasetKey)) throw new Error("Conjunto de datos no autorizado para exportación.");
+    if(datasetKey==="personas"&&!["active","archived","all"].includes(personStatus)) throw new Error("Estado de fichas no válido para exportación.");
     return miraRequest("rpc/export_dataset",{method:"POST",body:{
       p_dataset_key:datasetKey,p_search:search,p_filter_field:filterField,
-      p_filter_value:filterValue,p_limit:Math.min(Math.max(Number(limit)||100000,1),100000)
+      p_filter_value:filterValue,p_limit:Math.min(Math.max(Number(limit)||100000,1),100000),
+      p_person_status:datasetKey==="personas"?personStatus:"all"
     }});
+  },
+  async getDataQualitySummary() {
+    return miraRequest("rpc/get_data_quality_summary",{method:"POST",body:{}});
   },
   async listAdminAudit({limit=50,offset=0}={}) {
     const safeLimit=Math.min(Math.max(Number(limit)||50,1),51);
