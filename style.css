@@ -7343,3 +7343,264 @@ body.theme-light #mainSidebar .neo-tactile-sidebar > .mira-module-flyout :is(inp
     forced-color-adjust: auto;
   }
 }
+
+
+/* MIRA · Acceso al Centro de Operaciones — referencia Glass Effect Login
+   Mantiene intactos el formulario, los IDs y el flujo Neon Auth. */
+.admin-login-backdrop {
+  z-index: 100000 !important;
+  background:
+    radial-gradient(ellipse 34% 25% at 50% 40%, rgba(58, 126, 190, .22), transparent 72%),
+    radial-gradient(ellipse 48% 20% at 50% 100%, rgba(106, 130, 158, .72), transparent 74%),
+    radial-gradient(ellipse 28% 15% at 27% 39%, rgba(106, 153, 192, .20), transparent 72%),
+    radial-gradient(ellipse 30% 16% at 74% 40%, rgba(32, 105, 181, .24), transparent 72%),
+    linear-gradient(180deg, #020d24 0%, #061a36 60%, #263b5a 100%) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(118%) !important;
+  backdrop-filter: blur(12px) saturate(118%) !important;
+  opacity: 0;
+  transition: opacity .58s cubic-bezier(.2,.7,.2,1) !important;
+}
+.admin-login-backdrop:not(.hidden) { opacity: 1; }
+.admin-login-backdrop::before,
+.admin-login-backdrop::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  filter: blur(30px);
+  border-radius: 50%;
+}
+.admin-login-backdrop::before {
+  width: min(38vw, 520px);
+  height: 110px;
+  left: 12%;
+  top: 34%;
+  background: rgba(153, 183, 207, .20);
+}
+.admin-login-backdrop::after {
+  width: min(38vw, 520px);
+  height: 110px;
+  right: 10%;
+  top: 34%;
+  background: rgba(37, 115, 197, .20);
+}
+.admin-login-modal {
+  z-index: 100001 !important;
+  width: min(426px, calc(100vw - 30px)) !important;
+  max-width: min(426px, calc(100vw - 30px)) !important;
+  max-height: min(88dvh, 680px) !important;
+  overflow-y: auto !important;
+  padding: 34px 35px 30px !important;
+  border: 1px solid rgba(0, 190, 238, .78) !important;
+  border-radius: 30px !important;
+  background:
+    linear-gradient(145deg, rgba(13, 35, 63, .90), rgba(5, 20, 42, .94)) !important;
+  color: #eaf4ff !important;
+  -webkit-backdrop-filter: blur(32px) saturate(142%) !important;
+  backdrop-filter: blur(32px) saturate(142%) !important;
+  box-shadow:
+    0 28px 82px rgba(0, 0, 0, .48),
+    0 0 36px rgba(0, 153, 219, .10),
+    inset 0 1px 0 rgba(226, 247, 255, .10) !important;
+  transform: translate(-50%, -46%) scale(.965) !important;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity .46s cubic-bezier(.2,.7,.2,1),
+    transform .72s cubic-bezier(.18,1,.28,1),
+    visibility .46s ease,
+    box-shadow .5s ease !important;
+  will-change: opacity, transform;
+}
+.admin-login-modal.is-open {
+  transform: translate(-50%, -50%) scale(1) !important;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+.admin-login-modal:hover {
+  transform: translate(-50%, -50%) scale(1) !important;
+  box-shadow:
+    0 30px 86px rgba(0,0,0,.50),
+    0 0 40px rgba(0,153,219,.13),
+    inset 0 1px 0 rgba(226,247,255,.11) !important;
+}
+.admin-login-modal::before {
+  display: none !important;
+}
+.admin-login-modal .admin-inline-form {
+  gap: 19px !important;
+}
+.admin-login-modal .inline-form-header {
+  margin-bottom: 2px !important;
+  align-items: center;
+}
+.admin-login-modal .inline-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 2px 9px !important;
+  border-radius: 999px !important;
+  border: 1px solid rgba(0, 196, 235, .62) !important;
+  background: rgba(0, 183, 225, .10) !important;
+  color: #38e4f4 !important;
+  font-size: .66rem !important;
+  font-weight: 800;
+  letter-spacing: .045em;
+}
+.admin-login-modal .inline-close-btn {
+  width: 31px !important;
+  height: 31px !important;
+  border-radius: 50% !important;
+  background: rgba(61, 118, 164, .16) !important;
+  border: 1px solid rgba(106, 183, 225, .34) !important;
+  color: #d9edff !important;
+  transition: background .28s ease, transform .42s cubic-bezier(.2,.8,.2,1) !important;
+}
+.admin-login-modal .inline-close-btn:hover {
+  background: rgba(69, 157, 213, .26) !important;
+  transform: rotate(90deg) !important;
+}
+.admin-login-modal .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px !important;
+}
+.admin-login-modal .form-group label {
+  color: #b7cce1 !important;
+  font-size: .76rem !important;
+  font-weight: 600;
+}
+.admin-login-modal .form-group input {
+  width: 100%;
+  min-height: 42px;
+  box-sizing: border-box;
+  padding: 10px 13px !important;
+  border-radius: 15px !important;
+  border: 1px solid rgba(35, 157, 204, .62) !important;
+  background: rgba(2, 12, 29, .82) !important;
+  color: #eff8ff !important;
+  box-shadow: inset 0 1px 4px rgba(0,0,0,.22) !important;
+  outline: none !important;
+  transition: border-color .32s ease, box-shadow .36s ease, background .32s ease !important;
+}
+.admin-login-modal .form-group input::placeholder {
+  color: #819ab3 !important;
+}
+.admin-login-modal .form-group input:focus {
+  border-color: rgba(38, 203, 240, .94) !important;
+  background: rgba(3, 17, 38, .96) !important;
+  box-shadow: 0 0 0 3px rgba(0, 177, 230, .10), 0 0 18px rgba(0, 177, 230, .10) !important;
+}
+.admin-login-modal .login-btn {
+  min-height: 47px !important;
+  margin-top: 5px !important;
+  border-radius: 16px !important;
+  border: 1px solid rgba(91, 174, 255, .72) !important;
+  background: linear-gradient(100deg, #087fe3, #174be0) !important;
+  color: #fff !important;
+  box-shadow: 0 8px 24px rgba(0, 92, 210, .23) !important;
+  transition: transform .38s cubic-bezier(.2,.8,.2,1), filter .35s ease, box-shadow .38s ease !important;
+}
+.admin-login-modal .login-btn:hover {
+  transform: translateY(-2px) !important;
+  filter: brightness(1.08);
+  box-shadow: 0 12px 28px rgba(0, 111, 229, .30) !important;
+}
+.admin-login-modal .account-secondary-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+.admin-login-modal .account-link-btn {
+  padding: 4px 2px !important;
+  background: transparent !important;
+  border: 0 !important;
+  color: #36dff0 !important;
+  font-size: .73rem !important;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color .25s ease, opacity .25s ease !important;
+}
+.admin-login-modal .account-link-btn:hover {
+  color: #a5f4ff !important;
+  opacity: .92;
+}
+.admin-login-modal .account-action-notice,
+.admin-login-modal .login-error {
+  color: #ffd4d8 !important;
+}
+.admin-login-modal .recovery-heading h2,
+.admin-login-modal .recovery-heading p {
+  color: #eaf4ff !important;
+}
+@media (max-width: 560px) {
+  .admin-login-modal {
+    width: calc(100vw - 28px) !important;
+    max-width: calc(100vw - 28px) !important;
+    padding: 25px 21px 23px !important;
+    border-radius: 25px !important;
+  }
+  .admin-login-modal .account-secondary-actions {
+    flex-wrap: wrap;
+  }
+}
+
+/* Movimiento global más continuo: curvas suaves, sin saltos ni sobreimpulso excesivo. */
+:root {
+  --mira-ease-fluid: cubic-bezier(.22,.75,.24,1);
+  --mira-ease-enter: cubic-bezier(.18,.88,.28,1);
+}
+#mainSidebar.sidebar-wrapper-group,
+#mainSidebar .neo-tactile-sidebar,
+#mainSidebar .sidebar-content > details.custom-dropdown > summary,
+#mainSidebar .neo-tactile-sidebar > .mira-module-flyout,
+.activities-workspace,
+.activity-panel,
+.testigos-modal-card,
+.admin-permissions-dialog,
+.module-placeholder-card {
+  transition-timing-function: var(--mira-ease-fluid) !important;
+}
+#mainSidebar.sidebar-wrapper-group,
+#mainSidebar .neo-tactile-sidebar {
+  transition-duration: .68s !important;
+}
+#mainSidebar .neo-tactile-sidebar > .mira-module-flyout {
+  transition:
+    opacity .38s var(--mira-ease-fluid),
+    transform .58s var(--mira-ease-enter),
+    clip-path .58s var(--mira-ease-enter),
+    border-radius .58s var(--mira-ease-fluid) !important;
+}
+.activities-workspace {
+  animation-duration: .56s !important;
+  animation-timing-function: var(--mira-ease-enter) !important;
+}
+.activity-panel,
+.module-placeholder-card,
+.testigos-modal-card,
+.admin-permissions-dialog {
+  transition-duration: .42s !important;
+}
+button, .activity-folder, .hero-module-card, .database-action-card,
+.activity-sidebar-tile, .mira-quick-item, .module-card,
+.module-pending-card, .module-placeholder-card {
+  transition-timing-function: var(--mira-ease-fluid) !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .admin-login-modal,
+  .admin-login-backdrop,
+  #mainSidebar.sidebar-wrapper-group,
+  #mainSidebar .neo-tactile-sidebar,
+  #mainSidebar .neo-tactile-sidebar > .mira-module-flyout,
+  .activities-workspace,
+  .activity-panel,
+  .testigos-modal-card,
+  .admin-permissions-dialog {
+    animation: none !important;
+    transition-duration: .01ms !important;
+  }
+}
