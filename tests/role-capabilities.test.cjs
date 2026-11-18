@@ -354,3 +354,29 @@ test("Bloque 6: Base de datos general tiene ajustes responsivos y foco visible",
   assert.match(styleSource, /database-workspace button:focus-visible/);
   assert.match(styleSource, /database-workspace #databaseQualityReport \.activity-table\{width:100%;min-width:100%/);
 });
+
+
+test("InfoMIRA: consulta normaliza documentos, limita la consulta y pagina con orden estable",()=>{
+  assert.match(dataSource,/async listInfoMiraDirectory\(\{cedula="", search="", limit=100, offset=0\}/);
+  assert.match(dataSource,/const documentDigits=cleanCedula\(cedula\)/);
+  assert.match(dataSource,/order:"fila_origen.asc,id.asc"/);
+  assert.match(dataSource,/Math\.min\(Math\.max\(Number\(limit\)\|\|100,1\),100\)/);
+  assert.match(dataSource,/cedula_original\.eq\.\$\{documentDigits\}/);
+  assert.match(dataSource,/cedula_normalizada,nombres,apellidos/);
+});
+test("InfoMIRA: el buscador recorre páginas y evita pintar respuestas obsoletas",()=>{
+  assert.match(appSource,/loadAllInfoMiraPages = async/);
+  assert.match(appSource,/offset\+=pageSize/);
+  assert.match(appSource,/requestId!==searchRequest \|\| inputCuidador\.value\.trim\(\)!==query/);
+  assert.match(appSource,/if\(requestId!==searchRequest\) return/);
+  assert.match(appSource,/searchRequest\+\+/);
+});
+test("InfoMIRA: las fichas y exportación escapan texto y el mapa usa puestos existentes",()=>{
+  const info=appSource.slice(appSource.indexOf("function inicializarModuloInfoMIRA"),appSource.indexOf("function obtenerUltimaActividadPorBarrio"));
+  assert.match(info,/escInfo\(name\)/);
+  assert.match(info,/mostrarValor\(value\)/);
+  assert.match(info,/listaPuestosVotacion\.forEach/);
+  assert.match(info,/miraMarkersGroup\.clearLayers\(\)/);
+  assert.match(info,/if \(map\.hasLayer\(puestosLayerGroup\)\) puestosLayerGroup\.remove\(\)/);
+  assert.match(info,/XLSX\.utils\.json_to_sheet\(exportRows\)/);
+});
