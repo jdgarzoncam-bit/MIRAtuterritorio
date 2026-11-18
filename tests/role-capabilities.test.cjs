@@ -10,6 +10,7 @@ const appSource = fs.readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
 const styleSource = fs.readFileSync(path.join(__dirname, "..", "style.css"), "utf8");
 const exportMigration = fs.readFileSync(path.join(__dirname, "..", "migrations", "20261111_activities_granular_export_permission.sql"), "utf8");
 const auditMigration = fs.readFileSync(path.join(__dirname, "..", "migrations", "20261113_audit_export_remove_operational_reports.sql"), "utf8");
+const block5Migration = fs.readFileSync(path.join(__dirname, "..", "migrations", "20261118_block5_export_quality.sql"), "utf8");
 const leastPrivilegeMigration = fs.readFileSync(path.join(__dirname, "..", "migrations", "20261111_security_least_privilege_qa.sql"), "utf8");
 const commonMapApprovalMigration = fs.readFileSync(path.join(__dirname, "..", "migrations", "20261117_common_map_account_approval.sql"), "utf8");
 const reportesSource = fs.readFileSync(path.join(__dirname, "..", "reportes.js"), "utf8");
@@ -319,4 +320,23 @@ test("Bloque 4: auditoría central aplica RLS de lectura por módulo y no conced
   assert.match(auditMigration, /REVOKE ALL ON mira\.audit_events FROM PUBLIC, anonymous/);
   assert.match(auditMigration, /CREATE TRIGGER central_audit_module_permissions[\s\S]*ON mira\.module_permissions/);
   assert.match(auditMigration, /CREATE TRIGGER central_audit_user_profiles[\s\S]*ON mira\.user_profiles/);
+});
+
+
+test("Bloque 5: la exportación informa truncamiento y conserva el estado Activas/Archivadas/Todas", () => {
+  assert.match(dataSource, /p_person_status:datasetKey==="personas"\?personStatus:"all"/);
+  assert.match(appSource, /personStatus:dataset\.key==="personas"\?personStatus\.value:"all"/);
+  assert.match(appSource, /if\(result\.truncated\)[\s\S]*No se generó un archivo parcial/);
+  assert.match(block5Migration, /'total_count',v_total_count,'truncated',v_total_count>v_count/);
+  assert.match(block5Migration, /ORDER BY %I DESC,id DESC/);
+  assert.match(block5Migration, /cedula_normalizada=/);
+});
+
+test("Bloque 5: el diagnóstico de calidad es agregado, de solo lectura y protegido por permisos", () => {
+  assert.match(dataSource, /getDataQualitySummary\(\)[\s\S]*rpc\/get_data_quality_summary/);
+  assert.match(appSource, /Revisar calidad de datos/);
+  assert.match(appSource, /Este diagnóstico es de solo lectura/);
+  assert.match(block5Migration, /CREATE OR REPLACE FUNCTION mira\.get_data_quality_summary\(\)/);
+  assert.match(block5Migration, /LANGUAGE plpgsql[\s\S]*STABLE[\s\S]*SECURITY INVOKER/);
+  assert.match(block5Migration, /REVOKE ALL ON FUNCTION mira\.get_data_quality_summary\(\) FROM PUBLIC,anonymous/);
 });
