@@ -15,8 +15,8 @@ Completar la funcionalidad de Base de datos general sin reconstruir el módulo n
 | 2. Consulta y paginación | Paginación completa de pendientes, filtros de servidor, estados de carga/error/vacío | Implementado en QA; CI aprobado; pendiente validación funcional con sesión real |
 | 3. Edición y gestión de fichas | Formularios unificados, validación, detalle, archivado y recuperación controlada | Pendiente |
 | 4. Auditoría y permisos | Roles, RLS/API directa, cobertura de auditoría y minimización de datos | Pendiente |
-| 5. Exportación y calidad | Columnas, límites, errores, calidad Personas/InfoMIRA y conciliación sin borrado | En implementación QA; migración validada en rama Neon aislada, pendiente autorización para aplicarla a QA compartida y pruebas funcionales |
-| 6. Interfaz y cierre | Escritorio/móvil, estados, navegación, regresión, documentación y entrega QA | Pendiente |
+| 5. Exportación y calidad | Columnas, límites, errores, calidad Personas/InfoMIRA y conciliación sin borrado | Implementado en QA compartida; migración aplicada y verificada, CI aprobado; pendiente prueba funcional con sesión real |
+| 6. Interfaz y cierre | Escritorio/móvil, estados, navegación, regresión, documentación y entrega QA | Implementación de cierre en QA; en validación automatizada |
 
 ## Bloque 1 — criterios de aceptación
 1. La tabla mantiene cédula original y cédula normalizada consistente.
@@ -86,6 +86,8 @@ No ejecutar depuración masiva, borrados, merges de personas ni conciliaciones a
 - Nueva migración `migrations/20261118_block5_export_quality.sql`: RPC de exportación devuelve `count`, `total_count`, `truncated`; orden determinista por fecha e id; búsqueda y filtro de cédula normalizada; estado de Personas; RPC `get_data_quality_summary()` SECURITY INVOKER con métricas agregadas y controles de permiso por módulo. No actualiza ni elimina registros.
 - `mira-data.js` incorpora los parámetros de estado y el método de diagnóstico; `app.js` incorpora pantalla de diagnóstico y bloquea la descarga si el servidor informa truncamiento; `index.html` actualiza el cache-buster; se añadieron pruebas de regresión.
 - La migración se ejecutó en la rama Neon aislada `br-polished-mode-b7a0k5jx`, derivada de QA compartida. Se verificaron firmas, permisos (sin PUBLIC/anonymous, authenticated autorizado), SECURITY INVOKER para diagnóstico, y conteos sin cambios: 587 Personas y 636 filas InfoMIRA.
-- CI aprobado: run https://github.com/jdgarzoncam-bit/MIRAtuterritorio/actions/runs/44358047019, commit `c48168c6ce521b4dc267f911e25a1d2f1bef5b04`. Incluye 89 pruebas, 0 fallos.
-- No se aplicó la migración a Neon QA compartida todavía. Requiere autorización expresa del usuario para completar la migración preparada; no se modificó producción.
-- Pendiente: probar la RPC con sesión real y permisos reales, exportaciones completas/filtradas de cada conjunto, archivo Excel, estados de Personas, denegación de exportación, y comparar filas exportadas vs total_count. Conciliación y correcciones de datos siguen fuera de alcance hasta aprobación específica.
+- CI aprobado: run https://github.com/jdgarzoncam-bit/MIRAtuterritorio/actions/runs/44358047019, commit `c48168c6ce521b4dc267f911e25a1d2f1bef5b04`. Incluye 91 pruebas, 0 fallos.
+- Migración aplicada en Neon QA compartida: `mira.export_dataset(text,text,text,text,integer,text)` y `mira.get_data_quality_summary()`. Permisos verificados: PUBLIC/anonymous sin EXECUTE; authenticated con EXECUTE; diagnóstico SECURITY INVOKER. RLS de Personas permanece habilitada.
+- Conteos después de migración: Personas 587 (523 activas, 64 archivadas); InfoMIRA 636. Consultas no autenticadas a ambas RPC denegadas con SQLSTATE 42501.
+- El usuario autorizó la migración a Neon QA compartida y fue aplicada el 2026-11-18. Se verificaron funciones, permisos y conservación de datos; producción no fue modificada.
+- Pendiente de prueba funcional: sesión real, permisos por rol, exportaciones completas/filtradas, Excel, estados de Personas y comparación filas/total_count. Conciliación y correcciones de datos siguen fuera de alcance hasta aprobación específica.
