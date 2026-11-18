@@ -98,6 +98,6 @@ No ejecutar depuración masiva, borrados, merges de personas ni conciliaciones a
 - `style.css`: ajustes responsivos del espacio Base de datos general; acciones reacomodadas en móvil; tablas del diagnóstico legibles; foco visible para teclado; estados disabled distinguibles.
 - `index.html`: cache-buster actualizado a `20261118-block6-closeout-1`.
 - Se añadió `docs/QA-BASE-DATOS-GENERAL-BLOQUES-1-6.md` con matriz de pruebas de Bloques 1–6, pasos de ejecución local, controles de seguridad y criterios de cierre.
-- CI final de código/plan: https://github.com/jdgarzoncam-bit/MIRAtuterritorio/actions/runs/44360464618 — 93 pruebas aprobadas, 0 fallos (91 previas + 2 de accesibilidad/responsive).
-- CI del protocolo de pruebas: https://github.com/jdgarzoncam-bit/MIRAtuterritorio/actions/runs/44360538634 (pendiente al registrar este renglón).
+- CI final del commit `293734b717b389772fba8ec8421b2f1595420b25`: https://github.com/jdgarzoncam-bit/MIRAtuterritorio/actions/runs/44360617007 — 93 pruebas aprobadas, 0 fallos (91 previas + 2 de accesibilidad/responsive).
+- CI del protocolo de pruebas: https://github.com/jdgarzoncam-bit/MIRAtuterritorio/actions/runs/44360538634 — aprobado.
 - Bloques 5 y 6 están listos a nivel de implementación QA y pruebas automatizadas. No se declara completada la validación funcional de navegador: se ejecutará con la sesión QA del usuario, siguiendo el protocolo. No promover a producción sin autorización expresa.
