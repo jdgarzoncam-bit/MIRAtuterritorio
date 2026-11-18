@@ -81,7 +81,7 @@ const EXPLORER_DATASETS = Object.freeze([
 function getExplorerDataset(key){return EXPLORER_DATASETS.find(item=>item.key===key)||null;}
 export const MIRA_DATA = {
   getExplorerDatasets() { return EXPLORER_DATASETS.map(({key,label,module,columns})=>({key,label,module,columns})); },
-  async listExplorerRows({datasetKey,search="",filterField="",filterValue="",limit=25,offset=0}={}) {
+  async listExplorerRows({datasetKey,search="",filterField="",filterValue="",limit=25,offset=0,personStatus="active"}={}) {
     const dataset=getExplorerDataset(datasetKey);
     if(!dataset) throw new Error("Conjunto de datos no autorizado para el explorador.");
     const safeLimit=Math.min(Math.max(Number(limit)||25,1),100);
@@ -92,6 +92,7 @@ export const MIRA_DATA = {
       if(dataset.key==="personas"){const digits=cleanCedula(search);if(digits)clauses.push("cedula_normalizada.eq."+digits);}
       params.or="("+clauses.join(",")+")";
     }
+    if(dataset.key==="personas"&&personStatus!=="all") params.activo="eq."+(personStatus==="archived"?"false":"true");
     if(filterField&&filterValue!==undefined&&String(filterValue).trim()){
       const allowedFields=new Set(dataset.columns.map(column=>column[0]));
       if(!allowedFields.has(filterField)) throw new Error("El campo de filtro no está permitido para este conjunto.");
@@ -120,6 +121,12 @@ export const MIRA_DATA = {
     const params={select:"id,cedula,cedula_normalizada,nombres,apellidos,telefono,correo,barrio,puesto_votacion,mesa_votacion,edad,tipo_participacion,observaciones,datos_pendientes,updated_at",order:"updated_at.desc,id.asc",limit:String(safeLimit),offset:String(Math.max(0,Number(offset)||0)),or:'(datos_pendientes.eq.true,telefono.is.null,telefono.eq."",barrio.is.null,barrio.eq."")'};
     return miraRequest("personas",{query:qs(params)});
   },
+  async getPersonById(id) {
+    if(!id) throw new Error("No se identificó la ficha que deseas consultar.");
+    const rows=await miraRequest("personas",{query:qs({select:"*",id:"eq."+id,limit:"2"})});
+    if(!Array.isArray(rows)||rows.length!==1) throw new Error("No fue posible localizar una ficha única con ese identificador.");
+    return rows[0];
+  },
   async listPeople({cedula="", search="", limit=100, offset=0, tipoParticipacion=""}={}) {
     const params = {select:"id,cedula,cedula_normalizada,nombres,apellidos,telefono,correo,info_mira,barrio,puesto_votacion,mesa_votacion,requiere_transporte,edad,tipo_participacion,observaciones,activo,datos_pendientes,fuente_registro,created_at,updated_at",order:"updated_at.desc",limit:String(Math.min(Math.max(limit,1),1000)),offset:String(Math.max(0,Number(offset)||0))};
     if (tipoParticipacion) params.tipo_participacion = `eq.${tipoParticipacion}`;
@@ -144,7 +151,8 @@ export const MIRA_DATA = {
     if(cedula!==undefined&&!cedula) throw new Error("La cédula debe contener al menos un dígito.");
     return miraRequest("personas",{method:"PATCH",query:qs({id:`eq.${id}`}),body:{...personData,...(cedula!==undefined?{cedula}:{})},requireRows:true});
   },
-  archivePerson(id) { return this.updatePerson(id,{activo:false}); },
+  archivePerson(id) { if(!id) throw new Error("No se identificó la ficha que deseas archivar."); return this.updatePerson(id,{activo:false}); },
+  restorePerson(id) { if(!id) throw new Error("No se identificó la ficha que deseas recuperar."); return this.updatePerson(id,{activo:true}); },
   async listActivities({limit=100,offset=0}={}) {
     return miraRequest("actividades",{query:qs({select:"*",order:"fecha.desc",limit:String(Math.min(Math.max(limit,1),1000)),offset:String(Math.max(0,Number(offset)||0))})});
   },
