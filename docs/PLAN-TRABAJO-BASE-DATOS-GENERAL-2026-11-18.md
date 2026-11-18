@@ -15,7 +15,7 @@ Completar la funcionalidad de Base de datos general sin reconstruir el módulo n
 | 2. Consulta y paginación | Paginación completa de pendientes, filtros de servidor, estados de carga/error/vacío | Implementado en QA; CI aprobado; pendiente validación funcional con sesión real |
 | 3. Edición y gestión de fichas | Formularios unificados, validación, detalle, archivado y recuperación controlada | Pendiente |
 | 4. Auditoría y permisos | Roles, RLS/API directa, cobertura de auditoría y minimización de datos | Pendiente |
-| 5. Exportación y calidad | Columnas, límites, errores, calidad Personas/InfoMIRA y conciliación sin borrado | Pendiente |
+| 5. Exportación y calidad | Columnas, límites, errores, calidad Personas/InfoMIRA y conciliación sin borrado | En implementación QA; migración validada en rama Neon aislada, pendiente autorización para aplicarla a QA compartida y pruebas funcionales |
 | 6. Interfaz y cierre | Escritorio/móvil, estados, navegación, regresión, documentación y entrega QA | Pendiente |
 
 ## Bloque 1 — criterios de aceptación
@@ -76,3 +76,16 @@ No ejecutar depuración masiva, borrados, merges de personas ni conciliaciones a
 - `app.js`: corregido el estado de error del historial. Si falla la RPC, ya no queda la tabla indefinidamente en “Consultando”; muestra error, conserva el control de reintento por filtros y evita respuestas fuera de orden.
 - Se añadieron pruebas de regresión de UI/RLS/auditoría en `tests/role-capabilities.test.cjs`. CI del commit `51888537c15e915b3323b0f323aa731fe428ac58` estaba ejecutándose al registrar esta actualización.
 - Pendiente de validación funcional: sesión de operador con permisos de Base de datos general y módulos, cuenta sin permisos, filtros de auditoría y denegación de escrituras directas; confirmar CI verde. No modificar datos de producción.
+
+
+## Bloque 5 — avance técnico inicial (2026-11-18)
+- Diagnóstico de solo lectura en Neon QA compartida: Personas 587 (523 activas, 64 archivadas); cédulas normalizadas duplicadas 0; teléfonos vacíos 33; barrios vacíos 587; indicador datos_pendientes inconsistente con teléfono/barrio 586; nombres/apellidos vacíos o espacios 583; teléfonos con formato atípico 2.
+- InfoMIRA: 636 filas; 618 vinculadas y 18 sin vincular/sin documento; 213 sin barrio; 34 grupos de cédula repetida (68 filas involucradas); 0 cédulas discordantes entre fila vinculada y Persona. Los duplicados son hallazgos, no instrucciones de fusión.
+- Asistencias: 3 filas (1 activa, 2 anuladas); 0 grupos duplicados por persona/actividad; 0 vínculos huérfanos a Persona o Actividad.
+- Exportación existente usa RPC SECURITY DEFINER con permisos validados en servidor, pero no devolvía total real ni bandera de truncamiento; además la exportación de Personas no distinguía Activas/Archivadas/Todas y la búsqueda por documento no incluía de forma garantizada la cédula normalizada.
+- Nueva migración `migrations/20261118_block5_export_quality.sql`: RPC de exportación devuelve `count`, `total_count`, `truncated`; orden determinista por fecha e id; búsqueda y filtro de cédula normalizada; estado de Personas; RPC `get_data_quality_summary()` SECURITY INVOKER con métricas agregadas y controles de permiso por módulo. No actualiza ni elimina registros.
+- `mira-data.js` incorpora los parámetros de estado y el método de diagnóstico; `app.js` incorpora pantalla de diagnóstico y bloquea la descarga si el servidor informa truncamiento; `index.html` actualiza el cache-buster; se añadieron pruebas de regresión.
+- La migración se ejecutó en la rama Neon aislada `br-polished-mode-b7a0k5jx`, derivada de QA compartida. Se verificaron firmas, permisos (sin PUBLIC/anonymous, authenticated autorizado), SECURITY INVOKER para diagnóstico, y conteos sin cambios: 587 Personas y 636 filas InfoMIRA.
+- CI aprobado: run https://github.com/jdgarzoncam-bit/MIRAtuterritorio/actions/runs/44358047019, commit `c48168c6ce521b4dc267f911e25a1d2f1bef5b04`. Incluye 89 pruebas, 0 fallos.
+- No se aplicó la migración a Neon QA compartida todavía. Requiere autorización expresa del usuario para completar la migración preparada; no se modificó producción.
+- Pendiente: probar la RPC con sesión real y permisos reales, exportaciones completas/filtradas de cada conjunto, archivo Excel, estados de Personas, denegación de exportación, y comparar filas exportadas vs total_count. Conciliación y correcciones de datos siguen fuera de alcance hasta aprobación específica.
