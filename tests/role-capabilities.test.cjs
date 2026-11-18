@@ -299,3 +299,8 @@ test("la migración de Personas normaliza cédula en PostgreSQL y garantiza cons
   assert.match(migration, /personas_cedula_unica/);
   assert.match(migration, /REVOKE EXECUTE ON FUNCTION mira\.normalize_person_cedula\(\) FROM PUBLIC, anonymous, authenticated/);
 });
+
+
+test("Bloque 2: fichas pendientes se consultan y paginan desde Neon",()=>{assert.match(dataSource,/async listPendingPeople\(\{limit=25,offset=0\}/);assert.match(dataSource,/datos_pendientes\.eq\.true/);assert.match(dataSource,/telefono\.is\.null/);assert.match(dataSource,/barrio\.is\.null/);assert.match(appSource,/listPendingPeople\(\{limit:26,offset:page\*25\}\)/);assert.doesNotMatch(appSource,/listPeople\(\{limit:1000\}\)[\s\S]{0,250}rows\.filter\(p=>p\.datos_pendientes/);assert.match(appSource,/databasePendingNext/);});
+test("Bloque 2: explorador Personas busca por cédula original y normalizada",()=>{assert.match(dataSource,/cedula_normalizada.*nombres.*apellidos/);assert.match(dataSource,/if\(dataset\.key==="personas"\)[\s\S]*cleanCedula\(search\)[\s\S]*cedula_normalizada\.eq\./);});
+test("Bloque 2: explorador controla carga, error, vacío y evita respuestas fuera de orden",()=>{assert.match(appSource,/let page=0,more=false,lastRows=\[\],dataset=datasets\[0\],requestVersion=0/);assert.match(appSource,/No se encontraron registros para los filtros seleccionados/);assert.match(appSource,/No fue posible consultar los registros/);assert.match(appSource,/if\(version!==requestVersion\)return/);});
