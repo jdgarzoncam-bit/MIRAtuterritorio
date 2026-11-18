@@ -16,7 +16,7 @@ Completar la funcionalidad de Base de datos general sin reconstruir el módulo n
 | 3. Edición y gestión de fichas | Formularios unificados, validación, detalle, archivado y recuperación controlada | Pendiente |
 | 4. Auditoría y permisos | Roles, RLS/API directa, cobertura de auditoría y minimización de datos | Pendiente |
 | 5. Exportación y calidad | Columnas, límites, errores, calidad Personas/InfoMIRA y conciliación sin borrado | Implementado en QA compartida; migración aplicada y verificada, CI aprobado; pendiente prueba funcional con sesión real |
-| 6. Interfaz y cierre | Escritorio/móvil, estados, navegación, regresión, documentación y entrega QA | Implementación de cierre en QA; en validación automatizada |
+| 6. Interfaz y cierre | Escritorio/móvil, estados, navegación, regresión, documentación y entrega QA | Implementado en QA; 93 pruebas automatizadas aprobadas; listo para validación funcional del usuario |
 
 ## Bloque 1 — criterios de aceptación
 1. La tabla mantiene cédula original y cédula normalizada consistente.
@@ -91,3 +91,13 @@ No ejecutar depuración masiva, borrados, merges de personas ni conciliaciones a
 - Conteos después de migración: Personas 587 (523 activas, 64 archivadas); InfoMIRA 636. Consultas no autenticadas a ambas RPC denegadas con SQLSTATE 42501.
 - El usuario autorizó la migración a Neon QA compartida y fue aplicada el 2026-11-18. Se verificaron funciones, permisos y conservación de datos; producción no fue modificada.
 - Pendiente de prueba funcional: sesión real, permisos por rol, exportaciones completas/filtradas, Excel, estados de Personas y comparación filas/total_count. Conciliación y correcciones de datos siguen fuera de alcance hasta aprobación específica.
+
+
+## Bloque 6 — cierre técnico y entrega QA (2026-11-18)
+- `app.js`: el diagnóstico tiene región accesible con etiqueta, foco y anuncio de cambios (`aria-live`).
+- `style.css`: ajustes responsivos del espacio Base de datos general; acciones reacomodadas en móvil; tablas del diagnóstico legibles; foco visible para teclado; estados disabled distinguibles.
+- `index.html`: cache-buster actualizado a `20261118-block6-closeout-1`.
+- Se añadió `docs/QA-BASE-DATOS-GENERAL-BLOQUES-1-6.md` con matriz de pruebas de Bloques 1–6, pasos de ejecución local, controles de seguridad y criterios de cierre.
+- CI final de código/plan: https://github.com/jdgarzoncam-bit/MIRAtuterritorio/actions/runs/44360464618 — 93 pruebas aprobadas, 0 fallos (91 previas + 2 de accesibilidad/responsive).
+- CI del protocolo de pruebas: https://github.com/jdgarzoncam-bit/MIRAtuterritorio/actions/runs/44360538634 (pendiente al registrar este renglón).
+- Bloques 5 y 6 están listos a nivel de implementación QA y pruebas automatizadas. No se declara completada la validación funcional de navegador: se ejecutará con la sesión QA del usuario, siguiendo el protocolo. No promover a producción sin autorización expresa.
