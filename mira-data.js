@@ -85,7 +85,7 @@ export const MIRA_DATA = {
     const dataset=getExplorerDataset(datasetKey);
     if(!dataset) throw new Error("Conjunto de datos no autorizado para el explorador.");
     const safeLimit=Math.min(Math.max(Number(limit)||25,1),100);
-    const params={select:dataset.select,order:"created_at.desc",limit:String(safeLimit),offset:String(Math.max(0,Number(offset)||0))};
+    const params={select:dataset.select,order:"created_at.desc,id.asc",limit:String(safeLimit),offset:String(Math.max(0,Number(offset)||0))};
     const term=String(search||"").trim().replace(/[,*()]/g," ").slice(0,80);
     if(term){
       const clauses=dataset.search.map(column=>column+".ilike.*"+term+"*");
@@ -117,7 +117,7 @@ export const MIRA_DATA = {
   },
   async listPendingPeople({limit=25,offset=0}={}) {
     const safeLimit=Math.min(Math.max(Number(limit)||25,1),100);
-    const params={select:"id,cedula,cedula_normalizada,nombres,apellidos,telefono,correo,barrio,puesto_votacion,mesa_votacion,edad,tipo_participacion,observaciones,datos_pendientes,updated_at",order:"updated_at.desc",limit:String(safeLimit),offset:String(Math.max(0,Number(offset)||0)),or:'(datos_pendientes.eq.true,telefono.is.null,telefono.eq."",barrio.is.null,barrio.eq."")'};
+    const params={select:"id,cedula,cedula_normalizada,nombres,apellidos,telefono,correo,barrio,puesto_votacion,mesa_votacion,edad,tipo_participacion,observaciones,datos_pendientes,updated_at",order:"updated_at.desc,id.asc",limit:String(safeLimit),offset:String(Math.max(0,Number(offset)||0)),or:'(datos_pendientes.eq.true,telefono.is.null,telefono.eq."",barrio.is.null,barrio.eq."")'};
     return miraRequest("personas",{query:qs(params)});
   },
   async listPeople({cedula="", search="", limit=100, offset=0, tipoParticipacion=""}={}) {
