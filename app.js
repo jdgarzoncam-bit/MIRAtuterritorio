@@ -1474,14 +1474,58 @@ document.getElementById('sidebarToggleBtn').addEventListener('click', function()
     setTimeout(() => { if (map) map.invalidateSize(); }, 350);
 });
 
-// Menú lateral · apertura y cierre animados de los módulos (sin alterar sus eventos internos).
+// Menú lateral · módulos flotantes en rail contraído y expansión fluida.
 (function inicializarTransicionesMenuModulos() {
     const sidebar = document.querySelector('#mainSidebar .neo-tactile-sidebar');
     if (!sidebar || sidebar.dataset.miraDisclosureReady === 'true') return;
     sidebar.dataset.miraDisclosureReady = 'true';
 
-    sidebar.querySelectorAll(':scope .sidebar-content > details.custom-dropdown > summary').forEach(summary => {
-        summary.setAttribute('aria-expanded', String(summary.parentElement.open));
+    const moduleDetails = () => Array.from(sidebar.querySelectorAll(':scope .sidebar-content > details.custom-dropdown'));
+    const restoreContent = details => {
+        const flyout = sidebar.querySelector(':scope > .mira-module-flyout');
+        const content = details?._miraDropdownContent;
+        if (content && flyout?.contains(content)) {
+            details.appendChild(content);
+            content.classList.remove('mira-floating-content');
+        }
+        if (flyout) flyout.remove();
+        if (details) {
+            details.classList.remove('mira-floating-active');
+            details.open = false;
+            details.querySelector(':scope > summary')?.setAttribute('aria-expanded', 'false');
+        }
+    };
+    const closeAllFloating = except => {
+        moduleDetails().forEach(item => {
+            if (item !== except && item.classList.contains('mira-floating-active')) restoreContent(item);
+        });
+    };
+    const openFloating = details => {
+        closeAllFloating(details);
+        const summary = details.querySelector(':scope > summary');
+        const content = details.querySelector(':scope > .dropdown-content');
+        if (!summary || !content) return;
+        details._miraDropdownContent = content;
+        const flyout = document.createElement('div');
+        flyout.className = 'mira-module-flyout';
+        flyout.setAttribute('role', 'region');
+        flyout.setAttribute('aria-label', summary.innerText.trim());
+        const sidebarRect = sidebar.getBoundingClientRect();
+        const summaryRect = summary.getBoundingClientRect();
+        const maxHeight = Math.min(Math.round(window.innerHeight * .76), 720);
+        const top = Math.max(10, Math.min(summaryRect.top - sidebarRect.top - 8, window.innerHeight - maxHeight - 10 - sidebarRect.top));
+        flyout.style.top = top + 'px';
+        flyout.appendChild(content);
+        sidebar.appendChild(flyout);
+        content.classList.add('mira-floating-content');
+        details.classList.add('mira-floating-active');
+        details.open = true;
+        summary.setAttribute('aria-expanded', 'true');
+        requestAnimationFrame(() => flyout.classList.add('is-visible'));
+    };
+    moduleDetails().forEach(details => {
+        details.querySelector(':scope > summary')?.setAttribute('aria-expanded', String(details.open));
+        details._miraDropdownContent = details.querySelector(':scope > .dropdown-content');
     });
 
     sidebar.addEventListener('click', event => {
@@ -1489,66 +1533,88 @@ document.getElementById('sidebarToggleBtn').addEventListener('click', function()
         if (!summary || !sidebar.contains(summary)) return;
         const details = summary.parentElement;
         if (details.classList.contains('module-access-restricted')) return;
-
-        const content = details.querySelector(':scope > .dropdown-content');
+        const content = details._miraDropdownContent || details.querySelector(':scope > .dropdown-content');
         if (!content) return;
         event.preventDefault();
 
+        const railMode = document.getElementById('mainSidebar')?.classList.contains('collapsed');
         const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        const compactViewport = window.matchMedia('(max-width: 600px)').matches;
-        if (reducedMotion || compactViewport) {
-            details.open = !details.open;
-            summary.setAttribute('aria-expanded', String(details.open));
+
+        if (railMode) {
+            if (details.classList.contains('mira-floating-active')) {
+                const flyout = sidebar.querySelector(':scope > .mira-module-flyout');
+                if (flyout) {
+                    flyout.classList.remove('is-visible');
+                    window.setTimeout(() => restoreContent(details), reducedMotion ? 0 : 300);
+                } else restoreContent(details);
+            } else openFloating(details);
             return;
         }
 
+        if (details.classList.contains('mira-floating-active')) restoreContent(details);
         if (!details.open) {
-            if (document.getElementById('mainSidebar')?.classList.contains('collapsed')) {
-                sidebar.querySelectorAll(':scope .sidebar-content > details.custom-dropdown[open]').forEach(other => {
-                    if (other !== details) {
-                        other.open = false;
-                        const otherSummary = other.querySelector(':scope > summary');
-                        otherSummary?.setAttribute('aria-expanded', 'false');
-                    }
-                });
-            }
+            moduleDetails().forEach(other => {
+                if (other !== details) {
+                    other.open = false;
+                    other.querySelector(':scope > summary')?.setAttribute('aria-expanded', 'false');
+                }
+            });
             details.open = true;
             summary.setAttribute('aria-expanded', 'true');
             return;
         }
 
+        if (reducedMotion) {
+            details.open = false;
+            summary.setAttribute('aria-expanded', 'false');
+            return;
+        }
         if (details.dataset.miraClosing === 'true') return;
         details.dataset.miraClosing = 'true';
         content.style.setProperty('max-height', content.scrollHeight + 'px', 'important');
-        content.style.opacity = '1';
-        content.style.transform = 'translateY(0)';
         void content.offsetHeight;
-        requestAnimationFrame(() => {
-            content.style.setProperty('max-height', '0px', 'important');
-            content.style.opacity = '0';
-            content.style.transform = 'translateY(-8px)';
-        });
-
-        let finished = false;
-        const finishClose = () => {
-            if (finished) return;
-            finished = true;
-            content.removeEventListener('transitionend', onTransitionEnd);
+        requestAnimationFrame(() => content.style.setProperty('max-height', '0px', 'important'));
+        const finish = () => {
+            if (details.dataset.miraClosing !== 'true') return;
             details.open = false;
             delete details.dataset.miraClosing;
             content.style.removeProperty('max-height');
-            content.style.removeProperty('opacity');
-            content.style.removeProperty('transform');
             summary.setAttribute('aria-expanded', 'false');
         };
-        const onTransitionEnd = transitionEvent => {
-            if (transitionEvent.target === content && transitionEvent.propertyName === 'max-height') finishClose();
-        };
-        content.addEventListener('transitionend', onTransitionEnd);
-        window.setTimeout(finishClose, 560);
+        content.addEventListener('transitionend', function onEnd(e) {
+            if (e.target !== content || e.propertyName !== 'max-height') return;
+            content.removeEventListener('transitionend', onEnd);
+            finish();
+        });
+        window.setTimeout(finish, 560);
     });
-})();
 
+    // Si se contrae con un módulo abierto, se convierte en panel lateral flotante.
+    document.getElementById('sidebarToggleBtn')?.addEventListener('click', () => {
+        const root = document.getElementById('mainSidebar');
+        requestAnimationFrame(() => {
+            if (root?.classList.contains('collapsed')) {
+                const opened = moduleDetails().find(item => item.open && !item.classList.contains('module-access-restricted'));
+                if (opened) openFloating(opened);
+            } else {
+                const active = moduleDetails().find(item => item.classList.contains('mira-floating-active'));
+                if (active) restoreContent(active);
+            }
+        });
+    });
+    window.addEventListener('resize', () => {
+        const active = moduleDetails().find(item => item.classList.contains('mira-floating-active'));
+        if (active && document.getElementById('mainSidebar')?.classList.contains('collapsed')) {
+            const summary = active.querySelector(':scope > summary');
+            const flyout = sidebar.querySelector(':scope > .mira-module-flyout');
+            if (summary && flyout) {
+                const sr = summary.getBoundingClientRect(), br = sidebar.getBoundingClientRect();
+                const mh = Math.min(Math.round(window.innerHeight * .76), 720);
+                flyout.style.top = Math.max(10, Math.min(sr.top - br.top - 8, window.innerHeight - mh - 10 - br.top)) + 'px';
+            }
+        }
+    }, { passive: true });
+})();
 
 function manejarBotonFlotanteReapertura(estaContraido) {
     // El botón de alternancia permanece integrado en el rail de iconos.
