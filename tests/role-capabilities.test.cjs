@@ -380,3 +380,10 @@ test("InfoMIRA: las fichas y exportación escapan texto y el mapa usa puestos ex
   assert.match(info,/if \(map\.hasLayer\(puestosLayerGroup\)\) puestosLayerGroup\.remove\(\)/);
   assert.match(info,/XLSX\.utils\.json_to_sheet\(exportRows\)/);
 });
+
+test("InfoMIRA: el filtro Activo no incluye registros Inactivos por coincidencia parcial",()=>{
+  assert.match(appSource,/person\?\.activo !== false && role === 'activo'/);
+  assert.match(appSource,/role\.includes\('lider'\) \|\| role\.includes\('cuidador'\)/);
+  assert.match(appSource,/role\.includes\('referido'\)/);
+  assert.doesNotMatch(appSource,/role\.includes\('ACTIVO'\)/);
+});
