@@ -280,3 +280,21 @@ test("las funciones exclusivas de triggers no conservan EXECUTE para clientes AP
     assert.match(leastPrivilegeMigration, new RegExp("revoke execute on function mira\\."+fn+"\\(\\) from public, anonymous, authenticated", "i"), fn);
   }
 });
+
+
+test("Personas exige confirmación de una fila en altas y ediciones", () => {
+  assert.match(dataSource, /createPerson\(payload\)[\s\S]*requireRows:true/);
+  assert.match(dataSource, /updatePerson\(id,payload\)[\s\S]*requireRows:true/);
+  assert.match(dataSource, /No se identificó la persona que deseas actualizar/);
+});
+
+test("la migración de Personas normaliza cédula en PostgreSQL y garantiza consistencia y unicidad", () => {
+  const migration = fs.readFileSync(path.join(__dirname, "..", "migrations", "20261118_personas_cedula_integrity.sql"), "utf8");
+  assert.match(migration, /CREATE OR REPLACE FUNCTION mira\.normalize_person_cedula/);
+  assert.match(migration, /regexp_replace\(coalesce\(NEW\.cedula, ''\), '\[\^0-9\]', '', 'g'\)/);
+  assert.match(migration, /BEFORE INSERT OR UPDATE ON mira\.personas/);
+  assert.match(migration, /ALTER COLUMN cedula_normalizada SET NOT NULL/);
+  assert.match(migration, /personas_cedula_normalizada_consistente/);
+  assert.match(migration, /VALIDATE CONSTRAINT/);
+  assert.match(migration, /personas_cedula_unica/);
+});
