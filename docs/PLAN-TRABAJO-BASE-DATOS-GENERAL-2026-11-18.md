@@ -11,8 +11,8 @@ Completar la funcionalidad de Base de datos general sin reconstruir el módulo n
 
 | Bloque | Alcance | Estado |
 |---|---|---|
-| 1. Integridad de Personas | Esquema, normalización de cédula, cliente de altas/ediciones, confirmación de escritura, unicidad y concurrencia | En intervención |
-| 2. Consulta y paginación | Paginación completa de pendientes, filtros de servidor, estados de carga/error/vacío | Pendiente |
+| 1. Integridad de Personas | Esquema, normalización de cédula, cliente de altas/ediciones, confirmación de escritura, unicidad y concurrencia | Implementación y pruebas técnicas en QA; falta validación funcional con sesión real |
+| 2. Consulta y paginación | Paginación completa de pendientes, filtros de servidor, estados de carga/error/vacío | Implementado en QA; CI aprobado; pendiente validación funcional con sesión real |
 | 3. Edición y gestión de fichas | Formularios unificados, validación, detalle, archivado y recuperación controlada | Pendiente |
 | 4. Auditoría y permisos | Roles, RLS/API directa, cobertura de auditoría y minimización de datos | Pendiente |
 | 5. Exportación y calidad | Columnas, límites, errores, calidad Personas/InfoMIRA y conciliación sin borrado | Pendiente |
@@ -37,10 +37,21 @@ Completar la funcionalidad de Base de datos general sin reconstruir el módulo n
 
 ## Intervención en curso
 - Rama Neon aislada: `qa-personas-integrity-2026-11-18` (`br-autumn-math-b7vc7hc7`), derivada de QA compartida.
-- Migración de normalización aplicada y probada solo en esa rama aislada.
+- Migración aplicada primero en rama aislada y posteriormente en QA compartida `br-wild-surf-b74rsbpz` con autorización expresa.
+- Verificación QA: 587 personas, 0 cédulas nulas/vacías/inconsistentes, 587 documentos normalizados distintos; trigger, NOT NULL, CHECK validado, UNIQUE y RLS activos.
+- Prueba SQL: alta, búsqueda con/sin puntuación, actualización de cédula y teléfono, reconsulta de persistencia y limpieza del registro sintético.
 - Cliente `mira-data.js`: altas y ediciones requieren exactamente una fila devuelta; edición valida ID y rechaza cédula sin dígitos.
-- No se ha aplicado la migración a la rama Neon QA compartida ni a producción.
-- La validación automatizada de GitHub Actions y la prueba funcional con sesión real permanecen pendientes.
+- CI del commit `4d51c6bd83ab04dda7aa46e19a71ffaee1294dd1`: 87 pruebas aprobadas, 0 fallos.
+- Falta validar desde navegador con sesión real alta, búsqueda y edición. No cerrar el bloque hasta esa comprobación.
 
 ## Protección de datos
 No ejecutar depuración masiva, borrados, merges de personas ni conciliaciones automáticas de InfoMIRA dentro de este bloque. Cualquier registro dudoso se conserva para revisión posterior.
+
+## Bloque 2 — avance técnico (2026-11-18)
+- La bandeja de pendientes ya no carga las primeras 1.000 personas para filtrar en el navegador. Usa listPendingPeople con filtro OR en Neon y páginas de 25 registros (consulta 26 para detectar siguiente página).
+- El filtro servidor considera datos_pendientes=true, teléfono nulo/vacío o barrio nulo/vacío. En QA, la comparación con el criterio anterior basado en btrim arrojó 587 pendientes en ambos métodos y 0 casos de teléfono/barrio compuesto solo por espacios que el filtro nuevo omitiera.
+- La búsqueda del explorador de Personas incluye cedula_normalizada y añade comparación exacta por dígitos al buscar un documento con o sin puntuación.
+- La paginación usa orden secundario por id para evitar resultados inestables cuando varias filas comparten timestamp.
+- La bandeja y el explorador muestran carga, error y estado vacío; las respuestas antiguas se descartan mediante versión de solicitud.
+- CI: 87 pruebas aprobadas, 0 fallos en el commit 4d51c6bd83ab04dda7aa46e19a71ffaee1294dd1.
+- Pendiente: validación funcional con sesión y permisos reales. No se ha modificado main ni producción.
