@@ -730,13 +730,13 @@ function initDatabaseExplorer(){
  }
  function renderIncorporate(){
   if(!allowed("personas","create"))throw new Error("No tienes permiso para incorporar personas en el módulo Personas.");
-  const fields=[["cedula","Cédula","text",true],["nombres","Nombres","text",true],["apellidos","Apellidos","text",true],["telefono","Teléfono","tel",false],["correo","Correo electrónico","email",false],["barrio","Barrio","text",false],["puesto_votacion","Puesto de votación","text",false],["mesa_votacion","Mesa","text",false],["edad","Edad","number",false],["tipo_participacion","Tipo de participación","text",false],["info_mira","InfoMIRA","boolean",false],["requiere_transporte","¿Requiere transporte?","boolean",false],["observaciones","Observaciones","text",false]];
+  const fields=[["cedula","Cédula","text",true],["nombres","Nombres","text",true],["apellidos","Apellidos","text",true],["telefono","Teléfono","tel",false],["correo","Correo electrónico","email",false],["barrio","Barrio","text",false],["puesto_votacion","Puesto de votación","text",false],["mesa_votacion","Mesa","text",false],["edad","Edad","number",false],["tipo_participacion","Tipo de participación","text",false],["info_mira","InfoMIRA","boolean",false],["observaciones","Observaciones","text",false]];
   content.innerHTML='<form id="databasePersonForm"><div class="activity-form-grid">'+fields.map(([key,label,type,required])=>'<label>'+label+(type==='boolean'?'<select name="'+key+'"><option value="">Sin especificar</option><option value="true">Sí</option><option value="false">No</option></select>':'<input name="'+key+'" type="'+type+'" '+(required?'required':'')+'>')+'</label>').join('')+'</div><div class="activity-actions"><button class="login-btn" type="submit">Guardar persona</button><button class="activity-secondary-btn" type="reset">Limpiar</button></div><p id="databasePersonNotice" class="activity-local-warning" role="status"></p></form>';
   document.getElementById("databasePersonForm").addEventListener("submit",async event=>{
    event.preventDefault();const form=event.currentTarget,button=form.querySelector('[type="submit"]'),payload=Object.fromEntries(new FormData(form).entries());
    ["edad"].forEach(k=>{if(payload[k]==="")delete payload[k];else payload[k]=Number(payload[k]);});
-   ["info_mira","requiere_transporte"].forEach(k=>{if(payload[k]==="")delete payload[k];else payload[k]=payload[k]==="true";});
-   ["telefono","correo","barrio","puesto_votacion","mesa_votacion","tipo_participacion","info_mira","requiere_transporte","observaciones"].forEach(k=>{if(!payload[k])delete payload[k];});
+   ["info_mira"].forEach(k=>{if(payload[k]==="")delete payload[k];else payload[k]=payload[k]==="true";});
+   ["telefono","correo","barrio","puesto_votacion","mesa_votacion","tipo_participacion","info_mira","observaciones"].forEach(k=>{if(!payload[k])delete payload[k];});
    button.disabled=true;
    try{await window.MIRA_DATA.createPerson({...payload,activo:true,datos_pendientes:false,fuente_registro:"base_datos_general"});form.reset();document.getElementById("databasePersonNotice").textContent="Persona incorporada correctamente."; }
    catch(error){document.getElementById("databasePersonNotice").textContent=error.message||"No fue posible guardar la persona.";}
@@ -3222,12 +3222,10 @@ function inicializarSistemaMapa() {
                 const puesto = person?.puesto_votacion || row.puesto_votacion || row.puesto_original;
                 const mesa = person?.mesa_votacion || row.mesa_votacion;
                 const barrio = row.barrio;
-                const movilidad = row.movilidad;
                 const asistencia = row.asistencia;
                 const extras = [
                     person?.edad !== null && person?.edad !== undefined ? ['Edad',person.edad] : null,
                     person?.tipo_participacion ? ['Tipo de participación',person.tipo_participacion] : null,
-                    person?.requiere_transporte !== null && person?.requiere_transporte !== undefined ? ['Requiere transporte',person.requiere_transporte ? 'Sí' : 'No'] : null
                 ].filter(Boolean);
                 const fields = [
                     ['Documento',cedula],
@@ -3298,11 +3296,9 @@ function inicializarSistemaMapa() {
                         'Mesa': p.mesa_votacion || row.mesa_votacion || '',
                         'InfoMIRA': p.info_mira === true ? 'Sí' : p.info_mira === false ? 'No' : '',
                         'Activo': p.activo === true ? 'Sí' : p.activo === false ? 'No' : '',
-                        'Movilidad': row.movilidad || '',
                         'Asistencia': row.asistencia || '',
                         'Edad': p.edad ?? '',
                         'Tipo de participación': p.tipo_participacion || '',
-                        'Requiere transporte': p.requiere_transporte === true ? 'Sí' : p.requiere_transporte === false ? 'No' : ''
                     };
                 });
                 const wb = XLSX.utils.book_new();
@@ -3765,7 +3761,6 @@ if(homeReturnButton){
     document.getElementById('concejalPersonAge').value=p.edad??'';
     document.getElementById('concejalPersonPollingPlace').value=p.puesto_votacion||'';
     document.getElementById('concejalPersonPollingTable').value=p.mesa_votacion||'';
-    document.getElementById('concejalPersonTransport').value=p.requiere_transporte===true?'si':p.requiere_transporte===false?'no':'';
     document.getElementById('concejalPersonNotes').value=p.observaciones||'';
     document.getElementById('concejalPersonConsent').checked=true;
     document.getElementById('concejalPersonFormTitle').textContent='Editar persona externa';
@@ -3794,7 +3789,6 @@ if(homeReturnButton){
         edad:document.getElementById('concejalPersonAge').value?Number(document.getElementById('concejalPersonAge').value):null,
         puesto_votacion:document.getElementById('concejalPersonPollingPlace').value.trim()||null,
         mesa_votacion:document.getElementById('concejalPersonPollingTable').value.trim()||null,
-        requiere_transporte:document.getElementById('concejalPersonTransport').value===''?null:document.getElementById('concejalPersonTransport').value==='si',
         tipo_participacion:'externo',
         observaciones:[document.getElementById('concejalPersonNotes').value.trim(), 'Autorización de tratamiento de datos confirmada en formulario el '+new Date().toLocaleString('es-CO')].filter(Boolean).join('\n'),
         actualizado_por:window.MIRA_CURRENT_USER?.email||null,
