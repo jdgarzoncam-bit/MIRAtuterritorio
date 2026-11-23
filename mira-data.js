@@ -10,7 +10,15 @@ async function miraToken({anonymous=false}={}) {
   if(typeof auth.getJWTToken!=="function"){
     throw new Error("El cliente de Neon Auth no expone getJWTToken(). Actualiza la página e inténtalo nuevamente.");
   }
-  const result=await auth.getJWTToken();
+  let result;
+  try {
+    result=await auth.getJWTToken();
+  } catch(cause) {
+    const error=new Error("Neon Auth [getJWTToken]: "+(cause?.message||"No fue posible emitir el token de acceso."));
+    error.code=cause?.code||"MIRA_AUTH_TOKEN_ERROR";
+    error.status=cause?.status||cause?.statusCode||0;
+    throw error;
+  }
   if(result?.error){
     const error=new Error(result.error.message||"No fue posible obtener el token de acceso de Neon.");
     error.status=result.error.status||result.error.statusCode||0;
@@ -58,7 +66,7 @@ async function miraRequest(table, {method="GET", query="", body, anonymous=false
   try { data = text ? JSON.parse(text) : null; } catch { data = text; }
   if (!response.ok) {
     const message = data?.message || data?.details || data?.hint || `Error HTTP ${response.status}`;
-    const error = new Error(message); error.status=response.status; error.code=data?.code||null; throw error;
+    const error = new Error(`[Neon Data API ${method} ${table}] ${message}`); error.status=response.status; error.code=data?.code||null; throw error;
   }
   if (requireRows && (!Array.isArray(data) || data.length !== 1)) {
     throw new Error("La base de datos no confirmó el cambio. No se actualizará la interfaz.");
