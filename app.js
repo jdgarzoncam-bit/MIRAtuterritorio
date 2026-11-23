@@ -1,3 +1,5 @@
+// Desactivación temporal e irreversible desde la UI hasta validación expresa.
+window.MIRA_TESTIGOS_TEMP_DISABLED = true;
 let map = null;
 let geojsonLayer = null;
 let datosOriginales = null;
@@ -13,6 +15,44 @@ let poligonoSeleccionadoNombre = null;
 let poligonosCoincidenciaActiva = new Set();
 let poligonosPorNombre = Object.create(null);
 
+// Renderer SVG dedicado para los polígonos de barrios. Evita que el renderer
+// Canvas preferido por el mapa oculte/mezcle la capa territorial.
+let miraTerritorySvgRenderer = null;
+let miraTerritoryCanvasRenderer = null;
+
+// Leaflet necesita que el renderer vectorial esté montado en el mapa antes
+// de añadir los FeatureLayer. La opción renderer por sí sola no garantiza
+// que el contenedor SVG exista cuando el mapa acaba de salir del login.
+function asegurarRenderizadorTerritorial() {
+    if (!map || !window.L || typeof L.svg !== 'function') return null;
+    const overlayPane = map.getPane('overlayPane');
+    if (overlayPane) {
+        overlayPane.style.zIndex = '400';
+        overlayPane.style.pointerEvents = 'auto';
+    }
+    if (!miraTerritorySvgRenderer) {
+        miraTerritorySvgRenderer = L.svg({ pane: 'overlayPane', padding: 0.5 });
+    }
+    if (!map.hasLayer(miraTerritorySvgRenderer)) miraTerritorySvgRenderer.addTo(map);
+    if (miraTerritorySvgRenderer._container) {
+        miraTerritorySvgRenderer._container.style.maxWidth = 'none';
+    }
+    return miraTerritorySvgRenderer;
+}
+
+function asegurarRenderizadorTerritorialCanvas() {
+    if (!map || !window.L || typeof L.canvas !== 'function') return null;
+    if (!miraTerritoryCanvasRenderer) {
+        miraTerritoryCanvasRenderer = L.canvas({ pane: 'overlayPane', padding: 0.5 });
+    }
+    if (!map.hasLayer(miraTerritoryCanvasRenderer)) miraTerritoryCanvasRenderer.addTo(map);
+    if (miraTerritoryCanvasRenderer._container) {
+        miraTerritoryCanvasRenderer._container.style.maxWidth = 'none';
+    }
+    return miraTerritoryCanvasRenderer;
+}
+
+
 let imagenBase64Seleccionada = "";
 
 // Control E-14 centralizado. No detener la propagación del clic: otros módulos
@@ -20,6 +60,12 @@ let imagenBase64Seleccionada = "";
 if (!window.__MIRA_E14_GLOBAL_HANDLER__) {
     window.__MIRA_E14_GLOBAL_HANDLER__ = true;
     document.addEventListener('click', event => {
+        const disabledEntry = event.target?.closest?.('#openTestigosModalBtn, #miraQuickTestigosBtn, #btnSelectTestigo');
+        if (window.MIRA_TESTIGOS_TEMP_DISABLED && disabledEntry) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            return;
+        }
         const trigger = event.target?.closest?.('#openTestigosModalBtn');
         if (trigger) {
             event.preventDefault();
@@ -365,12 +411,10 @@ const listaPuestosVotacion = [
 ];
 
 // NAVEGACIÓN DESDE LA LANDING
-document.getElementById('btnSelectTestigo')?.addEventListener('click', function() {
-    document.getElementById('landing-hero-overlay').style.display = 'none';
-    document.getElementById('landingHeaderControls').style.display = 'none';
-    document.getElementById('testigoStandaloneContainer').classList.remove('hidden');
-    document.getElementById('miraQuickModules')?.classList.add('hidden');
-    inicializarDropdownPuestosCustom();
+document.getElementById('btnSelectTestigo')?.addEventListener('click', function(event) {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    return;
 });
 
 // ACCESO ADMINISTRADOR DESDE EL BOTÓN SUPERIOR (se conserva la autenticación existente)
@@ -405,6 +449,8 @@ function abrirLoginAdmin() {
     document.body.classList.add('admin-login-active');
     adminLoginFormInline.classList.remove('hidden');
     if (adminDefaultView) adminDefaultView.classList.add('hidden');
+    const loginError = document.getElementById('loginError');
+    if (loginError) { loginError.textContent = ''; loginError.style.display = 'none'; }
     requestAnimationFrame(() => adminCardContainer.classList.add('is-open'));
     setTimeout(() => document.getElementById('username').focus(), 220);
 }
@@ -418,6 +464,7 @@ function cerrarLoginAdmin() {
     adminCardContainer.classList.add('hidden');
     adminLoginFormInline.classList.remove('hidden');
     if (adminDefaultView) adminDefaultView.classList.add('hidden');
+    syncMiraQuickModules();
 }
 landingLoginBtn.addEventListener('click', abrirLoginAdmin);
 cancelAdminBtn.addEventListener('click', function(e) { e.preventDefault(); e.stopPropagation(); cerrarLoginAdmin(); });
@@ -497,8 +544,17 @@ function isPrimaryMiraAdmin(){
   const user=window.MIRA_CURRENT_USER;
   return user?.role==="admin" && user?.authUserId==="beef5bf3-82a8-4c35-a12c-17771be59da1";
 }
+function effectiveActivityPermissions(rows){
+  const role=window.MIRA_CURRENT_USER?.role;
+  const actions=role==="operator"
+    ?["view","create","edit","export","annul"]
+    :role==="viewer"?["view"]:[];
+  return new Set((rows||[])
+    .filter(p=>p.module_key==="actividades"&&p.allowed===true&&actions.includes(p.action_key))
+    .map(p=>p.action_key));
+}
 function canManageActivities(action){
-  if(isPrimaryMiraAdmin()) return ["view","create","edit","delete","export","manage"].includes(action);
+  if(isPrimaryMiraAdmin()) return ["view","create","edit","delete","export","manage","annul"].includes(action);
   return activityPermissions.has(action);
 }
 async function loadActivitiesFromNeon(){
@@ -506,26 +562,32 @@ async function loadActivitiesFromNeon(){
   activitiesLoading=true;
   try{
     if(!window.MIRA_DATA)throw new Error('El cliente de Neon todavía no está disponible.');
-    const [peopleRows,activityRows,attendanceRows]=await Promise.all([
-      window.MIRA_DATA.listPeople({limit:1000}),
-      window.MIRA_DATA.listActivities({limit:100}),
-      window.MIRA_DATA.listAttendances({limit:1000})
-    ]);
-    // La cuenta administradora principal no depende de consultar su propia matriz de permisos.
+    // Resolver permisos antes de consultar datos. Si no existe Consulta, se cierra el módulo.
     if(isPrimaryMiraAdmin()){
-      activityPermissions=new Set(["view","create","edit","delete","export","manage"]);
+      activityPermissions=new Set(["view","create","edit","delete","export","manage","annul"]);
     }else{
-      try{
-        const rows=await window.MIRA_DATA.listMyModulePermissions();
-        activityPermissions=new Set((rows||[]).filter(p=>p.module_key==="actividades"&&p.allowed===true).map(p=>p.action_key));
-      }catch(permissionError){
-        activityPermissions=new Set();
-        console.warn("[MIRA Actividades] No se pudieron consultar permisos; se mantiene solo el acceso permitido por RLS.",permissionError);
-      }
+      const rows=await window.MIRA_DATA.listMyModulePermissions();
+      activityPermissions=effectiveActivityPermissions(rows);
     }
+    if(!activityPermissions.has("view")) throw new Error("No tienes permiso de Consulta en Actividades.");
+    const loadAllPages=async fetchPage=>{
+      const pageSize=1000,all=[];
+      for(let offset=0;offset<100000;offset+=pageSize){
+        const page=await fetchPage({limit:pageSize,offset});
+        if(!Array.isArray(page))throw new Error("Neon devolvió una respuesta de paginación inválida.");
+        all.push(...page);
+        if(page.length<pageSize)return all;
+      }
+      throw new Error("Se alcanzó el límite de seguridad de paginación. Reduce el volumen o solicita revisión.");
+    };
+    const [peopleRows,activityRows,attendanceRows]=await Promise.all([
+      loadAllPages(({limit,offset})=>window.MIRA_DATA.listPeople({limit,offset})),
+      loadAllPages(({limit,offset})=>window.MIRA_DATA.listActivities({limit,offset})),
+      loadAllPages(({limit,offset})=>window.MIRA_DATA.listAttendances({limit,offset}))
+    ]);
     activitiesState.people=(peopleRows||[]).map(p=>{const parsed=splitLegacyPersonName(p.nombres,p.apellidos);return {id:p.id,cedula:p.cedula||p.cedula_normalizada||'',names:parsed.names,surnames:parsed.surnames,phone:p.telefono||'',infoMira:p.info_mira===true?'si':p.info_mira===false?'no':'',type:p.tipo_participacion||''};});
     activitiesState.activities=(activityRows||[]).map(a=>({id:a.id,name:a.nombre,date:a.fecha,place:a.lugar||'',status:["activa","active","en_curso"].includes(String(a.estado||"").toLowerCase())?"active":["finalizada","finished","cerrada"].includes(String(a.estado||"").toLowerCase())?"finished":String(a.estado||"").toLowerCase()==="cancelada"?"cancelada":a.estado,createdAt:a.created_at}));
-    activitiesState.attendances=(attendanceRows||[]).map(a=>({id:a.id,personId:a.persona_id,activityId:a.actividad_id,createdAt:a.fecha_registro||a.created_at}));
+    activitiesState.attendances=(attendanceRows||[]).map(a=>({id:a.id,personId:a.persona_id,activityId:a.actividad_id,createdAt:a.fecha_registro||a.created_at,status:a.estado||'activa',reason:a.motivo_anulacion||''}));
     const active=activitiesState.activities.find(a=>a.status==='active');
     activitiesState.currentActivityId=active?.id||activitiesState.activities[0]?.id||null;
     activitiesBackendReady=true;
@@ -554,29 +616,23 @@ function splitLegacyPersonName(nombres,apellidos){
 function escapeActivityHtml(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function currentActivity(){return activitiesState.activities.find(a=>a.id===activitiesState.currentActivityId&&a.status==='active')||null;}
 let activitiesReturnContext = 'landing';
-let pendingActivitiesOpen = false;
 async function openActivities(view='registration'){
-  if(!window.MIRA_CURRENT_USER?.authUserId){
-    pendingActivitiesOpen=true;
-    abrirLoginAdmin();
-    const notice=document.getElementById('accountActionNotice');
-    if(notice){notice.textContent='Inicia sesión con una cuenta autorizada. Actividades se abrirá automáticamente al ingresar.';notice.classList.remove('hidden');}
-    return;
+  if(!isPrimaryMiraAdmin()){
+    try{
+      const rows=await window.MIRA_DATA.listMyModulePermissions();
+      activityPermissions=effectiveActivityPermissions(rows);
+    }catch(error){activityPermissions=new Set();alert("No fue posible validar tus permisos de Actividades. El acceso permanece bloqueado.");return;}
   }
-  pendingActivitiesOpen=false;
-  document.getElementById('miraQuickModules')?.classList.add('hidden');
+  if(!activityPermissions.has("view")&&!isPrimaryMiraAdmin()){alert("No tienes permiso de Consulta en Actividades.");return;}
+  if(!activitiesBackendReady)await loadActivitiesFromNeon();
+  if(!activitiesBackendReady){alert("No se pudo abrir Actividades. Verifica tu sesión, conexión y permisos.");return;}
   activitiesReturnContext=(document.getElementById('landing-hero-overlay').style.display==='none')?'platform':'landing';
   activitiesPlaceholder.classList.remove('hidden');
   document.getElementById('landing-hero-overlay').style.display='none';
   document.getElementById('landingHeaderControls').style.display='none';
-  if(!activitiesBackendReady)await loadActivitiesFromNeon();
-  renderActivities();
-  showActivityView(view);
+  renderActivities();showActivityView(view);
 }
-window.addEventListener('mira:authenticated',()=>{
-  if(pendingActivitiesOpen) openActivities('registration');
-});
-function closeActivities(){activitiesPlaceholder.classList.add('hidden');if(activitiesReturnContext==='landing'&&!document.body.classList.contains('pmu-neomorphic'))document.getElementById('miraQuickModules')?.classList.remove('hidden');if(activitiesReturnContext==='platform'){document.getElementById('landing-hero-overlay').style.display='none';document.getElementById('landingHeaderControls').style.display='none';}else{document.getElementById('landing-hero-overlay').style.display='flex';document.getElementById('landingHeaderControls').style.display='flex';}}
+function closeActivities(){activitiesPlaceholder.classList.add('hidden');if(activitiesReturnContext==='platform'){document.getElementById('landing-hero-overlay').style.display='none';document.getElementById('landingHeaderControls').style.display='none';}else{document.getElementById('landing-hero-overlay').style.display='flex';document.getElementById('landingHeaderControls').style.display='flex';}}
 function showActivityView(view){const target={registration:'activityRegistrationView',recent:'activityRecentPanel',all:'activityAllView',detail:'activityDetailView'}[view]||'activityRegistrationView';['activityRegistrationView','activityRecentPanel','activityAllView','activityDetailView'].forEach(id=>document.getElementById(id).classList.toggle('hidden',id!==target));document.getElementById('activityScreenSubtitle').textContent=({registration:'Registro de participación territorial.',recent:'Consulta en vivo y rectificación de registros.',all:'Archivo de actividades y sus hojas de cálculo.',detail:'Registros guardados en esta actividad.'})[view]||'Registro de participación territorial.';document.querySelectorAll('.activity-mobile-tab').forEach(tab=>tab.classList.toggle('is-active',tab.dataset.activityView===(view==='detail'?'all':view)));}
 document.getElementById('btnSelectActividades')?.addEventListener('click',()=>openActivities('registration'));
 document.getElementById('btnSelectActividades')?.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openActivities('registration');}});
@@ -585,34 +641,310 @@ document.getElementById('closeActivitiesPlaceholder').addEventListener('click',c
 document.querySelectorAll('.activity-mobile-tab').forEach(tab=>tab.addEventListener('click',()=>{const view=tab.dataset.activityView;if(view==='registration')document.getElementById('newActivityForm')?.classList.add('hidden');showActivityView(view);if(view==='recent'||view==='all')renderActivities();}));
 document.getElementById('sideAllActivitiesBtn').addEventListener('click',()=>openActivities('all'));
 document.getElementById('sideOpenActivityModuleBtn').addEventListener('click',()=>{openActivities('registration');showNewActivity();});
-document.getElementById('quickCreateActivityBtn')?.addEventListener('click',showNewActivity);
 
-function syncMiraQuickModules(){
+// Base de datos general: paneles independientes con permisos granulares.
+function initDatabaseExplorer(){
+ const root=document.getElementById("databaseExplorer"),workspace=document.getElementById("databaseWorkspace");
+ if(!root||!workspace)return;
+ // Portal inmediato: evita que el panel herede recortes, scroll o stacking contexts del menú lateral.
+ if(workspace.parentElement!==document.body)document.body.appendChild(workspace);
+ const title=document.getElementById("databaseWorkspaceTitle"),description=document.getElementById("databaseWorkspaceDescription"),content=document.getElementById("databaseWorkspaceContent"),notice=document.getElementById("databaseExplorerNotice");
+ // El panel debe vivir directamente en body para no heredar overflow/transform del dropdown.
+ if(workspace.parentElement!==document.body)document.body.appendChild(workspace);
+ let permissions=new Set(),datasets=[],activeView="";
+ const admin=()=>isPrimaryMiraAdmin();
+ const allowed=(module,action="view")=>admin()||permissions.has(module+"::"+action);
+ const esc=value=>escapeActivityHtml(value===null||value===undefined?"—":typeof value==="object"?JSON.stringify(value):String(value));
+ const say=(message,error=false)=>{
+  const text=String(message||"");
+  if(text.startsWith("Exportación bloqueada\n")){
+    const body=text.slice("Exportación bloqueada\n".length);
+    notice.innerHTML='<strong>Exportación bloqueada</strong><div>'+esc(body)+'</div>';
+    notice.style.display="grid";notice.style.gap="4px";
+  }else{
+    notice.textContent=text;notice.style.display="";notice.style.gap="";
+  }
+  notice.style.color=error?"#ff8b8b":"var(--text-muted)";
+ };
+ async function waitForMiraData(timeoutMs=15000){
+  const ready=()=>window.MIRA_DATA&&typeof window.MIRA_DATA.getExplorerDatasets==="function";
+  if(ready())return window.MIRA_DATA;
+  await new Promise((resolve,reject)=>{
+   let settled=false;
+   const cleanup=()=>{window.removeEventListener("mira:data-ready",onReady);clearTimeout(timer);};
+   const onReady=()=>{if(!settled&&ready()){settled=true;cleanup();resolve();}};
+   const timer=setTimeout(()=>{if(!settled){settled=true;cleanup();reject(new Error("El cliente de datos no terminó de inicializar. Recarga la página y verifica que mira-data.js cargue correctamente."));}},timeoutMs);
+   window.addEventListener("mira:data-ready",onReady);
+   // Cubre el caso en que el módulo termina de cargar entre la primera comprobación y el listener.
+   onReady();
+  });
+  return window.MIRA_DATA;
+ }
+ async function refreshPermissions(){
+  const data=await waitForMiraData();
+  if(!admin()&&typeof data.listMyModulePermissions!=="function")throw new Error("La versión del cliente de permisos no está disponible. Actualiza la aplicación y vuelve a ingresar.");
+  if(typeof data.getExplorerDatasets!=="function")throw new Error("No está disponible el catálogo autorizado de conjuntos de datos.");
+  const rows=admin()?[]:await data.listMyModulePermissions();
+  const role=window.MIRA_CURRENT_USER?.role;
+  const roleActions=role==="operator"
+    ?["view","create","edit","export","annul"]
+    :role==="viewer"?["view"]:[];
+  permissions=new Set((rows||[])
+    .filter(p=>p.allowed===true&&roleActions.includes(p.action_key))
+    .map(p=>p.module_key+"::"+p.action_key));
+  datasets=data.getExplorerDatasets().filter(d=>allowed("base_datos_general","view")&&allowed(d.module,"view"));
+ }
+ async function open(view){
+  activeView=view;root.classList.add("hidden");
+  // Fijar el espacio de trabajo al viewport real y sacarlo del contenedor lateral.
+  if(workspace.parentElement!==document.body)document.body.appendChild(workspace);
+  workspace.style.setProperty("position","fixed","important");
+  workspace.style.setProperty("inset","0","important");
+  workspace.style.setProperty("left","0","important");
+  workspace.style.setProperty("top","0","important");
+  workspace.style.setProperty("width","100vw","important");
+  workspace.style.setProperty("height","100vh","important");
+  workspace.style.setProperty("height","100dvh","important");
+  workspace.style.setProperty("max-width","none","important");
+  workspace.style.setProperty("max-height","none","important");
+  workspace.style.setProperty("z-index","2147483000","important");
+  workspace.style.setProperty("overflow-y","auto","important");
+  workspace.classList.remove("hidden");
+  workspace.setAttribute("aria-hidden","false");
+  document.body.classList.add("database-workspace-open");
+  const configs={
+   incorporate:["Incorporar persona","Formulario de incorporación de una ficha completa en la base general."],
+   pending:["Datos pendientes","Personas marcadas con información pendiente de completar."],
+   history:["Historial de cambios","Trazabilidad disponible de cambios registrados por la plataforma."],
+   all:["Todos los registros","Explorador de los conjuntos de datos autorizados para tu cuenta."]
+  };
+  title.textContent=configs[view][0];description.textContent=configs[view][1];content.innerHTML='<p class="admin-permissions-loading">Consultando permisos…</p>';
+  try{await refreshPermissions();await render(view);}
+  catch(error){content.innerHTML='<p class="admin-permissions-error">'+esc(error.message||"No fue posible abrir este espacio.")+'</p>';}
+ }
+ function back(){workspace.classList.add("hidden");workspace.setAttribute("aria-hidden","true");document.body.classList.remove("database-workspace-open");root.classList.remove("hidden");activeView="";}
+ async function render(view){
+  if(!allowed("base_datos_general","view"))throw new Error("No tienes permiso para consultar Base de datos general.");
+  if(view==="incorporate")return renderIncorporate();
+  if(view==="pending")return renderPending();
+  if(view==="history")return renderHistory();
+  if(view==="all")return renderAll();
+ }
+ function renderIncorporate(){
+  if(!allowed("personas","create"))throw new Error("No tienes permiso para incorporar personas en el módulo Personas.");
+  const fields=[["cedula","Cédula","text",true],["nombres","Nombres","text",true],["apellidos","Apellidos","text",true],["telefono","Teléfono","tel",false],["correo","Correo electrónico","email",false],["barrio","Barrio","text",false],["puesto_votacion","Puesto de votación","text",false],["mesa_votacion","Mesa","text",false],["edad","Edad","number",false],["tipo_participacion","Tipo de participación","text",false],["info_mira","InfoMIRA","boolean",false],["observaciones","Observaciones","text",false]];
+  content.innerHTML='<form id="databasePersonForm"><div class="activity-form-grid">'+fields.map(([key,label,type,required])=>'<label>'+label+(type==='boolean'?'<select name="'+key+'"><option value="">Sin especificar</option><option value="true">Sí</option><option value="false">No</option></select>':'<input name="'+key+'" type="'+type+'" '+(required?'required':'')+'>')+'</label>').join('')+'</div><div class="activity-actions"><button class="login-btn" type="submit">Guardar persona</button><button class="activity-secondary-btn" type="reset">Limpiar</button></div><p id="databasePersonNotice" class="activity-local-warning" role="status"></p></form>';
+  document.getElementById("databasePersonForm").addEventListener("submit",async event=>{
+   event.preventDefault();const form=event.currentTarget,button=form.querySelector('[type="submit"]'),payload=Object.fromEntries(new FormData(form).entries());
+   ["edad"].forEach(k=>{if(payload[k]==="")delete payload[k];else payload[k]=Number(payload[k]);});
+   ["info_mira"].forEach(k=>{if(payload[k]==="")delete payload[k];else payload[k]=payload[k]==="true";});
+   ["telefono","correo","barrio","puesto_votacion","mesa_votacion","tipo_participacion","info_mira","observaciones"].forEach(k=>{if(!payload[k])delete payload[k];});
+   button.disabled=true;
+   try{await window.MIRA_DATA.createPerson({...payload,activo:true,datos_pendientes:false,fuente_registro:"base_datos_general"});form.reset();document.getElementById("databasePersonNotice").textContent="Persona incorporada correctamente."; }
+   catch(error){document.getElementById("databasePersonNotice").textContent=error.message||"No fue posible guardar la persona.";}
+   finally{button.disabled=false;}
+  });
+ }
+ async function renderPending(){
+  if(!allowed("personas","view"))throw new Error("No tienes permiso de consulta en Personas.");
+  let page=0,hasMore=false,pendingRows=[],requestVersion=0;
+  content.innerHTML='<div class="activity-toolbar"><div><h3>Fichas por completar</h3><p id="databasePendingMeta">Consultando registros pendientes…</p></div></div><div id="databasePendingState" class="mira-label" role="status">Cargando fichas pendientes…</div><div class="activity-table-wrap"><table class="activity-table"><thead><tr><th>Persona</th><th>Cédula</th><th>Barrio</th><th>Acción</th></tr></thead><tbody></tbody></table></div><div class="activity-actions"><button id="databasePendingPrev" class="activity-secondary-btn" type="button">← Anterior</button><span id="databasePendingPage">Página 1</span><button id="databasePendingNext" class="activity-secondary-btn" type="button">Siguiente →</button></div><div id="databasePendingEditor"></div>';
+  const body=content.querySelector("tbody"),meta=document.getElementById("databasePendingMeta"),state=document.getElementById("databasePendingState");
+  const load=async()=>{
+    const version=++requestVersion;state.textContent="Consultando fichas pendientes…";state.classList.remove("hidden");body.innerHTML='<tr><td colspan="4">Cargando…</td></tr>';
+    try{
+      const rows=await window.MIRA_DATA.listPendingPeople({limit:26,offset:page*25});
+      if(version!==requestVersion)return;if(!Array.isArray(rows))throw new Error("Neon devolvió una respuesta de consulta inválida.");
+      pendingRows=rows.slice(0,25);hasMore=rows.length>25;
+      body.innerHTML=pendingRows.length?pendingRows.map(p=>'<tr><td>'+esc((p.nombres||"")+" "+(p.apellidos||""))+'</td><td>'+esc(p.cedula)+'</td><td>'+esc(p.barrio)+'</td><td><button type="button" class="activity-secondary-btn" data-pending-edit="'+esc(p.id)+'">Completar ficha</button></td></tr>').join(""):'<tr><td colspan="4">No hay fichas marcadas con datos pendientes.</td></tr>';
+      state.classList.add("hidden");meta.textContent=pendingRows.length+" fichas en esta página"+(hasMore?" · Hay más resultados":" · Fin de resultados");
+      document.getElementById("databasePendingPage").textContent="Página "+(page+1);document.getElementById("databasePendingPrev").disabled=page===0;document.getElementById("databasePendingNext").disabled=!hasMore;
+      content.querySelectorAll("[data-pending-edit]").forEach(button=>button.addEventListener("click",()=>editPending(pendingRows.find(p=>p.id===button.dataset.pendingEdit))));
+    }catch(error){if(version!==requestVersion)return;body.innerHTML='<tr><td colspan="4">No fue posible consultar las fichas pendientes.</td></tr>';state.textContent=error.message||"Error al consultar fichas pendientes.";state.classList.remove("hidden");meta.textContent="Consulta no disponible";throw error;}
+  };
+  document.getElementById("databasePendingPrev").addEventListener("click",()=>{if(page>0){page--;load().catch(()=>{});}});
+  document.getElementById("databasePendingNext").addEventListener("click",()=>{if(hasMore){page++;load().catch(()=>{});}});
+  await load();
+}
+function editPending(person){
+  if(!allowed("personas","edit")){alert("No tienes permiso para editar fichas de Personas.");return;}
+  const editor=document.getElementById("databasePendingEditor");
+  const fields=["cedula","nombres","apellidos","telefono","correo","barrio","puesto_votacion","mesa_votacion","edad","tipo_participacion","observaciones"];
+  editor.innerHTML='<form id="databasePendingForm" class="activity-panel"><h3>Completar ficha: '+esc(person.nombres+" "+person.apellidos)+'</h3><div class="activity-form-grid">'+fields.map(k=>'<label>'+k.replaceAll("_"," ")+'<input name="'+k+'" value="'+esc(person[k]??"")+'"></label>').join("")+'</div><div class="activity-actions"><button class="login-btn" type="submit">Guardar cambios</button></div><p id="databasePendingNotice" class="activity-local-warning"></p></form>';
+  editor.scrollIntoView({behavior:"smooth",block:"start"});
+  editor.querySelector("form").addEventListener("submit",async event=>{event.preventDefault();const payload=Object.fromEntries(new FormData(event.currentTarget).entries());if(payload.edad==="")delete payload.edad;else payload.edad=Number(payload.edad);try{const stillPending=!String(payload.telefono||"").trim()||!String(payload.barrio||"").trim();await window.MIRA_DATA.updatePerson(person.id,{...payload,datos_pendientes:stillPending});document.getElementById("databasePendingNotice").textContent=stillPending?"Ficha guardada. Sigue pendiente porque falta teléfono o barrio.":"Ficha guardada y completa según los campos de seguimiento.";await renderPending();}catch(error){document.getElementById("databasePendingNotice").textContent=error.message||"No fue posible actualizar la ficha.";}} ,{once:true});
+ }
+ async function renderHistory(){
+  if(!allowed("base_datos_general","view"))throw new Error("No tienes permiso para consultar el historial de Base de datos general.");
+  content.innerHTML='<div class="activity-toolbar"><div><h3>Historial de cambios y exportaciones</h3><p>Registro centralizado de operaciones realizadas en los módulos autorizados.</p></div><button id="auditSearchReset" class="activity-secondary-btn" type="button">Limpiar filtros</button></div><div class="activity-form-grid"><label>Módulo<select id="auditModuleFilter"><option value="">Todos los módulos permitidos</option><option value="personas">Personas</option><option value="actividades">Actividades</option><option value="pqrs">PQRS</option><option value="concejal">Concejal</option><option value="infomira">InfoMIRA</option><option value="control_administrativo">Control Administrativo</option></select></label><label>Usuario (ID de cuenta)<input id="auditActorFilter" type="search" placeholder="Filtrar por usuario"></label><label>Operación<select id="auditOperationFilter"><option value="">Todas las operaciones</option><option value="INSERT">Creación</option><option value="UPDATE">Actualización</option><option value="DELETE">Eliminación</option><option value="EXPORT">Exportación</option></select></label><label>Buscar en el historial<input id="auditSearchFilter" type="search" placeholder="Tabla, registro, módulo, detalle o exportación"></label></div><div id="auditResultsMeta" class="mira-label"></div><div class="activity-table-wrap"><table class="activity-table"><thead><tr><th>Módulo</th><th>Tabla</th><th>Registro</th><th>Usuario</th><th>Operación</th><th>Campos / detalle</th><th>Fecha</th></tr></thead><tbody></tbody></table></div><div class="activity-actions"><button id="auditPrev" class="activity-secondary-btn" type="button">← Anterior</button><span id="auditPage">Página 1</span><button id="auditNext" class="activity-secondary-btn" type="button">Siguiente →</button></div><p class="activity-local-warning">La auditoría central registra operaciones desde la activación de esta versión. No reconstruye acciones históricas anteriores.</p>';
+  const $id=id=>document.getElementById(id),module=$id("auditModuleFilter"),actor=$id("auditActorFilter"),operation=$id("auditOperationFilter"),search=$id("auditSearchFilter"),body=content.querySelector("tbody");
+  let offset=0,hasMore=false,requestVersion=0;
+  const load=async()=>{
+    const version=++requestVersion;
+    body.innerHTML='<tr><td colspan="7">Consultando historial…</td></tr>';
+    $id("auditResultsMeta").textContent="Consultando eventos…";
+    try{
+      const rows=await window.MIRA_DATA.listAuditEvents({moduleKey:module.value,actor:actor.value.trim(),operation:operation.value,search:search.value.trim(),limit:101,offset});
+      if(version!==requestVersion)return;
+      if(!Array.isArray(rows))throw new Error("Neon devolvió una respuesta de auditoría inválida.");
+      const pageRows=rows.slice(0,100);hasMore=rows.length>100;
+      const labels={personas:"Personas",actividades:"Actividades",pqrs:"PQRS",concejal:"Concejal",infomira:"InfoMIRA",control_administrativo:"Control Administrativo"};
+      const ops={INSERT:"Creación",UPDATE:"Actualización",DELETE:"Eliminación",EXPORT:"Exportación"};
+      body.innerHTML=pageRows.length?pageRows.map(x=>{
+        const details=x.operation==="EXPORT"?(x.details?.dataset_key||"") +" · "+(x.details?.row_count??0)+" registros · "+(x.details?.search||x.details?.filter_value||"Sin filtros"):(x.changed_fields||[]).join(", ");
+        return "<tr><td>"+esc(labels[x.module_key]||x.module_key)+"</td><td>"+esc(x.table_name)+"</td><td>"+esc(x.record_id||"—")+"</td><td>"+esc(x.actor_auth_user_id||"Sistema / operación SQL")+"</td><td>"+esc(ops[x.operation]||x.operation)+"</td><td>"+esc(details||"—")+"</td><td>"+esc(x.created_at?new Date(x.created_at).toLocaleString("es-CO"):"—")+"</td></tr>";
+      }).join(""):'<tr><td colspan="7">No se encontraron eventos para estos filtros o no tienes permisos para consultarlos.</td></tr>';
+      $id("auditResultsMeta").textContent=pageRows.length+" eventos en esta página";
+      $id("auditPage").textContent="Página "+(Math.floor(offset/100)+1);
+      $id("auditPrev").disabled=offset===0;$id("auditNext").disabled=!hasMore;
+    }catch(error){
+      if(version!==requestVersion)return;
+      body.innerHTML='<tr><td colspan="7">No fue posible cargar el historial. Comprueba la conexión y vuelve a intentarlo.</td></tr>';
+      $id("auditResultsMeta").textContent=error.message||"Error al consultar el historial.";
+      $id("auditPrev").disabled=offset===0;$id("auditNext").disabled=true;
+      throw error;
+    }
+  };
+  const reset=()=>{offset=0;load().catch(error=>say(error.message||"No fue posible consultar el historial.",true));};
+  [module,operation].forEach(el=>el.addEventListener("change",reset));
+  [actor,search].forEach(el=>el.addEventListener("keydown",event=>{if(event.key==="Enter")reset();}));
+  $id("auditSearchReset").addEventListener("click",()=>{module.value="";actor.value="";operation.value="";search.value="";reset();});
+  $id("auditPrev").addEventListener("click",()=>{if(offset>0){offset=Math.max(0,offset-100);load().catch(error=>say(error.message,true));}});
+  $id("auditNext").addEventListener("click",()=>{if(hasMore){offset+=100;load().catch(error=>say(error.message,true));}});
+  await load();
+ }
+ async function renderAll(){
+  if(!datasets.length)throw new Error("No hay conjuntos de datos de origen autorizados.");
+  content.innerHTML='<div class="activity-toolbar"><div><h3>Explorador de información</h3><p>Los resultados se limitan a tus permisos de Base de datos general y del módulo de origen.</p></div><button id="databaseQualityBtn" class="activity-secondary-btn" type="button">Revisar calidad de datos</button><button id="databaseExportBtn" class="login-btn" type="button">⇩ Exportar Excel</button></div><div class="activity-form-grid"><label>Conjunto de datos<select id="databaseAllSet">'+datasets.map(d=>'<option value="'+esc(d.key)+'">'+esc(d.label)+'</option>').join("")+'</select></label><label>Buscar<input id="databaseAllSearch" placeholder="Nombre, documento o término…"></label><label id="databasePersonStatusWrap" hidden>Estado de fichas<select id="databasePersonStatus"><option value="active">Activas</option><option value="inactive">Inactivos</option><option value="all">Todas</option></select></label><label>Campo de filtro<select id="databaseAllField"></select></label><label>Valor exacto<input id="databaseAllValue" placeholder="Valor del filtro"></label></div><div id="databaseQualityReport" class="activity-table-wrap" role="region" aria-label="Diagnóstico de calidad de datos" aria-live="polite" tabindex="-1" hidden></div><div id="databaseAllMeta" class="mira-label"></div><div class="activity-table-wrap"><table class="activity-table"><thead></thead><tbody></tbody></table></div><div class="activity-actions"><button id="databaseAllPrev" class="activity-secondary-btn">← Anterior</button><span id="databaseAllPage">Página 1</span><button id="databaseAllNext" class="activity-secondary-btn">Siguiente →</button></div>';
+  const $id=id=>document.getElementById(id),set=$id("databaseAllSet"),search=$id("databaseAllSearch"),field=$id("databaseAllField"),value=$id("databaseAllValue"),table=content.querySelector("table"),head=table.querySelector("thead"),body=table.querySelector("tbody");
+  let page=0,more=false,lastRows=[],dataset=datasets[0],requestVersion=0;
+   const statusWrap=$id("databasePersonStatusWrap"),personStatus=$id("databasePersonStatus");
+  const updateFields=()=>{dataset=datasets.find(d=>d.key===set.value);field.innerHTML='<option value="">Sin filtro</option>'+dataset.columns.map(([k,l])=>'<option value="'+esc(k)+'">'+esc(l)+'</option>').join("");};
+  const qualityPanel=$id("databaseQualityReport"),qualityButton=$id("databaseQualityBtn");
+  qualityButton.addEventListener("click",async()=>{
+    qualityButton.disabled=true;qualityPanel.hidden=false;qualityPanel.innerHTML='<p>Generando diagnóstico agregado…</p>';
+    try{
+      const report=await window.MIRA_DATA.getDataQualitySummary();
+      const labels={total:"Registros",active:"Activos",archived:"Inactivos",missing_name:"Nombres o apellidos vacíos",missing_phone:"Sin teléfono",missing_neighborhood:"Sin barrio",duplicate_normalized_cedula:"Duplicados de cédula normalizada",invalid_phone_format:"Teléfonos con formato atípico",pending_flag_mismatch:"Indicador de pendientes inconsistente",linked:"Vinculados",unlinked:"Sin vincular",missing_document:"Sin documento",duplicate_document_groups:"Grupos con documento repetido",duplicate_document_rows:"Filas en grupos repetidos",linked_document_mismatch:"Documento distinto al de la persona vinculada",activities:"Actividades",attendances:"Asistencias",active_attendances:"Asistencias activas",annulled_attendances:"Asistencias anuladas",duplicate_attendance_groups:"Duplicados persona/actividad",orphan_person_links:"Asistencias sin persona",orphan_activity_links:"Asistencias sin actividad"};
+      const sections=[["Personas",report.personas],["InfoMIRA",report.infomira],["Actividades y asistencias",report.actividades]].filter(x=>x[1]);
+      if(!sections.length)throw new Error("No tienes permisos para consultar los conjuntos del diagnóstico.");
+      qualityPanel.innerHTML='<div class="activity-toolbar"><strong>Diagnóstico de calidad · '+esc(report.generated_at?new Date(report.generated_at).toLocaleString("es-CO"):"")+'</strong><button id="databaseQualityClose" class="activity-secondary-btn" type="button">Cerrar diagnóstico</button></div>'+sections.map(([title,metrics])=>'<h4>'+title+'</h4><table class="activity-table"><tbody>'+Object.entries(metrics).map(([key,value])=>'<tr><td>'+esc(labels[key]||key)+'</td><td>'+esc(value)+'</td></tr>').join("")+'</tbody></table>').join("")+'<p class="activity-local-warning">Este diagnóstico es de solo lectura. Los valores señalan posibles problemas; no se modificó ni eliminó ningún registro.</p>';
+      $id("databaseQualityClose").addEventListener("click",()=>{qualityPanel.hidden=true;qualityPanel.innerHTML="";});
+    }catch(error){qualityPanel.innerHTML='<p class="admin-permissions-error">'+esc(error.message||"No fue posible generar el diagnóstico.")+'</p>';}
+    finally{qualityButton.disabled=false;}
+  });
+  const load=async()=>{
+    updateFields();statusWrap.hidden=dataset.key!=="personas";const version=++requestVersion;$id("databaseAllMeta").textContent="Consultando "+dataset.label+"…";body.innerHTML='<tr><td colspan="'+Math.max(dataset.columns.length,1)+'">Cargando registros…</td></tr>';
+    try{
+      const rows=await window.MIRA_DATA.listExplorerRows({datasetKey:dataset.key,search:search.value,filterField:field.value,filterValue:value.value,personStatus:dataset.key==="personas"?personStatus.value:"active",limit:26,offset:page*25});
+      if(version!==requestVersion)return;if(!Array.isArray(rows))throw new Error("Neon devolvió una respuesta de consulta inválida.");
+      lastRows=rows.slice(0,25);more=rows.length>25;head.innerHTML="<tr>"+dataset.columns.map(c=>"<th>"+esc(c[1])+"</th>").join("")+(dataset.key==="personas"?"<th>Gestión</th>":"")+"</tr>";
+      body.innerHTML=lastRows.length?lastRows.map((row,i)=>"<tr>"+dataset.columns.map(([k])=>"<td>"+esc(row[k])+"</td>").join("")+(dataset.key==="personas"?"<td><button type=\"button\" class=\"activity-secondary-btn\" data-person-view=\""+i+"\">Ver ficha</button> "+(allowed("personas","edit")?(row.activo?'<button type="button" class="activity-secondary-btn" data-person-archive="'+i+'">Marcar inactiva</button>':'<button type="button" class="activity-secondary-btn" data-person-restore="'+i+'">Activar</button>'):"")+"</td>":"")+"</tr>").join(""):'<tr><td colspan="'+Math.max(dataset.columns.length,1)+'">No se encontraron registros para los filtros seleccionados.</td></tr>';
+      $id("databaseAllMeta").textContent=dataset.label+" · "+lastRows.length+" registros en esta página"+(more?" · Hay más resultados":" · Fin de resultados");$id("databaseAllPage").textContent="Página "+(page+1);$id("databaseAllPrev").disabled=page===0;$id("databaseAllNext").disabled=!more;
+    }catch(error){if(version!==requestVersion)return;body.innerHTML='<tr><td colspan="'+Math.max(dataset.columns.length,1)+'">No fue posible consultar los registros.</td></tr>';$id("databaseAllMeta").textContent=error.message||"Error de consulta";throw error;}
+  };
+  body.addEventListener("click",async event=>{const b=event.target.closest("button[data-person-view],button[data-person-archive],button[data-person-restore]");if(!b)return;const i=Number(b.dataset.personView??b.dataset.personArchive??b.dataset.personRestore),p=lastRows[i];if(!p)return;if(b.hasAttribute("data-person-view")){try{const x=await window.MIRA_DATA.getPersonById(p.id);alert(["Cédula: "+x.cedula,"Nombre: "+x.nombres+" "+x.apellidos,"Teléfono: "+(x.telefono||"—"),"Correo: "+(x.correo||"—"),"Barrio: "+(x.barrio||"—"),"Puesto: "+(x.puesto_votacion||"—"),"Mesa: "+(x.mesa_votacion||"—"),"Estado: "+(x.inactivo?"Inactiva":"Activa")].join("\\n"));}catch(e){say(e.message,true);}return;}const restore=b.hasAttribute("data-person-restore");if(!confirm(restore?"¿Activar esta ficha?":"¿Marcar esta ficha como inactiva? No se borrarán datos."))return;b.disabled=true;try{if(restore)await window.MIRA_DATA.restorePerson(p.id);else await window.MIRA_DATA.archivePerson(p.id);say(restore?"Ficha activada.":"Ficha marcada como inactiva.");await load();}catch(e){say(e.message,true);}finally{b.disabled=false;}});personStatus.addEventListener("change",()=>{page=0;load().catch(e=>say(e.message,true));});
+   set.addEventListener("change",()=>{page=0;load().catch(e=>say(e.message,true));});$id("databaseAllSearch").addEventListener("keydown",e=>{if(e.key==="Enter"){page=0;load().catch(x=>say(x.message,true));}});value.addEventListener("keydown",e=>{if(e.key==="Enter"){page=0;load().catch(x=>say(x.message,true));}});field.addEventListener("change",()=>{page=0;load().catch(e=>say(e.message,true));});$id("databaseAllPrev").addEventListener("click",()=>{if(page){page--;load().catch(e=>say(e.message,true));}});$id("databaseAllNext").addEventListener("click",()=>{if(more){page++;load().catch(e=>say(e.message,true));}});
+  $id("databaseExportBtn").addEventListener("click",async()=>{
+    const button=$id("databaseExportBtn");
+    button.disabled=true;
+    try{
+      // Refresca la matriz desde Neon justo antes de cada intento. No se confía en la copia al abrir el módulo.
+      await refreshPermissions();
+      if(!admin()&&!allowed("base_datos_general","view")){
+        say("No tienes permiso para consultar Base de datos general. Solicita al administrador que habilite Consulta.",true);
+        return;
+      }
+      if(!admin()&&!allowed(dataset.module,"view")){
+        say("No tienes permiso para consultar los registros del módulo "+dataset.label+".",true);
+        return;
+      }
+      if(!admin()&&!allowed("base_datos_general","export")){
+        say("Exportación bloqueada\nNo tienes permiso para exportar desde Base de datos general. El administrador retiró o no asignó esta autorización. Puedes seguir consultando los registros si conservas el permiso Consulta.",true);
+        return;
+      }
+      if(!admin()&&!allowed(dataset.module,"export")){
+        say("Exportación bloqueada\nNo tienes permiso para exportar los datos del módulo "+dataset.label+". Solicita al administrador que habilite Exportar en ese módulo.",true);
+        return;
+      }
+      if(!window.XLSX){say("No está disponible el componente de exportación Excel. Recarga la plataforma y vuelve a intentarlo.",true);return;}
+      const filtered=Boolean(search.value.trim()||(field.value&&value.value.trim()));
+      const summary="Conjunto: "+dataset.label+"\nFiltros: "+(filtered?[search.value.trim()?"Búsqueda: "+search.value.trim():"",field.value?field.options[field.selectedIndex].text+": "+value.value:""].filter(Boolean).join("\n"):"Sin filtros")+"\n\nSe comprobarán nuevamente ambas autorizaciones en el servidor y la operación quedará registrada en el historial. ¿Deseas continuar?";
+      if(!window.confirm(summary))return;
+      const result=await window.MIRA_DATA.exportDataset({datasetKey:dataset.key,search:search.value,filterField:field.value,filterValue:value.value,limit:100000,personStatus:dataset.key==="personas"?personStatus.value:"all"});
+      const all=result?.rows;
+      if(!Array.isArray(all))throw new Error("El servidor no devolvió un conjunto de datos válido.");
+      if(result.truncated){say("Exportación incompleta bloqueada: existen "+(result.total_count??"más de "+all.length)+" registros y el servidor entregó "+all.length+". No se generó un archivo parcial. Aplica filtros para reducir el conjunto.",true);return;}
+      if(!all.length){say("La exportación fue autorizada y registrada, pero no hay registros que coincidan con los filtros.");return;}
+      const sheet=window.XLSX.utils.json_to_sheet(all),book=window.XLSX.utils.book_new();
+      window.XLSX.utils.book_append_sheet(book,sheet,dataset.label.slice(0,31));
+      window.XLSX.writeFile(book,"MIRA_"+dataset.key+"_exportacion.xlsx");
+      say("Exportación autorizada y registrada en el historial: "+all.length+" registros.");
+    }catch(error){
+      if(error?.code==="42501"||/no tienes permiso|permission denied|autorización.*export/i.test(error?.message||"")){
+        const detail=String(error?.message||"");
+        if(/base de datos general/i.test(detail)){
+          say("Exportación bloqueada\nNo tienes permiso para exportar desde Base de datos general. El administrador retiró o no asignó esta autorización. Puedes seguir consultando los registros si conservas el permiso Consulta.",true);
+        }else if(/módulo de origen|modulo de origen/i.test(detail)){
+          say("Exportación bloqueada\nNo tienes permiso para exportar los datos del módulo "+dataset.label+". Solicita al administrador que habilite Exportar en ese módulo.",true);
+        }else{
+          say("Exportación bloqueada\n"+(detail||"No tienes permiso para realizar esta exportación. Solicita la autorización al administrador."),true);
+        }
+      }else{
+        console.error("[MIRA Exportación] Falló la solicitud de exportación.",error);
+        say("No fue posible completar la exportación por un problema técnico. Tu permiso no necesariamente fue retirado. Intenta nuevamente y, si persiste, informa al administrador.",true);
+      }
+    }finally{button.disabled=false;}
+  });
+  await load();
+ }
+ root.querySelectorAll("[data-database-view]").forEach(button=>button.addEventListener("click",()=>open(button.dataset.databaseView)));
+ document.getElementById("databaseWorkspaceClose")?.addEventListener("click",back);document.getElementById("databaseWorkspaceBack")?.addEventListener("click",back);
+ window.addEventListener("mira:authenticated",()=>refreshPermissions().catch(e=>say(e.message,true)));
+ window.addEventListener("mira:permissions-refreshed",async()=>{const before=new Set(permissions),wasAdmin=admin();try{await refreshPermissions();const stillCanView=admin()||allowed("base_datos_general","view");if(!stillCanView){back();say("Tu permiso de consulta en Base de datos general fue retirado. El acceso a este espacio se cerró; la sesión sigue activa.",true);return;}const viewPermissionsChanged=wasAdmin!==admin()||[...before].some(key=>key.endsWith("::view")&&!permissions.has(key))||[...permissions].some(key=>key.endsWith("::view")&&!before.has(key));if(viewPermissionsChanged&&activeView){try{await render(activeView);}catch(renderError){content.innerHTML='<p class="admin-permissions-error">'+esc(renderError.message||"No hay conjuntos de datos disponibles con tus permisos actuales.")+'</p>';}}}catch(e){console.error("[MIRA Base de datos] No fue posible actualizar los permisos.",e);say("No fue posible actualizar los permisos en este momento. La sesión permanece activa; vuelve a intentar actualizar el módulo.",true);}});
+ window.addEventListener("mira:signed-out",()=>{permissions.clear();datasets=[];back();});
+ say("Selecciona una herramienta. El contenido se habilita según los permisos asignados.");
+}
+initDatabaseExplorer();
+
+let quickModulesSyncVersion=0;
+async function syncMiraQuickModules(){
+  const version=++quickModulesSyncVersion;
   const root=document.getElementById('miraQuickModules');
   const testigos=document.getElementById('miraQuickTestigosBtn');
-  const activities=document.getElementById('miraQuickActivitiesBtn');
   const status=document.getElementById('miraQuickTestigosStatus');
-  const activitiesStatus=document.getElementById('miraQuickActivitiesStatus');
-  const publicLock=document.getElementById('miraQuickPublicLock');
+  const activities=document.getElementById('miraQuickActivitiesBtn');
+  const activitiesStatus=activities?.querySelector('small');
   const user=window.MIRA_CURRENT_USER;
-  const authenticated=Boolean(user?.authUserId);
-  const isAdmin=user?.role==='admin'&&user?.authUserId==='beef5bf3-82a8-4c35-a12c-17771be59da1';
-  const pmuVisible=document.body.classList.contains('pmu-neomorphic') || document.getElementById('app-container')?.style.display==='block';
-  const standaloneVisible=!document.getElementById('testigoStandaloneContainer')?.classList.contains('hidden') || !document.getElementById('activitiesPlaceholder')?.classList.contains('hidden');
-  if(root)root.classList.toggle('hidden',pmuVisible||standaloneVisible);
-  if(publicLock)publicLock.classList.toggle('hidden',authenticated);
+  const landing=document.getElementById('landing-hero-overlay');
+  const landingVisible=Boolean(landing&&getComputedStyle(landing).display!=='none');
+  if(root)root.classList.toggle('hidden',!landingVisible);
   if(testigos){
-    testigos.disabled=!isAdmin;
-    testigos.setAttribute('aria-disabled',String(!isAdmin));
-    testigos.classList.toggle('is-locked',!isAdmin);
+    testigos.disabled=true;
+    testigos.setAttribute('aria-disabled','true');
+    testigos.classList.add('is-locked');
+    testigos.title='Módulo temporalmente inactivo';
   }
-  if(activities){
-    activities.disabled=!authenticated;
-    activities.setAttribute('aria-disabled',String(!authenticated));
-    activities.classList.toggle('is-locked',!authenticated);
+  if(status)status.textContent='En renovación · Acceso bloqueado';
+  if(!activities)return;
+  activities.disabled=false;
+  activities.setAttribute('aria-disabled','false');
+  if(activitiesStatus)activitiesStatus.textContent=user?.authUserId?'Verificando permisos…':'Inicia sesión para acceder';
+  let allowed=false;
+  if(user?.authUserId){
+    if(isPrimaryMiraAdmin())allowed=true;
+    else if(window.MIRA_DATA?.listMyModulePermissions){
+      try{
+        const rows=await window.MIRA_DATA.listMyModulePermissions();
+        allowed=Array.isArray(rows)&&rows.some(p=>p.module_key==='actividades'&&p.action_key==='view'&&p.allowed===true);
+      }catch(error){console.warn('[MIRA] No se pudo verificar el acceso rápido a Actividades.',error);}
+    }
   }
-  if(status)status.textContent=isAdmin?'Acceso administrador':authenticated?'Restringido al administrador':'Inicia sesión para acceder';
-  if(activitiesStatus)activitiesStatus.textContent=authenticated?'Registro y seguimiento':'Inicia sesión para acceder';
+  if(version!==quickModulesSyncVersion)return;
+  const requiresLogin=!user?.authUserId;
+  activities.disabled=!allowed&&!requiresLogin;
+  activities.setAttribute('aria-disabled',String(!allowed&&!requiresLogin));
+  if(activitiesStatus)activitiesStatus.textContent=requiresLogin?'Inicia sesión para acceder':allowed?'Registro y seguimiento':'Sin permiso de consulta';
 }
 document.getElementById('miraQuickModulesToggle')?.addEventListener('click',()=>{
   const panel=document.getElementById('miraQuickModulesPanel');
@@ -621,15 +953,19 @@ document.getElementById('miraQuickModulesToggle')?.addEventListener('click',()=>
   panel?.classList.toggle('hidden',!opening);
   toggle?.setAttribute('aria-expanded',String(Boolean(opening)));
 });
-document.getElementById('miraQuickTestigosBtn')?.addEventListener('click',()=>{
-  const user=window.MIRA_CURRENT_USER;
-  if(!(user?.role==='admin'&&user?.authUserId==='beef5bf3-82a8-4c35-a12c-17771be59da1'))return;
-  document.getElementById('miraQuickModulesPanel')?.classList.add('hidden');
-  document.getElementById('miraQuickModulesToggle')?.setAttribute('aria-expanded','false');
-  document.getElementById('openTestigosModalBtn')?.click();
+document.getElementById('miraQuickTestigosBtn')?.addEventListener('click',event=>{
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  return;
 });
 document.getElementById('miraQuickActivitiesBtn')?.addEventListener('click',()=>{
-  if(!window.MIRA_CURRENT_USER?.authUserId)return;
+  if(!window.MIRA_CURRENT_USER?.authUserId){
+    document.getElementById('miraQuickModulesPanel')?.classList.add('hidden');
+    document.getElementById('miraQuickModulesToggle')?.setAttribute('aria-expanded','false');
+    document.getElementById('miraQuickModules')?.classList.add('hidden');
+    document.getElementById('landingLoginBtn')?.click();
+    return;
+  }
   document.getElementById('miraQuickModulesPanel')?.classList.add('hidden');
   document.getElementById('miraQuickModulesToggle')?.setAttribute('aria-expanded','false');
   openActivities('registration');
@@ -641,15 +977,24 @@ window.addEventListener('mira:signed-out',()=>{
   document.getElementById('miraQuickModulesToggle')?.setAttribute('aria-expanded','false');
 });
 document.addEventListener('DOMContentLoaded',syncMiraQuickModules);
+// Mantener el menú rápido sincronizado con los cambios de pantalla (portada/PMU).
+// La transición al Centro de Operaciones modifica display directamente y no siempre emite eventos de navegación.
+const miraLandingForMenu=document.getElementById('landing-hero-overlay');
+if(miraLandingForMenu&&typeof MutationObserver!=='undefined'){
+  const miraMenuVisibilityObserver=new MutationObserver(()=>syncMiraQuickModules());
+  miraMenuVisibilityObserver.observe(miraLandingForMenu,{attributes:true,attributeFilter:['style','class']});
+}
+
 
 
 document.getElementById('backToActivityRegistration')?.addEventListener('click',()=>showActivityView('registration'));
 document.getElementById('backToActivityHomeFromAll').addEventListener('click',()=>showActivityView('registration'));
 document.getElementById('backToAllActivities').addEventListener('click',()=>showActivityView('all'));
 document.getElementById('cancelNewActivityBtn').addEventListener('click',()=>document.getElementById('newActivityForm').classList.add('hidden'));
-function showNewActivity(){document.getElementById('newActivityForm').classList.remove('hidden');document.getElementById('activityName').focus();}
+function showNewActivity(){if(!canManageActivities("create")){alert("No tienes permiso para crear actividades.");return;}document.getElementById('newActivityForm').classList.remove('hidden');document.getElementById('activityName').focus();}
 document.getElementById('newActivityBtnAll').addEventListener('click',()=>{showActivityView('registration');showNewActivity();});
 document.getElementById('saveActivityBtn').addEventListener('click',async()=>{
+  if(!canManageActivities("create")){alert("No tienes permiso para crear actividades.");return;}
   if(!activitiesBackendReady){alert('No hay conexión confirmada con Neon. No se guardó la actividad.');return;}
   const name=document.getElementById('activityName').value.trim();
   if(!name){alert('Escribe el nombre de la actividad.');return;}
@@ -657,8 +1002,8 @@ document.getElementById('saveActivityBtn').addEventListener('click',async()=>{
   try{
     const date=document.getElementById('activityDate').value||new Date().toISOString().slice(0,10);
     const place=document.getElementById('activityPlace').value.trim();
-    await Promise.all(activitiesState.activities.filter(a=>a.status==='active').map(a=>window.MIRA_DATA.updateActivity(a.id,{estado:'finalizada'})));
-    await window.MIRA_DATA.createActivity({nombre:name,fecha:date,lugar:place||null,estado:'activa',creado_por:window.MIRA_CURRENT_USER?.email||null});
+    const created=await window.MIRA_DATA.createActivity({nombre:name,fecha:date,lugar:place||null,creado_por:window.MIRA_CURRENT_USER?.email||null});
+    if(!Array.isArray(created)||created.length!==1||created[0]?.estado!=="activa")throw new Error("Neon no confirmó la creación atómica de la actividad.");
     await loadActivitiesFromNeon();
     document.getElementById('newActivityForm').classList.add('hidden');
     ['activityName','activityDate','activityPlace'].forEach(id=>document.getElementById(id).value='');
@@ -666,7 +1011,7 @@ document.getElementById('saveActivityBtn').addEventListener('click',async()=>{
   }catch(error){console.error(error);alert('No fue posible guardar la actividad en Neon: '+(error.message||'Error desconocido'));}
   finally{button.disabled=false;}
 });
-function clearParticipantForm(){editingParticipantId=null;editingPersonId=null;['participantCedula','participantNames','participantSurnames','participantPhone'].forEach(id=>document.getElementById(id).value='');document.getElementById('participantInfoMira').value='';document.getElementById('participantType').value='';document.getElementById('duplicateNotice').classList.add('hidden');document.getElementById('saveParticipantBtn').textContent='Guardar persona y asistencia';const title=document.getElementById('participantFormTitle');if(title)title.textContent='Registrar participante';}
+function clearParticipantForm(){editingParticipantId=null;editingPersonId=null;['participantCedula','participantNames','participantSurnames','participantPhone'].forEach(id=>document.getElementById(id).value='');document.getElementById('participantInfoMira').value='';document.getElementById('participantType').value='';document.getElementById('duplicateNotice').classList.add('hidden');document.getElementById('saveParticipantBtn').textContent='Guardar asistencia';const title=document.getElementById('participantFormTitle');if(title)title.textContent='Registrar participante';}
 document.getElementById('clearParticipantBtn').addEventListener('click',clearParticipantForm);
 async function lookupPerson(){
   const ced=normalizeCedula(document.getElementById('participantCedula').value);
@@ -693,6 +1038,8 @@ async function lookupPerson(){
 document.getElementById('lookupParticipantBtn').addEventListener('click',lookupPerson);
 document.getElementById('participantCedula').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();lookupPerson();}});
 document.getElementById('saveParticipantBtn').addEventListener('click',async()=>{
+  const requiredAction=editingParticipantId?"edit":"create";
+  if(!canManageActivities(requiredAction)){alert(requiredAction==="edit"?"No tienes permiso para editar asistencias.":"No tienes permiso para registrar asistencias.");return;}
   if(!activitiesBackendReady){alert('No hay conexión confirmada con Neon. No se guardó el registro.');return;}
   const wasEditing=!!editingParticipantId;
   const actId=document.getElementById('participantActivity').value||activitiesState.currentActivityId;
@@ -737,16 +1084,27 @@ document.getElementById('saveParticipantBtn').addEventListener('click',async()=>
 });
 document.getElementById('activitySearch').addEventListener('input',renderActivityTable);
 function activityRows(activityId=null,query=''){return activitiesState.attendances.slice().sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0)).map(a=>({a,p:activitiesState.people.find(p=>p.id===a.personId)||{},act:activitiesState.activities.find(x=>x.id===a.activityId)||{}})).filter(x=>(!activityId||x.a.activityId===activityId)&&(!query||normActivityText([x.p.names,x.p.surnames,x.p.cedula,x.act.name].join(' ')).includes(query)));}
-function editAttendance(id){returnToRecentAfterEdit=true;const a=activitiesState.attendances.find(x=>x.id===id),p=a&&activitiesState.people.find(x=>x.id===a.personId);if(!a||!p)return;editingParticipantId=a.id;editingPersonId=p.id;document.getElementById('participantCedula').value=p.cedula;document.getElementById('participantNames').value=p.names;document.getElementById('participantSurnames').value=p.surnames;document.getElementById('participantPhone').value=p.phone||'';document.getElementById('participantInfoMira').value=p.infoMira||'';document.getElementById('participantType').value=p.type||'';document.getElementById('participantActivity').value=a.activityId;document.getElementById('saveParticipantBtn').textContent='Guardar cambios';const title=document.getElementById('participantFormTitle');if(title)title.textContent='Editar participante';const notice=document.getElementById('duplicateNotice');notice.textContent='Estás editando una asistencia existente. Los cambios se actualizarán en Neon.';notice.classList.remove('hidden');showActivityView('registration');document.getElementById('participantWorkspace').scrollIntoView({behavior:'smooth',block:'start'});}
-function renderActivityTable(){const body=document.getElementById('activityParticipantsBody');const q=normActivityText(document.getElementById('activitySearch').value);const allRows=activityRows(null,q);const rows=allRows.slice(0,10);document.getElementById('liveActivityCount').textContent='Mostrando '+rows.length+' de '+activitiesState.attendances.length+' registros';body.innerHTML=rows.length?rows.map(({a,p,act})=>`<tr><td>${escapeActivityHtml((p.names||'')+' '+(p.surnames||''))}</td><td>${escapeActivityHtml(p.cedula||'')}</td><td>${escapeActivityHtml(act.name||'—')}</td><td>${p.infoMira==='si'?'Sí':'No'}</td><td>${p.type==='externo'?'Externo':p.type==='interno'?'Interno':'—'}</td><td>${a.createdAt?new Date(a.createdAt).toLocaleString('es-CO'):''}</td><td><button class="activity-row-btn" data-edit="${a.id}" type="button">Editar</button></td></tr>`).join(''):'<tr><td colspan="7">No hay registros recientes para mostrar.</td></tr>';body.querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',()=>editAttendance(b.dataset.edit)));}
-function exportActivityExcel(activityId){if(!window.XLSX){alert('No se pudo cargar la herramienta de Excel.');return;}const rows=activityRows(activityId).map(({a,p,act})=>({'Actividad':act.name||'','Fecha actividad':act.date||'','Lugar':act.place||'','Cédula':p.cedula||'','Nombres':p.names||'','Apellidos':p.surnames||'','Teléfono':p.phone||'','InfoMIRA':p.infoMira==='si'?'Sí':'No','Fecha registro':a.createdAt||''}));const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),'Registros');const act=activitiesState.activities.find(a=>a.id===activityId);XLSX.writeFile(wb,(act?act.name:'Mira_Tu_Territorio').replace(/[^a-z0-9_-]/gi,'_')+'.xlsx');}
+function editAttendance(id){if(!canManageActivities("edit")){alert("No tienes permiso para editar asistencias.");return;}returnToRecentAfterEdit=true;const a=activitiesState.attendances.find(x=>x.id===id),p=a&&activitiesState.people.find(x=>x.id===a.personId);if(!a||!p)return;editingParticipantId=a.id;editingPersonId=p.id;document.getElementById('participantCedula').value=p.cedula;document.getElementById('participantNames').value=p.names;document.getElementById('participantSurnames').value=p.surnames;document.getElementById('participantPhone').value=p.phone||'';document.getElementById('participantInfoMira').value=p.infoMira||'';document.getElementById('participantType').value=p.type||'';document.getElementById('participantActivity').value=a.activityId;document.getElementById('saveParticipantBtn').textContent='Guardar cambios';const title=document.getElementById('participantFormTitle');if(title)title.textContent='Editar participante';const notice=document.getElementById('duplicateNotice');notice.textContent='Estás editando una asistencia existente. Los cambios se actualizarán en Neon.';notice.classList.remove('hidden');showActivityView('registration');document.getElementById('participantWorkspace').scrollIntoView({behavior:'smooth',block:'start'});}
+async function annulActivityAttendance(id){if(!canManageActivities('annul')){alert('No tienes permiso para anular asistencias.');return;}const reason=window.prompt('Indica el motivo de anulación.');if(reason===null)return;if(!reason.trim()){alert('Debes indicar un motivo.');return;}if(!window.confirm('¿Confirmas la anulación? Quedará registrada en el historial.'))return;try{await window.MIRA_DATA.annulAttendance(id,reason);await loadActivitiesFromNeon();alert('Asistencia anulada y registrada.');}catch(error){alert(error.message||'No fue posible anular la asistencia.');}}
+function renderActivityTable(){const canEdit=canManageActivities("edit");const body=document.getElementById('activityParticipantsBody');const q=normActivityText(document.getElementById('activitySearch').value);const allRows=activityRows(null,q);const rows=allRows.slice(0,10);document.getElementById('liveActivityCount').textContent='Mostrando '+rows.length+' de '+activitiesState.attendances.length+' registros';body.innerHTML=rows.length?rows.map(({a,p,act})=>`<tr><td>${escapeActivityHtml((p.names||'')+' '+(p.surnames||''))}</td><td>${escapeActivityHtml(p.cedula||'')}</td><td>${escapeActivityHtml(act.name||'—')}</td><td>${p.infoMira==='si'?'Sí':'No'}</td><td>${p.type==='externo'?'Externo':p.type==='interno'?'Interno':'—'}</td><td>${a.createdAt?new Date(a.createdAt).toLocaleString('es-CO'):''}</td>${canEdit?'<td><button class="activity-row-btn" data-edit="'+a.id+'" type="button">Editar</button></td>':'<td>Solo consulta</td>'}</tr>`).join(''):'<tr><td colspan="7">No hay registros recientes para mostrar.</td></tr>';body.querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',()=>editAttendance(b.dataset.edit)));body.querySelectorAll('tr').forEach((row,index)=>{const item=rows[index]?.a;if(!item)return;const cell=row.insertCell(-1);if(item.status==='anulada'){cell.textContent='Anulada';return;}if(canManageActivities('annul')){const button=document.createElement('button');button.type='button';button.className='activity-row-btn';button.textContent='Anular';button.addEventListener('click',()=>annulActivityAttendance(item.id));cell.appendChild(button);}else cell.textContent='—';});}
+function exportActivityExcel(activityId){if(!canManageActivities("view")||!canManageActivities("export")){alert('No tienes autorización para exportar registros. Solicita el permiso Exportar Excel al administrador.');return;}if(!window.XLSX){alert('No se pudo cargar la herramienta de Excel.');return;}const rows=activityRows(activityId).map(({a,p,act})=>({'Actividad':act.name||'','Fecha actividad':act.date||'','Lugar':act.place||'','Cédula':p.cedula||'','Nombres':p.names||'','Apellidos':p.surnames||'','Teléfono':p.phone||'','InfoMIRA':p.infoMira==='si'?'Sí':'No','Fecha registro':a.createdAt||''}));const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),'Registros');const act=activitiesState.activities.find(a=>a.id===activityId);XLSX.writeFile(wb,(act?act.name:'Mira_Tu_Territorio').replace(/[^a-z0-9_-]/gi,'_')+'.xlsx');}
 document.getElementById('exportSingleActivityBtn').addEventListener('click',()=>exportActivityExcel(detailActivityId));
-function openActivityFolder(id){const act=activitiesState.activities.find(a=>a.id===id);if(!act)return;detailActivityId=id;document.getElementById('activityDetailTitle').textContent=act.name;document.getElementById('activityDetailMeta').textContent=[act.date,act.place,activitiesState.attendances.filter(x=>x.activityId===id).length+' registros'].filter(Boolean).join(' · ');const rows=activityRows(id);document.getElementById('activityDetailBody').innerHTML=rows.length?rows.map(({a,p})=>`<tr><td>${escapeActivityHtml((p.names||'')+' '+(p.surnames||''))}</td><td>${escapeActivityHtml(p.cedula||'')}</td><td>${escapeActivityHtml(p.phone||'—')}</td><td>${p.infoMira==='si'?'Sí':'No'}</td><td>${a.createdAt?new Date(a.createdAt).toLocaleString('es-CO'):''}</td><td><button class="activity-row-btn" data-edit="${a.id}" type="button">Editar</button></td></tr>`).join(''):'<tr><td colspan="6">Esta actividad aún no tiene registros.</td></tr>';const body=document.getElementById('activityDetailBody');body.querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',()=>editAttendance(b.dataset.edit)));showActivityView('detail');}
+document.getElementById('exportSingleActivityBtn').hidden=true;
+function openActivityFolder(id){const act=activitiesState.activities.find(a=>a.id===id);if(!act)return;detailActivityId=id;document.getElementById('activityDetailTitle').textContent=act.name;document.getElementById('activityDetailMeta').textContent=[act.date,act.place,activitiesState.attendances.filter(x=>x.activityId===id).length+' registros'].filter(Boolean).join(' · ');const rows=activityRows(id),canEdit=canManageActivities("edit");document.getElementById('activityDetailBody').innerHTML=rows.length?rows.map(({a,p})=>`<tr><td>${escapeActivityHtml((p.names||'')+' '+(p.surnames||''))}</td><td>${escapeActivityHtml(p.cedula||'')}</td><td>${escapeActivityHtml(p.phone||'—')}</td><td>${p.infoMira==='si'?'Sí':'No'}</td><td>${a.createdAt?new Date(a.createdAt).toLocaleString('es-CO'):''}</td><td>${canEdit?'<button class="activity-row-btn" data-edit="'+a.id+'" type="button">Editar</button>':'Solo consulta'}</td></tr>`).join(''):'<tr><td colspan="6">Esta actividad aún no tiene registros.</td></tr>';const body=document.getElementById('activityDetailBody');body.querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',()=>editAttendance(b.dataset.edit)));body.querySelectorAll('tr').forEach((row,index)=>{const item=rows[index]?.a;if(!item)return;const cell=row.cells[row.cells.length-1];if(item.status==='anulada'){cell.textContent='Anulada';return;}if(canManageActivities('annul')){const button=document.createElement('button');button.type='button';button.className='activity-row-btn';button.textContent='Anular';button.addEventListener('click',()=>annulActivityAttendance(item.id));cell.appendChild(button);}});showActivityView('detail');}
 function renderActivities(){
+  const exportAllowed=canManageActivities("view")&&canManageActivities("export");
+  const createAllowed=canManageActivities("create");
+  const editAllowed=canManageActivities("edit");
+  const participantWorkspace=document.getElementById('participantWorkspace');
+  if(participantWorkspace)participantWorkspace.classList.toggle('hidden',!createAllowed&&!editAllowed);
+  const newActivityButton=document.getElementById('newActivityBtnAll');
+  if(newActivityButton)newActivityButton.hidden=!createAllowed;
+  const sideCreateButton=document.getElementById('sideOpenActivityModuleBtn');
+  if(sideCreateButton)sideCreateButton.hidden=!createAllowed;
+  const singleExport=document.getElementById('exportSingleActivityBtn');
+  if(singleExport)singleExport.hidden=!exportAllowed;
   const select=document.getElementById('participantActivity'),old=select.value;
   const activeActivities=activitiesState.activities.filter(a=>a.status==='active');
-  const noActiveNotice=document.getElementById('activityNoActiveNotice');
-  if(noActiveNotice)noActiveNotice.classList.toggle('hidden',activeActivities.length>0);
   select.innerHTML='<option value="">Seleccionar actividad…</option>'+activeActivities.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(a=>`<option value="${escapeActivityHtml(a.id)}">${escapeActivityHtml(a.name)} · En curso</option>`).join('');
   if(old&&activeActivities.some(a=>a.id===old))select.value=old;
   else if(currentActivity())select.value=currentActivity().id;
@@ -755,9 +1113,9 @@ function renderActivities(){
     const count=activitiesState.attendances.filter(x=>x.activityId===a.id).length;
     const statusLabel=a.status==='active'?'En curso':a.status==='finished'?'Finalizada':a.status==='cancelada'?'Cancelada':a.status||'Sin estado';
     const statusClass=a.status==='active'?'active':a.status==='cancelada'?'cancelled':'closed';
-    const cancelButton=a.status==='active'&&canManageActivities('edit')?`<button class="activity-row-btn activity-manage-cancel" data-activity-cancel="${escapeActivityHtml(a.id)}" type="button">Cancelar</button>`:'';
+    const cancelButton=a.status==='active'&&editAllowed?`<button class="activity-row-btn activity-manage-cancel" data-activity-cancel="${escapeActivityHtml(a.id)}" type="button">Cancelar</button>`:'';
     const deleteButton=canManageActivities('delete')?(count===0?`<button class="activity-row-btn activity-manage-delete" data-activity-delete="${escapeActivityHtml(a.id)}" type="button">Eliminar</button>`:'<span class="activity-delete-locked" title="Tiene asistencias asociadas">No eliminable · '+count+' registros</span>'):'';
-    return `<article class="activity-folder"><div class="folder-icon">📁</div><h3>${escapeActivityHtml(a.name)}</h3><p>${escapeActivityHtml(a.date||'Sin fecha')} · ${count} registros</p><span class="activity-state-pill ${statusClass}">${escapeActivityHtml(statusLabel)}</span><div class="activity-folder-actions"><button class="activity-row-btn" data-folder-open="${escapeActivityHtml(a.id)}" type="button">📂 Abrir</button>${cancelButton}${deleteButton}</div></article><button class="activity-file-card" data-folder-export="${escapeActivityHtml(a.id)}" type="button" aria-label="Descargar Excel de ${escapeActivityHtml(a.name)}"><span class="file-icon">📊</span><strong>${escapeActivityHtml(a.name)}.xlsx</strong><small>Archivo de registros · ${count} filas</small><span class="file-type">EXCEL · DESCARGAR</span></button>`;
+    return `<article class="activity-folder"><div class="folder-icon">📁</div><h3>${escapeActivityHtml(a.name)}</h3><p>${escapeActivityHtml(a.date||'Sin fecha')} · ${count} registros</p><span class="activity-state-pill ${statusClass}">${escapeActivityHtml(statusLabel)}</span><div class="activity-folder-actions"><button class="activity-row-btn" data-folder-open="${escapeActivityHtml(a.id)}" type="button">📂 Abrir</button>${cancelButton}${deleteButton}</div></article>${exportAllowed?'<button class="activity-file-card" data-folder-export="'+escapeActivityHtml(a.id)+'" type="button" aria-label="Descargar Excel de '+escapeActivityHtml(a.name)+'"><span class="file-icon">📊</span><strong>'+escapeActivityHtml(a.name)+'.xlsx</strong><small>Archivo de registros · '+count+' filas</small><span class="file-type">EXCEL · DESCARGAR</span></button>':''}`;
   }).join(''):'<div class="activity-empty-drive"><div>📂</div><h3>Aún no hay actividades</h3><p>Crea una actividad para que aparezca aquí su carpeta y su archivo Excel.</p></div>';
   folders.querySelectorAll('[data-folder-open]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();openActivityFolder(b.dataset.folderOpen);}));
   folders.querySelectorAll('[data-folder-export]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();exportActivityExcel(b.dataset.folderExport);}));
@@ -788,7 +1146,6 @@ renderActivities();
 
 document.getElementById('logoutTestigoBtn').addEventListener('click', function() {
     document.getElementById('testigoStandaloneContainer').classList.add('hidden');
-    document.getElementById('miraQuickModules')?.classList.remove('hidden');
     document.getElementById('landing-hero-overlay').style.display = 'flex';
     document.getElementById('landingHeaderControls').style.display = 'flex';
 });
@@ -817,7 +1174,6 @@ function activarPMUAutenticado() {
     cerrarCapaAccesoPMU();
     // Transición visual del portal al PMU tras validar la sesión de Neon Auth.
     document.body.classList.add('pmu-neomorphic');
-    document.getElementById('miraQuickModules')?.classList.add('hidden');
     const overlay = document.getElementById('landing-hero-overlay');
     const controls = document.getElementById('landingHeaderControls');
     const appContainer = document.getElementById('app-container');
@@ -954,6 +1310,7 @@ function procesarYComprimirImagen(file) {
 }
 
 function inicializarEventosArchivosTestigo() {
+    if (window.MIRA_TESTIGOS_TEMP_DISABLED) return;
     const btnCamara = document.getElementById('btnTomarFotoCamara');
     const btnGaleria = document.getElementById('btnSubirGaleria');
     const cameraInput = document.getElementById('testigoCameraInput');
@@ -1119,30 +1476,175 @@ document.getElementById('sidebarToggleBtn').addEventListener('click', function()
     setTimeout(() => { if (map) map.invalidateSize(); }, 350);
 });
 
-function manejarBotonFlotanteReapertura(estaContraido) {
-    let floatBtn = document.getElementById('floatingReopenBtn');
-    if (estaContraido) {
-        if (!floatBtn) {
-            floatBtn = document.createElement('button');
-            floatBtn.id = 'floatingReopenBtn';
-            floatBtn.title = 'Mostrar Menú';
-            floatBtn.setAttribute('aria-label', 'Abrir menú lateral');
-            floatBtn.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 12h18M3 6h18M3 18h18"/></svg>`;
-            floatBtn.className = 'floating-reopen-neo-btn';
-            floatBtn.addEventListener('click', function() {
-                const sidebarGroup = document.getElementById('mainSidebar');
-                sidebarGroup.classList.remove('collapsed');
-                document.getElementById('sidebarToggleBtn').setAttribute('aria-expanded', 'true');
-                floatBtn.remove();
-                setTimeout(() => { if (map) map.invalidateSize(); }, 350);
-            });
-            document.body.appendChild(floatBtn);
-        } else {
-            floatBtn.style.display = 'flex';
+// Menú lateral · módulos flotantes en rail contraído y expansión fluida.
+(function inicializarTransicionesMenuModulos() {
+    const sidebar = document.querySelector('#mainSidebar .neo-tactile-sidebar');
+    if (!sidebar || sidebar.dataset.miraDisclosureReady === 'true') return;
+    sidebar.dataset.miraDisclosureReady = 'true';
+
+    const moduleDetails = () => Array.from(sidebar.querySelectorAll(':scope .sidebar-content > details.custom-dropdown'));
+    const restoreContent = details => {
+        const flyout = sidebar.querySelector(':scope > .mira-module-flyout');
+        const content = details?._miraDropdownContent;
+        if (content && flyout?.contains(content)) {
+            details.appendChild(content);
+            content.classList.remove('mira-floating-content');
         }
-    } else {
-        if (floatBtn) floatBtn.style.display = 'none';
+        if (flyout) flyout.remove();
+        if (details) {
+            details.classList.remove('mira-floating-active');
+            details.open = false;
+            details.querySelector(':scope > summary')?.setAttribute('aria-expanded', 'false');
+        }
+    };
+    const closeAllFloating = except => {
+        moduleDetails().forEach(item => {
+            if (item !== except && item.classList.contains('mira-floating-active')) restoreContent(item);
+        });
+    };
+    const openFloating = details => {
+        closeAllFloating(details);
+        const summary = details.querySelector(':scope > summary');
+        const content = details.querySelector(':scope > .dropdown-content');
+        if (!summary || !content) return;
+        details._miraDropdownContent = content;
+        const flyout = document.createElement('div');
+        flyout.className = 'mira-module-flyout';
+        flyout.setAttribute('role', 'region');
+        flyout.setAttribute('aria-label', summary.innerText.trim());
+        const sidebarRect = sidebar.getBoundingClientRect();
+        const summaryRect = summary.getBoundingClientRect();
+        const maxHeight = Math.min(Math.round(window.innerHeight * .76), 720);
+        const top = Math.max(10, Math.min(summaryRect.top - sidebarRect.top - 8, window.innerHeight - maxHeight - 10 - sidebarRect.top));
+        flyout.style.top = top + 'px';
+        flyout.appendChild(content);
+        sidebar.appendChild(flyout);
+        content.classList.add('mira-floating-content');
+        details.classList.add('mira-floating-active');
+        details.open = true;
+        summary.setAttribute('aria-expanded', 'true');
+        requestAnimationFrame(() => flyout.classList.add('is-visible'));
+    };
+    moduleDetails().forEach(details => {
+        details.querySelector(':scope > summary')?.setAttribute('aria-expanded', String(details.open));
+        details._miraDropdownContent = details.querySelector(':scope > .dropdown-content');
+    });
+
+    sidebar.addEventListener('click', event => {
+        const summary = event.target.closest('.sidebar-content > details.custom-dropdown > summary');
+        if (!summary || !sidebar.contains(summary)) return;
+        const details = summary.parentElement;
+        if (details.classList.contains('module-access-restricted')) return;
+        const content = details._miraDropdownContent || details.querySelector(':scope > .dropdown-content');
+        if (!content) return;
+        event.preventDefault();
+
+        const rootSidebar = document.getElementById('mainSidebar');
+        const railMode = rootSidebar?.classList.contains('collapsed');
+        const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        // Al seleccionar un módulo desde el menú completo, el rail se recoge
+        // y el contenido pasa al panel flotante, igual que en la referencia.
+        if (!railMode) {
+            rootSidebar?.classList.add('collapsed');
+            const toggle = document.getElementById('sidebarToggleBtn');
+            toggle?.setAttribute('aria-expanded', 'false');
+            toggle?.setAttribute('aria-label', 'Expandir menú lateral');
+            if (toggle) toggle.title = 'Expandir menú';
+            closeAllFloating();
+            requestAnimationFrame(() => openFloating(details));
+            if (typeof manejarBotonFlotanteReapertura === 'function') manejarBotonFlotanteReapertura(true);
+            return;
+        }
+
+        if (railMode) {
+            if (details.classList.contains('mira-floating-active')) {
+                const flyout = sidebar.querySelector(':scope > .mira-module-flyout');
+                if (flyout) {
+                    flyout.classList.remove('is-visible');
+                    window.setTimeout(() => restoreContent(details), reducedMotion ? 0 : 300);
+                } else restoreContent(details);
+            } else openFloating(details);
+            return;
+        }
+
+        if (details.classList.contains('mira-floating-active')) restoreContent(details);
+        if (!details.open) {
+            moduleDetails().forEach(other => {
+                if (other !== details) {
+                    other.open = false;
+                    other.querySelector(':scope > summary')?.setAttribute('aria-expanded', 'false');
+                }
+            });
+            details.open = true;
+            summary.setAttribute('aria-expanded', 'true');
+            return;
+        }
+
+        if (reducedMotion) {
+            details.open = false;
+            summary.setAttribute('aria-expanded', 'false');
+            return;
+        }
+        if (details.dataset.miraClosing === 'true') return;
+        details.dataset.miraClosing = 'true';
+        content.style.setProperty('max-height', content.scrollHeight + 'px', 'important');
+        void content.offsetHeight;
+        requestAnimationFrame(() => content.style.setProperty('max-height', '0px', 'important'));
+        const finish = () => {
+            if (details.dataset.miraClosing !== 'true') return;
+            details.open = false;
+            delete details.dataset.miraClosing;
+            content.style.removeProperty('max-height');
+            summary.setAttribute('aria-expanded', 'false');
+        };
+        content.addEventListener('transitionend', function onEnd(e) {
+            if (e.target !== content || e.propertyName !== 'max-height') return;
+            content.removeEventListener('transitionend', onEnd);
+            finish();
+        });
+        window.setTimeout(finish, 560);
+    });
+
+    // Si se contrae con un módulo abierto, se convierte en panel lateral flotante.
+    document.getElementById('sidebarToggleBtn')?.addEventListener('click', () => {
+        const root = document.getElementById('mainSidebar');
+        requestAnimationFrame(() => {
+            if (root?.classList.contains('collapsed')) {
+                const opened = moduleDetails().find(item => item.open && !item.classList.contains('module-access-restricted'));
+                if (opened) openFloating(opened);
+            } else {
+                const active = moduleDetails().find(item => item.classList.contains('mira-floating-active'));
+                if (active) restoreContent(active);
+            }
+        });
+    });
+    window.addEventListener('resize', () => {
+        const active = moduleDetails().find(item => item.classList.contains('mira-floating-active'));
+        if (active && document.getElementById('mainSidebar')?.classList.contains('collapsed')) {
+            const summary = active.querySelector(':scope > summary');
+            const flyout = sidebar.querySelector(':scope > .mira-module-flyout');
+            if (summary && flyout) {
+                const sr = summary.getBoundingClientRect(), br = sidebar.getBoundingClientRect();
+                const mh = Math.min(Math.round(window.innerHeight * .76), 720);
+                flyout.style.top = Math.max(10, Math.min(sr.top - br.top - 8, window.innerHeight - mh - 10 - br.top)) + 'px';
+            }
+        }
+    }, { passive: true });
+})();
+
+function manejarBotonFlotanteReapertura(estaContraido) {
+    // El botón de alternancia permanece integrado en el rail de iconos.
+    // Se elimina el antiguo botón flotante para evitar duplicar controles.
+    const floatBtn = document.getElementById('floatingReopenBtn');
+    if (floatBtn) floatBtn.remove();
+    const toggle = document.getElementById('sidebarToggleBtn');
+    if (toggle) {
+        toggle.setAttribute('aria-expanded', String(!estaContraido));
+        toggle.setAttribute('aria-label', estaContraido ? 'Expandir menú lateral' : 'Contraer menú lateral');
+        toggle.title = estaContraido ? 'Expandir menú' : 'Contraer menú';
     }
+    setTimeout(() => { if (map) map.invalidateSize(); }, 380);
 }
 
 // Mantener el mapa sincronizado con el tamaño real del viewport.
@@ -1165,9 +1667,6 @@ function inicializarSistemaMapa() {
     // Registrar el módulo E-14 antes de cualquier retorno temprano. La función
     // está declarada dentro de este ámbito y es hoisted; así también queda
     // disponible cuando Leaflet ya creó el mapa en una sesión anterior.
-    // Exponer la carga para reintentos y reinicializaciones cuando Leaflet ya existe.
-    // La declaración interna está disponible por hoisting dentro de esta función.
-    window.MIRA_CARGAR_POLIGONOS = cargarPoligonosTerritoriales;
     if (!window.__MIRA_E14_INITIALIZED__) {
         try {
             inicializarModuloTestigosPMU();
@@ -1179,19 +1678,22 @@ function inicializarSistemaMapa() {
         }
     }
     if (map) {
+        asegurarRenderizadorTerritorial();
         setTimeout(() => {
             map.invalidateSize({ pan: false, animate: false });
-            if (datosOriginales && typeof window.actualizarMapa === 'function') {
+            // Una sesión restaurada puede volver a activar el PMU sobre un mapa
+            // ya creado. No omitir la carga de polígonos por el retorno temprano.
+            if (!datosOriginales) {
+                cargarPoligonosTerritoriales();
+            } else if (typeof window.actualizarMapa === 'function') {
                 window.actualizarMapa();
-                if (poligonosKmlVisibles && geojsonLayer && !map.hasLayer(geojsonLayer)) geojsonLayer.addTo(map);
-            } else if (typeof window.MIRA_CARGAR_POLIGONOS === 'function') {
-                window.MIRA_CARGAR_POLIGONOS();
             }
         }, 200);
         return;
     }
 
     map = L.map('map', { zoomControl: false, preferCanvas: true }).setView([4.8123, -74.3542], 14);
+    asegurarRenderizadorTerritorial();
     L.control.zoom({ position: 'topright' }).addTo(map);
 
     // V39: restaurar la cartografía base satelital. Sin esta capa Leaflet deja
@@ -1238,7 +1740,8 @@ function inicializarSistemaMapa() {
         if (geojsonLayer && map.hasLayer(geojsonLayer)) map.removeLayer(geojsonLayer);
         poligonosPorNombre = Object.create(null);
 
-        geojsonLayer = L.geoJSON(datosOriginales, {
+        const territoryLayerOptions = {
+            pane: 'overlayPane',
             filter: function(feature) {
                 const index = datosOriginales.features.indexOf(feature);
                 const nombre = obtenerNombreBarrio(feature, index);
@@ -1298,10 +1801,85 @@ function inicializarSistemaMapa() {
                     mostrarFichaBarrio(feature, nombre);
                 });
             }
-        });
+        };
+
+        let territoryRenderer = asegurarRenderizadorTerritorial();
+        let territoryRendererMode = 'svg';
+        if (!territoryRenderer) {
+            territoryRenderer = asegurarRenderizadorTerritorialCanvas();
+            territoryRendererMode = 'canvas';
+        }
+        geojsonLayer = L.geoJSON(datosOriginales, { ...territoryLayerOptions, renderer: territoryRenderer });
         if (poligonosKmlVisibles) geojsonLayer.addTo(map);
+
+        let svgNode = territoryRendererMode === 'svg' ? territoryRenderer?._container : null;
+        let svgPathCount = svgNode?.querySelectorAll ? svgNode.querySelectorAll('path').length : 0;
+        if (poligonosKmlVisibles && territoryRendererMode === 'svg' && svgPathCount === 0) {
+            if (map.hasLayer(geojsonLayer)) map.removeLayer(geojsonLayer);
+            territoryRenderer = asegurarRenderizadorTerritorialCanvas();
+            territoryRendererMode = 'canvas';
+            geojsonLayer = L.geoJSON(datosOriginales, { ...territoryLayerOptions, renderer: territoryRenderer });
+            geojsonLayer.addTo(map);
+        }
+
+        const renderedLayers = geojsonLayer.getLayers();
+        const territorialBounds = geojsonLayer.getBounds();
+        const boundsValid = Boolean(territorialBounds && territorialBounds.isValid());
+        const layerAttached = Boolean(map && map.hasLayer(geojsonLayer));
+        const activeRendererNode = territoryRenderer?._container;
+        const rendererReady = territoryRendererMode === 'svg'
+            ? svgPathCount > 0
+            : Boolean(activeRendererNode && activeRendererNode.tagName === 'CANVAS' && activeRendererNode.width > 0 && activeRendererNode.height > 0);
+        if (!renderedLayers.length || !boundsValid) {
+            throw new Error('La capa territorial se creó sin entidades o sin límites geográficos válidos.');
+        }
+        if (poligonosKmlVisibles && !layerAttached) {
+            throw new Error('Leaflet creó los polígonos, pero no incorporó la capa al mapa.');
+        }
+        if (poligonosKmlVisibles && !rendererReady) {
+            throw new Error('Leaflet recibió los polígonos, pero no pudo dibujarlos con SVG ni Canvas.');
+        }
+        window.MIRA_TERRITORIO_DIAGNOSTICO = {
+            estado: poligonosKmlVisibles ? 'renderizado' : 'capa_oculta_por_control',
+            fuente: window.MIRA_TERRITORIO_DIAGNOSTICO?.fuente || null,
+            entidadesGeoJSON: datosOriginales.features.length,
+            capasLeaflet: renderedLayers.length,
+            limitesValidos: boundsValid,
+            capaAgregadaAlMapa: layerAttached,
+            trazadosSVG: svgPathCount,
+            renderizador: territoryRendererMode,
+            tamanoMapa: map ? { ancho: map.getSize().x, alto: map.getSize().y } : null,
+            fecha: new Date().toISOString()
+        };
+        // Puente de sincronización para el motor 3D experimental. Leaflet sigue
+        // siendo el renderizador principal; el motor 3D recibe el mismo GeoJSON
+        // y el mismo estado de filtros/selección, sin duplicar ni alterar datos.
+        window.dispatchEvent(new CustomEvent('mira:territory-render', {
+            detail: {
+                data: datosOriginales,
+                filters: { ...barriosFiltroEstado },
+                selected: poligonoSeleccionadoNombre,
+                matches: Array.from(poligonosCoincidenciaActiva),
+                visible: poligonosKmlVisibles
+            }
+        }));
     };
 
+
+    // La cartografía se agenda antes de los módulos secundarios para que
+    // un fallo de InfoMIRA o Dashboard no impida cargar los barrios.
+    window.MIRA_RECARGAR_POLIGONOS = cargarPoligonosTerritoriales;
+    window.MIRA_TERRITORIO_DIAGNOSTICO = {
+        estado: 'programado',
+        fuente: null,
+        entidadesGeoJSON: 0,
+        capasLeaflet: 0,
+        limitesValidos: false,
+        capaAgregadaAlMapa: false,
+        trazadosSVG: 0,
+        fecha: new Date().toISOString()
+    };
+    setTimeout(() => cargarPoligonosTerritoriales(), 0);
 
     // Selector de vistas del módulo unificado Barrios y puestos.
     const territoryModeBarrios = document.getElementById('territoryModeBarrios');
@@ -1333,31 +1911,28 @@ function inicializarSistemaMapa() {
     cargarPuestosEnMapa(); // muestra los puestos conocidos incluso sin la base de personas
     inicializarModuloInfoMIRA();
 
-    // La cartografía territorial se agenda inmediatamente después de preparar
-    // el renderizador del mapa. Así no depende de que los módulos posteriores
-    // (Logística, Dashboard o Testigos) terminen su inicialización sin errores.
-    setTimeout(() => { if (map && typeof window.MIRA_CARGAR_POLIGONOS === 'function') window.MIRA_CARGAR_POLIGONOS(); }, 80);
-
-    inicializarModuloLogistica();
     actualizarDashboardKPIs();
 
     // La base de electores no forma parte de esta distribución independiente.
     // Se mantiene vacía hasta conectar una fuente de datos autorizada.
     baseVotantes = [];
-    actualizarConteoLogistica();
 
     // Carga robusta de la cartografía territorial. El archivo contiene los
     // polígonos y coordenadas oficiales aportados; no se generan coordenadas
     // aproximadas ni se sustituye la geometría por marcadores.
     async function cargarPoligonosTerritoriales() {
+        window.MIRA_TERRITORIO_DIAGNOSTICO = {
+            ...(window.MIRA_TERRITORIO_DIAGNOSTICO || {}),
+            estado: 'descargando',
+            fecha: new Date().toISOString(),
+            error: null
+        };
         const container = document.getElementById('barrios-checkbox-container');
         if (container) container.innerHTML = '<p class="loading-text">Cargando sectores y geometrías territoriales…</p>';
 
-        const geoJsonPath = 'barrios_poligonos_kml_aportado.geojson';
         const fuentes = [
-            new URL('./' + geoJsonPath + '?v=20261105-main-geojson-restore-1', document.baseURI).href,
-            'https://raw.githubusercontent.com/jdgarzoncam-bit/MIRAtuterritorio/main/' + geoJsonPath,
-            'https://cdn.jsdelivr.net/gh/jdgarzoncam-bit/MIRAtuterritorio@main/' + geoJsonPath
+            new URL('./barrios_poligonos_kml_aportado.geojson?v=20261114-territory-svg-recovery-2', document.baseURI).href,
+            'https://raw.githubusercontent.com/jdgarzoncam-bit/MIRAtuterritorio/preview/neon-qa-control-admin/barrios_poligonos_kml_aportado.geojson'
         ];
         const errores = [];
         let data = null;
@@ -1365,7 +1940,7 @@ function inicializarSistemaMapa() {
 
         for (const url of fuentes) {
             try {
-                const response = await fetch(url, { cache: 'reload', credentials: 'omit' });
+                const response = await fetch(url, { cache: 'no-store' });
                 if (!response.ok) throw new Error('HTTP ' + response.status);
                 const candidate = await response.json();
                 if (!candidate || candidate.type !== 'FeatureCollection' || !Array.isArray(candidate.features) || !candidate.features.length) {
@@ -1390,6 +1965,12 @@ function inicializarSistemaMapa() {
 
         if (!data) {
             const detail = errores.join(' | ');
+            window.MIRA_TERRITORIO_DIAGNOSTICO = {
+                ...(window.MIRA_TERRITORIO_DIAGNOSTICO || {}),
+                estado: 'error_descarga',
+                errores,
+                fecha: new Date().toISOString()
+            };
             console.error('[MIRA] No fue posible cargar la cartografía territorial:', detail);
             if (container) {
                 container.innerHTML = '<div class="loading-text" role="alert"><strong>No se pudieron cargar los barrios.</strong><p>La cartografía no se ha eliminado. Comprueba la conexión y vuelve a intentarlo.</p><button type="button" id="retryTerritoryGeoJSON" class="territory-reset-icon">Reintentar carga</button></div>';
@@ -1399,6 +1980,15 @@ function inicializarSistemaMapa() {
         }
 
         datosOriginales = data;
+        window.MIRA_TERRITORIO_DIAGNOSTICO = {
+            ...(window.MIRA_TERRITORIO_DIAGNOSTICO || {}),
+            estado: 'datos_descargados',
+            fuente: fuenteCargada,
+            entidadesGeoJSON: data.features.length,
+            tiposGeometria: [...new Set(data.features.map(feature => feature.geometry?.type || 'sin_geometria'))],
+            fecha: new Date().toISOString()
+        };
+        if (map) map.invalidateSize({ pan: false, animate: false });
         barriosFiltroEstado = Object.create(null);
         data.features.forEach((feature, index) => {
             barriosFiltroEstado[obtenerNombreBarrio(feature, index)] = true;
@@ -1425,6 +2015,12 @@ function inicializarSistemaMapa() {
                 fuente: fuenteCargada
             });
         } catch (error) {
+            window.MIRA_TERRITORIO_DIAGNOSTICO = {
+                ...(window.MIRA_TERRITORIO_DIAGNOSTICO || {}),
+                estado: 'error_renderizado',
+                error: error?.message || String(error),
+                fecha: new Date().toISOString()
+            };
             console.error('[MIRA] El GeoJSON se descargó, pero falló el renderizado avanzado:', error);
 
             // Recuperación de producción: si falla la lista o el renderizador avanzado,
@@ -1433,7 +2029,10 @@ function inicializarSistemaMapa() {
             let fallbackRendered = false;
             try {
                 if (geojsonLayer && map && map.hasLayer(geojsonLayer)) map.removeLayer(geojsonLayer);
+                const recoveryRenderer = asegurarRenderizadorTerritorialCanvas();
                 geojsonLayer = L.geoJSON(data, {
+                    pane: 'overlayPane',
+                    renderer: recoveryRenderer,
                     style: () => ({
                         color: '#8B5CF6',
                         weight: 1.7,
@@ -1450,6 +2049,16 @@ function inicializarSistemaMapa() {
                         : { paddingTopLeft: [410, 45], paddingBottomRight: [45, 45], maxZoom: 14 });
                 }
                 fallbackRendered = true;
+                window.MIRA_TERRITORIO_DIAGNOSTICO = {
+                    ...(window.MIRA_TERRITORIO_DIAGNOSTICO || {}),
+                    estado: 'renderizado_recuperacion',
+                    capasLeaflet: geojsonLayer.getLayers().length,
+                    capaAgregadaAlMapa: map.hasLayer(geojsonLayer),
+                    limitesValidos: fallbackBounds.isValid(),
+                    trazadosSVG: miraTerritorySvgRenderer?._container?.querySelectorAll?.('path')?.length || 0,
+                    error: error?.message || String(error),
+                    fecha: new Date().toISOString()
+                };
                 console.warn('[MIRA] Se activó el renderizado territorial de recuperación.');
             } catch (fallbackError) {
                 console.error('[MIRA] También falló el renderizado territorial de recuperación:', fallbackError);
@@ -1467,8 +2076,6 @@ function inicializarSistemaMapa() {
             }
         }
     }
-    // Permite recuperar la cartografía si el mapa se inicializó mientras su contenedor estaba oculto.
-    window.MIRA_CARGAR_POLIGONOS = cargarPoligonosTerritoriales;
     function obtenerNombreBarrio(feature, index) {
         if (feature && feature.properties) {
             return feature.properties.nombre || feature.properties.Barrio || `Sector ${index + 1}`;
@@ -1722,6 +2329,13 @@ function inicializarSistemaMapa() {
         if (abrirFicha) mostrarFichaBarrio(feature, nombre);
         return { feature, nombre };
     }
+
+    // API pública mínima para que el mapa 3D reutilice las acciones territoriales
+    // ya existentes (selección, ficha y filtros), sin replicar su lógica.
+    window.MIRA_MAP3D_BRIDGE = {
+        selectTerritory: (nombre) => seleccionarPoligonoTerritorial(nombre, true),
+        getView: () => map ? { center: map.getCenter(), zoom: map.getZoom() } : null
+    };
 
     function aplicarFiltroTerritorialDesdePuestos(puestosSeleccionados, aislar = true) {
         if (!datosOriginales || !Array.isArray(datosOriginales.features)) return;
@@ -2185,200 +2799,12 @@ function inicializarSistemaMapa() {
         XLSX.writeFile(workbook, `Reporte_Votantes_${puesto.nombre.replace(/\s+/g, '_')}.xlsx`);
     }
 
-    const logisticaRouteLayer = L.layerGroup();
-    let directorioLogisticaCache = null;
-    let directorioLogisticaPromise = null;
-
-    function normalizarTelefonoLogistica(value) {
-        const digits = String(value || '').replace(/\D/g, '');
-        return digits.length === 10 && digits.startsWith('3') ? digits : '';
-    }
-    function botonesContactoLogistica(phone, name='contacto') {
-        const mobile = normalizarTelefonoLogistica(phone);
-        if (!mobile) return '<span class="mira-db-action-hint">Sin celular válido</span>';
-        const safeName = escapeHtml(name);
-        return '<div class="mira-db-actions">'+
-            '<a class="mira-db-wa" href="https://wa.me/57'+mobile+'" target="_blank" rel="noopener noreferrer">◉ WhatsApp</a>'+
-            '<a class="mira-db-export" href="tel:+57'+mobile+'" aria-label="Llamar a '+safeName+'">☎ Llamar</a>'+
-            '</div>';
-    }
-    async function obtenerDirectorioLogistica() {
-        if (directorioLogisticaCache) return directorioLogisticaCache;
-        if (directorioLogisticaPromise) return directorioLogisticaPromise;
-        directorioLogisticaPromise = (async () => {
-            const all = [];
-            for (let offset = 0; offset < 2000; offset += 100) {
-                const page = await window.MIRA_DATA.listInfoMiraDirectory({limit:100,offset});
-                all.push(...(page || []));
-                if (!page || page.length < 100) break;
-            }
-            directorioLogisticaCache = all;
-            return all;
-        })();
-        try { return await directorioLogisticaPromise; }
-        finally { directorioLogisticaPromise = null; }
-    }
-    function centroGeograficoBarrio(nombre) {
-        if (!datosOriginales?.features?.length || !nombre) return null;
-        const target = normalizarTexto(nombre);
-        const feature = datosOriginales.features.find(f => normalizarTexto(f.properties?.nombre || f.properties?.Barrio || '') === target);
-        if (!feature?.geometry) return null;
-        const geometry = feature.geometry;
-        const rings = geometry.type === 'Polygon'
-            ? [geometry.coordinates?.[0] || []]
-            : geometry.type === 'MultiPolygon'
-                ? geometry.coordinates.map(polygon => polygon?.[0] || [])
-                : [];
-        // En barrios multipolígono se usa el componente exterior de mayor área,
-        // evitando calcular la recogida desde una isla o fragmento menor.
-        let best = null;
-        rings.forEach(ring => {
-            if (!Array.isArray(ring) || ring.length < 4) return;
-            let area2 = 0, cx = 0, cy = 0;
-            for (let i = 0; i < ring.length - 1; i++) {
-                const [x1, y1] = ring[i], [x2, y2] = ring[i + 1];
-                const cross = x1 * y2 - x2 * y1;
-                area2 += cross;
-                cx += (x1 + x2) * cross;
-                cy += (y1 + y2) * cross;
-            }
-            const area = Math.abs(area2);
-            if (area < 1e-12 || (best && area <= best.area)) return;
-            best = { area, point: [cy / (3 * area2), cx / (3 * area2)] };
-        });
-        if (best) return best.point;
-        const fallback = rings.find(ring => Array.isArray(ring) && ring.length >= 4);
-        const points = fallback ? fallback.slice(0, -1) : [];
-        return points.length
-            ? [points.reduce((sum, point) => sum + point[1], 0) / points.length,
-               points.reduce((sum, point) => sum + point[0], 0) / points.length]
-            : null;
-    }
-    function buscarPuestoLogistica(nombre) {
-        const target=normalizarTexto(nombre);
-        const exact=listaPuestosVotacion.find(p=>{
-            const n=normalizarTexto(p.nombre), m=normalizarTexto(p.matchName);
-            return target && (target===n || target===m || target.includes(n) || n.includes(target) || target.includes(m) || m.includes(target));
-        });
-        if(exact) return exact;
-        const tokens=target.split(/\s+/).filter(t=>t.length>3 && !['COLEGIO','ESCUELA','PUESTO','VOTACION','INSTITUTO','SEDE'].includes(t));
-        let best=null,score=0;
-        listaPuestosVotacion.forEach(p=>{
-            const candidate=normalizarTexto(p.nombre+' '+p.matchName).split(/\s+/);
-            const overlap=tokens.filter(t=>candidate.some(c=>c.includes(t)||t.includes(c))).length;
-            const ratio=overlap/Math.max(1,Math.min(tokens.length,candidate.length));
-            if(overlap>=2 && ratio>score){score=ratio;best=p;}
-        });
-        return score>=0.5?best:null;
-    }
-    async function dibujarRutaLogistica(origen,destino,grupo) {
-        if(!origen || !destino) return;
-        let points=[[origen[1],origen[0]],[destino.lon,destino.lat]];
-        let routed=false;
-        try {
-            const url='https://router.project-osrm.org/route/v1/driving/'+points.map(p=>p.join(',')).join(';')+'?overview=full&geometries=geojson';
-            const response=await fetch(url);
-            if(response.ok){
-                const payload=await response.json();
-                const coords=payload.routes?.[0]?.geometry?.coordinates;
-                if(coords?.length){points=coords;routed=true;}
-            }
-        } catch(error){ console.warn('[Logística] No fue posible consultar la ruta vial; se dibuja referencia directa.',error); }
-        const latlngs=points.map(p=>[p[1],p[0]]);
-        const line=L.polyline(latlngs,{color:routed?'#4f8cff':'#f0b45b',weight:4,opacity:.88,dashArray:routed?null:'8 8'});
-        line.bindTooltip((routed?'Ruta vial estimada · ':'Trayecto aproximado · ')+grupo,{sticky:true});
-        logisticaRouteLayer.addLayer(line);
-        L.circleMarker(origen,{radius:7,color:'#fff',weight:2,fillColor:'#2e5de6',fillOpacity:1}).bindTooltip('Origen aproximado · '+grupo).addTo(logisticaRouteLayer);
-        L.marker([destino.lat,destino.lon]).bindTooltip('Destino · '+destino.nombre+' · '+destino.direccion).addTo(logisticaRouteLayer);
-    }
-
-    function actualizarConteoLogistica() {}
-    function inicializarModuloLogistica() {
-        const btnLogistica=document.getElementById('logisticaBtn');
-        const selectLogistica=document.getElementById('logisticaSelect');
-        const dropdownLogistica=document.getElementById('dropdown-infomira');
-        if(!btnLogistica || !selectLogistica || !dropdownLogistica) return;
-        let box=document.getElementById('logisticaResultsContainer');
-        if(!box){box=document.createElement('div');box.id='logisticaResultsContainer';dropdownLogistica.querySelector('.dropdown-content')?.appendChild(box);}
-        if(!map.hasLayer(logisticaRouteLayer)) logisticaRouteLayer.addTo(map);
-        btnLogistica.addEventListener('click',async()=>{
-            const tipo=selectLogistica.value.toUpperCase();
-            btnLogistica.disabled=true;
-            box.innerHTML='<div class="mira-db-loading"><span></span> Consultando logística centralizada en Neon…</div>';
-            logisticaRouteLayer.clearLayers();
-            try{
-                if(!window.MIRA_DATA?.listInfoMiraDirectory) throw new Error('El cliente de Neon aún no está disponible.');
-                const all=await obtenerDirectorioLogistica();
-                const personOf=r=>Array.isArray(r.personas)?(r.personas[0]||null):(r.personas||null);
-                const getPhone=r=>personOf(r)?.telefono || r.telefono || '';
-                const getName=r=>[personOf(r)?.nombres,personOf(r)?.apellidos].filter(Boolean).join(' ') || r.nombre_original || 'Sin nombre';
-                const required=all.filter(r=>normalizarTexto(r.movilidad)==='REQUIERE');
-                const drivers=all.filter(r=>normalizarTexto(r.movilidad)==='PROPIO');
-                const shown=tipo==='TODOS'?all:tipo==='REQUIERE'?required:tipo==='PROPIO'?drivers:[];
-                const groups=new Map();
-                required.forEach(r=>{
-                    const barrio=r.barrio || 'BARRIO SIN REGISTRAR';
-                    const puestoName=r.puesto_votacion || r.puesto_original || '';
-                    const key=normalizarTexto(barrio)+'|'+normalizarTexto(puestoName);
-                    if(!groups.has(key)) groups.set(key,{barrio,puestoName,passengers:[]});
-                    groups.get(key).passengers.push(r);
-                });
-                const groupList=[...groups.values()];
-                const driversHtml=drivers.map(d=>'<article class="mira-db-person-card"><strong>'+escapeHtml(getName(d))+'</strong><div class="mira-db-action-hint">'+escapeHtml(d.barrio || 'Barrio sin registrar')+' · Vehículo propio</div>'+botonesContactoLogistica(getPhone(d),getName(d))+'</article>').join('');
-                const routeCards=groupList.map((g,i)=>{
-                    const place=buscarPuestoLogistica(g.puestoName);
-                    const origin=centroGeograficoBarrio(g.barrio);
-                    const passengerHtml=g.passengers.map(p=>'<div class="mira-db-field"><small>Pasajero · Mesa '+escapeHtml(p.mesa_votacion || 'S/N')+'</small><strong>'+escapeHtml(getName(p))+'</strong>'+botonesContactoLogistica(getPhone(p),getName(p))+'</div>').join('');
-                    const driverOptions=drivers.map(d=>'<option value="'+escapeHtml(d.id)+'">'+escapeHtml(getName(d))+' · '+escapeHtml(d.barrio || 'Sin barrio')+'</option>').join('');
-                    return '<article class="mira-db-person-card"><div class="mira-db-person-head"><div><small>RUTA '+(i+1)+'</small><h4>'+escapeHtml(g.barrio)+' → '+escapeHtml(g.puestoName || 'Puesto sin asignar')+'</h4></div><span class="mira-db-status">'+g.passengers.length+' pasajero(s)</span></div>'+
-                        '<div class="mira-db-action-hint">Origen: centro geográfico del barrio · Destino: '+escapeHtml(place?.direccion || 'Dirección no localizada en el catálogo')+'</div>'+
-                        '<label class="mira-db-action-hint">Seleccionar persona con vehículo propio (confirmar disponibilidad)<select class="mira-select" data-driver-route="'+i+'"><option value="">Seleccionar conductor…</option>'+driverOptions+'</select></label><div data-driver-contact="'+i+'"></div>'+passengerHtml+
-                        (place&&origin?'<div class="mira-db-action-hint" data-route-state="'+i+'">Preparando trazado vial…</div>':'<div class="mira-db-action-hint">No se puede trazar: '+(!origin?'falta polígono del barrio. ':'')+(!place?'puesto sin coordenadas verificadas.':'')+'</div>')+
-                        '</article>';
-                }).join('');
-                box.innerHTML='<section class="mira-db-results"><header class="mira-db-results-heading"><div><small>OPERACIÓN DÍA D · DATOS NEON</small><strong>🚐 Logística y Transporte</strong></div><span class="mira-db-count">'+shown.length+' registro(s)</span></header>'+
-                    '<div class="mira-db-action-hint">Requieren transporte: <b>'+required.length+'</b> · Vehículo propio: <b>'+drivers.length+'</b> · Rutas agrupadas: <b>'+groupList.length+'</b></div>'+
-                    (tipo==='REQUIERE'||tipo==='TODOS'?routeCards:'')+
-                    (tipo==='PROPIO'||tipo==='TODOS'?'<h4>Personas con vehículo propio (posibles conductores)</h4>'+driversHtml:'')+
-                    '<button id="downloadExcelLogisticaBtn" class="mira-db-export" type="button">↧ Exportar reporte logístico</button>'+
-                    '<p class="mira-db-action-hint">Los conductores se consideran disponibles para cualquier ruta. La asignación operativa debe confirmarse con cada conductor; aún no se guarda una asignación en la base de datos.</p></section>';
-                box.querySelectorAll('[data-driver-route]').forEach(select=>{
-                    select.addEventListener('change',()=>{
-                        const duplicated = select.value && [...box.querySelectorAll('[data-driver-route]')]
-                            .some(other => other !== select && other.value === select.value);
-                        if (duplicated) {
-                            alert('Ese conductor ya está asignado a otra ruta en esta sesión.');
-                            select.value = '';
-                        }
-                        const driver=drivers.find(d=>String(d.id)===select.value);
-                        const target=box.querySelector('[data-driver-contact="'+select.dataset.driverRoute+'"]');
-                        if(target) target.innerHTML=driver?'<div class="mira-db-action-hint">Conductor seleccionado: '+escapeHtml(getName(driver))+'</div>'+botonesContactoLogistica(getPhone(driver),getName(driver)):'';
-                    });
-                });
-                groupList.forEach(async(g,i)=>{
-                    const place=buscarPuestoLogistica(g.puestoName), origin=centroGeograficoBarrio(g.barrio);
-                    if(place&&origin){
-                        const state=box.querySelector('[data-route-state="'+i+'"]');
-                        await dibujarRutaLogistica(origin,place,g.barrio+' → '+g.puestoName);
-                        if(state) state.textContent='Ruta dibujada desde el centro geográfico del barrio hasta '+place.direccion+'.';
-                    }
-                });
-                const dl=document.getElementById('downloadExcelLogisticaBtn');
-                dl?.addEventListener('click',()=>{
-                    const rows=shown.map((r,i)=>({Numero:i+1,Nombre:getName(r),Documento:r.personas?.cedula || r.cedula_original || '',Telefono:getPhone(r),Barrio:r.barrio || '',Movilidad:r.movilidad || '',Puesto:r.puesto_votacion || r.puesto_original || '',DireccionPuesto:buscarPuestoLogistica(r.puesto_votacion || r.puesto_original || '')?.direccion || '',Mesa:r.mesa_votacion || ''}));
-                    const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),'Logistica');
-                    XLSX.writeFile(wb,'Reporte_Logistica_Dia_D.xlsx');
-                });
-                if(groupList.length){
-                    const pts=groupList.map(g=>({g,origin:centroGeograficoBarrio(g.barrio),place:buscarPuestoLogistica(g.puestoName)})).filter(x=>x.origin&&x.place);
-                    if(pts.length) map.fitBounds(L.latLngBounds(pts.flatMap(x=>[x.origin,[x.place.lat,x.place.lon]])),{padding:[55,55],maxZoom:14});
-                }
-            }catch(error){box.innerHTML='<div class="mira-db-empty">No fue posible cargar logística: '+escapeHtml(error.message)+'</div>';}
-            finally{btnLogistica.disabled=false;}
-        });
-    }
-
     function inicializarModuloTestigosPMU() {
+        if (window.MIRA_TESTIGOS_TEMP_DISABLED) {
+            const status = document.getElementById('e14CentralStatus');
+            if (status) status.textContent = 'Módulo E-14 temporalmente inactivo. Sus operaciones están bloqueadas durante la renovación.';
+            return;
+        }
         const modal = document.getElementById('testigosModal');
         const openBtn = document.getElementById('openTestigosModalBtn');
         const closeBtn = document.getElementById('closeTestigosModalBtn');
@@ -2621,6 +3047,17 @@ function inicializarSistemaMapa() {
         if (!inputCuidador || !btnBuscarMira || !selectEstado || !btnResetMira || !miraInternalContainer) return;
 
         let ultimaConsulta = [];
+        let searchRequest = 0;
+        const loadAllInfoMiraPages = async ({cedula="",search=""}={}) => {
+            const pageSize=100,all=[];
+            for(let offset=0;offset<5000;offset+=pageSize){
+                const page=await window.MIRA_DATA.listInfoMiraDirectory({cedula,search,limit:pageSize,offset});
+                if(!Array.isArray(page)) throw new Error("Neon devolvió una respuesta inválida del directorio InfoMIRA.");
+                all.push(...page);
+                if(page.length<pageSize) return all;
+            }
+            throw new Error("InfoMIRA superó el límite de seguridad de paginación (5.000 registros).");
+        };
 
         // Sugerencias inteligentes del directorio centralizado.
         const searchGroup = inputCuidador.closest('.mira-input-group');
@@ -2679,6 +3116,7 @@ function inicializarSistemaMapa() {
         inputCuidador.setAttribute('aria-autocomplete','list');
         inputCuidador.setAttribute('aria-controls','miraSearchSuggestions');
         inputCuidador.addEventListener('input',() => {
+            searchRequest++;
             clearTimeout(suggestionTimer);
             const term = inputCuidador.value.trim();
             const requestId = ++suggestionRequest;
@@ -2727,6 +3165,9 @@ function inicializarSistemaMapa() {
         const mostrarValor = value => value === null || value === undefined || String(value).trim() === ''
             ? 'Sin registrar' : escInfo(value);
         const personaDe = row => Array.isArray(row.personas) ? (row.personas[0] || null) : (row.personas || null);
+        const normalizarPuestoInfoMira = value => String(value || '').normalize('NFD')
+            .replace(/[\\u0300-\\u036f]/g,'').toUpperCase()
+            .replace(/[^A-Z0-9]+/g,' ').trim().replace(/\\s+/g,' ');
 
         function actualizarMapaInfoMira(rows) {
             miraMarkersGroup.clearLayers();
@@ -2737,12 +3178,12 @@ function inicializarSistemaMapa() {
             const agrupados = new Map();
             rows.forEach(row => {
                 const nombrePuesto = row.puesto_votacion || row.puesto_original || personaDe(row)?.puesto_votacion || '';
-                const clave = normalizarTexto(nombrePuesto);
+                const clave = normalizarPuestoInfoMira(nombrePuesto);
                 if (clave) agrupados.set(clave, (agrupados.get(clave) || 0) + 1);
             });
             const bounds = [];
             listaPuestosVotacion.forEach(puesto => {
-                const cantidad = agrupados.get(normalizarTexto(puesto.matchName)) || agrupados.get(normalizarTexto(puesto.nombre)) || 0;
+                const cantidad = agrupados.get(normalizarPuestoInfoMira(puesto.matchName)) || agrupados.get(normalizarPuestoInfoMira(puesto.nombre)) || 0;
                 if (!cantidad) return;
                 bounds.push([puesto.lat, puesto.lon]);
                 const icon = L.divIcon({
@@ -2783,12 +3224,10 @@ function inicializarSistemaMapa() {
                 const puesto = person?.puesto_votacion || row.puesto_votacion || row.puesto_original;
                 const mesa = person?.mesa_votacion || row.mesa_votacion;
                 const barrio = row.barrio;
-                const movilidad = row.movilidad;
                 const asistencia = row.asistencia;
                 const extras = [
                     person?.edad !== null && person?.edad !== undefined ? ['Edad',person.edad] : null,
                     person?.tipo_participacion ? ['Tipo de participación',person.tipo_participacion] : null,
-                    person?.requiere_transporte !== null && person?.requiere_transporte !== undefined ? ['Requiere transporte',person.requiere_transporte ? 'Sí' : 'No'] : null
                 ].filter(Boolean);
                 const fields = [
                     ['Documento',cedula],
@@ -2859,11 +3298,9 @@ function inicializarSistemaMapa() {
                         'Mesa': p.mesa_votacion || row.mesa_votacion || '',
                         'InfoMIRA': p.info_mira === true ? 'Sí' : p.info_mira === false ? 'No' : '',
                         'Activo': p.activo === true ? 'Sí' : p.activo === false ? 'No' : '',
-                        'Movilidad': row.movilidad || '',
                         'Asistencia': row.asistencia || '',
                         'Edad': p.edad ?? '',
                         'Tipo de participación': p.tipo_participacion || '',
-                        'Requiere transporte': p.requiere_transporte === true ? 'Sí' : p.requiere_transporte === false ? 'No' : ''
                     };
                 });
                 const wb = XLSX.utils.book_new();
@@ -2873,6 +3310,7 @@ function inicializarSistemaMapa() {
         }
 
         async function aplicarFiltroInfoMIRA() {
+            const requestId = ++searchRequest;
             const query = inputCuidador.value.trim();
             const estadoFiltro = selectEstado.value.toUpperCase();
             if (!query && estadoFiltro === 'TODOS') {
@@ -2894,17 +3332,19 @@ function inicializarSistemaMapa() {
             miraInternalContainer.innerHTML = '<div class="mira-db-loading"><span></span> Consultando el directorio centralizado…</div>';
             try {
                 const isCedula = /^\d+$/.test(query);
-                const rows = await window.MIRA_DATA.listInfoMiraDirectory({
+                const rows = await loadAllInfoMiraPages({
                     cedula: isCedula ? query : '',
-                    search: query && !isCedula ? query : '',
-                    limit: 100
+                    search: query && !isCedula ? query : ''
                 });
-                const rowsFiltered = (rows || []).filter(row => {
+                if(requestId!==searchRequest || inputCuidador.value.trim()!==query) return;
+                const rowsFiltered = rows.filter(row => {
                     if (estadoFiltro === 'TODOS') return true;
                     const person = personaDe(row);
-                    const role = String(row.estado_original || person?.tipo_participacion || '').toUpperCase();
-                    if (estadoFiltro === 'ACTIVO') return person?.activo === true || role.includes('ACTIVO');
-                    return role.includes(estadoFiltro);
+                    const role = normalizarTexto(row.estado_original || person?.tipo_participacion || '');
+                    if (estadoFiltro === 'ACTIVO') return person?.activo === true || (person?.activo !== false && role === 'ACTIVO');
+                    if (estadoFiltro === 'LIDER') return role.includes('LIDER') || role.includes('CUIDADOR');
+                    if (estadoFiltro === 'REFERIDO') return role.includes('REFERIDO');
+                    return false;
                 });
                 ultimaConsulta = rowsFiltered;
                 renderizarFichaInfoMira(rowsFiltered,query,estadoFiltro);
@@ -2912,6 +3352,7 @@ function inicializarSistemaMapa() {
                 document.getElementById('adminDashboardCard')?.classList.toggle('dashboard-compact',rowsFiltered.length > 0);
                 document.getElementById('dropdown-infomira')?.classList.toggle('dropdown-expanded-full',rowsFiltered.length > 0);
             } catch (error) {
+                if(requestId!==searchRequest) return;
                 console.error('[InfoMIRA] Error consultando Neon:',error);
                 miraInternalContainer.innerHTML = '<div class="mira-db-error">No fue posible consultar Neon: '+escInfo(error.message || 'Error de conexión o permisos')+'</div>';
             } finally {
@@ -2927,6 +3368,7 @@ function inicializarSistemaMapa() {
         });
         selectEstado.addEventListener('change',aplicarFiltroInfoMIRA);
         btnResetMira.addEventListener('click',() => {
+            searchRequest++;
             clearTimeout(suggestionTimer);
             suggestionRequest++;
             closeSuggestions();
@@ -3321,7 +3763,6 @@ if(homeReturnButton){
     document.getElementById('concejalPersonAge').value=p.edad??'';
     document.getElementById('concejalPersonPollingPlace').value=p.puesto_votacion||'';
     document.getElementById('concejalPersonPollingTable').value=p.mesa_votacion||'';
-    document.getElementById('concejalPersonTransport').value=p.requiere_transporte===true?'si':p.requiere_transporte===false?'no':'';
     document.getElementById('concejalPersonNotes').value=p.observaciones||'';
     document.getElementById('concejalPersonConsent').checked=true;
     document.getElementById('concejalPersonFormTitle').textContent='Editar persona externa';
@@ -3350,7 +3791,6 @@ if(homeReturnButton){
         edad:document.getElementById('concejalPersonAge').value?Number(document.getElementById('concejalPersonAge').value):null,
         puesto_votacion:document.getElementById('concejalPersonPollingPlace').value.trim()||null,
         mesa_votacion:document.getElementById('concejalPersonPollingTable').value.trim()||null,
-        requiere_transporte:document.getElementById('concejalPersonTransport').value===''?null:document.getElementById('concejalPersonTransport').value==='si',
         tipo_participacion:'externo',
         observaciones:[document.getElementById('concejalPersonNotes').value.trim(), 'Autorización de tratamiento de datos confirmada en formulario el '+new Date().toLocaleString('es-CO')].filter(Boolean).join('\n'),
         actualizado_por:window.MIRA_CURRENT_USER?.email||null,

@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <script>document.documentElement.classList.add("mira-auth-restoring"); window.__miraAuthBootstrapFallback = window.setTimeout(() => document.documentElement.classList.remove("mira-auth-restoring"), 8000);</script>
     <title>MIRA TU TERRITORIO — Inteligencia Electoral & Operativa</title>
     
     <!-- Tipografías Inter & Outfit -->
@@ -13,7 +14,8 @@
     <!-- SheetJS -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
-    <link rel="stylesheet" href="style.css?v=20261105-landing-menu-scope-1">
+    <link rel="stylesheet" href="style.css?v=20261123-auth-startup-fix-1">
+    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css">
 </head>
 <body class="theme-dark">
 
@@ -34,15 +36,13 @@
             
             <div class="landing-top-bar">
                 <div class="brand-pill">PLATAFORMA TERRITORIAL FACATATIVÁ</div>
-                <div class="live-status-pill"><span class="dot"></span> <span data-i18n="status_active">Sistema Activo</span></div>
+                
             </div>
 
             <div class="landing-hero-content">
-                <p class="hero-subtitle">⚡ PLATAFORMA INTEGRAL DE AUDITORÍA & OPERACIONES</p>
+                
                 <h1 class="hero-title">MIRA <span class="hero-title-cyan">TU TERRITORIO</span></h1>
-                <p class="hero-description" data-i18n="hero_desc">
-                    Gestión estratégica de datos, mapeo georreferenciado y transmisión en tiempo real de actas electorales para Facatativá.
-                </p>
+                
             </div>
 
             <!-- MÓDULOS INICIALES -->
@@ -63,15 +63,9 @@
                     <div class="card-arrow-badge">↗</div><div class="card-icon-glow">💬</div>
                     <div class="card-text-block"><h3>PQRS</h3><p>Envía peticiones, quejas, reclamos y sugerencias sobre los módulos.</p></div>
                 </div>
-
-                <!-- ACCESO PÚBLICO: INSCRIPCIÓN A ACTIVIDADES -->
                 <a class="hero-module-card" id="btnSelectActividadesPublic" href="actividad.html" aria-label="Inscripción pública a actividades" style="text-decoration:none;color:inherit">
-                    <div class="card-arrow-badge">↗</div>
-                    <div class="card-icon-glow">📋</div>
-                    <div class="card-text-block">
-                        <h3>Inscripción a actividades</h3>
-                        <p>Registra tu participación libremente. No necesitas crear una cuenta.</p>
-                    </div>
+                    <div class="card-arrow-badge">↗</div><div class="card-icon-glow">📋</div>
+                    <div class="card-text-block"><h3>Registro de actividades</h3><p>Inscríbete libremente en una actividad. No necesitas crear una cuenta.</p></div>
                 </a>
                 <!-- Capa modal de acceso: desenfoca toda la portada sin reemplazarla -->
                 <div id="adminLoginBackdrop" class="admin-login-backdrop hidden" aria-hidden="true"></div>
@@ -154,7 +148,7 @@
       </nav>
       <div id="activityRegistrationView" class="activity-view">
         <div id="newActivityForm" class="activity-panel hidden"><h3>Crear actividad</h3><div class="activity-form-grid"><label>Nombre de la actividad<input id="activityName" placeholder="Ej. Jornada de participación juvenil" maxlength="120"></label><label>Fecha<input id="activityDate" type="date"></label><label>Lugar<input id="activityPlace" placeholder="Lugar de realización"></label></div><div class="activity-actions"><button id="saveActivityBtn" class="login-btn" type="button">Crear actividad</button><button id="cancelNewActivityBtn" class="activity-secondary-btn" type="button">Cancelar</button></div></div>
-        <div id="participantWorkspace" class="activity-panel activity-registration-card"><div class="activity-registration-heading"><span class="inline-badge">REGISTRO DE PARTICIPACIÓN</span><h2 id="participantFormTitle">Registrar participante</h2><p>Busca por cédula. Si no existe, completa los datos y la plataforma creará su ficha antes de guardar la asistencia.</p></div><div id="activityNoActiveNotice" class="activity-notice hidden" role="status"><strong>Aún no hay una actividad en curso.</strong> Crea la primera actividad para empezar a registrar participantes. <button id="quickCreateActivityBtn" class="activity-secondary-btn" type="button">＋ Crear primera actividad</button></div><div class="activity-form-grid"><label>Cédula<input id="participantCedula" inputmode="numeric" placeholder="Número de documento" autocomplete="off"></label><button id="lookupParticipantBtn" class="activity-secondary-btn activity-lookup-btn" type="button">⌕ Buscar ficha</button><label>Nombres<input id="participantNames" placeholder="Nombres" autocomplete="given-name"></label><label>Apellidos<input id="participantSurnames" placeholder="Apellidos" autocomplete="family-name"></label><label>Teléfono (opcional)<input id="participantPhone" type="tel" placeholder="Teléfono"></label><label>Actividad<select id="participantActivity"></select></label><label>InfoMIRA<select id="participantInfoMira"><option value="">Seleccionar Sí / No</option><option value="si">Sí</option><option value="no">No</option></select></label><label>Tipo de participante<select id="participantType" required><option value="">Seleccionar tipo</option><option value="externo">Externo</option><option value="interno">Interno</option></select></label></div><div id="duplicateNotice" class="activity-notice hidden" role="status"></div><div class="activity-actions"><button id="saveParticipantBtn" class="login-btn" type="button">Guardar persona y asistencia</button><button id="clearParticipantBtn" class="activity-secondary-btn" type="button">Limpiar</button></div><p class="activity-local-warning">Los registros se guardan de forma centralizada en Neon.</p></div>
+        <div id="participantWorkspace" class="activity-panel activity-registration-card"><div class="activity-registration-heading"><span class="inline-badge">REGISTRO DE PARTICIPACIÓN</span><h2 id="participantFormTitle">Registrar participante</h2><p>Busca la ficha por cédula o completa los datos para registrar la asistencia.</p></div><div class="activity-form-grid"><label>Cédula<input id="participantCedula" inputmode="numeric" placeholder="Número de documento" autocomplete="off"></label><button id="lookupParticipantBtn" class="activity-secondary-btn activity-lookup-btn" type="button">⌕ Buscar ficha</button><label>Nombres<input id="participantNames" placeholder="Nombres" autocomplete="given-name"></label><label>Apellidos<input id="participantSurnames" placeholder="Apellidos" autocomplete="family-name"></label><label>Teléfono (opcional)<input id="participantPhone" type="tel" placeholder="Teléfono"></label><label>Actividad<select id="participantActivity"></select></label><label>InfoMIRA<select id="participantInfoMira"><option value="">Seleccionar Sí / No</option><option value="si">Sí</option><option value="no">No</option></select></label><label>Tipo de participante<select id="participantType" required><option value="">Seleccionar tipo</option><option value="externo">Externo</option><option value="interno">Interno</option></select></label></div><div id="duplicateNotice" class="activity-notice hidden" role="status"></div><div class="activity-actions"><button id="saveParticipantBtn" class="login-btn" type="button">Guardar asistencia</button><button id="clearParticipantBtn" class="activity-secondary-btn" type="button">Limpiar</button></div><p class="activity-local-warning">Los registros se guardan de forma centralizada en Neon.</p></div>
       </div>
       <div id="activityRecentPanel" class="activity-view activity-panel hidden"><div class="activity-toolbar"><div><span class="inline-badge">REGISTRO EN VIVO</span><h2>Registros recientes</h2><p>Todos los registros realizados desde el formulario de actividades.</p></div><input id="activitySearch" class="activity-search" placeholder="Buscar por cédula o nombre…"></div><div class="activity-live-summary"><span class="activity-live-dot"></span><strong id="liveActivityCount">0 registros</strong><small>Actualizado al guardar cada asistencia</small></div><div class="activity-table-wrap"><table class="activity-table"><thead><tr><th>Persona</th><th>Cédula</th><th>Actividad</th><th>InfoMIRA</th><th>Tipo</th><th>Registro</th><th>Acciones</th></tr></thead><tbody id="activityParticipantsBody"><tr><td colspan="7">No hay registros recientes.</td></tr></tbody></table></div><div class="activity-actions activity-back-row"><button class="activity-secondary-btn" id="backToActivityRegistration" type="button">← Volver al registro</button></div></div>
       <div id="activityAllView" class="activity-view activity-panel hidden"><div class="activity-toolbar"><div><span class="inline-badge">ARCHIVO DE ACTIVIDADES</span><h2>Todas las actividades</h2><p>Abre una carpeta para consultar sus registros o exportar su Excel.</p></div><button id="newActivityBtnAll" class="login-btn" type="button">＋ Nueva actividad</button></div><div id="activitiesFolders" class="activities-folders"></div><div class="activity-actions activity-back-row"><button class="activity-secondary-btn" id="backToActivityHomeFromAll" type="button">← Volver al registro</button></div></div>
@@ -180,15 +174,15 @@
         <div class="pqrs-intro"><span class="pqrs-intro-icon">💬</span><div><h2>Cuéntanos cómo podemos mejorar</h2><p>Tu comentario quedará registrado para revisión por el equipo administrador.</p></div></div>
         <form id="pqrsSubmitForm"><div class="pqrs-form-grid">
           <label>Tipo de solicitud<select id="pqrsType" required><option value="peticion">Petición</option><option value="queja">Queja</option><option value="reclamo">Reclamo</option><option value="sugerencia">Sugerencia</option></select></label>
-          <label>Módulo relacionado<select id="pqrsModule" required><option value="">Selecciona un módulo</option><option value="infomira">InfoMIRA</option><option value="logistica">Logística &amp; Transporte</option><option value="testigos">Auditoría Testigos</option><option value="info_electoral">Info Electoral</option><option value="barrios_puestos">Barrios y puestos</option><option value="actividades">Actividades</option><option value="concejal">Concejal · Gestión territorial</option><option value="centro_operaciones">Centro de Operaciones</option><option value="pqrs">PQRS</option><option value="otro">Otro / General</option></select></label>
+          <div class="pqrs-full-field pqrs-routing-notice"><strong>Canal único de atención</strong><p>Todas las solicitudes se reciben en la bandeja PQRS del Centro de Operaciones y se organizan allí por tipo: petición, queja, reclamo o sugerencia.</p></div>
           <label class="pqrs-full-field">Asunto<input id="pqrsSubject" type="text" maxlength="160" minlength="4" placeholder="Resume el motivo de tu comentario" required></label>
           <label class="pqrs-full-field">Descripción<textarea id="pqrsDescription" rows="7" minlength="10" maxlength="5000" placeholder="Describe tu petición, queja, reclamo o sugerencia con el mayor detalle posible…" required></textarea><small class="pqrs-field-help">Entre 10 y 5.000 caracteres. No incluyas contraseñas ni datos personales sensibles.</small></label>
         </div><div id="pqrsSubmitNotice" class="activity-notice hidden" role="status" aria-live="polite"></div><div class="activity-actions"><button id="pqrsSendBtn" class="login-btn" type="submit">Enviar PQRS ↗</button><button id="pqrsClearBtn" class="activity-secondary-btn" type="reset">Limpiar formulario</button></div></form>
-      </div><div class="activity-panel pqrs-confirmation-panel"><strong>¿Qué sucede después?</strong><p>Tu registro queda almacenado en Neon con fecha y usuario de envío. El administrador podrá clasificarlo, revisarlo y actualizar su estado desde el Centro de Operaciones.</p></div></div>
+      </div></div>
       <footer class="activities-footer"><button class="activity-secondary-btn" id="returnFromPqrsSubmit" type="button">← Volver al menú principal</button></footer>
     </section>
     <section id="pqrsAdminWorkspace" class="activities-workspace pqrs-workspace hidden" aria-labelledby="pqrsAdminTitle">
-      <header class="activities-header"><div class="activities-header-copy"><div class="brand-pill">CENTRO DE OPERACIONES · GESTIÓN INTERNA</div><h1 id="pqrsAdminTitle"><span class="hero-title-cyan">PQRS</span></h1><p>Consulta, clasifica y realiza seguimiento a las solicitudes recibidas.</p></div><button class="top-control-btn" id="closePqrsAdmin" type="button" title="Volver al mapa" aria-label="Cerrar módulo">✕</button></header>
+      <header class="activities-header"><div class="activities-header-copy"><div class="brand-pill">CENTRO DE OPERACIONES · GESTIÓN INTERNA</div><h1 id="pqrsAdminTitle"><span class="hero-title-cyan">PQRS</span></h1><p>Consulta las solicitudes recibidas. La gestión de estados está reservada al administrador principal.</p></div><button class="top-control-btn" id="closePqrsAdmin" type="button" title="Volver al mapa" aria-label="Cerrar módulo">✕</button></header>
       <div class="activity-view"><div class="pqrs-admin-stats" id="pqrsAdminStats"></div>
         <nav class="pqrs-filter-bar" aria-label="Filtrar PQRS"><button type="button" class="pqrs-filter is-active" data-pqrs-filter="todas">Todas <span id="pqrsCountAll">0</span></button><button type="button" class="pqrs-filter" data-pqrs-filter="peticion">Peticiones <span id="pqrsCountPeticion">0</span></button><button type="button" class="pqrs-filter" data-pqrs-filter="queja">Quejas <span id="pqrsCountQueja">0</span></button><button type="button" class="pqrs-filter" data-pqrs-filter="reclamo">Reclamos <span id="pqrsCountReclamo">0</span></button><button type="button" class="pqrs-filter" data-pqrs-filter="sugerencia">Sugerencias <span id="pqrsCountSugerencia">0</span></button></nav>
         <div class="activity-panel pqrs-inbox-panel"><div class="activity-toolbar"><div><h2>Solicitudes recibidas</h2><p id="pqrsAdminSubtitle">Cargando registros desde Neon…</p></div><button class="activity-secondary-btn" id="pqrsRefreshBtn" type="button">↻ Actualizar</button></div><div id="pqrsAdminNotice" class="activity-notice hidden" role="status" aria-live="polite"></div><div id="pqrsAdminList" class="pqrs-admin-list"><div class="activity-empty-drive"><div>💬</div><h3>Consultando PQRS</h3><p>Un momento, por favor.</p></div></div></div>
@@ -308,7 +302,6 @@
               <label>Edad<input id="concejalPersonAge" type="number" min="0" max="120" placeholder="Edad"></label>
               <label>Puesto de votación<input id="concejalPersonPollingPlace" placeholder="Puesto de votación"></label>
               <label>Mesa de votación<input id="concejalPersonPollingTable" placeholder="Número de mesa"></label>
-              <label>¿Requiere transporte?<select id="concejalPersonTransport"><option value="">Sin especificar</option><option value="si">Sí</option><option value="no">No</option></select></label>
               <label class="concejal-person-full">Observaciones<textarea id="concejalPersonNotes" rows="2" maxlength="1000" placeholder="Información adicional pertinente (opcional)"></textarea></label>
             </div>
             <label class="concejal-person-consent"><input id="concejalPersonConsent" type="checkbox" required><span>Confirmo que la persona autorizó el tratamiento de sus datos personales para esta finalidad y que se le informó cómo ejercer sus derechos.</span></label>
@@ -323,7 +316,7 @@
     </section>
 
     <!-- PORTAL DIRECTO EXCLUSIVO PARA TESTIGOS -->
-    <div id="testigoStandaloneContainer" class="hidden">
+    <div id="testigoStandaloneContainer" class="hidden" aria-hidden="true" inert>
         <div class="testigo-standalone-card">
             <div class="testigo-standalone-header">
                 <div>
@@ -388,20 +381,9 @@
         </div>
     </div>
 
-        <div id="miraQuickModules" class="mira-quick-modules">
-            <button id="miraQuickModulesToggle" class="mira-quick-toggle" type="button" aria-expanded="false" aria-controls="miraQuickModulesPanel" aria-label="Abrir menú de módulos">
-                <span class="mira-quick-toggle-icon" aria-hidden="true">☰</span><span>Módulos</span><span id="miraQuickPublicLock" class="mira-quick-toggle-lock" aria-hidden="true">🔒</span>
-            </button>
-            <nav id="miraQuickModulesPanel" class="mira-quick-panel hidden" aria-label="Módulos principales">
-                <button type="button" class="mira-quick-item" id="miraQuickTestigosBtn"><span aria-hidden="true">🗳️</span><span><strong>Testigos</strong><small id="miraQuickTestigosStatus">Inicia sesión para acceder</small></span><span class="mira-quick-lock" aria-hidden="true">🔒</span></button>
-                <button type="button" class="mira-quick-item" id="miraQuickActivitiesBtn"><span aria-hidden="true">📋</span><span><strong>Actividades</strong><small id="miraQuickActivitiesStatus">Inicia sesión para acceder</small></span><span aria-hidden="true">›</span></button>
-            </nav>
-        </div>
-
     <!-- CONTENEDOR PRINCIPAL DEL SISTEMA (PMU / ADMIN) -->
     <div id="app-container">
         
-
 
         <div id="mainSidebar" class="sidebar-wrapper-group">
             
@@ -431,7 +413,7 @@
                     <!-- MÓDULO 1: InfoMIRA -->
                     <details class="custom-dropdown" id="dropdown-infomira">
                         <summary>
-                            <span class="summary-title"><i class="neo-icon">💙</i> InfoMIRA · Red y Movilidad</span>
+                            <span class="summary-title"><i class="neo-icon">💙</i> InfoMIRA · Red</span>
                             <svg class="arrow-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
                         </summary>
                         <div class="dropdown-content">
@@ -462,34 +444,55 @@
                             </div>
                             <div id="miraInternalResultsContainer" style="margin-top: 10px;"></div>
 
-                            <section class="mira-filter-box" id="infomiraMobilityFilters" style="width: 100%; box-sizing: border-box; margin-top: 14px;">
-                                <div class="mira-label">MOVILIDAD Y TRANSPORTE · DÍA D</div>
-                                <label for="logisticaSelect" class="mira-label">Filtrar requerimiento de movilidad:</label>
-                                <select id="logisticaSelect" class="mira-select">
-                                    <option value="TODOS">Ver todos los registros</option>
-                                    <option value="REQUIERE">Requiere transporte / ruta</option>
-                                    <option value="PROPIO">Vehículo propio / autónomo</option>
-                                </select>
-                                <button id="logisticaBtn" class="mira-reset-btn btn-logistica-fit" type="button">
-                                    🚐 Consultar mapa logístico
-                                </button>
-                            </section>
+
                         </div>
                     </details>
 
-                    <!-- MÓDULO 3: Auditoría de Testigos -->
-                    <details class="custom-dropdown" id="dropdown-testigos">
+                    <!-- EXPLORADOR CENTRAL DE BASES AUTORIZADAS -->
+                    <details class="custom-dropdown" id="dropdown-base-datos-general">
+                        <summary><span class="summary-title"><i class="neo-icon">🗄️</i> Base de datos general</span><svg class="arrow-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></summary>
+                        <div class="dropdown-content">
+                            <section class="database-home" id="databaseExplorer" aria-label="Base de datos general">
+                                <div class="mira-label">GESTIÓN CENTRALIZADA DE INFORMACIÓN</div>
+                                <p class="database-intro">Selecciona una herramienta para consultar, incorporar o completar información autorizada.</p>
+                                <div class="database-action-grid" aria-label="Herramientas de Base de datos general">
+                                  <button type="button" class="database-action-card" data-database-view="incorporate"><span aria-hidden="true">＋</span><strong>Incorporar persona</strong><small>Agregar ficha</small></button>
+                                  <button type="button" class="database-action-card" data-database-view="pending"><span aria-hidden="true">◷</span><strong>Datos pendientes</strong><small>Completar datos</small></button>
+                                  <button type="button" class="database-action-card" data-database-view="history"><span aria-hidden="true">↻</span><strong>Historial de cambios</strong><small>Ver modificaciones</small></button>
+                                  <button type="button" class="database-action-card" data-database-view="all"><span aria-hidden="true">▦</span><strong>Todos los registros</strong><small>Consultar y exportar</small></button>
+                                </div>
+                                
+                              </section>
+                              
+                        </div>
+                    </details>
+
+                    <section id="databaseWorkspace" class="database-workspace hidden" aria-live="polite">
+                                <header class="activities-header database-workspace-header">
+                                  <div class="activities-header-copy"><div class="brand-pill">MIRA TU TERRITORIO</div><h2 id="databaseWorkspaceTitle">Base de datos general</h2><p id="databaseWorkspaceDescription"></p></div>
+                                  <button type="button" id="databaseWorkspaceClose" class="top-control-btn" aria-label="Cerrar panel">✕</button>
+                                </header>
+                                <div id="databaseExplorerNotice" class="activity-local-warning" role="status" aria-live="polite"></div>
+                                <div class="activity-panel database-workspace-panel">
+                                  <div id="databaseWorkspaceContent"></div>
+                                  <div class="activity-actions database-back-row"><button type="button" id="databaseWorkspaceBack" class="activity-secondary-btn">← Volver a Base de datos general</button></div>
+                                </div>
+                              </section>
+
+                    <!-- MÓDULO TEMPORALMENTE BLOQUEADO: TESTIGOS / AUDITORÍA E-14 -->
+                    <details class="custom-dropdown module-access-restricted" id="dropdown-testigos" aria-disabled="true">
                         <summary>
-                            <span class="summary-title"><i class="neo-icon">🗳️</i> Auditoría Testigos (Actas E-14)</span>
+                            <span class="summary-title"><i class="neo-icon">🗳️</i> Testigos y Auditoría E-14</span>
                             <svg class="arrow-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
                         </summary>
                         <div class="dropdown-content">
-                            <div class="mira-filter-box" style="width: 100%; box-sizing: border-box;">
-                                <p style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.3;">Consola de auditoría de actas recibidas desde el campo.</p>
-                                <button id="openTestigosModalBtn" class="mira-reset-btn btn-auditoria-fit">
-                                    🖼️ Ver y Descargar Actas E-14
-                                </button>
+                            <div class="mira-filter-box" style="width:100%;box-sizing:border-box;">
+                                <p style="font-size:.78rem;color:var(--text-muted);line-height:1.4;">Este módulo está temporalmente inactivo mientras se renuevan sus componentes. El acceso se habilitará únicamente después de su validación.</p>
                             </div>
+                        </div>
+                        <div class="module-access-lock-overlay" role="note">
+                            <span class="module-access-lock-icon" aria-hidden="true">🔒</span>
+                            <strong>Módulo en renovación · Acceso bloqueado</strong>
                         </div>
                     </details>
 
@@ -666,7 +669,7 @@
         </div>
 
         <!-- MODAL DE AUDITORÍA DE TESTIGOS -->
-        <div id="testigosModal" class="testigos-modal-overlay hidden">
+        <div id="testigosModal" class="testigos-modal-overlay hidden" aria-hidden="true" inert>
             <div class="testigos-modal-card">
                 <div class="testigos-modal-header">
                     <h3>💻 Centro de Operaciones — Auditoría y Descarga de Actas E-14</h3>
@@ -724,7 +727,23 @@
         </div>
 
         <div id="map"></div>
+        <div id="map3d" hidden></div>
     </div>
+
+    <!-- Menú global de módulos: fuera de Centro de Operaciones -->
+        <div id="miraQuickModules" class="mira-quick-modules hidden">
+            <button id="miraQuickModulesToggle" class="mira-quick-toggle" type="button" aria-expanded="false" aria-controls="miraQuickModulesPanel" aria-label="Abrir menú de módulos">
+                <span class="mira-quick-toggle-icon" aria-hidden="true">☰</span><span>Módulos</span>
+            </button>
+            <nav id="miraQuickModulesPanel" class="mira-quick-panel hidden" aria-label="Módulos principales">
+                <button type="button" class="mira-quick-item is-locked" id="miraQuickTestigosBtn" disabled aria-disabled="true" title="Módulo temporalmente inactivo"><span aria-hidden="true">🗳️</span><span><strong>Testigos</strong><small id="miraQuickTestigosStatus">En renovación · Acceso bloqueado</small></span><span class="mira-quick-lock" aria-hidden="true">🔒</span></button>
+                <button type="button" class="mira-quick-item" id="miraQuickActivitiesBtn"><span aria-hidden="true">📋</span><span><strong>Actividades</strong><small>Registro y seguimiento</small></span><span aria-hidden="true">›</span></button>
+            </nav>
+        </div>
+
+
+    <!-- Motor 3D experimental (solo se activa con ?mapa3d=1) -->
+    <script src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
 
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
@@ -735,10 +754,13 @@
     <section id="adminPermissionsPanel" class="admin-permissions-overlay hidden" aria-hidden="true">
         <div class="admin-permissions-dialog" role="dialog" aria-modal="true" aria-labelledby="adminPermissionsTitle">
             <header class="admin-permissions-header">
-                <div><span class="admin-permissions-eyebrow">MIRA TU TERRITORIO · SEGURIDAD</span><h2 id="adminPermissionsTitle">Aprobación de cuentas y permisos</h2><p>Aprueba o desaprueba solicitudes y concede permisos por módulo desde un solo lugar.</p></div>
-                <button type="button" id="closeAdminPermissionsBtn" class="admin-permissions-close" aria-label="Cerrar">✕</button>
+                <div><span class="admin-permissions-eyebrow">MIRA TU TERRITORIO · SEGURIDAD</span><h2 id="adminPermissionsTitle">Control Administrativo</h2><p>Gestiona cuentas, roles, permisos y consulta el historial de cambios.</p></div>
+                <div class="admin-permissions-header-actions">
+                    <button type="button" id="adminViewToggleBtn" class="admin-view-toggle">Ver historial de auditoría</button>
+                    <button type="button" id="closeAdminPermissionsBtn" class="admin-permissions-close" aria-label="Cerrar">✕</button>
+                </div>
             </header>
-            <div class="admin-permissions-body">
+            <div id="adminPermissionsBody" class="admin-permissions-body">
                 <aside class="admin-users-pane">
                     <div class="admin-pane-heading"><strong>Usuarios registrados</strong><button type="button" id="refreshAdminUsersBtn" title="Actualizar">↻</button></div>
                     <p class="admin-pane-hint">Separa las solicitudes pendientes de las cuentas que ya están habilitadas.</p>
@@ -755,17 +777,26 @@
                     <div id="adminPermissionsNotice" class="admin-permissions-notice hidden" role="status" aria-live="polite"></div>
                 </section>
             </div>
+            <section id="adminAuditPanel" class="admin-audit-panel hidden" aria-hidden="true" aria-label="Historial de auditoría">
+                <div class="admin-audit-toolbar">
+                    <div><strong>Historial de auditoría</strong><p>Eventos de creación, actualización y retiro de cuentas y permisos.</p></div>
+                    <button type="button" id="refreshAdminAuditBtn" class="admin-audit-refresh">Actualizar</button>
+                </div>
+                <div id="adminAuditList" class="admin-audit-list"><p class="admin-permissions-loading">Abre el historial para consultar los eventos.</p></div>
+                <div id="adminAuditPagination" class="admin-audit-pagination" aria-label="Paginación del historial"></div>
+            </section>
             <footer class="admin-permissions-footer"><span>La cuenta administradora principal conserva todos sus privilegios.</span><span>Registro abierto · correo verificado · aprobación administrativa obligatoria.</span></footer>
         </div>
     </section>
-    <script type="module" src="mira-data.js?v=20261123-activities-integrated-1"></script>
-    <script type="module" src="mira-auth.js?v=20261103-require-module-view-1"></script>
-    <script src="app.js?v=20261123-activities-integrated-1"></script>
-    <script type="module" src="mira-admin.js?v=20261105-granular-permissions-1"></script>
-    <script type="module" src="reportes.js?v=20261103-anon-submit-minimal-2"></script>
-    <script type="module" src="pqrs.js?v=20261103-pqrs-anon-2"></script>
+    <script type="module" src="mira-data.js?v=20261123-auth-startup-fix-2"></script>
+    <script type="module" src="mira-auth.js?v=20261123-auth-startup-fix-3"></script>
+    <script src="app.js?v=20261123-auth-startup-fix-3"></script>
+    <script src="mapa-3d.js?v=20261114-terrain-engine-1"></script>
+    <script type="module" src="mira-admin.js?v=20261123-infomira-readonly-1"></script>
+    <script type="module" src="reportes.js?v=20261114-role-aware-3"></script>
+    <script type="module" src="pqrs.js?v=20261110-pqrs-centralized-1"></script>
     <script src="pmu-navigation.js?v=20261031-vertical-glass"></script>
     <script src="electoral-dashboard.js"></script>
-    <script src="mobile-operations.js?v=20261031-mobile-map-panel-1"></script>
+    <script src="mobile-operations.js?v=20261123-logistics-removed-1"></script>
 </body>
 </html>

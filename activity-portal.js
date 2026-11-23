@@ -1,7 +1,7 @@
 import { createInternalNeonAuth } from "https://esm.sh/@neondatabase/auth@0.7.0-beta";
-import { MIRA_DATA } from "./mira-data.js?v=20261123-public-activities-1";
+import { MIRA_DATA } from "./mira-data.js?v=20261123-auth-startup-fix-2";
 
-const AUTH_URL = "https://ep-round-dawn-b7l3ya3h.neonauth.c-13.us-east-1.aws.neon.tech/neondb/auth";
+const AUTH_URL = "https://ep-mute-grass-b7qan4n6.neonauth.c-13.us-east-1.aws.neon.tech/neondb/auth";
 const neonAuth = createInternalNeonAuth(AUTH_URL,{allowAnonymous:true});
 const auth = neonAuth.adapter;
 window.MIRA_AUTH = {
