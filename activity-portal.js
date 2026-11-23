@@ -1,13 +1,9 @@
-import { createInternalNeonAuth } from "https://esm.sh/@neondatabase/auth@0.7.0-beta";
+import { createAuthClient } from "https://esm.sh/@neondatabase/auth@0.7.0-beta";
 import { MIRA_DATA } from "./mira-data.js?v=20261123-public-activities-1";
 
 const AUTH_URL = "https://ep-round-dawn-b7l3ya3h.neonauth.c-13.us-east-1.aws.neon.tech/neondb/auth";
-const neonAuth = createInternalNeonAuth(AUTH_URL,{allowAnonymous:true});
-const auth = neonAuth.adapter;
-window.MIRA_AUTH = {
-  getJWTToken: () => neonAuth.getJWTToken(),
-  getAnonymousToken: (...args) => auth.getAnonymousToken(...args)
-};
+const auth = createAuthClient(AUTH_URL,{allowAnonymous:true});
+window.MIRA_AUTH = auth;
 const $ = id => document.getElementById(id);
 const cleanCedula = value => String(value || "").replace(/\D/g, "");
 let busy = false;
