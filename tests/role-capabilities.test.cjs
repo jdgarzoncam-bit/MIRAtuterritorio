@@ -418,3 +418,15 @@ test("the Logistics module and its routing integration are absent from the QA in
   assert.doesNotMatch(appSource, /requiere_transporte|row\\.movilidad/);
   assert.doesNotMatch(dataSource, /requiere_transporte|movilidad,"Movilidad"/);
 });
+
+
+test("the landing exposes the protected Activities registration portal and account signup", () => {
+  const indexSource = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
+  const activityPage = fs.readFileSync(path.join(__dirname, "..", "actividad.html"), "utf8");
+  const signupPage = fs.readFileSync(path.join(__dirname, "..", "registro-usuario.html"), "utf8");
+  assert.match(indexSource, /id="btnSelectActividadesPublic" href="actividad\.html"/);
+  assert.match(indexSource, /id="landingRegisterBtn"[^>]*href="registro-usuario\.html"/);
+  assert.match(activityPage, /id="activityLoginForm"/);
+  assert.match(activityPage, /href="registro-usuario\.html"/);
+  assert.match(signupPage, /id="signupForm"/);
+});
