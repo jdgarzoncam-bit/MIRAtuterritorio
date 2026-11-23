@@ -5,58 +5,72 @@
 <title>MIRA TU TERRITORIO — Registro de participante</title>
 <link rel="stylesheet" href="style.css?v=20261123-public-layout-token-fix-1">
 <style>
-body{display:block!important;width:100%!important;min-width:0!important;min-height:100vh;height:auto!important;overflow-x:hidden!important;overflow-y:auto!important;position:relative} .activity-public-shell{display:grid;width:100%;min-height:100vh;min-height:100svh;box-sizing:border-box;place-items:center;padding:24px;margin:0 auto;background:radial-gradient(ellipse at top left,rgba(0,205,230,.12),transparent 45%),#050b17;color:#f4f8ff}
-.activity-public-card{width:min(920px,100%);border:1px solid rgba(31,220,245,.65);border-radius:24px;background:rgba(8,17,34,.94);box-shadow:0 20px 80px #0005;padding:clamp(20px,4vw,36px)}
-.activity-public-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;border-bottom:1px solid #7890aa33;padding-bottom:18px;margin-bottom:22px}
-.activity-public-head h1{margin:8px 0 4px;font-size:clamp(25px,4vw,38px)}.activity-public-head h1 span{color:#36d9ef}
-.activity-public-head p,.activity-public-note{color:#91a4bb}
-.activity-public-pill{display:inline-block;border:1px solid #24d9ee;border-radius:30px;padding:5px 11px;color:#39e5f5;font-size:11px;font-weight:800;letter-spacing:.08em}
-.activity-public-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
-.activity-public-form label{display:grid;gap:7px;color:#40e3f3;font-size:13px;font-weight:700}
-.activity-public-form input,.activity-public-form select{width:100%;min-width:0;box-sizing:border-box;background:#060d1b;border:1px solid #243347;border-radius:10px;padding:13px;color:#f4f8ff;font:inherit}
-.activity-public-form .full{grid-column:1/-1}
-.activity-public-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px}
-.activity-public-actions button{border:1px solid #1dd9ee;border-radius:10px;padding:12px 18px;font-weight:800;cursor:pointer;color:white;background:#2054df}
-.activity-public-actions button:disabled{opacity:.55;cursor:wait}.activity-public-actions .secondary{background:#111c2d}
-.activity-public-note{font-size:12px;line-height:1.6;margin-top:18px}
-.activity-public-status{padding:12px;border-radius:10px;margin-top:16px;display:none}
-.activity-public-status[data-kind="error"]{background:#b4231820;border:1px solid #ef444470;color:#ffb4ae}
-.activity-public-status[data-kind="success"]{background:#1bbe8920;border:1px solid #1bbe8970;color:#8ff0cb}
-.activity-public-consent{display:flex!important;align-items:flex-start;gap:10px!important;color:#c4d1e0!important;font-weight:500!important;line-height:1.5}
-.activity-public-consent input{width:18px;height:18px;margin:2px 0 0;accent-color:#20cde3}
-.activity-public-back{color:#40e3f3;text-decoration:none;font-weight:700}
-[hidden]{display:none!important}
-@media(max-width:620px){.activity-public-form{grid-template-columns:1fr}.activity-public-form .full{grid-column:auto}.activity-public-head{flex-direction:column}}
-</style>
-<style>
-/* Formulario público: misma composición visual del panel interno de Actividades. */
-body{display:block!important;width:100%!important;min-width:0!important;min-height:100vh;height:auto!important;overflow-x:hidden!important;overflow-y:auto!important;position:relative}
+/* Registro público MIRA · responsive real para móvil, tableta y escritorio */
+:root{color-scheme:dark}
+html{min-width:320px;min-height:100%;overflow-x:hidden}
+body.theme-dark{display:block!important;width:100%!important;min-width:320px!important;min-height:100vh;min-height:100svh;height:auto!important;margin:0!important;overflow-x:hidden!important;overflow-y:auto!important;position:relative;background:#061329!important}
 .activity-public-shell{display:grid;width:100%;min-height:100vh;min-height:100svh;box-sizing:border-box;place-items:center;padding:clamp(12px,3vw,36px);margin:0 auto;background:radial-gradient(ellipse at top left,rgba(0,205,230,.12),transparent 45%),radial-gradient(ellipse at bottom right,rgba(35,89,220,.12),transparent 48%),#050b17;color:#f4f8ff}
-.activity-public-card{width:min(1120px,100%);border:1px solid rgba(110,133,160,.38);border-radius:20px;background:rgba(18,30,49,.94);box-shadow:0 20px 80px #0005;padding:clamp(20px,3vw,34px)}
-.activity-public-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;padding-bottom:8px;margin-bottom:18px}
-.activity-public-head h1{margin:9px 0 4px;font-size:clamp(25px,4vw,34px);color:#edf5ff}.activity-public-head h1 span{color:#36d9ef}
-.activity-public-head p,.activity-public-note{color:#b2c3d7}
+.activity-public-card{width:min(1120px,100%);min-width:0;box-sizing:border-box;border:1px solid rgba(110,133,160,.38);border-radius:20px;background:rgba(18,30,49,.96);box-shadow:0 20px 80px #0005;padding:clamp(16px,3vw,34px)}
+.activity-public-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;padding-bottom:12px;margin-bottom:18px;min-width:0}
+.activity-public-head>div{min-width:0}
+.activity-public-head h1{margin:9px 0 4px;font-size:clamp(25px,4vw,36px);line-height:1.15;color:#edf5ff;overflow-wrap:anywhere}
+.activity-public-head p,.activity-public-note{color:#b2c3d7;line-height:1.5}
 .activity-public-pill{display:inline-block;border:1px solid #24d9ee;border-radius:30px;padding:4px 10px;color:#39e5f5;font-size:11px;font-weight:800;letter-spacing:.06em}
 .activity-public-back{color:#40e3f3;text-decoration:none;font-weight:700;white-space:nowrap}
-.activity-public-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px 16px}
-.activity-public-form label{display:grid;gap:7px;color:#8ccfff;font-size:13px;font-weight:700;min-width:0}
-.activity-public-form input,.activity-public-form select{width:100%;min-width:0;box-sizing:border-box;background:#061124;border:1px solid #0878a7;border-radius:10px;padding:13px 12px;min-height:46px;color:#f4f8ff;font:inherit}
+.activity-public-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px 16px;width:100%;min-width:0}
+.activity-public-form label{display:grid;gap:7px;min-width:0;color:#8ccfff;font-size:13px;font-weight:700}
+.activity-public-form input,.activity-public-form select{display:block;width:100%;min-width:0;max-width:100%;min-height:46px;box-sizing:border-box;background:#061124;border:1px solid #0878a7;border-radius:10px;padding:12px;color:#f4f8ff;font:inherit;font-size:16px}
 .activity-public-form select{background-color:#101c2c;border-color:#435166}
+.activity-public-form input:focus-visible,.activity-public-form select:focus-visible,.activity-public-form button:focus-visible{outline:2px solid #55b8f4;outline-offset:2px}
 .activity-public-form .full{grid-column:1/-1}
-.activity-public-lookup{display:flex!important;align-self:end;justify-content:flex-end}
-.activity-public-lookup button{width:100%;min-height:46px;border:1px solid #0878a7;border-radius:10px;background:#0b2748;color:#f4f8ff;font-weight:800;cursor:pointer}
-.activity-public-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px}
-.activity-public-actions button{border:1px solid #1dd9ee;border-radius:10px;padding:12px 18px;font-weight:800;cursor:pointer;color:white;background:linear-gradient(110deg,#087fc7,#2455df);min-height:46px}
-.activity-public-actions #pubSubmit{flex:1}
-.activity-public-actions button:disabled{opacity:.55;cursor:wait}.activity-public-actions .secondary{background:#10243b}
-.activity-public-note{font-size:12px;line-height:1.6;margin-top:16px}
-.activity-public-status{padding:12px;border-radius:10px;margin-top:14px;display:none}
+.activity-public-lookup{display:flex!important;align-self:end;justify-content:stretch}
+.activity-public-lookup button{width:100%;min-width:0;min-height:46px;border:1px solid #0878a7;border-radius:10px;background:#0b2748;color:#f4f8ff;font-weight:800;font-size:15px;cursor:pointer}
+.activity-public-lookup button:disabled{opacity:.6;cursor:wait}
+.activity-public-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;min-width:0}
+.activity-public-actions button{border:1px solid #1dd9ee;border-radius:10px;padding:12px 18px;font-weight:800;font-size:15px;cursor:pointer;color:white;background:linear-gradient(110deg,#087fc7,#2455df);min-height:46px}
+.activity-public-actions #pubSubmit{flex:1 1 240px;min-width:0}
+.activity-public-actions button:disabled{opacity:.55;cursor:not-allowed}
+.activity-public-actions .secondary{background:#10243b}
+.activity-public-note{font-size:12px;line-height:1.6;margin-top:16px;overflow-wrap:anywhere}
+.activity-public-status{padding:12px;border-radius:10px;margin-top:14px;display:none;line-height:1.5;overflow-wrap:anywhere}
 .activity-public-status[data-kind="error"]{background:#b4231820;border:1px solid #ef444470;color:#ffb4ae}
 .activity-public-status[data-kind="success"]{background:#1bbe8920;border:1px solid #1bbe8970;color:#8ff0cb}
 .activity-public-consent{display:flex!important;align-items:flex-start;gap:10px!important;color:#c4d1e0!important;font-weight:500!important;line-height:1.5}
-.activity-public-consent input{width:18px;height:18px;min-height:18px;margin:2px 0 0;accent-color:#20cde3}
+.activity-public-consent input{flex:0 0 18px;width:18px;height:18px;min-height:18px;margin:2px 0 0;padding:0;accent-color:#20cde3}
 [hidden]{display:none!important}
-@media(max-width:650px){.activity-public-form{grid-template-columns:1fr}.activity-public-form .full{grid-column:auto}.activity-public-head{flex-direction:column}.activity-public-lookup{align-self:stretch}.activity-public-actions #pubSubmit{min-width:100%}}
+@media(max-width:760px){
+ .activity-public-shell{place-items:start center;padding:14px}
+ .activity-public-card{border-radius:17px;padding:clamp(16px,3.5vw,24px)}
+ .activity-public-head{gap:12px}
+ .activity-public-form{grid-template-columns:minmax(0,1fr);gap:13px}
+ .activity-public-form .full{grid-column:1}
+ .activity-public-lookup{align-self:stretch}
+ .activity-public-actions{display:grid;grid-template-columns:minmax(0,1fr) auto}
+ .activity-public-actions #pubSubmit{grid-column:1;min-width:0}
+ .activity-public-actions .secondary{grid-column:2}
+}
+@media(max-width:480px){
+ .activity-public-shell{padding:9px}
+ .activity-public-card{padding:17px 14px;border-radius:14px}
+ .activity-public-head{flex-direction:column;align-items:stretch}
+ .activity-public-back{align-self:flex-start}
+ .activity-public-head h1{font-size:27px}
+ .activity-public-actions{grid-template-columns:minmax(0,1fr)}
+ .activity-public-actions #pubSubmit,.activity-public-actions .secondary{grid-column:1;width:100%}
+}
+@media(max-width:350px){
+ .activity-public-shell{padding:6px}
+ .activity-public-card{padding:14px 11px}
+ .activity-public-head h1{font-size:24px}
+ .activity-public-form input,.activity-public-form select{padding:11px 9px}
+}
+@media(max-height:520px) and (min-width:761px){
+ .activity-public-shell{place-items:start center}
+ .activity-public-card{margin:12px auto}
+}
+@media(prefers-reduced-motion:reduce){
+ .activity-public-card,.activity-public-form *{scroll-behavior:auto!important;transition:none!important;animation:none!important}
+}
 </style>
 </head>
 <body class="theme-dark">
