@@ -76,7 +76,7 @@ const EXPLORER_DATASETS = Object.freeze([
   {key:"reportes_ciudadanos",label:"Reportes ciudadanos",table:"reportes_ciudadanos",module:"concejal",select:"id,categoria,sector,ubicacion,descripcion,estado,created_at,updated_at",search:["categoria","sector","ubicacion","descripcion","estado"],columns:[["categoria","Categoría"],["sector","Sector"],["ubicacion","Ubicación"],["descripcion","Descripción"],["estado","Estado"],["created_at","Creación"]]},
   {key:"concejal_actividades",label:"Gestión territorial · Actividades",table:"concejal_actividades",module:"concejal",select:"id,barrio,descripcion,fecha,created_at,updated_at",search:["barrio","descripcion"],columns:[["barrio","Barrio"],["descripcion","Descripción"],["fecha","Fecha"],["created_at","Creación"]]},
   {key:"concejal_compromisos",label:"Gestión territorial · Compromisos",table:"concejal_compromisos",module:"concejal",select:"id,barrio,compromiso,adquirido_con,fecha,fecha_limite,estado,resultado,logrado,created_at,updated_at",search:["barrio","compromiso","adquirido_con","estado","resultado"],columns:[["barrio","Barrio"],["compromiso","Compromiso"],["adquirido_con","Adquirido con"],["fecha","Fecha"],["fecha_limite","Fecha límite"],["estado","Estado"],["logrado","Logrado"]]},
-  {key:"infomira_red",label:"InfoMIRA · Red",table:"infomira_red",module:"infomira",select:"id,nombre_original,barrio,estado_original,cuidador_nombre,puesto_votacion,mesa_votacion,movilidad,asistencia,created_at",search:["nombre_original","barrio","estado_original","cuidador_nombre","puesto_votacion"],columns:[["nombre_original","Nombre"],["barrio","Barrio"],["estado_original","Estado"],["cuidador_nombre","Cuidador / líder"],["puesto_votacion","Puesto"],["mesa_votacion","Mesa"],["movilidad","Movilidad"],["asistencia","Asistencia"]]}
+  {key:"infomira_red",label:"InfoMIRA · Red",table:"infomira_red",module:"infomira",select:"id,nombre_original,barrio,estado_original,cuidador_nombre,puesto_votacion,mesa_votacion,asistencia,created_at",search:["nombre_original","barrio","estado_original","cuidador_nombre","puesto_votacion"],columns:[["nombre_original","Nombre"],["barrio","Barrio"],["estado_original","Estado"],["cuidador_nombre","Cuidador / líder"],["puesto_votacion","Puesto"],["mesa_votacion","Mesa"],["asistencia","Asistencia"]]}
 ]);
 function getExplorerDataset(key){return EXPLORER_DATASETS.find(item=>item.key===key)||null;}
 export const MIRA_DATA = {
@@ -116,7 +116,7 @@ export const MIRA_DATA = {
     let people=[];
     if (documentDigits) {
       people=await miraRequest("personas",{query:qs({
-        select:"id,cedula,cedula_normalizada,nombres,apellidos,telefono,correo,info_mira,puesto_votacion,mesa_votacion,requiere_transporte,edad,tipo_participacion,activo,inactivo",
+        select:"id,cedula,cedula_normalizada,nombres,apellidos,telefono,correo,info_mira,puesto_votacion,mesa_votacion,edad,tipo_participacion,activo,inactivo",
         cedula_normalizada:"eq."+documentDigits,
         limit:"100"
       })});
@@ -126,7 +126,7 @@ export const MIRA_DATA = {
       const clauses=[`nombres.ilike.*${safeTerm}*`,`apellidos.ilike.*${safeTerm}*`];
       if (documentDigits) clauses.push("cedula_normalizada.eq."+documentDigits);
       people=await miraRequest("personas",{query:qs({
-        select:"id,cedula,cedula_normalizada,nombres,apellidos,telefono,correo,info_mira,puesto_votacion,mesa_votacion,requiere_transporte,edad,tipo_participacion,activo,inactivo",
+        select:"id,cedula,cedula_normalizada,nombres,apellidos,telefono,correo,info_mira,puesto_votacion,mesa_votacion,edad,tipo_participacion,activo,inactivo",
         or:"("+clauses.join(",")+")",
         limit:"100"
       })});
@@ -139,7 +139,7 @@ export const MIRA_DATA = {
     const pageIds=ids.slice(safeOffset,safeOffset+safeLimit);
     if (!pageIds.length) return [];
     const rows=await miraRequest("infomira_red",{query:qs({
-      select:"id,fila_origen,barrio,estado_original,cuidador_nombre,puesto_votacion,puesto_original,mesa_votacion,movilidad,asistencia,persona_id,personas!inner(id,cedula,cedula_normalizada,nombres,apellidos,telefono,correo,info_mira,puesto_votacion,mesa_votacion,requiere_transporte,edad,tipo_participacion,activo,inactivo)",
+      select:"id,fila_origen,barrio,estado_original,cuidador_nombre,puesto_votacion,puesto_original,mesa_votacion,asistencia,persona_id,personas!inner(id,cedula,cedula_normalizada,nombres,apellidos,telefono,correo,info_mira,puesto_votacion,mesa_votacion,edad,tipo_participacion,activo,inactivo)",
       persona_id:"in.("+pageIds.join(",")+")",
       order:"fila_origen.asc,id.asc",
       limit:String(safeLimit)
@@ -158,7 +158,7 @@ export const MIRA_DATA = {
     return rows[0];
   },
   async listPeople({cedula="", search="", limit=100, offset=0, tipoParticipacion=""}={}) {
-    const params = {select:"id,cedula,cedula_normalizada,nombres,apellidos,telefono,correo,info_mira,barrio,puesto_votacion,mesa_votacion,requiere_transporte,edad,tipo_participacion,observaciones,activo,inactivo,datos_pendientes,fuente_registro,created_at,updated_at",order:"updated_at.desc",limit:String(Math.min(Math.max(limit,1),1000)),offset:String(Math.max(0,Number(offset)||0))};
+    const params = {select:"id,cedula,cedula_normalizada,nombres,apellidos,telefono,correo,info_mira,barrio,puesto_votacion,mesa_votacion,edad,tipo_participacion,observaciones,activo,inactivo,datos_pendientes,fuente_registro,created_at,updated_at",order:"updated_at.desc",limit:String(Math.min(Math.max(limit,1),1000)),offset:String(Math.max(0,Number(offset)||0))};
     if (tipoParticipacion) params.tipo_participacion = `eq.${tipoParticipacion}`;
     if (cedula) params.cedula_normalizada = `eq.${cleanCedula(cedula)}`;
     else if (search.trim()) {
