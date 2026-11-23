@@ -5,27 +5,23 @@ const MIRA_DATA_API_URL = "https://ep-mute-grass-b7qan4n6.apirest.c-13.us-east-1
 async function miraToken({anonymous=false}={}) {
   const auth = window.MIRA_AUTH;
   if (!auth) throw new Error("El servicio de autenticación aún no está inicializado.");
-  let token=null;
-  if(anonymous){
-    // PQRS públicas conserva el JWT anónimo específico; no reutiliza la sesión privada.
-    const result=await auth.getAnonymousToken();
-    if(result?.error) {
-      const error=new Error(result.error.message||"No fue posible obtener el token público de Neon.");
-      error.status=result.error.status||result.error.statusCode||0;
-      error.code=result.error.code||null;
-      throw error;
-    }
-    token=result?.data?.token||null;
-  }else{
-    // API oficial del cliente Neon Auth: devuelve el JWT como string.
-    if(typeof auth.getJWTToken!=="function"){
-      throw new Error("La versión cargada de Neon Auth no expone getJWTToken(). Actualiza el cliente de autenticación.");
-    }
-    token=await auth.getJWTToken();
+  // Neon Auth expone getJWTToken() tanto para sesiones como para acceso anónimo
+  // cuando el cliente se inicializa con allowAnonymous:true. No existe un
+  // getAnonymousToken() público en el adaptador Better Auth.
+  if(typeof auth.getJWTToken!=="function"){
+    throw new Error("El cliente de Neon Auth no expone getJWTToken(). Actualiza la página e inténtalo nuevamente.");
   }
+  const result=await auth.getJWTToken();
+  if(result?.error){
+    const error=new Error(result.error.message||"No fue posible obtener el token de acceso de Neon.");
+    error.status=result.error.status||result.error.statusCode||0;
+    error.code=result.error.code||null;
+    throw error;
+  }
+  const token=typeof result==="string"?result:result?.data?.token||result?.token||null;
   if(typeof token!=="string"||!token.trim()){
     const error=new Error(anonymous
-      ?"Neon Auth no entregó un token anónimo válido para el registro público."
+      ?"Neon Auth no entregó el token anónimo. Comprueba que el acceso público esté habilitado."
       :"Neon Auth no entregó un JWT válido para la sesión. Comprueba la sesión e inténtalo nuevamente.");
     error.code="NEON_AUTH_JWT_MISSING";
     throw error;
