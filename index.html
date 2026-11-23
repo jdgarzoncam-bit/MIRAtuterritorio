@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <script>document.documentElement.classList.add("mira-auth-restoring");</script>
+    <script>document.documentElement.classList.add("mira-auth-restoring"); window.__miraAuthBootstrapFallback = window.setTimeout(() => document.documentElement.classList.remove("mira-auth-restoring"), 8000);</script>
     <title>MIRA TU TERRITORIO — Inteligencia Electoral & Operativa</title>
     
     <!-- Tipografías Inter & Outfit -->
@@ -14,7 +14,7 @@
     <!-- SheetJS -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
-    <link rel="stylesheet" href="style.css?v=20261118-mira-brand-8">
+    <link rel="stylesheet" href="style.css?v=20261123-auth-startup-fix-1">
     <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css">
 </head>
 <body class="theme-dark">
@@ -27,7 +27,6 @@
     <!-- BOTONES GLOBALES DE HEADER LANDING (TEMA + IDIOMA) -->
     <div class="top-header-controls" id="landingHeaderControls">
         <button id="landingLoginBtn" class="landing-login-btn" type="button">Ingresar <span aria-hidden="true">↗</span></button>
-        <a id="landingRegisterBtn" class="landing-login-btn" href="registro-usuario.html">Crear cuenta <span aria-hidden="true">↗</span></a>
     </div>
 
 
