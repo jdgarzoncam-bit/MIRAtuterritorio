@@ -194,14 +194,20 @@ export const MIRA_DATA = {
   async listPublicActivityOptions() {
     return miraRequest("rpc/public_list_active_activities",{method:"POST",body:{},anonymous:true});
   },
-  registerPublicActivityParticipant({cedula,nombres,apellidos,telefono=null,actividad_id,consentimiento=false}) {
+  async lookupPublicPerson(cedula) {
     const normalized=cleanCedula(cedula);
     if(normalized.length<5||normalized.length>15) throw new Error("La cédula debe contener entre 5 y 15 dígitos.");
-    if(!nombres?.trim()||!apellidos?.trim()||!actividad_id||consentimiento!==true) throw new Error("Completa los datos obligatorios y acepta el tratamiento de datos.");
-    return miraRequest("rpc/public_register_activity_participant",{
+    return miraRequest("rpc/public_person_exists",{method:"POST",anonymous:true,body:{p_cedula:normalized}});
+  },
+  registerPublicActivityParticipant({cedula,nombres,apellidos,telefono=null,actividad_id,info_mira,tipo_participacion,consentimiento=false}) {
+    const normalized=cleanCedula(cedula);
+    if(normalized.length<5||normalized.length>15) throw new Error("La cédula debe contener entre 5 y 15 dígitos.");
+    if(!nombres?.trim()||!apellidos?.trim()||!actividad_id||!["si","no"].includes(info_mira)||!["interno","externo"].includes(tipo_participacion)||consentimiento!==true) throw new Error("Completa los datos obligatorios y acepta el tratamiento de datos.");
+    return miraRequest("rpc/public_register_activity_participant_v2",{
       method:"POST",anonymous:true,body:{
         p_cedula:normalized,p_nombres:nombres.trim(),p_apellidos:apellidos.trim(),
-        p_telefono:telefono,p_actividad_id:actividad_id,p_consentimiento:true
+        p_telefono:telefono,p_actividad_id:actividad_id,p_info_mira:info_mira==="si",
+        p_tipo_participacion:tipo_participacion,p_consentimiento:true
       }
     });
   },
