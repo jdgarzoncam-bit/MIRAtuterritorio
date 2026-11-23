@@ -32,7 +32,8 @@
 <body class="theme-dark">
 <main class="activity-public-shell"><section class="activity-public-card">
 <header class="activity-public-head"><div><span class="activity-public-pill">MIRA TU TERRITORIO · ACCESO AUTORIZADO</span><h1>Registro de <span>Actividades</span></h1><p>Portal de registro conectado a la base central.</p></div><a href="index.html" style="color:#40e3f3;text-decoration:none;font-weight:700">Volver ↗</a></header>
-<section id="activityLogin" class="activity-login"><h2>Ingreso de personal autorizado</h2><form id="activityLoginForm" autocomplete="on"><label>Correo institucional<input id="activityEmail" type="email" autocomplete="username" required></label><label>Contraseña<input id="activityPassword" type="password" autocomplete="current-password" required></label><button id="activityLoginBtn" type="submit">Iniciar sesión</button><p id="activityLoginError" class="activity-login-error" role="alert"></p></form></section>
+<section id="activityLogin" class="activity-login"><h2>Ingreso de personal autorizado</h2><form id="activityLoginForm" autocomplete="on"><label>Correo institucional<input id="activityEmail" type="email" autocomplete="username" required></label><label>Contraseña<input id="activityPassword" type="password" autocomplete="current-password" required></label><button id="activityLoginBtn" type="submit">Iniciar sesión</button><p id="activityLoginError" class="activity-login-error" role="alert"></p></form>
+<p style="margin:14px 0 0;text-align:center;color:#91a4bb;font-size:13px">¿No tienes cuenta? <a href="registro-usuario.html" style="color:#40e3f3;font-weight:700">Crear cuenta</a></p></section>
 <section id="activityWorkspace" hidden><div class="activity-public-head"><div><strong>Sesión autorizada</strong><p id="activityIdentity" class="activity-identity"></p></div><button id="activityLogoutBtn" type="button" class="secondary" style="padding:10px 14px;border-radius:10px;background:#111c2d;color:#fff;border:1px solid #1dd9ee">Cerrar sesión</button></div>
 <form id="publicActivityForm" class="activity-public-form" autocomplete="off">
 <label>Cédula<input id="pubCedula" inputmode="numeric" required placeholder="Número de documento"></label><div style="display:flex;align-items:end"><button type="button" id="pubLookup" class="activity-login" style="width:100%;margin:0;padding:12px;color:#fff">⌕ Buscar ficha</button></div>
@@ -40,4 +41,4 @@
 <div class="full activity-public-actions"><button id="pubSubmit" type="submit">Guardar asistencia</button><button type="reset" class="secondary">Limpiar formulario</button></div></form>
 <div id="pubStatus" class="activity-public-status" role="status"></div></section>
 <p class="activity-public-note">El portal no permite acceso anónimo. La consulta y el registro requieren una cuenta activa con permisos de consulta y creación en Actividades. Los datos se guardan en Neon, no en el navegador.</p>
-</section></main><script type="module" src="activity-portal.js?v=20261114-role-aware-4"></script></body></html>
+</section></main><script type="module" src="activity-portal.js?v=20261123-activities-enabled-1"></script></body></html>
