@@ -192,12 +192,12 @@ export const MIRA_DATA = {
   archivePerson(id) { if(!id) throw new Error("No se identificó la ficha que deseas marcar como inactiva."); return this.updatePerson(id,{activo:false,inactivo:true}); },
   restorePerson(id) { if(!id) throw new Error("No se identificó la ficha que deseas activar."); return this.updatePerson(id,{activo:true,inactivo:false}); },
   async listPublicActivityOptions() {
-    return miraRequest("rpc/public_list_active_activities",{method:"POST",body:{},anonymous:true});
+    return miraRequest("rpc/public_activity_options_v2",{method:"POST",body:{},anonymous:true});
   },
   async lookupPublicPerson(cedula) {
     const normalized=cleanCedula(cedula);
     if(normalized.length<5||normalized.length>15) throw new Error("La cédula debe contener entre 5 y 15 dígitos.");
-    return miraRequest("rpc/public_person_exists",{method:"POST",anonymous:true,body:{p_cedula:normalized}});
+    return miraRequest("rpc/public_person_exists_v2",{method:"POST",anonymous:true,body:{p_cedula:normalized}});
   },
   registerPublicActivityParticipant({cedula,nombres,apellidos,telefono=null,actividad_id,info_mira,tipo_participacion,consentimiento=false}) {
     const normalized=cleanCedula(cedula);
