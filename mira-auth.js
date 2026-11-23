@@ -7,11 +7,20 @@ const auth = createAuthClient(AUTH_URL,{allowAnonymous:true});
 window.MIRA_AUTH = auth;
 
 async function bearerToken() {
-  const result=await auth.token();
+  const result=await auth.getJWTToken();
   if(result?.error) throw new Error(result.error.message || "No se pudo validar la sesión.");
-  const token=result?.data?.token;
-  if(!token) throw new Error("No se recibió el token de acceso.");
+  const token=typeof result==="string"?result:result?.data?.token||result?.token;
+  if(!token) throw new Error("Neon Auth no entregó un token de acceso.");
   return token;
+}
+async function withAuthTimeout(promise,label,ms=12000) {
+  let timer;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error("La conexión con "+label+" está tardando más de lo esperado. La plataforma seguirá disponible; puedes reintentar.")),ms);})
+    ]);
+  } finally { clearTimeout(timer); }
 }
 async function getOwnProfile(token,authUserId) {
   if(!authUserId) throw new Error("No fue posible identificar la cuenta autenticada.");
@@ -57,16 +66,23 @@ async function establishAuthenticatedUser(authUser) {
 }
 async function restoreExistingSession() {
   try {
-    const result=await auth.getSession();
+    const result=await withAuthTimeout(auth.getSession(),"Neon Auth");
     if(result?.error) throw result.error;
     const sessionData=result?.data;
     const authUser=sessionData?.user||sessionData?.session?.user||null;
     if(!authUser) { clearAuthenticatedState(); return; }
     await establishAuthenticatedUser(authUser);
   } catch(error) {
+    // Un fallo de red no debe cerrar ni borrar una sesión válida del navegador.
     clearAuthenticatedState();
-    try { await auth.signOut(); } catch(signOutError) { console.warn("[MIRA Auth] No se pudo limpiar una sesión inválida.",signOutError); }
-    console.warn("[MIRA Auth] La sesión guardada no superó la validación; se requiere iniciar sesión.",error);
+    console.warn("[MIRA Auth] No se pudo verificar la sesión en este intento; se conserva para reintentar.",error);
+    const message=/timing|conex|fetch|network|failed/i.test(error?.message||"")
+      ? "No fue posible comprobar la conexión con el servicio de autenticación. Verifica tu conexión; conservamos tu sesión y podrás volver a intentarlo."
+      : (error?.message || "No fue posible verificar la sesión. Intenta ingresar nuevamente.");
+    showLoginError(message);
+    window.dispatchEvent(new CustomEvent("mira:auth-check-failed",{detail:{message}}));
+  } finally {
+    window.dispatchEvent(new Event("mira:auth-check-finished"));
   }
 }
 async function signOutCompletely() {
@@ -96,9 +112,11 @@ async function loginWithNeon() {
     if(error) error.style.display="none";
     const pass=document.getElementById("password"); if(pass) pass.value="";
   } catch(error) {
-    clearAuthenticatedState();
-    try { await auth.signOut(); } catch(signOutError) { console.warn("[MIRA Auth] No se pudo limpiar la sesión tras un acceso rechazado.",signOutError); }
-    showLoginError(error?.message || "No fue posible iniciar sesión.");
+    // No cerrar la sesión ni eliminar credenciales por un error transitorio de red.
+    const message=/failed to fetch|fetch|network|load failed|timed out/i.test(error?.message||"")
+      ? "No fue posible comprobar la conexión con el servicio de autenticación. Verifica tu conexión; conservamos tu sesión y volveremos a intentarlo."
+      : (error?.message || "No fue posible iniciar sesión.");
+    showLoginError(message);
   } finally { if(button) button.disabled=false; }
 }
 
