@@ -71,7 +71,7 @@ async function restoreExistingSession() {
     const sessionData=result?.data;
     const authUser=sessionData?.user||sessionData?.session?.user||null;
     if(!authUser) { clearAuthenticatedState(); return; }
-    await establishAuthenticatedUser(authUser);
+    await withAuthTimeout(establishAuthenticatedUser(authUser),"validación de la cuenta");
   } catch(error) {
     // Un fallo de red no debe cerrar ni borrar una sesión válida del navegador.
     clearAuthenticatedState();
@@ -100,14 +100,14 @@ async function loginWithNeon() {
   if(!email || !password){showLoginError("Escribe tu correo electrónico y contraseña.");return;}
   if(button) button.disabled=true;
   try {
-    const result=await auth.signIn.email({email,password});
+    const result=await withAuthTimeout(auth.signIn.email({email,password}),"Neon Auth");
     if(result?.error) {
       const code=String(result.error.code||"").toUpperCase();
       const status=Number(result.error.status||result.error.statusCode||0);
       if(code.includes("EMAIL_NOT_VERIFIED")||status===403) throw new Error("Primero confirma tu correo electrónico. Revisa tu bandeja de entrada y Spam.");
       throw new Error("No fue posible iniciar sesión. Verifica tus credenciales.");
     }
-    await establishAuthenticatedUser(result?.data?.user);
+    await withAuthTimeout(establishAuthenticatedUser(result?.data?.user),"validación de la cuenta");
     const error=document.getElementById("loginError");
     if(error) error.style.display="none";
     const pass=document.getElementById("password"); if(pass) pass.value="";
