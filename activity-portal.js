@@ -109,6 +109,8 @@ $("pubPinSubmit").addEventListener("click", async () => {
     accessToken = result.access_token;
     $("pubGate").hidden = true;
     $("pubFormArea").hidden = false;
+    $("activityAvailability").hidden = false;
+    $("publicActivityForm").hidden = false;
     $("pubLock").hidden = false;
     $("pubPinStatus").style.display = "none";
     await refreshActivities();
@@ -139,6 +141,7 @@ $("pubLookup").addEventListener("click", async () => {
       $("pubInfoMira").value = "";
       $("pubType").value = "";
       clearPersonDetails();
+      setAvailable(activities.length > 0);
       status("No encontramos una ficha con esta cédula. Completa los datos para crearla al guardar la asistencia.","success");
       return;
     }
@@ -155,6 +158,7 @@ $("pubLookup").addEventListener("click", async () => {
       status("La ficha existe, pero está marcada como inactiva. No se puede registrar asistencia hasta que sea revisada por un administrador.","error");
       return;
     }
+    setAvailable(activities.length > 0);
     status("Ficha recuperada correctamente. Verifica los datos, selecciona la actividad y confirma el consentimiento para registrar la asistencia.","success");
   } catch (error) {
     const message = error.message || "No fue posible consultar la ficha.";
