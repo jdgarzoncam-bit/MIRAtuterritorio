@@ -6,7 +6,7 @@
 <link rel="stylesheet" href="style.css?v=20261123-public-activities">
 <style>
 .activity-public-shell{min-height:100vh;display:grid;place-items:center;padding:24px;background:radial-gradient(ellipse at top left,rgba(0,205,230,.12),transparent 45%),#050b17;color:#f4f8ff}
-.activity-public-card{width:min(920px,100%);border:1px solid rgba(31,220,245,.65);border-radius:24px;background:rgba(8,17,34,.94);box-shadow:0 20px 80px #0005,0 0 35px #00cde614;padding:clamp(20px,4vw,36px)}
+.activity-public-card{width:min(920px,100%);border:1px solid rgba(31,220,245,.65);border-radius:24px;background:rgba(8,17,34,.94);box-shadow:0 20px 80px #0005;padding:clamp(20px,4vw,36px)}
 .activity-public-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;border-bottom:1px solid #7890aa33;padding-bottom:18px;margin-bottom:22px}
 .activity-public-head h1{margin:8px 0 4px;font-size:clamp(25px,4vw,38px)}.activity-public-head h1 span{color:#36d9ef}
 .activity-public-head p,.activity-public-note{color:#91a4bb}
@@ -17,28 +17,23 @@
 .activity-public-form .full{grid-column:1/-1}
 .activity-public-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px}
 .activity-public-actions button{border:1px solid #1dd9ee;border-radius:10px;padding:12px 18px;font-weight:800;cursor:pointer;color:white;background:#2054df}
-.activity-public-actions button:disabled{opacity:.55;cursor:wait}
-.activity-public-actions .secondary{background:#111c2d}
+.activity-public-actions button:disabled{opacity:.55;cursor:wait}.activity-public-actions .secondary{background:#111c2d}
 .activity-public-note{font-size:12px;line-height:1.6;margin-top:18px}
-.activity-public-status{padding:12px;border-radius:10px;margin-top:16px;display:none;background:#1bbe8920;border:1px solid #1bbe8970;color:#8ff0cb}
-.activity-public-status[data-kind="error"]{background:#b4231820;border-color:#ef444470;color:#ffb4ae}
-.activity-public-status[data-kind="success"]{background:#1bbe8920;border-color:#1bbe8970;color:#8ff0cb}
-.activity-public-consent{display:flex!important;grid-template-columns:auto 1fr;align-items:flex-start;gap:10px!important;color:#c4d1e0!important;font-weight:500!important;line-height:1.5}
+.activity-public-status{padding:12px;border-radius:10px;margin-top:16px;display:none}
+.activity-public-status[data-kind="error"]{background:#b4231820;border:1px solid #ef444470;color:#ffb4ae}
+.activity-public-status[data-kind="success"]{background:#1bbe8920;border:1px solid #1bbe8970;color:#8ff0cb}
+.activity-public-consent{display:flex!important;align-items:flex-start;gap:10px!important;color:#c4d1e0!important;font-weight:500!important;line-height:1.5}
 .activity-public-consent input{width:18px;height:18px;margin:2px 0 0;accent-color:#20cde3}
 .activity-public-back{color:#40e3f3;text-decoration:none;font-weight:700}
 [hidden]{display:none!important}
 @media(max-width:620px){.activity-public-form{grid-template-columns:1fr}.activity-public-form .full{grid-column:auto}.activity-public-head{flex-direction:column}}
 </style></head>
 <body class="theme-dark">
-<main class="activity-public-shell">
-<section class="activity-public-card">
-<header class="activity-public-head">
-<div><span class="activity-public-pill">MIRA TU TERRITORIO · PARTICIPACIÓN CIUDADANA</span><h1>Inscripción a <span>Actividades</span></h1><p>Registra tu participación de forma fácil y segura. No necesitas iniciar sesión ni crear una cuenta.</p></div>
-<a class="activity-public-back" href="index.html">← Volver al inicio</a>
-</header>
+<main class="activity-public-shell"><section class="activity-public-card">
+<header class="activity-public-head"><div><span class="activity-public-pill">MIRA TU TERRITORIO · PARTICIPACIÓN CIUDADANA</span><h1>Inscripción a <span>Actividades</span></h1><p>Registra tu participación de forma fácil y segura. No necesitas iniciar sesión ni crear una cuenta.</p></div><a class="activity-public-back" href="index.html">← Volver al inicio</a></header>
 <div id="activityAvailability" class="activity-public-note" role="status">Consultando actividades disponibles…</div>
 <form id="publicActivityForm" class="activity-public-form" autocomplete="on" novalidate>
-<label>Actividad<select id="pubActivity" required><option value="">Consultando actividades…</option></select></label>
+<label>Actividad<select id="pubActivity" required><option value="">Selecciona una actividad</option></select></label>
 <label>Número de cédula<input id="pubCedula" inputmode="numeric" autocomplete="off" maxlength="20" required placeholder="Escribe tu número de documento"></label>
 <label>Nombres<input id="pubNames" autocomplete="given-name" maxlength="120" required placeholder="Tus nombres"></label>
 <label>Apellidos<input id="pubSurnames" autocomplete="family-name" maxlength="120" required placeholder="Tus apellidos"></label>
@@ -48,7 +43,6 @@
 </form>
 <div id="pubStatus" class="activity-public-status" role="status" aria-live="polite"></div>
 <p class="activity-public-note">Si ya tienes una ficha en la plataforma, usa la misma cédula. El sistema reconocerá el registro existente y evitará crear una ficha duplicada. Por seguridad, este formulario no muestra datos personales que ya estén guardados.</p>
-</section>
-</main>
+</section></main>
 <script type="module" src="activity-portal.js?v=20261123-public-activities-1"></script>
 </body></html>
