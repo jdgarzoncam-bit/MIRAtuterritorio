@@ -554,7 +554,28 @@ function splitLegacyPersonName(nombres,apellidos){
 function escapeActivityHtml(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function currentActivity(){return activitiesState.activities.find(a=>a.id===activitiesState.currentActivityId&&a.status==='active')||null;}
 let activitiesReturnContext = 'landing';
-async function openActivities(view='registration'){document.getElementById('miraQuickModules')?.classList.add('hidden');activitiesReturnContext=(document.getElementById('landing-hero-overlay').style.display==='none')?'platform':'landing';activitiesPlaceholder.classList.remove('hidden');document.getElementById('landing-hero-overlay').style.display='none';document.getElementById('landingHeaderControls').style.display='none';if(!activitiesBackendReady)await loadActivitiesFromNeon();renderActivities();showActivityView(view);}
+let pendingActivitiesOpen = false;
+async function openActivities(view='registration'){
+  if(!window.MIRA_CURRENT_USER?.authUserId){
+    pendingActivitiesOpen=true;
+    abrirLoginAdmin();
+    const notice=document.getElementById('accountActionNotice');
+    if(notice){notice.textContent='Inicia sesión con una cuenta autorizada. Actividades se abrirá automáticamente al ingresar.';notice.classList.remove('hidden');}
+    return;
+  }
+  pendingActivitiesOpen=false;
+  document.getElementById('miraQuickModules')?.classList.add('hidden');
+  activitiesReturnContext=(document.getElementById('landing-hero-overlay').style.display==='none')?'platform':'landing';
+  activitiesPlaceholder.classList.remove('hidden');
+  document.getElementById('landing-hero-overlay').style.display='none';
+  document.getElementById('landingHeaderControls').style.display='none';
+  if(!activitiesBackendReady)await loadActivitiesFromNeon();
+  renderActivities();
+  showActivityView(view);
+}
+window.addEventListener('mira:authenticated',()=>{
+  if(pendingActivitiesOpen) openActivities('registration');
+});
 function closeActivities(){activitiesPlaceholder.classList.add('hidden');if(activitiesReturnContext==='landing'&&!document.body.classList.contains('pmu-neomorphic'))document.getElementById('miraQuickModules')?.classList.remove('hidden');if(activitiesReturnContext==='platform'){document.getElementById('landing-hero-overlay').style.display='none';document.getElementById('landingHeaderControls').style.display='none';}else{document.getElementById('landing-hero-overlay').style.display='flex';document.getElementById('landingHeaderControls').style.display='flex';}}
 function showActivityView(view){const target={registration:'activityRegistrationView',recent:'activityRecentPanel',all:'activityAllView',detail:'activityDetailView'}[view]||'activityRegistrationView';['activityRegistrationView','activityRecentPanel','activityAllView','activityDetailView'].forEach(id=>document.getElementById(id).classList.toggle('hidden',id!==target));document.getElementById('activityScreenSubtitle').textContent=({registration:'Registro de participación territorial.',recent:'Consulta en vivo y rectificación de registros.',all:'Archivo de actividades y sus hojas de cálculo.',detail:'Registros guardados en esta actividad.'})[view]||'Registro de participación territorial.';document.querySelectorAll('.activity-mobile-tab').forEach(tab=>tab.classList.toggle('is-active',tab.dataset.activityView===(view==='detail'?'all':view)));}
 document.getElementById('btnSelectActividades')?.addEventListener('click',()=>openActivities('registration'));
