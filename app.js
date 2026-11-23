@@ -585,6 +585,7 @@ document.getElementById('closeActivitiesPlaceholder').addEventListener('click',c
 document.querySelectorAll('.activity-mobile-tab').forEach(tab=>tab.addEventListener('click',()=>{const view=tab.dataset.activityView;if(view==='registration')document.getElementById('newActivityForm')?.classList.add('hidden');showActivityView(view);if(view==='recent'||view==='all')renderActivities();}));
 document.getElementById('sideAllActivitiesBtn').addEventListener('click',()=>openActivities('all'));
 document.getElementById('sideOpenActivityModuleBtn').addEventListener('click',()=>{openActivities('registration');showNewActivity();});
+document.getElementById('quickCreateActivityBtn')?.addEventListener('click',showNewActivity);
 
 function syncMiraQuickModules(){
   const root=document.getElementById('miraQuickModules');
@@ -665,7 +666,7 @@ document.getElementById('saveActivityBtn').addEventListener('click',async()=>{
   }catch(error){console.error(error);alert('No fue posible guardar la actividad en Neon: '+(error.message||'Error desconocido'));}
   finally{button.disabled=false;}
 });
-function clearParticipantForm(){editingParticipantId=null;editingPersonId=null;['participantCedula','participantNames','participantSurnames','participantPhone'].forEach(id=>document.getElementById(id).value='');document.getElementById('participantInfoMira').value='';document.getElementById('participantType').value='';document.getElementById('duplicateNotice').classList.add('hidden');document.getElementById('saveParticipantBtn').textContent='Guardar asistencia';const title=document.getElementById('participantFormTitle');if(title)title.textContent='Registrar participante';}
+function clearParticipantForm(){editingParticipantId=null;editingPersonId=null;['participantCedula','participantNames','participantSurnames','participantPhone'].forEach(id=>document.getElementById(id).value='');document.getElementById('participantInfoMira').value='';document.getElementById('participantType').value='';document.getElementById('duplicateNotice').classList.add('hidden');document.getElementById('saveParticipantBtn').textContent='Guardar persona y asistencia';const title=document.getElementById('participantFormTitle');if(title)title.textContent='Registrar participante';}
 document.getElementById('clearParticipantBtn').addEventListener('click',clearParticipantForm);
 async function lookupPerson(){
   const ced=normalizeCedula(document.getElementById('participantCedula').value);
@@ -744,6 +745,8 @@ function openActivityFolder(id){const act=activitiesState.activities.find(a=>a.i
 function renderActivities(){
   const select=document.getElementById('participantActivity'),old=select.value;
   const activeActivities=activitiesState.activities.filter(a=>a.status==='active');
+  const noActiveNotice=document.getElementById('activityNoActiveNotice');
+  if(noActiveNotice)noActiveNotice.classList.toggle('hidden',activeActivities.length>0);
   select.innerHTML='<option value="">Seleccionar actividad…</option>'+activeActivities.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(a=>`<option value="${escapeActivityHtml(a.id)}">${escapeActivityHtml(a.name)} · En curso</option>`).join('');
   if(old&&activeActivities.some(a=>a.id===old))select.value=old;
   else if(currentActivity())select.value=currentActivity().id;
