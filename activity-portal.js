@@ -1,13 +1,7 @@
 import { createInternalNeonAuth } from "https://esm.sh/@neondatabase/auth@0.7.0-beta";
-import { MIRA_DATA } from "./mira-data.js?v=20261123-auth-startup-fix-2";
+import { MIRA_DATA } from "./mira-data.js?v=20261123-public-participant-panel-1";
 
 const AUTH_URL = "https://ep-mute-grass-b7qan4n6.neonauth.c-13.us-east-1.aws.neon.tech/neondb/auth";
-const neonAuth = createInternalNeonAuth(AUTH_URL,{allowAnonymous:true});
-const auth = neonAuth.adapter;
-window.MIRA_AUTH = {
-  getJWTToken: () => neonAuth.getJWTToken(),
-  getAnonymousToken: (...args) => auth.getAnonymousToken(...args)
-};
 const $ = id => document.getElementById(id);
 const cleanCedula = value => String(value || "").replace(/\D/g, "");
 let busy = false;
@@ -40,6 +34,20 @@ async function refreshActivities() {
     : `Hay ${activities.length} actividades disponibles. Selecciona en cuál deseas participar.`;
   setAvailable(true);
 }
+$("pubLookup").addEventListener("click", async () => {
+  const cedula = cleanCedula($("pubCedula").value);
+  if (cedula.length < 5 || cedula.length > 15) return status("Escribe una cédula válida para buscar la ficha.", "error");
+  const button = $("pubLookup");
+  button.disabled = true;
+  try {
+    const exists = await MIRA_DATA.lookupPublicPerson(cedula);
+    status(exists === true
+      ? "Encontramos una ficha asociada a esta cédula. Completa los datos y selecciona la actividad para registrar la asistencia. Por privacidad no mostramos información personal guardada."
+      : "No encontramos una ficha con esta cédula. Completa nombres y apellidos para crearla al guardar la asistencia.", "success");
+  } catch (error) {
+    status(error.message || "No fue posible consultar la ficha. Inténtalo nuevamente.", "error");
+  } finally { button.disabled = false; }
+});
 $("publicActivityForm").addEventListener("submit", async event => {
   event.preventDefault();
   if (busy) return;
@@ -50,6 +58,9 @@ $("publicActivityForm").addEventListener("submit", async event => {
   if (cedula.length < 5 || cedula.length > 15) return status("Verifica el número de cédula. Debe contener entre 5 y 15 dígitos.", "error");
   if (nombres.length < 2 || apellidos.length < 2) return status("Escribe tus nombres y apellidos completos.", "error");
   if (!actividad_id || !activities.some(a => String(a.activity_id) === actividad_id)) return status("Selecciona una actividad que esté abierta para inscripción.", "error");
+  const info_mira = $("pubInfoMira").value;
+  const tipo_participacion = $("pubType").value;
+  if (!info_mira || !tipo_participacion) return status("Selecciona InfoMIRA y el tipo de participante.", "error");
   if (!$("pubConsent").checked) return status("Debes aceptar el tratamiento de datos para continuar.", "error");
   busy = true;
   setAvailable(false);
@@ -58,7 +69,7 @@ $("publicActivityForm").addEventListener("submit", async event => {
     const result = await MIRA_DATA.registerPublicActivityParticipant({
       cedula, nombres, apellidos,
       telefono: $("pubPhone").value.trim() || null,
-      actividad_id, consentimiento: true
+      actividad_id, info_mira, tipo_participacion, consentimiento: true
     });
     if (result?.status === "duplicate") {
       status(result.message || "Esta cédula ya tiene asistencia registrada en la actividad seleccionada.", "error");
