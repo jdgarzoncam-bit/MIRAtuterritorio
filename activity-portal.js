@@ -1,5 +1,5 @@
 import { createInternalNeonAuth } from "https://esm.sh/@neondatabase/auth@0.7.0-beta";
-import { MIRA_DATA } from "./mira-data.js?v=20261123-public-participant-panel-2";
+import { MIRA_DATA } from "./mira-data.js?v=20261123-public-rpc-v2-1";
 
 // Este formulario es público: inicializa su propio cliente Neon Auth anónimo.
 // No depende de que el usuario abra la plataforma interna ni tenga una sesión.
