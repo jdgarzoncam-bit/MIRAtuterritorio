@@ -1,7 +1,5 @@
-import { createInternalNeonAuth } from "https://esm.sh/@neondatabase/auth@0.7.0-beta";
 import { MIRA_DATA } from "./mira-data.js?v=20261123-public-participant-panel-1";
 
-const AUTH_URL = "https://ep-mute-grass-b7qan4n6.neonauth.c-13.us-east-1.aws.neon.tech/neondb/auth";
 const $ = id => document.getElementById(id);
 const cleanCedula = value => String(value || "").replace(/\D/g, "");
 let busy = false;
