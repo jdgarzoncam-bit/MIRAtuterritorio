@@ -449,6 +449,8 @@ function abrirLoginAdmin() {
     document.body.classList.add('admin-login-active');
     adminLoginFormInline.classList.remove('hidden');
     if (adminDefaultView) adminDefaultView.classList.add('hidden');
+    const loginError = document.getElementById('loginError');
+    if (loginError) { loginError.textContent = ''; loginError.style.display = 'none'; }
     requestAnimationFrame(() => adminCardContainer.classList.add('is-open'));
     setTimeout(() => document.getElementById('username').focus(), 220);
 }
