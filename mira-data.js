@@ -212,7 +212,7 @@ export const MIRA_DATA = {
     if(!accessToken) throw new Error("Ingresa el PIN de acceso antes de consultar personas.");
     return miraRequest("rpc/public_lookup_participant",{method:"POST",anonymous:true,body:{p_cedula:normalized,p_access_token:accessToken}});
   },
-  registerPublicActivityParticipant({cedula,nombres,apellidos,telefono=null,actividad_id,info_mira,tipo_participacion,consentimiento=false}) {
+  registerPublicActivityParticipant({cedula,nombres,apellidos,telefono=null,actividad_id,info_mira,tipo_participacion,consentimiento=false,access_token=null}) {
     const normalized=cleanCedula(cedula);
     if(normalized.length<5||normalized.length>15) throw new Error("La cédula debe contener entre 5 y 15 dígitos.");
     if(!nombres?.trim()||!apellidos?.trim()||!actividad_id||![ "si","no" ].includes(info_mira)||![ "interno","externo" ].includes(tipo_participacion)||consentimiento!==true) throw new Error("Completa los datos obligatorios y acepta el tratamiento de datos.");
@@ -223,12 +223,12 @@ export const MIRA_DATA = {
       info_mira:info_mira==="si",
       tipo_participacion
     });
-    if(!arguments[0]?.access_token) throw new Error("Ingresa el PIN de acceso antes de registrar la asistencia.");
+    if(!access_token) throw new Error("Ingresa el PIN de acceso antes de registrar la asistencia.");
     return miraRequest("rpc/public_register_activity_participant_v2",{
       method:"POST",anonymous:true,body:{
         p_cedula:normalized,p_nombres:nombres.trim(),p_apellidos:apellidos.trim(),
         p_telefono:registrationData,p_actividad_id:actividad_id,p_consentimiento:true,
-        p_access_token:arguments[0].access_token
+        p_access_token:access_token
       }
     });
   },
