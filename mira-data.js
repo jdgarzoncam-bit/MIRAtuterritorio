@@ -92,7 +92,7 @@ export const MIRA_DATA = {
       if(dataset.key==="personas"){const digits=cleanCedula(search);if(digits)clauses.push("cedula_normalizada.eq."+digits);}
       params.or="("+clauses.join(",")+")";
     }
-    if(dataset.key==="personas"&&personStatus!=="all") params.activo="eq."+(personStatus==="archived"?"false":"true");
+    if(dataset.key==="personas"&&personStatus!=="all") params.inactivo="eq."+(personStatus==="inactive"?"true":"false");
     if(filterField&&filterValue!==undefined&&String(filterValue).trim()){
       const allowedFields=new Set(dataset.columns.map(column=>column[0]));
       if(!allowedFields.has(filterField)) throw new Error("El campo de filtro no está permitido para este conjunto.");
@@ -181,8 +181,8 @@ export const MIRA_DATA = {
     if(cedula!==undefined&&!cedula) throw new Error("La cédula debe contener al menos un dígito.");
     return miraRequest("personas",{method:"PATCH",query:qs({id:`eq.${id}`}),body:{...personData,...(cedula!==undefined?{cedula}:{})},requireRows:true});
   },
-  archivePerson(id) { if(!id) throw new Error("No se identificó la ficha que deseas archivar."); return this.updatePerson(id,{activo:false}); },
-  restorePerson(id) { if(!id) throw new Error("No se identificó la ficha que deseas recuperar."); return this.updatePerson(id,{activo:true}); },
+  archivePerson(id) { if(!id) throw new Error("No se identificó la ficha que deseas marcar como inactiva."); return this.updatePerson(id,{activo:false,inactivo:true}); },
+  restorePerson(id) { if(!id) throw new Error("No se identificó la ficha que deseas activar."); return this.updatePerson(id,{activo:true,inactivo:false}); },
   async listActivities({limit=100,offset=0}={}) {
     return miraRequest("actividades",{query:qs({select:"*",order:"fecha.desc",limit:String(Math.min(Math.max(limit,1),1000)),offset:String(Math.max(0,Number(offset)||0))})});
   },
@@ -328,11 +328,11 @@ export const MIRA_DATA = {
   },
   async exportDataset({datasetKey,search="",filterField="",filterValue="",limit=100000,personStatus="all"}={}) {
     if(!getExplorerDataset(datasetKey)) throw new Error("Conjunto de datos no autorizado para exportación.");
-    if(datasetKey==="personas"&&!["active","archived","all"].includes(personStatus)) throw new Error("Estado de fichas no válido para exportación.");
+    if(datasetKey==="personas"&&!["active","inactive","all"].includes(personStatus)) throw new Error("Estado de fichas no válido para exportación.");
     return miraRequest("rpc/export_dataset",{method:"POST",body:{
       p_dataset_key:datasetKey,p_search:search,p_filter_field:filterField,
       p_filter_value:filterValue,p_limit:Math.min(Math.max(Number(limit)||100000,1),100000),
-      p_person_status:datasetKey==="personas"?personStatus:"all"
+      p_person_status:datasetKey==="personas"?(personStatus==="inactive"?"archived":personStatus):"all"
     }});
   },
   async getDataQualitySummary() {
