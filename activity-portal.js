@@ -1,4 +1,4 @@
-import { MIRA_DATA } from "./mira-data.js?v=20261123-public-participant-panel-1";
+import { MIRA_DATA } from "./mira-data.js?v=20261123-public-participant-panel-2";
 
 const $ = id => document.getElementById(id);
 const cleanCedula = value => String(value || "").replace(/\D/g, "");
