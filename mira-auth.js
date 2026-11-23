@@ -104,10 +104,11 @@ async function restoreExistingSession() {
     if(result?.error) throw result.error;
     const sessionData=result?.data;
     const authUser=sessionData?.user||sessionData?.session?.user||null;
-    if(!authUser) { restoreRetryCount=0; clearAuthenticatedState(); finishAuthBootstrap(); return; }
+    if(!authUser) { restoreRetryCount=0; clearAuthenticatedState(); clearLoginError(); finishAuthBootstrap(); return; }
     const established=await establishAuthenticatedUser(authUser,revision);
     if(!established || authFlowIsStale(revision)) return;
     restoreRetryCount=0;
+    clearLoginError();
     finishAuthBootstrap();
   } catch(error) {
     if(authFlowIsStale(revision)) return;
@@ -201,6 +202,10 @@ async function signOutCompletely() {
 function showLoginError(message) {
   const error=document.getElementById("loginError");
   if(error){error.textContent=message;error.style.display="block";}
+}
+function clearLoginError() {
+  const error=document.getElementById("loginError");
+  if(error){error.textContent="";error.style.display="none";}
 }
 async function loginWithNeon() {
   if(loginInProgress || authSignOutInProgress){
