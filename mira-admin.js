@@ -4,7 +4,7 @@ const MODULE_ACTIONS = {
   personas:[["view","Consultar personas"],["create","Crear / Incorporar personas"],["edit","Completar / editar fichas"],["export","Exportar fichas"]],
   base_datos_general:[["view","Consultar bases autorizadas"],["export","Exportar información"]],
   concejal:[["view","Consulta"],["create","Crear"],["edit","Editar"],["delete","Eliminar"]],
-  infomira:[["view","Consulta"],["create","Crear"],["edit","Editar"],["delete","Eliminar"]],
+  infomira:[["view","Consulta"]],
   pqrs:[["view","Consulta"]]
 };
 const $ = (id) => document.getElementById(id);
