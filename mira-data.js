@@ -183,6 +183,20 @@ export const MIRA_DATA = {
   },
   archivePerson(id) { if(!id) throw new Error("No se identificó la ficha que deseas marcar como inactiva."); return this.updatePerson(id,{activo:false,inactivo:true}); },
   restorePerson(id) { if(!id) throw new Error("No se identificó la ficha que deseas activar."); return this.updatePerson(id,{activo:true,inactivo:false}); },
+  async listPublicActivityOptions() {
+    return miraRequest("rpc/public_list_active_activities",{method:"POST",body:{},anonymous:true});
+  },
+  registerPublicActivityParticipant({cedula,nombres,apellidos,telefono=null,actividad_id,consentimiento=false}) {
+    const normalized=cleanCedula(cedula);
+    if(normalized.length<5||normalized.length>15) throw new Error("La cédula debe contener entre 5 y 15 dígitos.");
+    if(!nombres?.trim()||!apellidos?.trim()||!actividad_id||consentimiento!==true) throw new Error("Completa los datos obligatorios y acepta el tratamiento de datos.");
+    return miraRequest("rpc/public_register_activity_participant",{
+      method:"POST",anonymous:true,body:{
+        p_cedula:normalized,p_nombres:nombres.trim(),p_apellidos:apellidos.trim(),
+        p_telefono:telefono,p_actividad_id:actividad_id,p_consentimiento:true
+      }
+    });
+  },
   async listActivities({limit=100,offset=0}={}) {
     return miraRequest("actividades",{query:qs({select:"*",order:"fecha.desc",limit:String(Math.min(Math.max(limit,1),1000)),offset:String(Math.max(0,Number(offset)||0))})});
   },
