@@ -2,18 +2,20 @@
 // No contiene contraseñas ni cadenas de conexión. Los permisos se aplican en PostgreSQL RLS.
 const MIRA_DATA_API_URL = "https://ep-round-dawn-b7l3ya3h.apirest.c-13.us-east-1.aws.neon.tech/neondb/rest/v1";
 
-async function miraToken({anonymous=false}={}) {
+async function miraToken() {
   const auth = window.MIRA_AUTH;
-  if (!auth) throw new Error("El servicio de autenticación aún no está inicializado.");
-  const result = anonymous ? await auth.getAnonymousToken() : await auth.token();
-  if (result?.error) throw new Error(result.error.message || "No fue posible obtener el token.");
-  const token = result?.data?.token;
-  if (!token) throw new Error("No se recibió un token válido.");
+  if (!auth || typeof auth.getJWTToken !== "function") {
+    throw new Error("El servicio de autenticación aún no está inicializado. Actualiza la página e inténtalo nuevamente.");
+  }
+  const result = await auth.getJWTToken();
+  if (result?.error) throw new Error(result.error.message || "No fue posible obtener el token de acceso.");
+  const token = typeof result === "string" ? result : result?.data?.token || result?.token;
+  if (!token) throw new Error("Neon Auth no entregó un token válido. Verifica la conexión e inténtalo nuevamente.");
   return token;
 }
 
 async function miraRequest(table, {method="GET", query="", body, anonymous=false, prefer, requireRows=false}={}) {
-  const token = await miraToken({anonymous});
+  const token = await miraToken();
   const headers = new Headers({
     Authorization: `Bearer ${token}`,
     "Accept-Profile": "mira",
