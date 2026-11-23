@@ -394,3 +394,24 @@ test("InfoMIRA: los nombres de puestos se normalizan para tolerar tildes, signos
   assert.match(info,/replace\(\/\[\^A-Z0-9\]\+\/g,' '\)/);
   assert.match(info,/agrupados\.get\(normalizarPuestoInfoMira\(puesto\.matchName\)\)/);
 });
+
+
+test("InfoMIRA is consultation-only in the administrative matrix and client", () => {
+  assert.match(adminSource, /infomira:\[\["view","Consulta"\]\]/);
+  assert.doesNotMatch(adminSource, /infomira:\[[^\n]*"(create|edit|delete)"/);
+  assert.match(dataSource, /params\.inactivo="eq\."/);
+});
+
+test("Personas keeps activo and inactivo synchronized in client actions", () => {
+  assert.match(dataSource, /updatePerson\(id,\{activo:false,inactivo:true\}\)/);
+  assert.match(dataSource, /updatePerson\(id,\{activo:true,inactivo:false\}\)/);
+  assert.match(dataSource, /personStatus==="inactive"\?"true":"false"/);
+});
+
+test("the Logistics module and its routing integration are absent from the QA interface", () => {
+  const mobileSource = fs.readFileSync(path.join(__dirname, "..", "mobile-operations.js"), "utf8");
+  const indexSource = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
+  assert.doesNotMatch(appSource, /inicializarModuloLogistica|logisticaRouteLayer|obtenerDirectorioLogistica/);
+  assert.doesNotMatch(mobileSource, /dropdown-logistica/);
+  assert.doesNotMatch(indexSource, /infomiraMobilityFilters|logisticaBtn|logisticaSelect/);
+});
