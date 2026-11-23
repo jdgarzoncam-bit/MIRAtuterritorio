@@ -18,7 +18,7 @@ async function bearerToken() {
   if(typeof neonAuth.getJWTToken!=="function"){
     throw new Error("La versión cargada de Neon Auth no expone getJWTToken(). Actualiza el cliente de autenticación.");
   }
-  const token=await neonAuth.getJWTToken();
+  const token=await withAuthTimeout(neonAuth.getJWTToken(),"Neon Auth");
   if(typeof token!=="string"||!token.trim()){
     const error=new Error("Neon Auth no entregó un JWT válido para consultar el perfil.");
     error.code="NEON_AUTH_JWT_MISSING";
@@ -28,9 +28,9 @@ async function bearerToken() {
 }
 async function getOwnProfile(token,authUserId) {
   if(!authUserId) throw new Error("No fue posible identificar la cuenta autenticada.");
-  const response=await fetch(`${DATA_API_URL}/user_profiles?select=auth_user_id,role,active,email_verified,email,display_name&auth_user_id=eq.${encodeURIComponent(authUserId)}&limit=1`,{
+  const response=await withAuthTimeout(fetch(`${DATA_API_URL}/user_profiles?select=auth_user_id,role,active,email_verified,email,display_name&auth_user_id=eq.${encodeURIComponent(authUserId)}&limit=1`,{
     headers:{Authorization:`Bearer ${token}`,"Accept-Profile":"mira"}
-  });
+  }),"la base de datos");
   if(!response.ok) {
     const error=new Error("No fue posible validar los permisos de esta cuenta.");
     error.status=response.status;
@@ -40,7 +40,20 @@ async function getOwnProfile(token,authUserId) {
   return rows?.[0] || null;
 }
 function finishAuthBootstrap() {
+  if(window.__miraAuthBootstrapFallback) window.clearTimeout(window.__miraAuthBootstrapFallback);
   document.documentElement.classList.remove("mira-auth-restoring");
+}
+async function withAuthTimeout(promise,label,ms=10000) {
+  let timer;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise((_,reject)=>{timer=window.setTimeout(()=>reject(new Error("La conexión con "+label+" está tardando demasiado. Se conserva la sesión y la plataforma seguirá disponible.")),ms);})
+    ]);
+  } finally { if(timer) window.clearTimeout(timer); }
+}
+function isTransientNetworkFailure(error) {
+  return error instanceof TypeError || /failed to fetch|fetch|network|load failed|timing|conex|timeout|timed out/i.test(error?.message||"");
 }
 function clearAuthenticatedState() {
   window.MIRA_CURRENT_USER=null;
@@ -86,7 +99,7 @@ async function restoreExistingSession() {
   restoreRunning=true;
   try {
     if(restoreRetryTimer){window.clearTimeout(restoreRetryTimer);restoreRetryTimer=null;}
-    const result=await auth.getSession();
+    const result=await withAuthTimeout(auth.getSession(),"Neon Auth");
     if(authFlowIsStale(revision)) return;
     if(result?.error) throw result.error;
     const sessionData=result?.data;
@@ -110,7 +123,9 @@ async function restoreExistingSession() {
       console.warn("[MIRA Auth] No fue posible validar la sesión por un problema temporal. Se conserva la sesión y se mantienen bloqueadas las acciones que no puedan verificarse.",error);
       showLoginError("No fue posible comprobar la conexión con el servicio de autenticación. Verifica tu conexión; conservamos la sesión y volveremos a intentarlo.");
       scheduleSessionRestore();
-      if(restoreRetryCount>=5) finishAuthBootstrap();
+      // La portada sigue disponible aunque Neon esté temporalmente fuera de línea.
+      // La revalidación continúa en segundo plano sin dejar la pantalla bloqueada.
+      finishAuthBootstrap();
     }
   } finally {
     restoreRunning=false;
@@ -137,7 +152,7 @@ async function revalidateCurrentAuthorization(force=false) {
   const revision=authFlowRevision;
   revalidationRunning=true;lastRevalidationAt=Date.now();
   try {
-    const result=await auth.getSession();
+    const result=await withAuthTimeout(auth.getSession(),"Neon Auth");
     if(authFlowIsStale(revision))return;
     if(result?.error)throw result.error;
     const sessionData=result?.data;
@@ -201,7 +216,7 @@ async function loginWithNeon() {
   loginInProgress=true;
   if(button) button.disabled=true;
   try {
-    const result=await auth.signIn.email({email,password});
+    const result=await withAuthTimeout(auth.signIn.email({email,password}),"Neon Auth");
     if(result?.error) {
       const code=String(result.error.code||"").toUpperCase();
       const status=Number(result.error.status||result.error.statusCode||0);
@@ -209,7 +224,7 @@ async function loginWithNeon() {
       throw new Error("No fue posible iniciar sesión. Verifica tus credenciales.");
     }
     signInCompleted=true;
-    await establishAuthenticatedUser(result?.data?.user);
+    await withAuthTimeout(establishAuthenticatedUser(result?.data?.user),"validación de la cuenta");
     const error=document.getElementById("loginError");
     if(error) error.style.display="none";
     const pass=document.getElementById("password"); if(pass) pass.value="";
@@ -224,6 +239,11 @@ async function loginWithNeon() {
       // temporal al recuperar el JWT, consultar el perfil o activar la interfaz.
       showLoginError("La autenticación fue aceptada, pero no pudimos completar la validación. Conservamos la sesión e intentaremos recuperarla.");
       scheduleSessionRestore();
+    } else if(isTransientNetworkFailure(error)) {
+      // No borrar cookies ni invalidar una sesión cuando solo falla la conexión.
+      showLoginError("No fue posible comprobar la conexión con el servicio de autenticación. Verifica tu conexión; conservamos la sesión y volveremos a intentarlo.");
+      scheduleSessionRestore();
+      finishAuthBootstrap();
     } else {
       clearAuthenticatedState();
     }
