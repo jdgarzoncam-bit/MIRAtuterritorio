@@ -5,15 +5,12 @@ const MIRA_DATA_API_URL = "https://ep-mute-grass-b7qan4n6.apirest.c-13.us-east-1
 async function miraToken({anonymous=false}={}) {
   const auth = window.MIRA_AUTH;
   if (!auth) throw new Error("El servicio de autenticación aún no está inicializado.");
-  // Las operaciones públicas deben obtener un token anónimo explícito.
-  // No se debe reutilizar getJWTToken() de una sesión de usuario para este flujo.
-  const tokenMethod = anonymous ? auth.getAnonymousToken : auth.getJWTToken;
-  if(typeof tokenMethod!=="function"){
-    throw new Error(anonymous
-      ? "El cliente de Neon Auth no pudo inicializar el acceso anónimo. Recarga el formulario."
-      : "El cliente de Neon Auth no pudo validar la sesión. Vuelve a ingresar.");
+  // Neon Auth devuelve un JWT anónimo cuando el cliente se inicializa
+  // con allowAnonymous:true y no existe una sesión de usuario.
+  if(typeof auth.getJWTToken!=="function"){
+    throw new Error("El cliente de Neon Auth no expone getJWTToken(). Actualiza la página e inténtalo nuevamente.");
   }
-  const result=await tokenMethod.call(auth);
+  const result=await auth.getJWTToken();
   if(result?.error){
     const error=new Error(result.error.message||"No fue posible obtener el token de acceso de Neon.");
     error.status=result.error.status||result.error.statusCode||0;
