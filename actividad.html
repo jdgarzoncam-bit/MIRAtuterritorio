@@ -2,7 +2,7 @@
 <html lang="es" data-theme="dark">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>MIRA TU TERRITORIO — Inscripción a Actividades</title>
+<title>MIRA TU TERRITORIO — Registro de participante</title>
 <link rel="stylesheet" href="style.css?v=20261123-public-layout-token-fix-1">
 <style>
 body{display:block!important;width:100%!important;min-width:0!important;min-height:100vh;height:auto!important;overflow-x:hidden!important;overflow-y:auto!important;position:relative} .activity-public-shell{display:grid;width:100%;min-height:100vh;min-height:100svh;box-sizing:border-box;place-items:center;padding:24px;margin:0 auto;background:radial-gradient(ellipse at top left,rgba(0,205,230,.12),transparent 45%),#050b17;color:#f4f8ff}
@@ -27,22 +27,56 @@ body{display:block!important;width:100%!important;min-width:0!important;min-heig
 .activity-public-back{color:#40e3f3;text-decoration:none;font-weight:700}
 [hidden]{display:none!important}
 @media(max-width:620px){.activity-public-form{grid-template-columns:1fr}.activity-public-form .full{grid-column:auto}.activity-public-head{flex-direction:column}}
-</style></head>
+</style>
+<style>
+/* Formulario público: misma composición visual del panel interno de Actividades. */
+body{display:block!important;width:100%!important;min-width:0!important;min-height:100vh;height:auto!important;overflow-x:hidden!important;overflow-y:auto!important;position:relative}
+.activity-public-shell{display:grid;width:100%;min-height:100vh;min-height:100svh;box-sizing:border-box;place-items:center;padding:clamp(12px,3vw,36px);margin:0 auto;background:radial-gradient(ellipse at top left,rgba(0,205,230,.12),transparent 45%),radial-gradient(ellipse at bottom right,rgba(35,89,220,.12),transparent 48%),#050b17;color:#f4f8ff}
+.activity-public-card{width:min(1120px,100%);border:1px solid rgba(110,133,160,.38);border-radius:20px;background:rgba(18,30,49,.94);box-shadow:0 20px 80px #0005;padding:clamp(20px,3vw,34px)}
+.activity-public-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;padding-bottom:8px;margin-bottom:18px}
+.activity-public-head h1{margin:9px 0 4px;font-size:clamp(25px,4vw,34px);color:#edf5ff}.activity-public-head h1 span{color:#36d9ef}
+.activity-public-head p,.activity-public-note{color:#b2c3d7}
+.activity-public-pill{display:inline-block;border:1px solid #24d9ee;border-radius:30px;padding:4px 10px;color:#39e5f5;font-size:11px;font-weight:800;letter-spacing:.06em}
+.activity-public-back{color:#40e3f3;text-decoration:none;font-weight:700;white-space:nowrap}
+.activity-public-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px 16px}
+.activity-public-form label{display:grid;gap:7px;color:#8ccfff;font-size:13px;font-weight:700;min-width:0}
+.activity-public-form input,.activity-public-form select{width:100%;min-width:0;box-sizing:border-box;background:#061124;border:1px solid #0878a7;border-radius:10px;padding:13px 12px;min-height:46px;color:#f4f8ff;font:inherit}
+.activity-public-form select{background-color:#101c2c;border-color:#435166}
+.activity-public-form .full{grid-column:1/-1}
+.activity-public-lookup{display:flex!important;align-self:end;justify-content:flex-end}
+.activity-public-lookup button{width:100%;min-height:46px;border:1px solid #0878a7;border-radius:10px;background:#0b2748;color:#f4f8ff;font-weight:800;cursor:pointer}
+.activity-public-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px}
+.activity-public-actions button{border:1px solid #1dd9ee;border-radius:10px;padding:12px 18px;font-weight:800;cursor:pointer;color:white;background:linear-gradient(110deg,#087fc7,#2455df);min-height:46px}
+.activity-public-actions #pubSubmit{flex:1}
+.activity-public-actions button:disabled{opacity:.55;cursor:wait}.activity-public-actions .secondary{background:#10243b}
+.activity-public-note{font-size:12px;line-height:1.6;margin-top:16px}
+.activity-public-status{padding:12px;border-radius:10px;margin-top:14px;display:none}
+.activity-public-status[data-kind="error"]{background:#b4231820;border:1px solid #ef444470;color:#ffb4ae}
+.activity-public-status[data-kind="success"]{background:#1bbe8920;border:1px solid #1bbe8970;color:#8ff0cb}
+.activity-public-consent{display:flex!important;align-items:flex-start;gap:10px!important;color:#c4d1e0!important;font-weight:500!important;line-height:1.5}
+.activity-public-consent input{width:18px;height:18px;min-height:18px;margin:2px 0 0;accent-color:#20cde3}
+[hidden]{display:none!important}
+@media(max-width:650px){.activity-public-form{grid-template-columns:1fr}.activity-public-form .full{grid-column:auto}.activity-public-head{flex-direction:column}.activity-public-lookup{align-self:stretch}.activity-public-actions #pubSubmit{min-width:100%}}
+</style>
+</head>
 <body class="theme-dark">
 <main class="activity-public-shell"><section class="activity-public-card">
-<header class="activity-public-head"><div><span class="activity-public-pill">MIRA TU TERRITORIO · PARTICIPACIÓN CIUDADANA</span><h1>Inscripción a <span>Actividades</span></h1><p>Registra tu participación de forma fácil y segura. No necesitas iniciar sesión ni crear una cuenta.</p></div><a class="activity-public-back" href="index.html">← Volver al inicio</a></header>
+<header class="activity-public-head"><div><span class="activity-public-pill">REGISTRO DE PARTICIPACIÓN</span><h1>Registrar participante</h1><p>Busca la ficha por cédula o completa los datos para registrar la asistencia. No necesitas iniciar sesión ni autorización de un administrador.</p></div><a class="activity-public-back" href="index.html">← Volver al inicio</a></header>
 <div id="activityAvailability" class="activity-public-note" role="status">Consultando actividades disponibles…</div>
 <form id="publicActivityForm" class="activity-public-form" autocomplete="on" novalidate>
+<label>Cédula<input id="pubCedula" inputmode="numeric" autocomplete="off" maxlength="20" required placeholder="Número de documento"></label>
+<label class="activity-public-lookup"><button id="pubLookup" type="button">⌕ Buscar ficha</button></label>
+<label>Nombres<input id="pubNames" autocomplete="given-name" maxlength="120" required placeholder="Nombres"></label>
+<label>Apellidos<input id="pubSurnames" autocomplete="family-name" maxlength="120" required placeholder="Apellidos"></label>
+<label>Teléfono (opcional)<input id="pubPhone" inputmode="tel" autocomplete="tel" maxlength="30" placeholder="Teléfono"></label>
 <label>Actividad<select id="pubActivity" required><option value="">Selecciona una actividad</option></select></label>
-<label>Número de cédula<input id="pubCedula" inputmode="numeric" autocomplete="off" maxlength="20" required placeholder="Escribe tu número de documento"></label>
-<label>Nombres<input id="pubNames" autocomplete="given-name" maxlength="120" required placeholder="Tus nombres"></label>
-<label>Apellidos<input id="pubSurnames" autocomplete="family-name" maxlength="120" required placeholder="Tus apellidos"></label>
-<label>Teléfono <span style="color:#91a4bb;font-weight:400">(opcional)</span><input id="pubPhone" inputmode="tel" autocomplete="tel" maxlength="30" placeholder="Número de contacto"></label>
+<label>InfoMIRA<select id="pubInfoMira" required><option value="">Seleccionar Sí / No</option><option value="si">Sí</option><option value="no">No</option></select></label>
+<label>Tipo de participante<select id="pubType" required><option value="">Seleccionar tipo</option><option value="externo">Externo</option><option value="interno">Interno</option></select></label>
 <label class="activity-public-consent full"><input id="pubConsent" type="checkbox" required><span>Autorizo el tratamiento de mis datos personales para gestionar mi inscripción y participación en la actividad seleccionada.</span></label>
-<div class="full activity-public-actions"><button id="pubSubmit" type="submit" disabled>Enviar inscripción ↗</button><button type="reset" class="secondary">Limpiar formulario</button></div>
+<div class="full activity-public-actions"><button id="pubSubmit" type="submit" disabled>Guardar asistencia</button><button type="reset" class="secondary">Limpiar</button></div>
 </form>
 <div id="pubStatus" class="activity-public-status" role="status" aria-live="polite"></div>
-<p class="activity-public-note">Si ya tienes una ficha en la plataforma, usa la misma cédula. El sistema reconocerá el registro existente y evitará crear una ficha duplicada. Por seguridad, este formulario no muestra datos personales que ya estén guardados.</p>
+<p class="activity-public-note">El registro se guarda de forma centralizada en Neon. Si la cédula ya tiene una ficha, el sistema evita crear una persona duplicada. Por seguridad, el formulario no expone datos personales almacenados.</p>
 </section></main>
-<script type="module" src="activity-portal.js?v=20261123-public-layout-token-fix-1"></script>
+<script type="module" src="activity-portal.js?v=20261123-public-participant-panel-1"></script>
 </body></html>
