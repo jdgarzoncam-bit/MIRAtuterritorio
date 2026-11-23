@@ -1865,7 +1865,7 @@ function inicializarSistemaMapa() {
 
 
     // La cartografía se agenda antes de los módulos secundarios para que
-    // un fallo de InfoMIRA, Logística o Dashboard no impida cargar los barrios.
+    // un fallo de InfoMIRA o Dashboard no impida cargar los barrios.
     window.MIRA_RECARGAR_POLIGONOS = cargarPoligonosTerritoriales;
     window.MIRA_TERRITORIO_DIAGNOSTICO = {
         estado: 'programado',
@@ -1909,13 +1909,11 @@ function inicializarSistemaMapa() {
     cargarPuestosEnMapa(); // muestra los puestos conocidos incluso sin la base de personas
     inicializarModuloInfoMIRA();
 
-    inicializarModuloLogistica();
     actualizarDashboardKPIs();
 
     // La base de electores no forma parte de esta distribución independiente.
     // Se mantiene vacía hasta conectar una fuente de datos autorizada.
     baseVotantes = [];
-    actualizarConteoLogistica();
 
     // Carga robusta de la cartografía territorial. El archivo contiene los
     // polígonos y coordenadas oficiales aportados; no se generan coordenadas
@@ -2797,176 +2795,6 @@ function inicializarSistemaMapa() {
         XLSX.utils.book_append_sheet(workbook, worksheet, "Votantes Puesto");
 
         XLSX.writeFile(workbook, `Reporte_Votantes_${puesto.nombre.replace(/\s+/g, '_')}.xlsx`);
-    }
-
-    const logisticaRouteLayer = L.layerGroup();
-    let directorioLogisticaCache = null;
-    let directorioLogisticaPromise = null;
-
-    function normalizarTelefonoLogistica(value) {
-        const digits = String(value || '').replace(/\D/g, '');
-        return digits.length === 10 && digits.startsWith('3') ? digits : '';
-    }
-    function botonesContactoLogistica(phone, name='contacto') {
-        const mobile = normalizarTelefonoLogistica(phone);
-        if (!mobile) return '<span class="mira-db-action-hint">Sin celular válido</span>';
-        const safeName = escapeHtml(name);
-        return '<div class="mira-db-actions">'+
-            '<a class="mira-db-wa" href="https://wa.me/57'+mobile+'" target="_blank" rel="noopener noreferrer">◉ WhatsApp</a>'+
-            '<a class="mira-db-export" href="tel:+57'+mobile+'" aria-label="Llamar a '+safeName+'">☎ Llamar</a>'+
-            '</div>';
-    }
-    async function obtenerDirectorioLogistica() {
-        if (directorioLogisticaCache) return directorioLogisticaCache;
-        if (directorioLogisticaPromise) return directorioLogisticaPromise;
-        directorioLogisticaPromise = (async () => {
-            const all = [];
-            for (let offset = 0; offset < 2000; offset += 100) {
-                const page = await window.MIRA_DATA.listInfoMiraDirectory({limit:100,offset});
-                all.push(...(page || []));
-                if (!page || page.length < 100) break;
-            }
-            directorioLogisticaCache = all;
-            return all;
-        })();
-        try { return await directorioLogisticaPromise; }
-        finally { directorioLogisticaPromise = null; }
-    }
-    function centroGeograficoBarrio(nombre) {
-        if (!datosOriginales?.features?.length || !nombre) return null;
-        const target = normalizarTexto(nombre);
-        const feature = datosOriginales.features.find(f => normalizarTexto(f.properties?.nombre || f.properties?.Barrio || '') === target);
-        if (!feature?.geometry) return null;
-        const rings = feature.geometry.type === 'Polygon' ? feature.geometry.coordinates :
-            feature.geometry.type === 'MultiPolygon' ? feature.geometry.coordinates.flat(1) : [];
-        const ring = rings[0];
-        if (!ring?.length) return null;
-        // Centroide de área para polígonos, con promedio de vértices como respaldo.
-        let area2=0, cx=0, cy=0;
-        for(let i=0;i<ring.length-1;i++){
-            const [x1,y1]=ring[i], [x2,y2]=ring[i+1], cross=x1*y2-x2*y1;
-            area2+=cross; cx+=(x1+x2)*cross; cy+=(y1+y2)*cross;
-        }
-        if(Math.abs(area2)>1e-12) return [cy/(3*area2),cx/(3*area2)];
-        const pts=ring.slice(0,-1);
-        return pts.length ? [pts.reduce((s,p)=>s+p[1],0)/pts.length,pts.reduce((s,p)=>s+p[0],0)/pts.length] : null;
-    }
-    function buscarPuestoLogistica(nombre) {
-        const target=normalizarTexto(nombre);
-        const exact=listaPuestosVotacion.find(p=>{
-            const n=normalizarTexto(p.nombre), m=normalizarTexto(p.matchName);
-            return target && (target===n || target===m || target.includes(n) || n.includes(target) || target.includes(m) || m.includes(target));
-        });
-        if(exact) return exact;
-        const tokens=target.split(/\s+/).filter(t=>t.length>3 && !['COLEGIO','ESCUELA','PUESTO','VOTACION','INSTITUTO','SEDE'].includes(t));
-        let best=null,score=0;
-        listaPuestosVotacion.forEach(p=>{
-            const candidate=normalizarTexto(p.nombre+' '+p.matchName).split(/\s+/);
-            const overlap=tokens.filter(t=>candidate.some(c=>c.includes(t)||t.includes(c))).length;
-            const ratio=overlap/Math.max(1,Math.min(tokens.length,candidate.length));
-            if(overlap>=2 && ratio>score){score=ratio;best=p;}
-        });
-        return score>=0.5?best:null;
-    }
-    async function dibujarRutaLogistica(origen,destino,grupo) {
-        if(!origen || !destino) return;
-        let points=[[origen[1],origen[0]],[destino.lon,destino.lat]];
-        let routed=false;
-        try {
-            const url='https://router.project-osrm.org/route/v1/driving/'+points.map(p=>p.join(',')).join(';')+'?overview=full&geometries=geojson';
-            const response=await fetch(url);
-            if(response.ok){
-                const payload=await response.json();
-                const coords=payload.routes?.[0]?.geometry?.coordinates;
-                if(coords?.length){points=coords;routed=true;}
-            }
-        } catch(error){ console.warn('[Logística] No fue posible consultar la ruta vial; se dibuja referencia directa.',error); }
-        const latlngs=points.map(p=>[p[1],p[0]]);
-        const line=L.polyline(latlngs,{color:routed?'#4f8cff':'#f0b45b',weight:4,opacity:.88,dashArray:routed?null:'8 8'});
-        line.bindTooltip((routed?'Ruta vial estimada · ':'Trayecto aproximado · ')+grupo,{sticky:true});
-        logisticaRouteLayer.addLayer(line);
-        L.circleMarker(origen,{radius:7,color:'#fff',weight:2,fillColor:'#2e5de6',fillOpacity:1}).bindTooltip('Origen aproximado · '+grupo).addTo(logisticaRouteLayer);
-        L.marker([destino.lat,destino.lon]).bindTooltip('Destino · '+destino.nombre+' · '+destino.direccion).addTo(logisticaRouteLayer);
-    }
-
-    function actualizarConteoLogistica() {}
-    function inicializarModuloLogistica() {
-        const btnLogistica=document.getElementById('logisticaBtn');
-        const selectLogistica=document.getElementById('logisticaSelect');
-        const dropdownLogistica=document.getElementById('dropdown-infomira');
-        if(!btnLogistica || !selectLogistica || !dropdownLogistica) return;
-        let box=document.getElementById('logisticaResultsContainer');
-        if(!box){box=document.createElement('div');box.id='logisticaResultsContainer';dropdownLogistica.querySelector('.dropdown-content')?.appendChild(box);}
-        if(!map.hasLayer(logisticaRouteLayer)) logisticaRouteLayer.addTo(map);
-        btnLogistica.addEventListener('click',async()=>{
-            const tipo=selectLogistica.value.toUpperCase();
-            btnLogistica.disabled=true;
-            box.innerHTML='<div class="mira-db-loading"><span></span> Consultando logística centralizada en Neon…</div>';
-            logisticaRouteLayer.clearLayers();
-            try{
-                if(!window.MIRA_DATA?.listInfoMiraDirectory) throw new Error('El cliente de Neon aún no está disponible.');
-                const all=await obtenerDirectorioLogistica();
-                const personOf=r=>Array.isArray(r.personas)?(r.personas[0]||null):(r.personas||null);
-                const getPhone=r=>personOf(r)?.telefono || r.telefono || '';
-                const getName=r=>[personOf(r)?.nombres,personOf(r)?.apellidos].filter(Boolean).join(' ') || r.nombre_original || 'Sin nombre';
-                const required=all.filter(r=>normalizarTexto(r.movilidad)==='REQUIERE');
-                const drivers=all.filter(r=>normalizarTexto(r.movilidad)==='PROPIO');
-                const shown=tipo==='TODOS'?all:tipo==='REQUIERE'?required:tipo==='PROPIO'?drivers:[];
-                const groups=new Map();
-                required.forEach(r=>{
-                    const barrio=r.barrio || 'BARRIO SIN REGISTRAR';
-                    const puestoName=r.puesto_votacion || r.puesto_original || '';
-                    const key=normalizarTexto(barrio)+'|'+normalizarTexto(puestoName);
-                    if(!groups.has(key)) groups.set(key,{barrio,puestoName,passengers:[]});
-                    groups.get(key).passengers.push(r);
-                });
-                const groupList=[...groups.values()];
-                const driversHtml=drivers.map(d=>'<article class="mira-db-person-card"><strong>'+escapeHtml(getName(d))+'</strong><div class="mira-db-action-hint">'+escapeHtml(d.barrio || 'Barrio sin registrar')+' · Vehículo propio</div>'+botonesContactoLogistica(getPhone(d),getName(d))+'</article>').join('');
-                const routeCards=groupList.map((g,i)=>{
-                    const place=buscarPuestoLogistica(g.puestoName);
-                    const origin=centroGeograficoBarrio(g.barrio);
-                    const passengerHtml=g.passengers.map(p=>'<div class="mira-db-field"><small>Pasajero · Mesa '+escapeHtml(p.mesa_votacion || 'S/N')+'</small><strong>'+escapeHtml(getName(p))+'</strong>'+botonesContactoLogistica(getPhone(p),getName(p))+'</div>').join('');
-                    const driverOptions=drivers.map(d=>'<option value="'+escapeHtml(d.id)+'">'+escapeHtml(getName(d))+' · '+escapeHtml(d.barrio || 'Sin barrio')+'</option>').join('');
-                    return '<article class="mira-db-person-card"><div class="mira-db-person-head"><div><small>RUTA '+(i+1)+'</small><h4>'+escapeHtml(g.barrio)+' → '+escapeHtml(g.puestoName || 'Puesto sin asignar')+'</h4></div><span class="mira-db-status">'+g.passengers.length+' pasajero(s)</span></div>'+
-                        '<div class="mira-db-action-hint">Origen: centro geográfico del barrio · Destino: '+escapeHtml(place?.direccion || 'Dirección no localizada en el catálogo')+'</div>'+
-                        '<label class="mira-db-action-hint">Seleccionar persona con vehículo propio (confirmar disponibilidad)<select class="mira-select" data-driver-route="'+i+'"><option value="">Seleccionar conductor…</option>'+driverOptions+'</select></label><div data-driver-contact="'+i+'"></div>'+passengerHtml+
-                        (place&&origin?'<div class="mira-db-action-hint" data-route-state="'+i+'">Preparando trazado vial…</div>':'<div class="mira-db-action-hint">No se puede trazar: '+(!origin?'falta polígono del barrio. ':'')+(!place?'puesto sin coordenadas verificadas.':'')+'</div>')+
-                        '</article>';
-                }).join('');
-                box.innerHTML='<section class="mira-db-results"><header class="mira-db-results-heading"><div><small>OPERACIÓN DÍA D · DATOS NEON</small><strong>🚐 Logística y Transporte</strong></div><span class="mira-db-count">'+shown.length+' registro(s)</span></header>'+
-                    '<div class="mira-db-action-hint">Requieren transporte: <b>'+required.length+'</b> · Vehículo propio: <b>'+drivers.length+'</b> · Rutas agrupadas: <b>'+groupList.length+'</b></div>'+
-                    (tipo==='REQUIERE'||tipo==='TODOS'?routeCards:'')+
-                    (tipo==='PROPIO'||tipo==='TODOS'?'<h4>Personas con vehículo propio (posibles conductores)</h4>'+driversHtml:'')+
-                    '<button id="downloadExcelLogisticaBtn" class="mira-db-export" type="button">↧ Exportar reporte logístico</button>'+
-                    '<p class="mira-db-action-hint">Los conductores se consideran disponibles para cualquier ruta. La asignación operativa debe confirmarse con cada conductor; aún no se guarda una asignación en la base de datos.</p></section>';
-                box.querySelectorAll('[data-driver-route]').forEach(select=>{
-                    select.addEventListener('change',()=>{
-                        const driver=drivers.find(d=>String(d.id)===select.value);
-                        const target=box.querySelector('[data-driver-contact="'+select.dataset.driverRoute+'"]');
-                        if(target) target.innerHTML=driver?'<div class="mira-db-action-hint">Conductor seleccionado: '+escapeHtml(getName(driver))+'</div>'+botonesContactoLogistica(getPhone(driver),getName(driver)):'';
-                    });
-                });
-                groupList.forEach(async(g,i)=>{
-                    const place=buscarPuestoLogistica(g.puestoName), origin=centroGeograficoBarrio(g.barrio);
-                    if(place&&origin){
-                        const state=box.querySelector('[data-route-state="'+i+'"]');
-                        await dibujarRutaLogistica(origin,place,g.barrio+' → '+g.puestoName);
-                        if(state) state.textContent='Ruta dibujada desde el centro geográfico del barrio hasta '+place.direccion+'.';
-                    }
-                });
-                const dl=document.getElementById('downloadExcelLogisticaBtn');
-                dl?.addEventListener('click',()=>{
-                    const rows=shown.map((r,i)=>({Numero:i+1,Nombre:getName(r),Documento:r.personas?.cedula || r.cedula_original || '',Telefono:getPhone(r),Barrio:r.barrio || '',Movilidad:r.movilidad || '',Puesto:r.puesto_votacion || r.puesto_original || '',DireccionPuesto:buscarPuestoLogistica(r.puesto_votacion || r.puesto_original || '')?.direccion || '',Mesa:r.mesa_votacion || ''}));
-                    const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),'Logistica');
-                    XLSX.writeFile(wb,'Reporte_Logistica_Dia_D.xlsx');
-                });
-                if(groupList.length){
-                    const pts=groupList.map(g=>({g,origin:centroGeograficoBarrio(g.barrio),place:buscarPuestoLogistica(g.puestoName)})).filter(x=>x.origin&&x.place);
-                    if(pts.length) map.fitBounds(L.latLngBounds(pts.flatMap(x=>[x.origin,[x.place.lat,x.place.lon]])),{padding:[55,55],maxZoom:14});
-                }
-            }catch(error){box.innerHTML='<div class="mira-db-empty">No fue posible cargar logística: '+escapeHtml(error.message)+'</div>';}
-            finally{btnLogistica.disabled=false;}
-        });
     }
 
     function inicializarModuloTestigosPMU() {
