@@ -27,6 +27,7 @@
     <!-- BOTONES GLOBALES DE HEADER LANDING (TEMA + IDIOMA) -->
     <div class="top-header-controls" id="landingHeaderControls">
         <button id="landingLoginBtn" class="landing-login-btn" type="button">Ingresar <span aria-hidden="true">↗</span></button>
+        <a id="landingRegisterBtn" class="landing-login-btn" href="registro-usuario.html">Crear cuenta <span aria-hidden="true">↗</span></a>
     </div>
 
 
@@ -63,6 +64,10 @@
                     <div class="card-arrow-badge">↗</div><div class="card-icon-glow">💬</div>
                     <div class="card-text-block"><h3>PQRS</h3><p>Envía peticiones, quejas, reclamos y sugerencias sobre los módulos.</p></div>
                 </div>
+                <a class="hero-module-card" id="btnSelectActividadesPublic" href="actividad.html" aria-label="Registro de actividades" style="text-decoration:none;color:inherit">
+                    <div class="card-arrow-badge">↗</div><div class="card-icon-glow">📋</div>
+                    <div class="card-text-block"><h3>Registro de actividades</h3><p>Acceso del personal autorizado para registrar participantes.</p></div>
+                </a>
                 <!-- Capa modal de acceso: desenfoca toda la portada sin reemplazarla -->
                 <div id="adminLoginBackdrop" class="admin-login-backdrop hidden" aria-hidden="true"></div>
 
@@ -786,7 +791,7 @@
     </section>
     <script type="module" src="mira-data.js?v=20261123-readonly-inactive-2"></script>
     <script type="module" src="mira-auth.js?v=20261117-common-map-access-1"></script>
-    <script src="app.js?v=20261123-logistics-removed-inactive-2"></script>
+    <script src="app.js?v=20261123-activities-enabled-1"></script>
     <script src="mapa-3d.js?v=20261114-terrain-engine-1"></script>
     <script type="module" src="mira-admin.js?v=20261123-infomira-readonly-1"></script>
     <script type="module" src="reportes.js?v=20261114-role-aware-3"></script>
