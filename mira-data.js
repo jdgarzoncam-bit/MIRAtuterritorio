@@ -43,9 +43,21 @@ async function miraRequest(table, {method="GET", query="", body, anonymous=false
   if (method !== "GET") headers.set("Content-Profile", "mira");
   if (body !== undefined) headers.set("Content-Type", "application/json");
   if (method !== "GET") headers.set("Prefer", prefer || "return=representation");
-  const response = await fetch(`${MIRA_DATA_API_URL}/${table}${query ? `?${query}` : ""}`, {
-    method, headers, body: body === undefined ? undefined : JSON.stringify(body), cache: "no-store"
-  });
+  let response;
+  const controller = new AbortController();
+  const requestTimer = window.setTimeout(() => controller.abort(), 15000);
+  try {
+    response = await fetch(`${MIRA_DATA_API_URL}/${table}${query ? `?${query}` : ""}`, {
+      method, headers, body: body === undefined ? undefined : JSON.stringify(body),
+      cache: "no-store", signal: controller.signal
+    });
+  } catch (error) {
+    if(error?.name==="AbortError") throw new Error("La conexión con Neon tardó demasiado. Comprueba tu conexión e inténtalo nuevamente.");
+    if(error instanceof TypeError) throw new Error("No fue posible conectar con Neon Data API. Verifica la conexión e inténtalo nuevamente.");
+    throw error;
+  } finally {
+    window.clearTimeout(requestTimer);
+  }
   const text = await response.text();
   let data = null;
   try { data = text ? JSON.parse(text) : null; } catch { data = text; }
