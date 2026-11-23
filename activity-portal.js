@@ -1,4 +1,15 @@
+import { createInternalNeonAuth } from "https://esm.sh/@neondatabase/auth@0.7.0-beta";
 import { MIRA_DATA } from "./mira-data.js?v=20261123-public-participant-panel-2";
+
+// Este formulario es público: inicializa su propio cliente Neon Auth anónimo.
+// No depende de que el usuario abra la plataforma interna ni tenga una sesión.
+const PUBLIC_AUTH_URL = "https://ep-mute-grass-b7qan4n6.neonauth.c-13.us-east-1.aws.neon.tech/neondb/auth";
+const publicNeonAuth = createInternalNeonAuth(PUBLIC_AUTH_URL,{allowAnonymous:true});
+const publicAuthAdapter = publicNeonAuth.adapter;
+window.MIRA_AUTH = {
+  getJWTToken: () => publicNeonAuth.getJWTToken(),
+  getAnonymousToken: (...args) => publicAuthAdapter.getAnonymousToken(...args)
+};
 
 const $ = id => document.getElementById(id);
 const cleanCedula = value => String(value || "").replace(/\D/g, "");
