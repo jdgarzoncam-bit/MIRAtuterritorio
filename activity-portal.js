@@ -1,172 +1,89 @@
 import { createInternalNeonAuth } from "https://esm.sh/@neondatabase/auth@0.7.0-beta";
-import { MIRA_DATA } from "./mira-data.js?v=20261123-activities-enabled-1";
+import { MIRA_DATA } from "./mira-data.js?v=20261123-public-activities-1";
 
 const AUTH_URL = "https://ep-mute-grass-b7qan4n6.neonauth.c-13.us-east-1.aws.neon.tech/neondb/auth";
-const DATA_API_URL = "https://ep-mute-grass-b7qan4n6.apirest.c-13.us-east-1.aws.neon.tech/neondb/rest/v1";
-const PRIMARY_ADMIN_AUTH_ID = "beef5bf3-82a8-4c35-a12c-17771be59da1";
 const neonAuth = createInternalNeonAuth(AUTH_URL,{allowAnonymous:true});
 const auth = neonAuth.adapter;
 window.MIRA_AUTH = {
   getJWTToken: () => neonAuth.getJWTToken(),
   getAnonymousToken: (...args) => auth.getAnonymousToken(...args)
 };
-const $ = (id) => document.getElementById(id);
+const $ = id => document.getElementById(id);
 const cleanCedula = value => String(value || "").replace(/\D/g, "");
-const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-let currentUser = null;
-let activities = [];
 let busy = false;
+let activities = [];
 
-function status(message, error = false) {
+function status(message, kind = "success") {
   const node = $("pubStatus");
   node.textContent = message;
+  node.dataset.kind = kind;
   node.style.display = "block";
-  node.style.background = error ? "#b4231820" : "#1bbe8920";
-  node.style.borderColor = error ? "#ef444470" : "#1bbe8970";
-  node.style.color = error ? "#ffb4ae" : "#8ff0cb";
 }
-function showAuthenticated(show) {
-  $("activityLogin").hidden = show;
-  $("activityWorkspace").hidden = !show;
-  $("activityIdentity").textContent = show ? (currentUser?.displayName || currentUser?.email || "Personal autorizado") : "";
-}
-async function token() {
-  const value = await neonAuth.getJWTToken();
-  if (typeof value !== "string" || !value.trim()) throw new Error("La sesión no es válida. Inicia sesión nuevamente.");
-  return value;
-}
-async function validateSession(user) {
-  if (!user?.id || user.emailVerified !== true) throw new Error("La cuenta debe tener el correo confirmado.");
-  const jwt = await token();
-  const response = await fetch(`${DATA_API_URL}/user_profiles?select=auth_user_id,role,active,email_verified,email,display_name&auth_user_id=eq.${encodeURIComponent(user.id)}&limit=1`, {
-    headers: { Authorization: `Bearer ${jwt}`, "Accept-Profile": "mira" }
-  });
-  if (!response.ok) throw new Error("No fue posible validar el perfil institucional.");
-  const rows = await response.json();
-  const profile = rows?.[0];
-  if (!profile || profile.auth_user_id !== user.id || profile.active !== true || profile.email_verified !== true || !["admin","operator","viewer"].includes(profile.role) || (profile.role === "admin" && profile.auth_user_id !== PRIMARY_ADMIN_AUTH_ID)) {
-    throw new Error("La cuenta no está activa o no ha sido autorizada por el administrador.");
-  }
-  if (profile.role !== "admin" || profile.auth_user_id !== PRIMARY_ADMIN_AUTH_ID) {
-    if (profile.role !== "operator") throw new Error("El portal de registro requiere el rol Operador y permisos de Consulta y Creación en Actividades.");
-    const permissionsResponse = await fetch(`${DATA_API_URL}/module_permissions?select=module_key,action_key,allowed&limit=500`, {
-      headers: { Authorization: `Bearer ${jwt}`, "Accept-Profile": "mira" }
-    });
-    if (!permissionsResponse.ok) throw new Error("No fue posible comprobar los permisos. El acceso permanece bloqueado.");
-    const permissions = await permissionsResponse.json();
-    const allowed = (action) => permissions.some(p => p.module_key === "actividades" && p.action_key === action && p.allowed === true);
-    if (!allowed("view") || !allowed("create")) throw new Error("Tu cuenta necesita permisos de consulta y registro en el módulo Actividades.");
-  }
-  currentUser = { id: user.id, role: profile.role, email: profile.email || user.email, displayName: profile.display_name || user.name || profile.email };
-  showAuthenticated(true);
-  await refreshActivities();
+function setAvailable(enabled) {
+  $("pubSubmit").disabled = !enabled || busy;
+  $("pubActivity").disabled = !enabled;
 }
 async function refreshActivities() {
-  activities = await MIRA_DATA.listActivities({limit:100});
+  const rows = await MIRA_DATA.listPublicActivityOptions();
+  activities = Array.isArray(rows) ? rows : [];
   const select = $("pubActivity");
-  const previous = select.value;
-  select.innerHTML = '<option value="">Seleccionar actividad…</option>' + activities
-    .filter(a => a.estado === "activa")
-    .sort((a,b) => String(b.fecha).localeCompare(String(a.fecha)))
-    .map(a => `<option value="${escapeHtml(a.id)}">${escapeHtml(a.nombre)} · ${escapeHtml(String(a.fecha).slice(0,10))}${a.estado === "activa" ? " · En curso" : ""}</option>`).join("");
-  if (activities.some(a => a.id === previous)) select.value = previous;
-}
-async function login(event) {
-  event.preventDefault();
-  if (busy) return;
-  busy = true;
-  $("activityLoginBtn").disabled = true;
-  try {
-    const email = $("activityEmail").value.trim();
-    const password = $("activityPassword").value;
-    const result = await auth.signIn.email({email,password});
-    if (result?.error) throw new Error("No fue posible iniciar sesión. Verifica tus credenciales y el estado de tu cuenta.");
-    await validateSession(result?.data?.user);
-    $("activityPassword").value = "";
-    $("activityLoginError").textContent = "";
-  } catch (error) {
-    currentUser = null;
-    showAuthenticated(false);
-    try { await auth.signOut(); } catch {}
-    $("activityLoginError").textContent = error.message || "Acceso no autorizado.";
-  } finally {
-    busy = false;
-    $("activityLoginBtn").disabled = false;
+  select.innerHTML = '<option value="">Selecciona una actividad</option>' + activities.map(a =>
+    `<option value="${String(a.activity_id)}">${String(a.activity_name)} · ${String(a.activity_date).slice(0,10)}${a.activity_place ? " · " + String(a.activity_place) : ""}</option>`
+  ).join("");
+  if (!activities.length) {
+    $("activityAvailability").textContent = "En este momento no hay actividades abiertas para inscripción. Vuelve a consultar más tarde.";
+    setAvailable(false);
+    return;
   }
+  $("activityAvailability").textContent = activities.length === 1
+    ? "Hay una actividad disponible para inscripción."
+    : `Hay ${activities.length} actividades disponibles. Selecciona en cuál deseas participar.`;
+  setAvailable(true);
 }
-async function restoreSession() {
-  try {
-    const result = await auth.getSession();
-    if (result?.error) throw result.error;
-    const data = result?.data;
-    const user = data?.user || data?.session?.user || null;
-    if (user) await validateSession(user);
-    else showAuthenticated(false);
-  } catch (error) {
-    currentUser = null;
-    showAuthenticated(false);
-    try { await auth.signOut(); } catch {}
-    $("activityLoginError").textContent = error.message || "Inicia sesión para continuar.";
-  }
-}
-$("activityLoginForm").addEventListener("submit", login);
-$("activityLogoutBtn").addEventListener("click", async () => {
-  try { await auth.signOut(); } finally { currentUser = null; showAuthenticated(false); $("activityLoginError").textContent = "Sesión cerrada."; }
-});
-$("pubLookup").addEventListener("click", async () => {
-  try {
-    const id = cleanCedula($("pubCedula").value);
-    if (!id) return status("Escribe una cédula para buscar.", true);
-    const rows = await MIRA_DATA.listPeople({cedula:id,limit:2});
-    const person = rows?.[0];
-    if (!person) return status("No existe ficha previa. Completa los datos para crearla.");
-    $("pubNames").value = person.nombres || "";
-    $("pubSurnames").value = person.apellidos || "";
-    $("pubPhone").value = person.telefono || "";
-    $("pubInfo").value = person.info_mira === true ? "si" : person.info_mira === false ? "no" : "";
-    status("Ficha encontrada en la base central. Datos cargados.");
-  } catch (error) { status(error.message || "No fue posible consultar la ficha.", true); }
-});
 $("publicActivityForm").addEventListener("submit", async event => {
   event.preventDefault();
   if (busy) return;
+  const cedula = cleanCedula($("pubCedula").value);
+  const nombres = $("pubNames").value.trim();
+  const apellidos = $("pubSurnames").value.trim();
+  const actividad_id = $("pubActivity").value;
+  if (cedula.length < 5 || cedula.length > 15) return status("Verifica el número de cédula. Debe contener entre 5 y 15 dígitos.", "error");
+  if (nombres.length < 2 || apellidos.length < 2) return status("Escribe tus nombres y apellidos completos.", "error");
+  if (!actividad_id || !activities.some(a => String(a.activity_id) === actividad_id)) return status("Selecciona una actividad que esté abierta para inscripción.", "error");
+  if (!$("pubConsent").checked) return status("Debes aceptar el tratamiento de datos para continuar.", "error");
   busy = true;
-  const submit = $("pubSubmit");
-  submit.disabled = true;
+  setAvailable(false);
+  status("Guardando tu inscripción…");
   try {
-    if (!currentUser) throw new Error("La sesión expiró. Inicia sesión nuevamente.");
-    const cedula = cleanCedula($("pubCedula").value);
-    const firstNames = $("pubNames").value.trim();
-    const apellidos = $("pubSurnames").value.trim();
-    const actividad_id = $("pubActivity").value;
-    const info_mira = $("pubInfo").value === "si";
-    if (!cedula || !firstNames || !apellidos || !actividad_id || !$("pubInfo").value) throw new Error("Completa los campos obligatorios.");
-    if (!activities.some(a => a.id === actividad_id && a.estado !== "cancelada")) throw new Error("La actividad ya no está disponible. Actualiza la página.");
-    let matches = await MIRA_DATA.listPeople({cedula,limit:2});
-    let person = matches?.[0];
-    if (matches?.length > 1) throw new Error("Hay más de una ficha con esa cédula. Se requiere revisión administrativa; no se registró la asistencia.");
-    const personData = {cedula,nombres:firstNames,apellidos,telefono:$("pubPhone").value.trim() || null,info_mira};
-    if (!person) {
-      status("Guardando ficha de la persona en Neon…");
-      const created = await MIRA_DATA.createPerson(personData);
-      person = created?.[0];
-      if (!person?.id) {
-        const confirmed = await MIRA_DATA.listPeople({cedula,limit:2});
-        if (confirmed?.length !== 1) throw new Error("La ficha no fue confirmada en la base central.");
-        person = confirmed[0];
-      }
+    const result = await MIRA_DATA.registerPublicActivityParticipant({
+      cedula, nombres, apellidos,
+      telefono: $("pubPhone").value.trim() || null,
+      actividad_id, consentimiento: true
+    });
+    if (result?.status === "duplicate") {
+      status(result.message || "Esta cédula ya tiene asistencia registrada en la actividad seleccionada.", "error");
+      return;
     }
-    try {
-      status("Ficha validada. Guardando asistencia en Neon…");
-      await MIRA_DATA.createAttendance({persona_id:person.id,actividad_id,registrado_por:currentUser.id});
-    } catch (error) {
-      if (/duplicate|unique|asistencias_unicas|409/i.test(error.message || "")) throw new Error("Esta persona ya tiene asistencia registrada en esta actividad; no se duplicó.");
-      throw error;
-    }
-    status("Asistencia guardada y confirmada en la base central.");
+    if (result?.status !== "ok") throw new Error(result?.message || "No se pudo confirmar la inscripción.");
     $("publicActivityForm").reset();
-    await refreshActivities();
-  } catch (error) { status("No fue posible guardar el registro: " + (error.message || "Error desconocido."), true); }
-  finally { busy = false; submit.disabled = false; }
+    status("¡Inscripción registrada correctamente! Tu participación quedó guardada.");
+  } catch (error) {
+    status(error.message || "No fue posible guardar la inscripción. Inténtalo nuevamente.", "error");
+  } finally {
+    busy = false;
+    setAvailable(activities.length > 0);
+  }
 });
-restoreSession();
+$("publicActivityForm").addEventListener("reset", () => {
+  setTimeout(() => {
+    $("pubStatus").style.display = "none";
+    $("pubStatus").textContent = "";
+  }, 0);
+});
+try {
+  await refreshActivities();
+} catch (error) {
+  $("activityAvailability").textContent = "No fue posible consultar las actividades. Actualiza la página o inténtalo más tarde.";
+  setAvailable(false);
+  status(error.message || "Error de conexión con el servicio de registro.", "error");
+}
