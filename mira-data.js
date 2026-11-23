@@ -74,6 +74,20 @@ export const MIRA_DATA = {
   },
   updatePerson(id,payload) { const {cedula_normalizada, ...personData} = payload; const cedula=personData.cedula===undefined?undefined:cleanCedula(personData.cedula); return miraRequest("personas",{method:"PATCH",query:qs({id:`eq.${id}`}),body:{...personData,...(cedula!==undefined?{cedula}:{})}}); },
   archivePerson(id) { return this.updatePerson(id,{activo:false}); },
+  async listPublicActivityOptions() {
+    return miraRequest("rpc/public_list_active_activities",{method:"POST",body:{},anonymous:true});
+  },
+  registerPublicActivityParticipant({cedula,nombres,apellidos,telefono=null,actividad_id,consentimiento=false}) {
+    const normalized=cleanCedula(cedula);
+    if(normalized.length<5||normalized.length>15) throw new Error("La cédula debe contener entre 5 y 15 dígitos.");
+    if(!nombres?.trim()||!apellidos?.trim()||!actividad_id||consentimiento!==true) throw new Error("Completa los datos obligatorios y acepta el tratamiento de datos.");
+    return miraRequest("rpc/public_register_activity_participant",{
+      method:"POST",anonymous:true,body:{
+        p_cedula:normalized,p_nombres:nombres.trim(),p_apellidos:apellidos.trim(),
+        p_telefono:telefono,p_actividad_id:actividad_id,p_consentimiento:true
+      }
+    });
+  },
   async listActivities({limit=100}={}) {
     return miraRequest("actividades",{query:qs({select:"*",order:"fecha.desc",limit:String(Math.min(Math.max(limit,1),100))})});
   },
