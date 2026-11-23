@@ -414,4 +414,7 @@ test("the Logistics module and its routing integration are absent from the QA in
   assert.doesNotMatch(appSource, /inicializarModuloLogistica|logisticaRouteLayer|obtenerDirectorioLogistica/);
   assert.doesNotMatch(mobileSource, /dropdown-logistica/);
   assert.doesNotMatch(indexSource, /infomiraMobilityFilters|logisticaBtn|logisticaSelect/);
+  assert.doesNotMatch(indexSource, /concejalPersonTransport|Requiere transporte/);
+  assert.doesNotMatch(appSource, /requiere_transporte|row\\.movilidad/);
+  assert.doesNotMatch(dataSource, /requiere_transporte|movilidad,"Movilidad"/);
 });
