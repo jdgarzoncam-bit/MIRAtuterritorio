@@ -71,13 +71,39 @@ body.theme-dark{display:block!important;width:100%!important;min-width:320px!imp
 @media(prefers-reduced-motion:reduce){
  .activity-public-card,.activity-public-form *{scroll-behavior:auto!important;transition:none!important;animation:none!important}
 }
+
+.activity-pin-gate{max-width:520px;margin:30px auto;padding:clamp(20px,4vw,32px);border:1px solid rgba(36,217,238,.55);border-radius:18px;background:linear-gradient(145deg,#14263e,#0b1830);box-shadow:0 18px 50px #0005}
+.activity-pin-gate h2{font-size:clamp(23px,4vw,30px);margin:14px 0 8px;color:#f4f8ff}
+.activity-pin-gate p{color:#b2c3d7;line-height:1.55;margin:0 0 18px}
+.activity-pin-gate label{display:block;color:#8ccfff;font-size:13px;font-weight:800;margin-bottom:7px}
+.activity-pin-gate input{width:100%;box-sizing:border-box;min-height:52px;border:1px solid #0878a7;border-radius:10px;background:#061124;color:white;padding:12px 15px;font-size:20px;letter-spacing:.24em;text-align:center}
+.activity-pin-gate button,.activity-public-lock{width:100%;min-height:48px;margin-top:12px;border:1px solid #24d9ee;border-radius:10px;background:linear-gradient(110deg,#087fc7,#2455df);color:white;font-weight:800;cursor:pointer}
+.activity-public-lock{width:auto;padding:9px 14px;margin:0 0 16px;background:#10243b}
+.activity-person-details{border:1px solid #31516b;border-radius:12px;background:#0c1b30;padding:15px}
+.activity-person-details h3{margin:0 0 12px;color:#dcecff}
+.activity-person-details-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.activity-person-details-grid div{min-width:0;display:grid;gap:4px}
+.activity-person-details-grid span{font-size:11px;color:#8ccfff}
+.activity-person-details-grid strong{font-size:13px;color:#f4f8ff;overflow-wrap:anywhere}
+@media(max-width:480px){.activity-pin-gate{margin:16px 0;padding:18px}.activity-person-details-grid{grid-template-columns:minmax(0,1fr)}}
 </style>
 </head>
 <body class="theme-dark">
 <main class="activity-public-shell"><section class="activity-public-card">
 <header class="activity-public-head"><div><span class="activity-public-pill">REGISTRO DE PARTICIPACIÓN</span><h1>Registrar participante</h1><p>Busca la ficha por cédula o completa los datos para registrar la asistencia. No necesitas iniciar sesión ni autorización de un administrador.</p></div><a class="activity-public-back" href="index.html">← Volver al inicio</a></header>
-<div id="activityAvailability" class="activity-public-note" role="status">Consultando actividades disponibles…</div>
-<form id="publicActivityForm" class="activity-public-form" autocomplete="on" novalidate>
+<section id="pubGate" class="activity-pin-gate" aria-labelledby="pubPinTitle">
+  <span class="activity-public-pill">ACCESO AUTORIZADO</span>
+  <h2 id="pubPinTitle">Ingresa tu código de acceso</h2>
+  <p>Introduce el PIN del equipo autorizado para habilitar la búsqueda y el registro de participantes.</p>
+  <label for="pubPin">Código PIN</label>
+  <input id="pubPin" type="password" inputmode="numeric" autocomplete="one-time-code" maxlength="10" pattern="[0-9]{10}" placeholder="Ingresa los 10 dígitos">
+  <button id="pubPinSubmit" type="button">Desbloquear módulo</button>
+  <div id="pubPinStatus" class="activity-public-status" role="status" aria-live="polite"></div>
+</section>
+<button id="pubLock" class="activity-public-lock" type="button" hidden>Bloquear módulo</button>
+<div id="pubFormArea" hidden>
+<div id="activityAvailability" class="activity-public-note" role="status" hidden>Consultando actividades disponibles…</div>
+<form id="publicActivityForm" hidden class="activity-public-form" autocomplete="on" novalidate>
 <label>Cédula<input id="pubCedula" inputmode="numeric" autocomplete="off" maxlength="20" required placeholder="Número de documento"></label>
 <label class="activity-public-lookup"><button id="pubLookup" type="button">⌕ Buscar ficha</button></label>
 <label>Nombres<input id="pubNames" autocomplete="given-name" maxlength="120" required placeholder="Nombres"></label>
@@ -87,10 +113,23 @@ body.theme-dark{display:block!important;width:100%!important;min-width:320px!imp
 <label>InfoMIRA<select id="pubInfoMira" required><option value="">Seleccionar Sí / No</option><option value="si">Sí</option><option value="no">No</option></select></label>
 <label>Tipo de participante<select id="pubType" required><option value="">Seleccionar tipo</option><option value="externo">Externo</option><option value="interno">Interno</option></select></label>
 <label class="activity-public-consent full"><input id="pubConsent" type="checkbox" required><span>Autorizo el tratamiento de mis datos personales para gestionar mi inscripción y participación en la actividad seleccionada.</span></label>
+<section id="pubPersonDetails" class="activity-person-details full" hidden>
+  <h3>Datos recuperados de la ficha</h3>
+  <div class="activity-person-details-grid">
+    <div><span>Correo electrónico</span><strong id="pubEmailValue">—</strong></div>
+    <div><span>Barrio</span><strong id="pubBarrioValue">—</strong></div>
+    <div><span>Puesto de votación</span><strong id="pubPollingPlaceValue">—</strong></div>
+    <div><span>Mesa</span><strong id="pubPollingTableValue">—</strong></div>
+    <div><span>Edad</span><strong id="pubAgeValue">—</strong></div>
+    <div><span>Requiere transporte</span><strong id="pubTransportValue">—</strong></div>
+    <div><span>Estado de la ficha</span><strong id="pubStateValue">—</strong></div>
+  </div>
+</section>
 <div class="full activity-public-actions"><button id="pubSubmit" type="submit" disabled>Guardar asistencia</button><button type="reset" class="secondary">Limpiar</button></div>
 </form>
+</div>
 <div id="pubStatus" class="activity-public-status" role="status" aria-live="polite"></div>
 <p class="activity-public-note">El registro se guarda de forma centralizada en Neon. Si la cédula ya tiene una ficha, el sistema evita crear una persona duplicada. Por seguridad, el formulario no expone datos personales almacenados.</p>
 </section></main>
-<script type="module" src="activity-portal.js?v=20261123-stabilization-diagnostics-6"></script>
+<script type="module" src="activity-portal.js?v=20261123-participant-pin-1"></script>
 </body></html>
