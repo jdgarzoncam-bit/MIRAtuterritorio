@@ -15,7 +15,7 @@ Este ciclo consolida correcciones de InfoMIRA, estado de Personas y retiro de Lo
 1. InfoMIRA: matriz administrativa limitada a `view`; retiradas las políticas RLS de INSERT, UPDATE y DELETE; privilegios de `authenticated` limitados a SELECT; permisos secundarios residuales retirados; la función de autorización deniega toda acción de InfoMIRA distinta de `view`.
 2. Personas: 95 registros que estaban marcados como inactivos por al menos uno de los dos indicadores quedaron normalizados como `activo=false, inactivo=true`. Se añadieron un trigger de sincronización y una restricción CHECK para impedir contradicciones futuras.
 3. Interfaz de Personas: filtro y etiquetas usan “Inactivos”; marcar inactiva y activar actualizan ambos indicadores.
-4. Logística: retirado el panel de rutas y asignación de conductores de InfoMIRA, sus funciones de trazado y exportación logística y su tarjeta en navegación móvil.
+4. Logística: retirado el panel de rutas y asignación de conductores de InfoMIRA, sus funciones de trazado y exportación, la tarjeta móvil y los campos operativos de transporte de los formularios de Personas/Concejal y del contrato de consulta de InfoMIRA. Los valores históricos en PostgreSQL se conservan sin exponerlos como flujo operativo.
 5. Cache: actualizadas las versiones de los scripts modificados en `index.html`.
 
 ## Matriz de pruebas funcionales
