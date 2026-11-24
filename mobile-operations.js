@@ -1,7 +1,9 @@
 /* MIRA TU TERRITORIO — navegación móvil estable y recuperación de módulos. */
 (()=> {
  const MQ='(max-width:600px)';
- let mobileLoginRequested=false;
+ let mobileLoginRequested=window.MIRA_MOBILE_LOGIN_REQUESTED===true;
+  window.MIRA_MOBILE_LOGIN_REQUESTED=mobileLoginRequested;
+  const loginRequested=()=>window.MIRA_MOBILE_LOGIN_REQUESTED===true;
  const cards=[
   {id:'dropdown-infomira',icon:'💙',title:'InfoMIRA',desc:'Red de cuidadores y líderes',tone:'blue',mapPanel:true},
   {id:'dropdown-testigos',icon:'🗳️',title:'Auditoría de testigos',desc:'Actas y evidencias E-14',tone:'violet'},
@@ -178,17 +180,18 @@
    document.getElementById('landing-hero-overlay')?.style.setProperty('display','flex');
    document.getElementById('landingHeaderControls')?.style.setProperty('display','flex');
   };
-  document.getElementById('landingLoginBtn')?.addEventListener('click',()=>{if(mobile())mobileLoginRequested=true;});
+  document.getElementById('landingLoginBtn')?.addEventListener('click',()=>{if(mobile()){mobileLoginRequested=true;window.MIRA_MOBILE_LOGIN_REQUESTED=true;}});
+   document.getElementById('cancelAdminInlineBtn')?.addEventListener('click',()=>{if(mobile()&&!window.MIRA_CURRENT_USER){mobileLoginRequested=false;window.MIRA_MOBILE_LOGIN_REQUESTED=false;}});
   window.addEventListener('mira:authenticated',()=>requestAnimationFrame(()=>{
-   if(mobile()&&!mobileLoginRequested){restorePublicLanding();return;}
+   if(mobile()&&!loginRequested()){restorePublicLanding();return;}
    showOperationsHome();
   }));
-  window.addEventListener('mira:signed-out',restorePublicLanding);
+  window.addEventListener('mira:signed-out',()=>{mobileLoginRequested=false;window.MIRA_MOBILE_LOGIN_REQUESTED=false;restorePublicLanding();});
   window.addEventListener('pageshow',()=>{
    if(!mobile())return;
    // Una sesión restaurada no debe saltarse la portada pública ni abrir el PMU automáticamente.
    // El Centro de Operaciones solo aparece después de que el usuario pulse Ingresar.
-   if(!mobileLoginRequested){restorePublicLanding();return;}
+   if(!loginRequested()){restorePublicLanding();return;}
    if(window.MIRA_CURRENT_USER&&document.body.classList.contains('pmu-neomorphic')){
     if(!app.classList.contains('mobile-operations-module-active')&&!app.classList.contains('mobile-operations-map-active')&&!app.classList.contains('mobile-operations-map-panel-active')&&!app.classList.contains('mobile-operations-workspace-active'))showOperationsHome();
    }else restorePublicLanding();
@@ -212,7 +215,7 @@
    },0);
   },true);
   const viewport=()=>{if(mobile()){
-   if(!mobileLoginRequested||!window.MIRA_CURRENT_USER||!document.body.classList.contains('pmu-neomorphic')){restorePublicLanding();return;}
+   if(!loginRequested()||!window.MIRA_CURRENT_USER||!document.body.classList.contains('pmu-neomorphic')){restorePublicLanding();return;}
    if(userExitedOperations)return;
    if(!app.classList.contains('mobile-operations-module-active')&&!app.classList.contains('mobile-operations-map-active')&&!app.classList.contains('mobile-operations-map-panel-active')&&!app.classList.contains('mobile-operations-workspace-active')&&!app.classList.contains('mobile-operations-home-active'))showOperationsHome();
   }else{userExitedOperations=false;document.body.classList.remove('mira-mobile-public-landing');app.classList.remove('mobile-operations-home-active','mobile-operations-module-active','mobile-operations-map-active','mobile-operations-map-panel-active','mobile-operations-workspace-active');home.hidden=true;sidebar.hidden=false;back.classList.remove('is-visible');historyStateActive=false;resetDropdowns()}};
