@@ -1,6 +1,7 @@
 import { MIRA_DATA } from "./mira-data.js?v=20261124-mobile-final-4";
 
 const TOKEN_KEY = "miraParticipantAccessToken";
+const TOKEN_EXPIRY_KEY = "miraParticipantAccessTokenExpiresAt";
 const PIN_SALT_HEX = "29a690124de6919817cc26c444b99359";
 const PIN_ITERATIONS = 310000;
 
@@ -18,7 +19,7 @@ const lockButton = $("miraQuickModulesLockBtn");
 if (!menu || !toggle || !panel || !pinGate || !pinInput || !pinSubmit || !registerButton || !lockButton) {
   console.warn("[MIRA módulos] No se encontró la estructura completa del menú.");
 } else {
-  let authorized = Boolean(sessionStorage.getItem(TOKEN_KEY));
+  let authorized = Boolean(sessionStorage.getItem(TOKEN_KEY) && Number(sessionStorage.getItem(TOKEN_EXPIRY_KEY)) > Date.now());
   let verifying = false;
 
   function setStatus(message, kind = "error") {
@@ -28,7 +29,11 @@ if (!menu || !toggle || !panel || !pinGate || !pinInput || !pinSubmit || !regist
   }
 
   function syncAuthorization() {
-    authorized = Boolean(sessionStorage.getItem(TOKEN_KEY));
+    authorized = Boolean(sessionStorage.getItem(TOKEN_KEY) && Number(sessionStorage.getItem(TOKEN_EXPIRY_KEY)) > Date.now());
+    if (!authorized) {
+      sessionStorage.removeItem(TOKEN_KEY);
+      sessionStorage.removeItem(TOKEN_EXPIRY_KEY);
+    }
     renderAuthorization();
   }
 
@@ -37,7 +42,7 @@ if (!menu || !toggle || !panel || !pinGate || !pinInput || !pinSubmit || !regist
     registerButton.setAttribute("aria-disabled", String(!authorized));
     registerButton.classList.toggle("is-locked", !authorized);
     registerButton.querySelector("small").textContent = authorized
-      ? "Autorizado durante esta sesión"
+      ? "PIN validado · token temporal"
       : "Requiere PIN de autorización";
     lockButton.hidden = !authorized;
     const testigos = $("miraQuickTestigosBtn");
@@ -64,6 +69,7 @@ if (!menu || !toggle || !panel || !pinGate || !pinInput || !pinSubmit || !regist
 
   function lockAuthorization(message = "La autorización quedó bloqueada.") {
     sessionStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(TOKEN_EXPIRY_KEY);
     authorized = false;
     renderAuthorization();
     hidePinGate();
@@ -98,10 +104,11 @@ if (!menu || !toggle || !panel || !pinGate || !pinInput || !pinSubmit || !regist
         throw new Error("No fue posible validar el PIN.");
       }
       sessionStorage.setItem(TOKEN_KEY, result.access_token);
+      sessionStorage.setItem(TOKEN_EXPIRY_KEY, String(Date.now() + Number(result.expires_in || 2700) * 1000));
       authorized = true;
       renderAuthorization();
       hidePinGate();
-      setStatus("Autorización activa hasta bloquearla o cerrar esta sesión.", "success");
+      setStatus("Acceso guardado en esta pestaña. La autorización del servidor vence a los 45 minutos; después deberás validar el PIN nuevamente.", "success");
     } catch (error) {
       setStatus(error?.message || "No fue posible validar el PIN.");
     } finally {
@@ -131,8 +138,10 @@ if (!menu || !toggle || !panel || !pinGate || !pinInput || !pinSubmit || !regist
 
   registerButton.addEventListener("click", () => {
     const token = sessionStorage.getItem(TOKEN_KEY);
-    if (!authorized || !token) {
+    if (!authorized || !token || Number(sessionStorage.getItem(TOKEN_EXPIRY_KEY)) <= Date.now()) {
       authorized = false;
+      sessionStorage.removeItem(TOKEN_KEY);
+      sessionStorage.removeItem(TOKEN_EXPIRY_KEY);
       renderAuthorization();
       showPinGate();
       return;
