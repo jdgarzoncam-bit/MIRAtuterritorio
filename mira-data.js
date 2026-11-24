@@ -160,10 +160,10 @@ export const MIRA_DATA = {
         const tokens=safeTerm.split(" ").filter(Boolean);
         directFilter="and("+tokens.map(token=>"or(cuidador_nombre.ilike.*"+token+"*,nombre_original.ilike.*"+token+"*)").join(",")+")";
       }
-      requests.push(miraRequest("infomira_red",{query:qs({
-        select:redSelect,and:documentDigits?undefined:directFilter,or:documentDigits?directFilter:undefined,
-        order:"fila_origen.asc,id.asc",limit:"1000"
-      })}));
+      const directParams={select:redSelect,order:"fila_origen.asc,id.asc",limit:"1000"};
+      if(documentDigits)directParams.or=directFilter;
+      else directParams.and=directFilter;
+      requests.push(miraRequest("infomira_red",{query:qs(directParams)}));
     }
     const resultSets=await Promise.all(requests);
     const unique=new Map();
