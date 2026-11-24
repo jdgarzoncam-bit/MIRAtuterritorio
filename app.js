@@ -539,6 +539,7 @@ let detailActivityId = null;
 let returnToRecentAfterEdit = false;
 let activitiesBackendReady = false;
 let activitiesLoading = false;
+let activitiesLoadWarning = '';
 let activityPermissions = new Set();
 function isPrimaryMiraAdmin(){
   const user=window.MIRA_CURRENT_USER;
@@ -558,8 +559,6 @@ function canManageActivities(action){
   return activityPermissions.has(action);
 }
 async function loadActivitiesFromNeon(){
-  // Si otra inicialización ya está consultando Neon, esperar su resultado y no
-  // devolver al módulo un estado transitoriamente vacío.
   if(activitiesLoading){
     await new Promise(resolve=>{
       const waitForCurrentLoad=()=>activitiesLoading?window.setTimeout(waitForCurrentLoad,40):resolve();
@@ -567,47 +566,64 @@ async function loadActivitiesFromNeon(){
     });
     return;
   }
-  activitiesLoading=true;
+  activitiesLoading=true;activitiesLoadWarning='';
   try{
     if(!window.MIRA_DATA)throw new Error('El cliente de Neon todavía no está disponible.');
-    // Resolver permisos antes de consultar datos. Si no existe Consulta, se cierra el módulo.
-    if(isPrimaryMiraAdmin()){
-      activityPermissions=new Set(["view","create","edit","delete","export","manage","annul"]);
-    }else{
-      const rows=await window.MIRA_DATA.listMyModulePermissions();
-      activityPermissions=effectiveActivityPermissions(rows);
-    }
-    if(!activityPermissions.has("view")) throw new Error("No tienes permiso de Consulta en Actividades.");
+    if(isPrimaryMiraAdmin())activityPermissions=new Set(["view","create","edit","delete","export","manage","annul"]);
+    else activityPermissions=effectiveActivityPermissions(await window.MIRA_DATA.listMyModulePermissions());
+    if(!activityPermissions.has("view"))throw new Error("No tienes permiso de Consulta en Actividades.");
     const loadAllPages=async fetchPage=>{
       const pageSize=1000,all=[];
       for(let offset=0;offset<100000;offset+=pageSize){
         const page=await fetchPage({limit:pageSize,offset});
         if(!Array.isArray(page))throw new Error("Neon devolvió una respuesta de paginación inválida.");
-        all.push(...page);
-        if(page.length<pageSize)return all;
+        all.push(...page);if(page.length<pageSize)return all;
       }
-      throw new Error("Se alcanzó el límite de seguridad de paginación. Reduce el volumen o solicita revisión.");
+      throw new Error("Se alcanzó el límite de seguridad de paginación. Solicita revisión.");
     };
-    const [peopleRows,activityRows,attendanceRows]=await Promise.all([
-      loadAllPages(({limit,offset})=>window.MIRA_DATA.listPeople({limit,offset})),
+    const [activityResult,attendanceResult,peopleResult]=await Promise.allSettled([
       loadAllPages(({limit,offset})=>window.MIRA_DATA.listActivities({limit,offset})),
-      loadAllPages(({limit,offset})=>window.MIRA_DATA.listAttendances({limit,offset}))
+      loadAllPages(({limit,offset})=>window.MIRA_DATA.listAttendances({limit,offset})),
+      loadAllPages(({limit,offset})=>window.MIRA_DATA.listPeople({limit,offset}))
     ]);
-    activitiesState.people=(peopleRows||[]).map(p=>{const parsed=splitLegacyPersonName(p.nombres,p.apellidos);return {id:p.id,cedula:p.cedula||p.cedula_normalizada||'',names:parsed.names,surnames:parsed.surnames,phone:p.telefono||'',infoMira:p.info_mira===true?'si':p.info_mira===false?'no':'',type:p.tipo_participacion||''};});
-    activitiesState.activities=(activityRows||[]).map(a=>({id:a.id,name:a.nombre,date:a.fecha,place:a.lugar||'',status:["activa","active","en_curso"].includes(String(a.estado||"").toLowerCase())?"active":["finalizada","finished","cerrada"].includes(String(a.estado||"").toLowerCase())?"finished":String(a.estado||"").toLowerCase()==="cancelada"?"cancelada":a.estado,createdAt:a.created_at}));
-    activitiesState.attendances=(attendanceRows||[]).map(a=>({id:a.id,personId:a.persona_id,activityId:a.actividad_id,createdAt:a.fecha_registro||a.created_at,status:a.estado||'activa',reason:a.motivo_anulacion||''}));
+    if(activityResult.status==='rejected')throw activityResult.reason;
+    const activityRows=activityResult.value||[];
+    const attendanceRows=attendanceResult.status==='fulfilled'?(attendanceResult.value||[]):[];
+    const peopleRows=peopleResult.status==='fulfilled'?(peopleResult.value||[]):[];
+    const warnings=[];
+    if(attendanceResult.status==='rejected')warnings.push('No se pudieron consultar las asistencias: '+(attendanceResult.reason?.message||'error de consulta'));
+    if(peopleResult.status==='rejected')warnings.push('No se pudieron consultar las fichas personales: '+(peopleResult.reason?.message||'error de consulta'));
+    activitiesLoadWarning=warnings.join(' · ');
+    activitiesState.people=peopleRows.map(p=>{
+      const parsed=splitLegacyPersonName(p.nombres,p.apellidos);
+      return {id:p.id,cedula:p.cedula||p.cedula_normalizada||'',names:parsed.names,surnames:parsed.surnames,phone:p.telefono||'',infoMira:p.info_mira===true?'si':p.info_mira===false?'no':'',type:p.tipo_participacion||''};
+    });
+    activitiesState.activities=activityRows.map(a=>({
+      id:a.id,name:a.nombre,date:a.fecha,place:a.lugar||'',
+      status:["activa","active","en_curso"].includes(String(a.estado||"").toLowerCase())?"active":
+        ["finalizada","finished","cerrada"].includes(String(a.estado||"").toLowerCase())?"finished":
+        String(a.estado||"").toLowerCase()==="cancelada"?"cancelada":a.estado,
+      createdAt:a.created_at
+    }));
+    activitiesState.attendances=attendanceRows.map(a=>({
+      id:a.id,personId:a.persona_id,activityId:a.actividad_id,
+      createdAt:a.fecha_registro||a.created_at,status:a.estado||'activa',reason:a.motivo_anulacion||''
+    }));
     const active=activitiesState.activities.find(a=>a.status==='active');
     activitiesState.currentActivityId=active?.id||activitiesState.activities[0]?.id||null;
-    activitiesBackendReady=true;
-    renderActivities();
-    console.info('[MIRA] Datos de Actividades cargados desde Neon:',{personas:activitiesState.people.length,actividades:activitiesState.activities.length,asistencias:activitiesState.attendances.length});
+    activitiesBackendReady=true;renderActivities();
+    console.info('[MIRA] Archivo de Actividades sincronizado:',{
+      personas:activitiesState.people.length,actividades:activitiesState.activities.length,
+      asistencias:activitiesState.attendances.length,advertencias:warnings
+    });
   }catch(error){
     activitiesBackendReady=false;
-    console.error('[MIRA] Error cargando datos desde Neon:',error);
-    const notice=document.getElementById('duplicateNotice');
-    if(notice){notice.textContent='No se pudieron cargar las actividades desde Neon: '+(error.message||'Error de conexión')+'. Reintenta abrir el módulo.';notice.classList.remove('hidden');}
+    console.error('[MIRA] Error cargando el archivo de Actividades desde Neon:',error);
     const folders=document.getElementById('activitiesFolders');
-    if(folders) folders.innerHTML='<div class="activity-empty-drive"><h3>No fue posible consultar las actividades</h3><p>Verifica tu sesión y permisos. Vuelve a abrir el módulo para reintentar.</p></div>';
+    if(folders){
+      folders.innerHTML='<div class="activity-empty-drive"><h3>No fue posible consultar las actividades</h3><p>'+escapeActivityHtml(error.message||'Verifica tu sesión, conexión y permisos.')+'</p><button type="button" class="territory-retry-button" id="retryActivitiesLoad">Reintentar consulta</button></div>';
+      document.getElementById('retryActivitiesLoad')?.addEventListener('click',()=>loadActivitiesFromNeon());
+    }
   }finally{activitiesLoading=false;}
 }
 window.addEventListener('mira:authenticated',loadActivitiesFromNeon);
@@ -1124,14 +1140,14 @@ function renderActivities(){
   const folders=document.getElementById('activitiesFolders');
   const archiveQuery=normActivityText(document.getElementById('activitiesArchiveSearch')?.value||'');
   const archiveActivities=activitiesState.activities.slice().sort((a,b)=>b.date.localeCompare(a.date)).filter(a=>!archiveQuery||normActivityText([a.name,a.date,a.place,a.status].join(' ')).includes(archiveQuery));
-  folders.innerHTML=archiveActivities.length?archiveActivities.map(a=>{
+  folders.innerHTML=(activitiesLoadWarning?'<div class="activity-load-warning" role="status">'+escapeActivityHtml(activitiesLoadWarning)+'</div>':'')+(archiveActivities.length?archiveActivities.map(a=>{
     const count=activitiesState.attendances.filter(x=>x.activityId===a.id).length;
     const statusLabel=a.status==='active'?'En curso':a.status==='finished'?'Finalizada':a.status==='cancelada'?'Cancelada':a.status||'Sin estado';
     const statusClass=a.status==='active'?'active':a.status==='cancelada'?'cancelled':'closed';
     const cancelButton=a.status==='active'&&editAllowed?`<button class="activity-row-btn activity-manage-cancel" data-activity-cancel="${escapeActivityHtml(a.id)}" type="button">Cancelar</button>`:'';
     const deleteButton=canManageActivities('delete')?(count===0?`<button class="activity-row-btn activity-manage-delete" data-activity-delete="${escapeActivityHtml(a.id)}" type="button">Eliminar</button>`:'<span class="activity-delete-locked" title="Tiene asistencias asociadas">No eliminable · '+count+' registros</span>'):'';
     return `<article class="activity-folder"><div class="folder-icon">📁</div><h3>${escapeActivityHtml(a.name)}</h3><p>${escapeActivityHtml(a.date||'Sin fecha')} · ${count} registros</p><span class="activity-state-pill ${statusClass}">${escapeActivityHtml(statusLabel)}</span><div class="activity-folder-actions"><button class="activity-row-btn" data-folder-open="${escapeActivityHtml(a.id)}" type="button">📂 Abrir</button>${cancelButton}${deleteButton}</div></article>${exportAllowed?'<button class="activity-file-card" data-folder-export="'+escapeActivityHtml(a.id)+'" type="button" aria-label="Descargar Excel de '+escapeActivityHtml(a.name)+'"><span class="file-icon">📊</span><strong>'+escapeActivityHtml(a.name)+'.xlsx</strong><small>Archivo de registros · '+count+' filas</small><span class="file-type">EXCEL · DESCARGAR</span></button>':''}`;
-  }).join(''):activitiesState.activities.length?'<div class="activity-empty-drive"><div>🔎</div><h3>No encontramos actividades</h3><p>Prueba con otro nombre, fecha o lugar.</p></div>':'<div class="activity-empty-drive"><div>📂</div><h3>Aún no hay actividades</h3><p>Crea una actividad para que aparezca aquí su carpeta y su archivo Excel.</p></div>';
+  }).join(''):activitiesState.activities.length?'<div class="activity-empty-drive"><div>🔎</div><h3>No encontramos actividades</h3><p>Prueba con otro nombre, fecha o lugar.</p></div>':'<div class="activity-empty-drive"><div>📂</div><h3>Aún no hay actividades</h3><p>Crea una actividad para que aparezca aquí su carpeta y su archivo Excel.</p></div>');
   folders.querySelectorAll('[data-folder-open]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();openActivityFolder(b.dataset.folderOpen);}));
   folders.querySelectorAll('[data-folder-export]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();exportActivityExcel(b.dataset.folderExport);}));
   folders.querySelectorAll('[data-activity-cancel]').forEach(b=>b.addEventListener('click',async e=>{
