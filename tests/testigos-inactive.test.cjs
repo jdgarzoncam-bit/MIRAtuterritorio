@@ -15,6 +15,8 @@ function loadDataApi(disabledValue = true) {
   const metrics = { fetchCalls: 0, tokenCalls: 0 };
   const window = {
     MIRA_TESTIGOS_TEMP_DISABLED: disabledValue,
+    setTimeout,
+    clearTimeout,
     MIRA_AUTH: {
       async getJWTToken() {
         metrics.tokenCalls += 1;
