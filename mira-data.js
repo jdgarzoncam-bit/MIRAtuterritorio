@@ -204,13 +204,19 @@ export const MIRA_DATA = {
   },
   async verifyParticipantAccessPin(pinVerifier) {
     if(!/^[a-f0-9]{64}$/i.test(String(pinVerifier||""))) throw new Error("El código de acceso no tiene un formato válido.");
-    return miraRequest("rpc/public_verify_participant_pin",{method:"POST",anonymous:true,body:{p_verifier_hex:pinVerifier}});
+    return miraRequest("rpc/public_register_activity_participant",{method:"POST",anonymous:true,body:{
+      p_cedula:"__MIRA_PIN_VERIFY__",p_nombres:pinVerifier,p_apellidos:"",p_telefono:"",
+      p_actividad_id:null,p_consentimiento:false
+    }});
   },
   async lookupPublicPerson(cedula,accessToken) {
     const normalized=cleanCedula(cedula);
     if(normalized.length<5||normalized.length>15) throw new Error("La cédula debe contener entre 5 y 15 dígitos.");
     if(!accessToken) throw new Error("Ingresa el PIN de acceso antes de consultar personas.");
-    return miraRequest("rpc/public_lookup_participant",{method:"POST",anonymous:true,body:{p_cedula:normalized,p_access_token:accessToken}});
+    return miraRequest("rpc/public_register_activity_participant",{method:"POST",anonymous:true,body:{
+      p_cedula:"__MIRA_PIN_LOOKUP__",p_nombres:normalized,p_apellidos:accessToken,p_telefono:"",
+      p_actividad_id:null,p_consentimiento:false
+    }});
   },
   registerPublicActivityParticipant({cedula,nombres,apellidos,telefono=null,actividad_id,info_mira,tipo_participacion,consentimiento=false,access_token=null}) {
     const normalized=cleanCedula(cedula);
@@ -219,16 +225,16 @@ export const MIRA_DATA = {
     // Empaquetamos los campos nuevos en el argumento de teléfono para mantener
     // la firma RPC de seis parámetros que Neon ya tiene en caché.
     const registrationData=JSON.stringify({
+      access_token:access_token,
       telefono:telefono,
       info_mira:info_mira==="si",
       tipo_participacion
     });
     if(!access_token) throw new Error("Ingresa el PIN de acceso antes de registrar la asistencia.");
-    return miraRequest("rpc/public_register_activity_participant_v2",{
+    return miraRequest("rpc/public_register_activity_participant",{
       method:"POST",anonymous:true,body:{
         p_cedula:normalized,p_nombres:nombres.trim(),p_apellidos:apellidos.trim(),
         p_telefono:registrationData,p_actividad_id:actividad_id,p_consentimiento:true,
-        p_access_token:access_token
       }
     });
   },
