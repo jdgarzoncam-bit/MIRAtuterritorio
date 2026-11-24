@@ -53,3 +53,11 @@ test("el portal no muestra ningún PIN secundario por estilos móviles", () => {
   assert.match(portal, /if \(!sharedToken \|\| expiresAt <= Date\.now\(\)\)/);
   assert.match(portal, /index\.html\?openModules=1&authorization=expired/);
 });
+
+test("el token de autorización central sigue siendo válido entre identidades Neon de páginas distintas", () => {
+  const migration = read("migrations/20261124_participant_access_token_actor_independent.sql");
+  assert.equal((migration.match(/s\\.token=v_access_token AND s\\.expires_at>now\\(\\)/g) || []).length, 3);
+  assert.doesNotMatch(migration, /s\\.token=v_access_token AND s\\.actor_uid=v_actor/);
+  assert.match(migration, /credencial bearer/);
+  assert.match(migration, /expires_at>now\\(\\)/);
+});
