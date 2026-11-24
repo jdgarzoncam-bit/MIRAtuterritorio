@@ -13,6 +13,7 @@ const $ = id => document.getElementById(id);
 const cleanCedula = value => String(value || "").replace(/\D/g, "");
 const PIN_SALT_HEX = "29a690124de6919817cc26c444b99359";
 const PIN_ITERATIONS = 310000;
+const MODULE_ACCESS_TOKEN_KEY = "miraParticipantAccessToken";
 let busy = false;
 let activities = [];
 let accessToken = null;
@@ -66,6 +67,7 @@ function clearPersonDetails() {
 }
 function lockModule(message = "") {
   accessToken = null;
+  sessionStorage.removeItem(MODULE_ACCESS_TOKEN_KEY);
   currentPersonBlocked = false;
   $("pubGate").hidden = false;
   $("pubFormArea").hidden = true;
@@ -215,4 +217,23 @@ $("publicActivityForm").addEventListener("reset", () => {
     clearPersonDetails();
   },0);
 });
-lockModule();
+async function restoreCentralModuleAuthorization() {
+  const sharedToken = sessionStorage.getItem(MODULE_ACCESS_TOKEN_KEY);
+  if (!sharedToken) {
+    lockModule();
+    return;
+  }
+  accessToken = sharedToken;
+  $("pubGate").hidden = true;
+  $("pubFormArea").hidden = false;
+  $("activityAvailability").hidden = false;
+  $("publicActivityForm").hidden = false;
+  $("pubLock").hidden = false;
+  $("pubPinStatus").style.display = "none";
+  try {
+    await refreshActivities();
+  } catch (error) {
+    lockModule(error?.message || "La autorización no está disponible. Ingresa nuevamente el PIN.");
+  }
+}
+restoreCentralModuleAuthorization();
