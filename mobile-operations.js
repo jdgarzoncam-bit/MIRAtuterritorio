@@ -160,6 +160,7 @@
   home.querySelector('#mobileOpsExit')?.addEventListener('click',exitToPlatform);
   const showOperationsHome=()=>{
    if(!mobile()||!window.MIRA_CURRENT_USER||!document.body.classList.contains('pmu-neomorphic'))return;
+   document.body.classList.remove('mira-mobile-public-landing');
    userExitedOperations=false;
    app.style.display='block';
    app.classList.remove('mobile-operations-module-active','mobile-operations-map-active','mobile-operations-map-panel-active','mobile-operations-workspace-active');
@@ -169,6 +170,7 @@
   };
   const restorePublicLanding=()=>{
    userExitedOperations=true;
+   document.body.classList.add('mira-mobile-public-landing');
    app.classList.remove('mobile-operations-home-active','mobile-operations-module-active','mobile-operations-map-active','mobile-operations-map-panel-active','mobile-operations-workspace-active');
    home.hidden=true;sidebar.hidden=false;back.classList.remove('is-visible');
    app.style.display='none';
@@ -184,6 +186,9 @@
   window.addEventListener('mira:signed-out',restorePublicLanding);
   window.addEventListener('pageshow',()=>{
    if(!mobile())return;
+   // Una sesión restaurada no debe saltarse la portada pública ni abrir el PMU automáticamente.
+   // El Centro de Operaciones solo aparece después de que el usuario pulse Ingresar.
+   if(!mobileLoginRequested){restorePublicLanding();return;}
    if(window.MIRA_CURRENT_USER&&document.body.classList.contains('pmu-neomorphic')){
     if(!app.classList.contains('mobile-operations-module-active')&&!app.classList.contains('mobile-operations-map-active')&&!app.classList.contains('mobile-operations-map-panel-active')&&!app.classList.contains('mobile-operations-workspace-active'))showOperationsHome();
    }else restorePublicLanding();
@@ -210,7 +215,7 @@
    if(!mobileLoginRequested||!window.MIRA_CURRENT_USER||!document.body.classList.contains('pmu-neomorphic')){restorePublicLanding();return;}
    if(userExitedOperations)return;
    if(!app.classList.contains('mobile-operations-module-active')&&!app.classList.contains('mobile-operations-map-active')&&!app.classList.contains('mobile-operations-map-panel-active')&&!app.classList.contains('mobile-operations-workspace-active')&&!app.classList.contains('mobile-operations-home-active'))showOperationsHome();
-  }else{userExitedOperations=false;app.classList.remove('mobile-operations-home-active','mobile-operations-module-active','mobile-operations-map-active','mobile-operations-map-panel-active','mobile-operations-workspace-active');home.hidden=true;sidebar.hidden=false;back.classList.remove('is-visible');historyStateActive=false;resetDropdowns()}};
+  }else{userExitedOperations=false;document.body.classList.remove('mira-mobile-public-landing');app.classList.remove('mobile-operations-home-active','mobile-operations-module-active','mobile-operations-map-active','mobile-operations-map-panel-active','mobile-operations-workspace-active');home.hidden=true;sidebar.hidden=false;back.classList.remove('is-visible');historyStateActive=false;resetDropdowns()}};
   window.addEventListener('resize',viewport,{passive:true});setActive(0);home.hidden=true;viewport();
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
