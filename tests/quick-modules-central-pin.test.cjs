@@ -25,7 +25,7 @@ test("el portal reutiliza el mismo JWT que validó el PIN central; no crea otra 
   assert.match(data, /miraRequest\([^\n]+authToken,body:/);
   assert.match(data, /authToken=null/);
   assert.match(portal, /getJWTToken: \(\) => sessionStorage\.getItem\("miraParticipantAuthJwt"\)/);
-  assert.doesNotMatch(portal, /createInternalNeonAuth|PUBLIC_AUTH_URL|new PIN|PIN de acceso/);
+  assert.doesNotMatch(portal, /createInternalNeonAuth|PUBLIC_AUTH_URL|PIN_SALT_HEX|PIN_ITERATIONS/);
   assert.match(portal, /sessionStorage\.getItem\(MODULE_ACCESS_TOKEN_KEY\)/);
   assert.match(portal, /accessToken = sharedToken/);
 });
