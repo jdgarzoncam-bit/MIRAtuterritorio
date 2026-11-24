@@ -2,7 +2,9 @@
 // No contiene contraseñas ni cadenas de conexión. Los permisos se aplican en PostgreSQL RLS.
 const MIRA_DATA_API_URL = "https://ep-mute-grass-b7qan4n6.apirest.c-13.us-east-1.aws.neon.tech/neondb/rest/v1";
 
-async function miraToken({anonymous=false}={}) {
+async function miraToken({anonymous=false,authToken=null}={}) {
+  // Reutiliza el JWT exacto que validó el PIN central entre la portada y el portal.
+  if(typeof authToken==="string" && authToken.trim()) return authToken;
   const auth = window.MIRA_AUTH;
   if (!auth) throw new Error("El servicio de autenticación aún no está inicializado.");
   // Neon Auth devuelve un JWT anónimo cuando el cliente se inicializa
@@ -36,8 +38,8 @@ async function miraToken({anonymous=false}={}) {
   return token;
 }
 
-async function miraRequest(table, {method="GET", query="", body, anonymous=false, prefer, requireRows=false}={}) {
-  const token = await miraToken({anonymous});
+async function miraRequest(table, {method="GET", query="", body, anonymous=false, authToken=null, prefer, requireRows=false}={}) {
+  const token = await miraToken({anonymous,authToken});
   const headers = new Headers({
     Authorization: `Bearer ${token}`,
     "Accept-Profile": "mira",
@@ -220,7 +222,11 @@ export const MIRA_DATA = {
   },
   async verifyParticipantAccessPin(pinVerifier) {
     if(!/^[a-f0-9]{64}$/i.test(String(pinVerifier||""))) throw new Error("El código de acceso no tiene un formato válido.");
-    return miraRequest("rpc/public_register_activity_participant",{method:"POST",anonymous:true,body:{
+    // Captura el JWT de Neon que ejecuta la validación del PIN y compártelo
+    // con el portal de registro para evitar una segunda identidad anónima.
+    const authToken=await miraToken({anonymous:true});
+    sessionStorage.setItem("miraParticipantAuthJwt",authToken);
+    return miraRequest("rpc/public_register_activity_participant",{method:"POST",anonymous:true,authToken,body:{
       p_cedula:"__MIRA_PIN_VERIFY__",p_nombres:pinVerifier,p_apellidos:"",p_telefono:"",
       p_actividad_id:null,p_consentimiento:false
     }});
