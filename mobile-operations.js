@@ -88,6 +88,7 @@
    });
   };
   const closeToHome=(fromPopstate=false)=>{
+   userExitedOperations=false;
    closeWorkspace();
    app.classList.remove('mobile-operations-module-active','mobile-operations-map-active','mobile-operations-map-panel-active','mobile-operations-workspace-active');
    app.classList.add('mobile-operations-home-active');
@@ -96,6 +97,7 @@
    if(!fromPopstate&&historyStateActive){historyStateActive=false;window.history.back();}
   };
   const exitToPlatform=()=>{
+   userExitedOperations=true;
    closeWorkspace();
    const hadHistory=historyStateActive;historyStateActive=false;
    app.classList.remove('mobile-operations-home-active','mobile-operations-module-active','mobile-operations-map-active','mobile-operations-map-panel-active','mobile-operations-workspace-active');
@@ -105,6 +107,7 @@
   const ensureHistory=()=>{if(!historyStateActive){window.history.pushState({miraMobileOperations:true},'','#centro-operaciones');historyStateActive=true}};
   const open=async card=>{
    if(!mobile())return;
+   userExitedOperations=false;
    ensureHistory();home.hidden=true;
    app.classList.remove('mobile-operations-home-active','mobile-operations-map-active','mobile-operations-module-active','mobile-operations-map-panel-active','mobile-operations-workspace-active');
    if(card.map){sidebar.hidden=true;app.classList.add('mobile-operations-map-active');back.classList.add('is-visible');document.getElementById('floatingPuestoWidget')?.classList.add('hidden');resizeMap();return}
@@ -154,12 +157,13 @@
     if((workspaceMode==='activities'&&activitiesHidden)||(workspaceMode==='concejal'&&concejalHidden))closeToHome(false);
    },0);
   },true);
-  let reloadExitHandled=false;
+  let reloadExitHandled=false,userExitedOperations=false;
   const isPageReload=()=>window.performance?.getEntriesByType?.('navigation')?.[0]?.type==='reload';
   const viewport=()=>{if(mobile()){
    if(isPageReload()&&!reloadExitHandled){reloadExitHandled=true;exitToPlatform();return;}
+   if(userExitedOperations)return;
    if(!app.classList.contains('mobile-operations-module-active')&&!app.classList.contains('mobile-operations-map-active')&&!app.classList.contains('mobile-operations-map-panel-active')&&!app.classList.contains('mobile-operations-workspace-active')&&!app.classList.contains('mobile-operations-home-active')){home.hidden=false;sidebar.hidden=true;app.classList.add('mobile-operations-home-active')}
-  }else{app.classList.remove('mobile-operations-home-active','mobile-operations-module-active','mobile-operations-map-active','mobile-operations-map-panel-active','mobile-operations-workspace-active');home.hidden=true;sidebar.hidden=false;back.classList.remove('is-visible');historyStateActive=false;resetDropdowns()}};
+  }else{userExitedOperations=false;app.classList.remove('mobile-operations-home-active','mobile-operations-module-active','mobile-operations-map-active','mobile-operations-map-panel-active','mobile-operations-workspace-active');home.hidden=true;sidebar.hidden=false;back.classList.remove('is-visible');historyStateActive=false;resetDropdowns()}};
   window.addEventListener('resize',viewport,{passive:true});setActive(0);viewport();
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
