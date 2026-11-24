@@ -68,6 +68,7 @@
   app.insertBefore(home,app.firstChild);
   let back=document.getElementById('mobileOpsBack');
   if(!back){back=document.createElement('button');back.id='mobileOpsBack';back.className='mobile-ops-back';back.type='button';back.innerHTML='<span aria-hidden="true">☰</span><b>Módulos</b>';back.setAttribute('aria-label','Volver al menú de módulos del Centro de Operaciones');document.body.appendChild(back);}
+  back.hidden=true;
   const carousel=home.querySelector('#mobileOpsCarousel'),els=[...carousel.querySelectorAll('.mobile-ops-card')],dots=[...home.querySelectorAll('#mobileOpsPagination button')];
   const mobile=()=>matchMedia(MQ).matches;let active=0,timer=0,workspaceMode=null,historyStateActive=false,userExitedOperations=false;
   const setActive=i=>{
@@ -115,7 +116,7 @@
    closeWorkspace();
    app.classList.remove('mobile-operations-module-active','mobile-operations-map-active','mobile-operations-map-panel-active','mobile-operations-workspace-active');
    app.classList.add('mobile-operations-home-active');
-   sidebar.hidden=true;home.hidden=false;back.classList.remove('is-visible');
+   sidebar.hidden=true;home.hidden=false;back.hidden=true;back.classList.remove('is-visible');
    resetDropdowns();resizeMap();
    if(!fromPopstate&&historyStateActive){historyStateActive=false;window.history.back();}
   };
@@ -126,7 +127,7 @@
    closeWorkspace();
    const hadHistory=historyStateActive;historyStateActive=false;
    app.classList.remove('mobile-operations-home-active','mobile-operations-module-active','mobile-operations-map-active','mobile-operations-map-panel-active','mobile-operations-workspace-active');
-   home.hidden=true;back.classList.remove('is-visible');
+   home.hidden=true;back.hidden=true;back.classList.remove('is-visible');
    resetDropdowns();
    if(hadHistory)window.history.back();
    // Primero se restaura visualmente la portada y se elimina la intención de
@@ -141,7 +142,7 @@
    userExitedOperations=false;
    ensureHistory();home.hidden=true;
    app.classList.remove('mobile-operations-home-active','mobile-operations-map-active','mobile-operations-module-active','mobile-operations-map-panel-active','mobile-operations-workspace-active');
-   if(card.map){sidebar.hidden=true;app.classList.add('mobile-operations-map-active');back.classList.add('is-visible');document.getElementById('floatingPuestoWidget')?.classList.add('hidden');resizeMap();return}
+   if(card.map){sidebar.hidden=true;app.classList.add('mobile-operations-map-active');back.hidden=false;back.classList.add('is-visible');document.getElementById('floatingPuestoWidget')?.classList.add('hidden');resizeMap();return}
    sidebar.hidden=false;
    document.querySelectorAll('#mainSidebar details.custom-dropdown').forEach(d=>{const yes=d.id===card.id;d.open=yes;d.classList.toggle('mobile-ops-selected-module',yes);d.querySelector(':scope > summary')?.setAttribute('aria-expanded',String(yes));d.setAttribute('aria-hidden',String(!yes));});
    back.classList.add('is-visible');
@@ -173,7 +174,7 @@
    app.style.display='block';
    app.classList.remove('mobile-operations-module-active','mobile-operations-map-active','mobile-operations-map-panel-active','mobile-operations-workspace-active');
    app.classList.add('mobile-operations-home-active');
-   home.hidden=false;sidebar.hidden=true;back.classList.remove('is-visible');
+   home.hidden=false;sidebar.hidden=true;back.hidden=true;back.classList.remove('is-visible');
    resizeMap();
   };
   const restorePublicLanding=()=>{
@@ -185,7 +186,7 @@
    userExitedOperations=true;
    document.body.classList.add('mira-mobile-public-landing');
    app.classList.remove('mobile-operations-home-active','mobile-operations-module-active','mobile-operations-map-active','mobile-operations-map-panel-active','mobile-operations-workspace-active');
-   home.hidden=true;sidebar.hidden=false;back.classList.remove('is-visible');
+   home.hidden=true;sidebar.hidden=false;back.hidden=true;back.classList.remove('is-visible');
    app.style.display='none';
    document.body.classList.remove('pmu-neomorphic');
    document.getElementById('landing-hero-overlay')?.style.setProperty('display','flex');
@@ -235,7 +236,7 @@
    if(userExitedOperations)return;
    if(!app.classList.contains('mobile-operations-module-active')&&!app.classList.contains('mobile-operations-map-active')&&!app.classList.contains('mobile-operations-map-panel-active')&&!app.classList.contains('mobile-operations-workspace-active')&&!app.classList.contains('mobile-operations-home-active'))showOperationsHome();
   }else{userExitedOperations=false;document.body.classList.remove('mira-mobile-public-landing');app.classList.remove('mobile-operations-home-active','mobile-operations-module-active','mobile-operations-map-active','mobile-operations-map-panel-active','mobile-operations-workspace-active');home.hidden=true;sidebar.hidden=false;back.classList.remove('is-visible');historyStateActive=false;resetDropdowns()}};
-  window.addEventListener('resize',viewport,{passive:true});setActive(0);home.hidden=true;viewport();
+  window.addEventListener('resize',viewport,{passive:true});setActive(0);home.hidden=true;back.hidden=true;viewport();
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
