@@ -59,7 +59,7 @@
  function init(){
   installKeyboardFix();
   const app=document.getElementById('app-container'),sidebar=document.getElementById('mainSidebar'),map=document.getElementById('map');
-  if(!app||!sidebar||!map||document.getElementById('mobileOperationsHome'))return;
+  if(!app||!sidebar||document.getElementById('mobileOperationsHome'))return;
   const home=document.createElement('section');home.id='mobileOperationsHome';home.className='mobile-operations-home';home.setAttribute('aria-label','Centro de Operaciones móvil');
   home.innerHTML=`<header class="mobile-ops-header"><div class="mobile-ops-brand"><span class="mobile-ops-brand-mark">TF</span><div><small>TERRITORIO FACA</small><h1>Centro de Operaciones</h1></div></div><div class="mobile-ops-header-actions"><span class="mobile-ops-live"><i></i> EN LÍNEA</span><button class="mobile-ops-exit" id="mobileOpsExit" type="button" aria-label="Salir del Centro de Operaciones">Salir <span>↗</span></button></div></header>
   <div class="mobile-ops-intro"><span>PLATAFORMA DE GESTIÓN TERRITORIAL</span><h2>¿Qué necesitas gestionar?</h2><p>Desliza las tarjetas para explorar los módulos.</p></div>
@@ -182,6 +182,12 @@
    home.hidden=false;sidebar.hidden=true;back.hidden=true;back.classList.remove('is-visible');
    resizeMap();
   };
+  window.MIRA_SHOW_MOBILE_MODULES=showOperationsHome;
+  document.getElementById('landingModulesBtn')?.addEventListener('click',()=>{
+   if(window.MIRA_CURRENT_USER&&document.body.classList.contains('pmu-neomorphic')){showOperationsHome();return;}
+   if(typeof window.abrirLoginAdmin==='function')window.abrirLoginAdmin();
+   else document.getElementById('landingLoginBtn')?.click();
+  });
   const restorePublicLanding=()=>{
    // La restauración inicial de Neon puede emitir mira:signed-out antes de
    // que el usuario envíe el formulario. No cancelar la intención de login.
