@@ -35,12 +35,15 @@ function loadRolePolicy() {
   return context.__roleAllowsAction;
 }
 
-test("el menú rápido de Actividades y Testigos se muestra en la portada pública y exige sesión", () => {
+test("el menú rápido conserva Testigos bloqueado y centraliza el PIN de Registrar participante", () => {
+  const indexSource = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
+  const quickSource = fs.readFileSync(path.join(__dirname, "..", "mira-quick-modules.js"), "utf8");
   assert.ok(appSource.includes("landingVisible=Boolean(landing&&getComputedStyle(landing).display!=='none')"));
   assert.ok(appSource.includes("root.classList.toggle('hidden',!landingVisible)"));
-  assert.ok(appSource.includes("Inicia sesión para acceder"));
-  assert.ok(appSource.includes("document.getElementById('landingLoginBtn')?.click()"));
-  assert.ok(appSource.includes("miraQuickTestigosBtn"));
+  assert.match(indexSource, /id="miraQuickTestigosBtn"[^>]*disabled/);
+  assert.match(indexSource, /id="miraQuickRegisterParticipantBtn"/);
+  assert.match(quickSource, /MIRA_DATA\.verifyParticipantAccessPin\(verifier\)/);
+  assert.match(quickSource, /miraQuickModulesLockBtn/);
 });
 
 test("Consulta solo permite view", () => {
@@ -258,18 +261,19 @@ test("Reportes ciudadanos utiliza el cliente central y no una segunda instancia 
   assert.match(dataSourceCurrent, /updateCitizenReportStatus\(id,status\)/);
 });
 
-test("el portal independiente de Actividades obtiene el JWT desde el wrapper oficial de Neon Auth", () => {
-  assert.match(activityPortalSource, /createInternalNeonAuth\(AUTH_URL/);
-  assert.match(activityPortalSource, /neonAuth\.getJWTToken\(\)/);
-  assert.match(activityPortalSource, /profile\.auth_user_id !== PRIMARY_ADMIN_AUTH_ID/);
+test("el portal independiente de Actividades usa el wrapper oficial de Neon Auth y la autorización PIN", () => {
+  assert.match(activityPortalSource, /createInternalNeonAuth\(PUBLIC_AUTH_URL/);
+  assert.match(activityPortalSource, /publicNeonAuth\.getJWTToken\(\)/);
+  assert.match(activityPortalSource, /MIRA_DATA\.verifyParticipantAccessPin\(verifier\)/);
   assert.doesNotMatch(activityPortalSource, /createAuthClient|auth\.token\(\)|"witness"/);
 });
 
-test("la interfaz de Actividades respeta los límites efectivos de cada rol", () => {
+test("la interfaz interna de Actividades respeta los límites efectivos de cada rol y el portal público exige token PIN", () => {
   assert.match(appSource, /function effectiveActivityPermissions\(rows\)/);
   assert.match(appSource, /role==="operator"[\s\S]*?\["view","create","edit","export","annul"\]/);
   assert.match(appSource, /role==="viewer"\?\["view"\]/);
-  assert.match(activityPortalSource, /profile\.role !== "operator"\) throw new Error/);
+  assert.match(activityPortalSource, /if \(!accessToken\) return lockModule/);
+  assert.match(activityPortalSource, /lookupPublicPerson\(cedula,accessToken\)/);
 });
 
 test("la bandeja de reportes solo habilita edición para Operador o administrador principal", () => {
@@ -303,7 +307,7 @@ test("la migración de Personas normaliza cédula en PostgreSQL y garantiza cons
 
 
 test("Bloque 2: fichas pendientes se consultan y paginan desde Neon",()=>{assert.match(dataSource,/async listPendingPeople\(\{limit=25,offset=0\}/);assert.match(dataSource,/datos_pendientes\.eq\.true/);assert.match(dataSource,/telefono\.is\.null/);assert.match(dataSource,/barrio\.is\.null/);assert.match(appSource,/listPendingPeople\(\{limit:26,offset:page\*25\}\)/);assert.doesNotMatch(appSource,/listPeople\(\{limit:1000\}\)[\s\S]{0,250}rows\.filter\(p=>p\.datos_pendientes/);assert.match(appSource,/databasePendingNext/);});
-test("Bloque 2: explorador Personas busca por cédula original y normalizada",()=>{assert.match(dataSource,/cedula_normalizada.*nombres.*apellidos/);assert.match(dataSource,/if\(dataset\.key==="personas"\)[\s\S]*cleanCedula\(search\)[\s\S]*cedula_normalizada\.eq\./);});
+test("Bloque 2: explorador Personas busca por cédula original y normalizada",()=>{assert.match(dataSource,/cedula_normalizada.*nombres.*apellidos/);assert.match(dataSource,/const documentDigits=dataset\.key==="personas"\?cleanCedula\(search\):""[\s\S]*cedula_normalizada\.eq\./);});
 test("Bloque 2: explorador controla carga, error, vacío y evita respuestas fuera de orden",()=>{assert.match(appSource,/let page=0,more=false,lastRows=\[\],dataset=datasets\[0\],requestVersion=0/);assert.match(appSource,/No se encontraron registros para los filtros seleccionados/);assert.match(appSource,/No fue posible consultar los registros/);assert.match(appSource,/if\(version!==requestVersion\)return/);});
 
 
@@ -324,7 +328,7 @@ test("Bloque 4: auditoría central aplica RLS de lectura por módulo y no conced
 
 
 test("Bloque 5: la exportación informa truncamiento y conserva el estado Activas/Archivadas/Todas", () => {
-  assert.match(dataSource, /p_person_status:datasetKey==="personas"\?personStatus:"all"/);
+  assert.match(dataSource, /p_person_status:datasetKey==="personas"\?\(personStatus==="inactive"\?"archived":personStatus\):"all"/);
   assert.match(appSource, /personStatus:dataset\.key==="personas"\?personStatus\.value:"all"/);
   assert.match(appSource, /if\(result\.truncated\)[\s\S]*No se generó un archivo parcial/);
   assert.match(block5Migration, /'total_count',v_total_count,'truncated',v_total_count>v_count/);
@@ -357,7 +361,7 @@ test("Bloque 6: Base de datos general tiene ajustes responsivos y foco visible",
 
 
 test("InfoMIRA: consulta normaliza documentos, limita la consulta y pagina con orden estable",()=>{
-  assert.match(dataSource,/async listInfoMiraDirectory\(\{cedula="", search="", limit=100, offset=0\}/);
+  assert.match(dataSource,/async listInfoMiraDirectory\(\{cedula="",search="",limit=100,offset=0\}/);
   assert.match(dataSource,/const documentDigits=cleanCedula\(cedula\)/);
   assert.match(dataSource,/order:"fila_origen.asc,id.asc"/);
   assert.match(dataSource,/Math\.min\(Math\.max\(Number\(limit\)\|\|100,1\),100\)/);
@@ -420,13 +424,13 @@ test("the Logistics module and its routing integration are absent from the QA in
 });
 
 
-test("the landing exposes the protected Activities registration portal and account signup", () => {
+test("the landing routes participant registration through the central PIN-protected modules menu", () => {
   const indexSource = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
   const activityPage = fs.readFileSync(path.join(__dirname, "..", "actividad.html"), "utf8");
   const signupPage = fs.readFileSync(path.join(__dirname, "..", "registro-usuario.html"), "utf8");
-  assert.match(indexSource, /id="btnSelectActividadesPublic" href="actividad\.html"/);
-  assert.match(indexSource, /id="landingRegisterBtn"[^>]*href="registro-usuario\.html"/);
-  assert.match(activityPage, /id="activityLoginForm"/);
-  assert.match(activityPage, /href="registro-usuario\.html"/);
+  assert.doesNotMatch(indexSource, /id="btnSelectActividadesPublic"/);
+  assert.match(indexSource, /id="miraQuickRegisterParticipantBtn"/);
+  assert.match(indexSource, /id="miraModulePinGate"/);
+  assert.match(activityPage, /id="pubPin"/);
   assert.match(signupPage, /id="signupForm"/);
 });
