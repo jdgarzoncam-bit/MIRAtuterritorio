@@ -234,6 +234,15 @@ export const MIRA_DATA = {
       p_actividad_id:null,p_consentimiento:false
     }});
   },
+  async checkPublicActivityParticipant(cedula,actividadId,accessToken) {
+    const normalized=cleanCedula(cedula);
+    if(normalized.length<5||normalized.length>15) throw new Error("La cédula debe contener entre 5 y 15 dígitos.");
+    if(!actividadId) throw new Error("Selecciona una actividad antes de consultar la inscripción.");
+    if(!accessToken) throw new Error("La autorización venció. Ingresa nuevamente desde Módulos.");
+    return miraRequest("rpc/public_check_activity_participant",{method:"POST",anonymous:true,body:{
+      p_cedula:normalized,p_actividad_id:actividadId,p_access_token:accessToken
+    }});
+  },
   registerPublicActivityParticipant({cedula,nombres,apellidos,telefono=null,actividad_id,info_mira,tiene_app_infomira,tipo_participacion,consentimiento=false,access_token=null}) {
     const normalized=cleanCedula(cedula);
     if(normalized.length<5||normalized.length>15) throw new Error("La cédula debe contener entre 5 y 15 dígitos.");
