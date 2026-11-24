@@ -14,7 +14,7 @@
     <!-- SheetJS -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
-    <link rel="stylesheet" href="style.css?v=20261124-reference-glass-3">
+    <link rel="stylesheet" href="style.css?v=20261124-central-pin-1">
     <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css">
 </head>
 <body class="theme-dark">
@@ -737,7 +737,18 @@
             </button>
             <nav id="miraQuickModulesPanel" class="mira-quick-panel hidden" aria-label="Módulos principales">
                 <button type="button" class="mira-quick-item is-locked" id="miraQuickTestigosBtn" disabled aria-disabled="true" title="Módulo temporalmente inactivo"><span aria-hidden="true">🗳️</span><span><strong>Testigos</strong><small id="miraQuickTestigosStatus">En renovación · Acceso bloqueado</small></span><span class="mira-quick-lock" aria-hidden="true">🔒</span></button>
+                <button type="button" class="mira-quick-item is-locked" id="miraQuickRegisterParticipantBtn" disabled aria-disabled="true"><span aria-hidden="true">📋</span><span><strong>Registrar participante</strong><small>Requiere PIN de autorización</small></span><span aria-hidden="true">↗</span></button>
+                <button type="button" id="miraQuickModulesLockBtn" class="mira-quick-lock-action" hidden>🔒 Bloquear autorización</button>
             </nav>
+            <section id="miraModulePinGate" class="mira-module-pin-gate" hidden role="dialog" aria-modal="false" aria-labelledby="miraModulePinTitle">
+                <span class="mira-module-pin-eyebrow">ACCESO DE EQUIPO</span>
+                <h2 id="miraModulePinTitle">Autorizar módulos</h2>
+                <p>Ingresa el PIN para habilitar Registrar participante. Testigos seguirá bloqueado mientras esté en renovación.</p>
+                <label for="miraModulePin">Código PIN</label>
+                <input id="miraModulePin" type="password" inputmode="numeric" autocomplete="one-time-code" maxlength="10" pattern="[0-9]{10}" placeholder="10 dígitos">
+                <button type="button" id="miraModulePinSubmit">Autorizar módulos</button>
+                <p id="miraModulePinStatus" class="mira-module-pin-status" role="status" aria-live="polite" hidden></p>
+            </section>
         </div>
 
 
@@ -792,6 +803,7 @@
     <script src="app.js?v=20261124-cardshuffle-1"></script>
     <script src="mapa-3d.js?v=20261114-terrain-engine-1"></script>
     <script type="module" src="mira-admin.js?v=20261124-mobile-fixes-2"></script>
+    <script type="module" src="mira-quick-modules.js?v=20261124-central-pin-1"></script>
     <script type="module" src="reportes.js?v=20261114-role-aware-3"></script>
     <script type="module" src="pqrs.js?v=20261110-pqrs-centralized-1"></script>
     <script src="pmu-navigation.js?v=20261031-vertical-glass"></script>
