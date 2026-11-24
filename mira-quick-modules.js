@@ -1,4 +1,4 @@
-import { MIRA_DATA } from "./mira-data.js?v=20261124-activity-precheck-1";
+import { MIRA_DATA } from "./mira-data.js?v=20261124-activity-precheck-2";
 
 const TOKEN_KEY = "miraParticipantAccessToken";
 const TOKEN_EXPIRY_KEY = "miraParticipantAccessTokenExpiresAt";
@@ -61,7 +61,7 @@ if (!menu || !toggle || !panel || !pinGate || !pinInput || !pinSubmit || !regist
     const icon = toggle.querySelector(".mira-quick-toggle-icon");
     const label = toggle.querySelector("span:last-child");
     if (icon) icon.textContent = open ? "←" : "☰";
-    if (label) label.textContent = open ? "Inicio" : "Módulos";
+    if (label) label.textContent = "Módulos";
   }
 
   function showPinGate() {
@@ -179,9 +179,14 @@ if (!menu || !toggle || !panel || !pinGate || !pinInput || !pinSubmit || !regist
       showPinGate();
       return;
     }
+    // Conserva el destino de regreso en la entrada actual del historial.
+    // Así el botón Atrás del navegador también restaura el menú sin pedir otro PIN.
+    history.replaceState({miraReturnToModules:true}, "", "index.html?openModules=1");
     menu.classList.remove("is-mobile-open");
+    menu.classList.add("hidden");
+    panel.classList.add("hidden");
     updateMobileMenuLabel(false);
-    window.location.assign("actividad.html?v=20261124-central-pin-4");
+    window.location.assign("actividad.html?v=20261124-central-pin-5");
   });
 
   lockButton.addEventListener("click", () => {
@@ -192,9 +197,13 @@ if (!menu || !toggle || !panel || !pinGate || !pinInput || !pinSubmit || !regist
     }
   });
   document.addEventListener("mira:signed-out", () => {
-    lockAuthorization("La sesión se cerró y la autorización fue retirada.");
+    // El PIN de participantes es una autorización independiente de la sesión PMU.
+    // No borrar su token al restaurar una página sin usuario autenticado; el RPC
+    // valida actor y vencimiento en Neon antes de permitir cualquier operación.
+    syncAuthorization();
     menu.classList.remove("is-mobile-open");
     panel.classList.add("hidden");
+    menu.classList.add("hidden");
     updateMobileMenuLabel(false);
   });
   window.addEventListener("pagehide", () => {
@@ -206,8 +215,9 @@ if (!menu || !toggle || !panel || !pinGate || !pinInput || !pinSubmit || !regist
   window.addEventListener("focus", syncAuthorization);
   document.addEventListener("visibilitychange", () => { if (!document.hidden) syncAuthorization(); });
 
-  const returnToModules = new URLSearchParams(window.location.search).get("openModules") === "1";
-  if (returnToModules) {
+  function restoreModulesFromNavigation() {
+    const returnToModules = new URLSearchParams(window.location.search).get("openModules") === "1";
+    if (!returnToModules) return;
     menu.classList.remove("hidden");
     if (isMobileMenu()) menu.classList.add("is-mobile-open");
     updateMobileMenuLabel(true);
@@ -219,6 +229,8 @@ if (!menu || !toggle || !panel || !pinGate || !pinInput || !pinSubmit || !regist
       panel.classList.add("hidden");
       showPinGate();
     }
-    history.replaceState(null, "", window.location.pathname);
+    history.replaceState(history.state, "", window.location.pathname);
   }
+  restoreModulesFromNavigation();
+  window.addEventListener("pageshow", restoreModulesFromNavigation);
 }
