@@ -1,8 +1,10 @@
 /* MIRA TU TERRITORIO — navegación móvil estable y recuperación de módulos. */
 (()=> {
  const MQ='(max-width:600px)';
- let mobileLoginRequested=window.MIRA_MOBILE_LOGIN_REQUESTED===true;
-  window.MIRA_MOBILE_LOGIN_REQUESTED=mobileLoginRequested;
+ // La intención de ingresar es efímera: nunca se hereda de una sesión restaurada,
+ // de una recarga ni de una página recuperada desde la caché del navegador.
+ let mobileLoginRequested=false;
+ window.MIRA_MOBILE_LOGIN_REQUESTED=false;
   const loginRequested=()=>window.MIRA_MOBILE_LOGIN_REQUESTED===true;
  const cards=[
   {id:'dropdown-infomira',icon:'💙',title:'InfoMIRA',desc:'Red de cuidadores y líderes',tone:'blue',mapPanel:true},
@@ -119,13 +121,17 @@
   };
   const exitToPlatform=()=>{
    userExitedOperations=true;
+   mobileLoginRequested=false;
+   window.MIRA_MOBILE_LOGIN_REQUESTED=false;
    closeWorkspace();
    const hadHistory=historyStateActive;historyStateActive=false;
    app.classList.remove('mobile-operations-home-active','mobile-operations-module-active','mobile-operations-map-active','mobile-operations-map-panel-active','mobile-operations-workspace-active');
    home.hidden=true;back.classList.remove('is-visible');
    resetDropdowns();
    if(hadHistory)window.history.back();
-   // Salir del PMU devuelve a la portada pública y cierra la sesión Neon.
+   // Primero se restaura visualmente la portada y se elimina la intención de
+   // acceso móvil; luego el botón existente cierra la sesión real de Neon Auth.
+   restorePublicLanding();
    document.getElementById('platformHomeBtn')?.click();
    document.body.classList.remove('pmu-neomorphic');
   };
