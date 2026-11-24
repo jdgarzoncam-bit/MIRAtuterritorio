@@ -7,8 +7,6 @@ window.MIRA_AUTH = {
 
 const $ = id => document.getElementById(id);
 const cleanCedula = value => String(value || "").replace(/\D/g, "");
-const PIN_SALT_HEX = "29a690124de6919817cc26c444b99359";
-const PIN_ITERATIONS = 310000;
 const MODULE_ACCESS_TOKEN_KEY = "miraParticipantAccessToken";
 const MODULE_ACCESS_TOKEN_EXPIRY_KEY = "miraParticipantAccessTokenExpiresAt";
 let busy = false;
