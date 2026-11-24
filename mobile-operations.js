@@ -199,6 +199,9 @@
    if(mobile()&&!mobileLoginRequested){restorePublicLanding();return;}
    showOperationsHome();
   }));
+  window.addEventListener('mira:pmu-ready',()=>requestAnimationFrame(()=>{
+   if(mobile()&&mobileLoginRequested&&window.MIRA_CURRENT_USER)showOperationsHome();
+  }));
   // La autenticación se emite antes de activar el PMU; este evento confirma
   // que el contenedor ya está visible y permite abrir el menú sin carreras.
   window.addEventListener('mira:pmu-ready',()=>requestAnimationFrame(()=>{
