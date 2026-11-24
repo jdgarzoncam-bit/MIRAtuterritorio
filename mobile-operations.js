@@ -67,7 +67,7 @@
   <div class="mobile-ops-pagination" id="mobileOpsPagination">${cards.map((_,i)=>`<button type="button" data-index="${i}" aria-label="Ir al módulo ${i+1}"></button>`).join('')}</div><footer class="mobile-ops-footer"><span>Desliza para cambiar de módulo</span></footer>`;
   app.insertBefore(home,app.firstChild);
   let back=document.getElementById('mobileOpsBack');
-  if(!back){back=document.createElement('button');back.id='mobileOpsBack';back.className='mobile-ops-back';back.type='button';back.innerHTML='<span>‹</span><b>Volver a módulos</b>';back.setAttribute('aria-label','Volver al Centro de Operaciones');document.body.appendChild(back);}
+  if(!back){back=document.createElement('button');back.id='mobileOpsBack';back.className='mobile-ops-back';back.type='button';back.innerHTML='<span aria-hidden="true">←</span><b class="sr-only">Volver a módulos</b>';back.setAttribute('aria-label','Volver al Centro de Operaciones');document.body.appendChild(back);}
   const carousel=home.querySelector('#mobileOpsCarousel'),els=[...carousel.querySelectorAll('.mobile-ops-card')],dots=[...home.querySelectorAll('#mobileOpsPagination button')];
   const mobile=()=>matchMedia(MQ).matches;let active=0,timer=0,workspaceMode=null,historyStateActive=false,userExitedOperations=false;
   const setActive=i=>{
