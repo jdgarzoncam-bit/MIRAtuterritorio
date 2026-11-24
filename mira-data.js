@@ -234,16 +234,17 @@ export const MIRA_DATA = {
       p_actividad_id:null,p_consentimiento:false
     }});
   },
-  registerPublicActivityParticipant({cedula,nombres,apellidos,telefono=null,actividad_id,info_mira,tipo_participacion,consentimiento=false,access_token=null}) {
+  registerPublicActivityParticipant({cedula,nombres,apellidos,telefono=null,actividad_id,info_mira,tiene_app_infomira,tipo_participacion,consentimiento=false,access_token=null}) {
     const normalized=cleanCedula(cedula);
     if(normalized.length<5||normalized.length>15) throw new Error("La cédula debe contener entre 5 y 15 dígitos.");
-    if(!nombres?.trim()||!apellidos?.trim()||!actividad_id||![ "si","no" ].includes(info_mira)||![ "interno","externo" ].includes(tipo_participacion)||consentimiento!==true) throw new Error("Completa los datos obligatorios y acepta el tratamiento de datos.");
+    if(!nombres?.trim()||!apellidos?.trim()||!actividad_id||![ "si","no" ].includes(info_mira)||![ "si","no" ].includes(tiene_app_infomira)||![ "interno","externo" ].includes(tipo_participacion)||consentimiento!==true) throw new Error("Completa los datos obligatorios y acepta el tratamiento de datos.");
     // Empaquetamos los campos nuevos en el argumento de teléfono para mantener
     // la firma RPC de seis parámetros que Neon ya tiene en caché.
     const registrationData=JSON.stringify({
       access_token:access_token,
       telefono:telefono,
       info_mira:info_mira==="si",
+      tiene_app_infomira:tiene_app_infomira==="si",
       tipo_participacion
     });
     if(!access_token) throw new Error("Ingresa el PIN de acceso antes de registrar la asistencia.");
