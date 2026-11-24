@@ -56,7 +56,7 @@
   const app=document.getElementById('app-container'),sidebar=document.getElementById('mainSidebar'),map=document.getElementById('map');
   if(!app||!sidebar||!map||document.getElementById('mobileOperationsHome'))return;
   const home=document.createElement('section');home.id='mobileOperationsHome';home.className='mobile-operations-home';home.setAttribute('aria-label','Centro de Operaciones móvil');
-  home.innerHTML=`<header class="mobile-ops-header"><div class="mobile-ops-brand"><span class="mobile-ops-brand-mark">TF</span><div><small>TERRITORIO FACA</small><h1>Centro de Operaciones</h1></div></div><span class="mobile-ops-live"><i></i> EN LÍNEA</span></header>
+  home.innerHTML=`<header class="mobile-ops-header"><div class="mobile-ops-brand"><span class="mobile-ops-brand-mark">TF</span><div><small>TERRITORIO FACA</small><h1>Centro de Operaciones</h1></div></div><div class="mobile-ops-header-actions"><span class="mobile-ops-live"><i></i> EN LÍNEA</span><button class="mobile-ops-exit" id="mobileOpsExit" type="button" aria-label="Salir del Centro de Operaciones">Salir <span>↗</span></button></div></header>
   <div class="mobile-ops-intro"><span>PLATAFORMA DE GESTIÓN TERRITORIAL</span><h2>¿Qué necesitas gestionar?</h2><p>Desliza las tarjetas para explorar los módulos.</p></div>
   <div class="mobile-ops-carousel-wrap"><button class="mobile-ops-arrow mobile-ops-prev" type="button" aria-label="Módulo anterior">‹</button><div class="mobile-ops-carousel" id="mobileOpsCarousel" tabindex="0" aria-label="Carrusel de módulos">${cards.map((c,i)=>`<button class="mobile-ops-card tone-${c.tone}" type="button" data-index="${i}" data-target="${c.id}" aria-label="Abrir ${c.title}"><span class="mobile-ops-card-top"><span class="mobile-ops-card-icon">${c.icon}</span><span class="mobile-ops-card-number">${String(i+1).padStart(2,'0')} / 07</span></span><span class="mobile-ops-card-content"><small>${c.map?'ACCESO TERRITORIAL':'MÓDULO DE GESTIÓN'}</small><strong>${c.title}</strong><span>${c.desc}</span></span><span class="mobile-ops-card-open">Tocar para abrir <b>↗</b></span></button>`).join('')}</div><button class="mobile-ops-arrow mobile-ops-next" type="button" aria-label="Módulo siguiente">›</button></div>
   <div class="mobile-ops-pagination" id="mobileOpsPagination">${cards.map((_,i)=>`<button type="button" data-index="${i}" aria-label="Ir al módulo ${i+1}"></button>`).join('')}</div><footer class="mobile-ops-footer"><span>Desliza para cambiar de módulo</span></footer>`;
@@ -81,17 +81,33 @@
    }
    workspaceMode=null;
   };
+  const resetDropdowns=()=>{
+   document.querySelectorAll('#mainSidebar details.custom-dropdown').forEach(d=>{
+    d.open=false;d.classList.remove('mobile-ops-selected-module');d.removeAttribute('aria-hidden');
+    d.querySelector(':scope > summary')?.setAttribute('aria-expanded','false');
+   });
+  };
   const closeToHome=(fromPopstate=false)=>{
+   userExitedOperations=false;
    closeWorkspace();
    app.classList.remove('mobile-operations-module-active','mobile-operations-map-active','mobile-operations-map-panel-active','mobile-operations-workspace-active');
-   sidebar.hidden=false;home.hidden=false;back.classList.remove('is-visible');
-   document.querySelectorAll('#mainSidebar details.custom-dropdown').forEach(d=>{d.open=false;d.classList.remove('mobile-ops-selected-module');d.removeAttribute('aria-hidden');d.querySelector(':scope > summary')?.setAttribute('aria-expanded','false')});
-   resizeMap();
+   app.classList.add('mobile-operations-home-active');
+   sidebar.hidden=true;home.hidden=false;back.classList.remove('is-visible');
+   resetDropdowns();resizeMap();
    if(!fromPopstate&&historyStateActive){historyStateActive=false;window.history.back();}
+  };
+  const exitToPlatform=()=>{
+   userExitedOperations=true;
+   closeWorkspace();
+   const hadHistory=historyStateActive;historyStateActive=false;
+   app.classList.remove('mobile-operations-home-active','mobile-operations-module-active','mobile-operations-map-active','mobile-operations-map-panel-active','mobile-operations-workspace-active');
+   home.hidden=true;sidebar.hidden=false;back.classList.remove('is-visible');
+   resetDropdowns();if(hadHistory)window.history.back();resizeMap();
   };
   const ensureHistory=()=>{if(!historyStateActive){window.history.pushState({miraMobileOperations:true},'','#centro-operaciones');historyStateActive=true}};
   const open=async card=>{
    if(!mobile())return;
+   userExitedOperations=false;
    ensureHistory();home.hidden=true;
    app.classList.remove('mobile-operations-home-active','mobile-operations-map-active','mobile-operations-module-active','mobile-operations-map-panel-active','mobile-operations-workspace-active');
    if(card.map){sidebar.hidden=true;app.classList.add('mobile-operations-map-active');back.classList.add('is-visible');document.getElementById('floatingPuestoWidget')?.classList.add('hidden');resizeMap();return}
@@ -118,6 +134,7 @@
    app.classList.add('mobile-operations-module-active');const side=sidebar.querySelector('.neo-tactile-sidebar');if(side)side.scrollTop=0;resizeMap();
   };
   const onBack=()=>{if(historyStateActive){window.history.back();return}closeToHome(true)};
+  home.querySelector('#mobileOpsExit')?.addEventListener('click',exitToPlatform);
   window.addEventListener('pageshow',()=>{
    if(!mobile())return;
    if(!app.classList.contains('mobile-operations-module-active')&&!app.classList.contains('mobile-operations-map-active')&&!app.classList.contains('mobile-operations-map-panel-active')&&!app.classList.contains('mobile-operations-workspace-active')){
@@ -140,7 +157,13 @@
     if((workspaceMode==='activities'&&activitiesHidden)||(workspaceMode==='concejal'&&concejalHidden))closeToHome(false);
    },0);
   },true);
-  const viewport=()=>{if(mobile()){if(!app.classList.contains('mobile-operations-module-active')&&!app.classList.contains('mobile-operations-map-active')&&!app.classList.contains('mobile-operations-map-panel-active')&&!app.classList.contains('mobile-operations-workspace-active')){home.hidden=false;sidebar.hidden=true;app.classList.add('mobile-operations-home-active')}}else{app.classList.remove('mobile-operations-home-active','mobile-operations-module-active','mobile-operations-map-active','mobile-operations-map-panel-active','mobile-operations-workspace-active');home.hidden=true;sidebar.hidden=false;back.classList.remove('is-visible');historyStateActive=false;document.querySelectorAll('#mainSidebar details.custom-dropdown').forEach(d=>{d.open=false;d.classList.remove('mobile-ops-selected-module');d.removeAttribute('aria-hidden')})}};
+  let reloadExitHandled=false,userExitedOperations=false;
+  const isPageReload=()=>window.performance?.getEntriesByType?.('navigation')?.[0]?.type==='reload';
+  const viewport=()=>{if(mobile()){
+   if(isPageReload()&&!reloadExitHandled){reloadExitHandled=true;exitToPlatform();return;}
+   if(userExitedOperations)return;
+   if(!app.classList.contains('mobile-operations-module-active')&&!app.classList.contains('mobile-operations-map-active')&&!app.classList.contains('mobile-operations-map-panel-active')&&!app.classList.contains('mobile-operations-workspace-active')&&!app.classList.contains('mobile-operations-home-active')){home.hidden=false;sidebar.hidden=true;app.classList.add('mobile-operations-home-active')}
+  }else{userExitedOperations=false;app.classList.remove('mobile-operations-home-active','mobile-operations-module-active','mobile-operations-map-active','mobile-operations-map-panel-active','mobile-operations-workspace-active');home.hidden=true;sidebar.hidden=false;back.classList.remove('is-visible');historyStateActive=false;resetDropdowns()}};
   window.addEventListener('resize',viewport,{passive:true});setActive(0);viewport();
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
