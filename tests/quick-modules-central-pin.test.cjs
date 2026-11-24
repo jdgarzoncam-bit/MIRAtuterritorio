@@ -11,27 +11,37 @@ const html = read("index.html");
 const activityHtml = read("actividad.html");
 const data = read("mira-data.js");
 
-test("Módulos es el único punto que solicita el PIN y lo valida con el RPC protegido de Neon", () => {
+test("Módulos es el único punto que solicita y valida el PIN", () => {
   assert.match(quick, /MIRA_DATA\.verifyParticipantAccessPin\(verifier\)/);
   assert.match(quick, /PBKDF2/);
   assert.match(quick, /PIN_ITERATIONS\s*=\s*310000/);
-  assert.match(quick, /sessionStorage\.setItem\(TOKEN_KEY/);
-  assert.doesNotMatch(portal, /pubPinSubmit|pubGate|pubPinStatus|derivePinVerifier|verifyParticipantAccessPin/);
-  assert.doesNotMatch(activityHtml, /id="pubGate"|id="pubPinSubmit"|id="pubLock"/);
+  assert.match(html, /id="miraModulePinGate"/);
+  assert.doesNotMatch(portal, /pubPinSubmit|pubGate|pubPinStatus|derivePinVerifier|verifyParticipantAccessPin|PIN_SALT_HEX|PIN_ITERATIONS/);
+  assert.doesNotMatch(activityHtml, /id="pubGate"|id="pubPinSubmit"|id="pubLock"|type="password"/);
 });
 
-test("Registrar participante reutiliza el mismo token de la sesión y no vuelve a pedir el PIN", () => {
-  assert.match(quick, /sessionStorage\.getItem\(TOKEN_KEY\)/);
-  assert.match(quick, /window\.location\.assign\("actividad\.html/);
+test("el portal reutiliza el mismo JWT que validó el PIN central; no crea otra identidad", () => {
+  assert.match(data, /sessionStorage\.setItem\("miraParticipantAuthJwt",authToken\)/);
+  assert.match(data, /miraRequest\([^\n]+authToken,body:/);
+  assert.match(data, /authToken=null/);
+  assert.match(portal, /getJWTToken: \(\) => sessionStorage\.getItem\("miraParticipantAuthJwt"\)/);
+  assert.doesNotMatch(portal, /createInternalNeonAuth|PUBLIC_AUTH_URL|new PIN|PIN de acceso/);
   assert.match(portal, /sessionStorage\.getItem\(MODULE_ACCESS_TOKEN_KEY\)/);
   assert.match(portal, /accessToken = sharedToken/);
-  assert.match(portal, /sessionStorage\.removeItem\(MODULE_ACCESS_TOKEN_KEY\)/);
-  assert.match(data, /access_token:access_token/);
-  assert.match(data, /Ingresa el PIN de acceso antes de registrar la asistencia/);
 });
 
-test("la autorización central se mantiene revocable y Testigos sigue bloqueado", () => {
+test("Registrar participante conserva el token central entre páginas y no solicita otro PIN", () => {
+  assert.match(quick, /sessionStorage\.setItem\(TOKEN_KEY/);
+  assert.match(quick, /window\.location\.assign\("actividad\.html/);
+  assert.match(quick, /sessionStorage\.getItem\(TOKEN_KEY\)/);
+  assert.match(portal, /sessionStorage\.getItem\(MODULE_ACCESS_TOKEN_KEY\)/);
+  assert.match(portal, /sessionStorage\.removeItem\("miraParticipantAuthJwt"\)/);
+  assert.match(data, /access_token:access_token/);
+});
+
+test("revocar o vencer la autorización limpia ambos tokens y Testigos sigue bloqueado", () => {
   assert.match(quick, /sessionStorage\.removeItem\(TOKEN_KEY\)/);
+  assert.match(quick, /sessionStorage\.removeItem\("miraParticipantAuthJwt"\)/);
   assert.match(quick, /miraQuickModulesLockBtn/);
   assert.match(quick, /mira:signed-out/);
   assert.match(quick, /testigos\.disabled\s*=\s*true/);
@@ -39,7 +49,7 @@ test("la autorización central se mantiene revocable y Testigos sigue bloqueado"
   assert.match(html, /id="miraQuickRegisterParticipantBtn"/);
 });
 
-test("el registro consulta inscripción previa y exige token antes de guardar en Neon", () => {
+test("el registro comprueba duplicados y guarda usando la autorización central", () => {
   assert.match(portal, /checkPublicActivityParticipant\(cedula, actividadId, accessToken\)/);
   assert.match(portal, /currentPersonAlreadyRegistered/);
   assert.match(portal, /currentPersonAlreadyRegistered \|\| !personLookupCompleted/);
@@ -48,20 +58,10 @@ test("el registro consulta inscripción previa y exige token antes de guardar en
   assert.match(data, /rpc\/public_register_activity_participant/);
 });
 
-test("el portal no muestra ningún PIN secundario por estilos móviles", () => {
-  assert.match(activityHtml, /\[hidden\]\s*\{\s*display:\s*none\s*!important;\s*\}/);
-  assert.match(portal, /if \(!sharedToken \|\| expiresAt <= Date\.now\(\)\)/);
-  assert.match(portal, /index\.html\?openModules=1&authorization=expired/);
-});
-
-test("el token de autorización central sigue siendo válido entre identidades Neon de páginas distintas", () => {
-  const migration = read("migrations/20261124_participant_access_token_actor_independent.sql");
-  assert.equal((migration.match(/s\.token=v_access_token AND s\.expires_at>now\(\)/g) || []).length, 3);
-  assert.doesNotMatch(migration, /s\.token=v_access_token AND s\.actor_uid=v_actor/);
-  assert.match(migration, /credencial bearer/);
-  assert.match(migration, /s\.token = p_access_token AND s\.expires_at > now\(\)/);
-  assert.doesNotMatch(migration, /s\.actor_uid = v_actor/);
-  assert.equal((migration.match(/v_attendance_id mira\.asistencias\.id%TYPE/g) || []).length, 2);
-  assert.doesNotMatch(migration, /v_attendance record|v_attendance\.estado|v_attendance\.id/);
-  assert.match(migration, /expires_at>now\(\)/);
+test("las páginas QA cargan la misma versión del cliente de datos y no hay PIN secundario en el HTML", () => {
+  assert.match(html, /mira-data\.js\?v=20261124-single-pin-6/);
+  assert.match(html, /mira-quick-modules\.js\?v=20261124-single-pin-6/);
+  assert.match(activityHtml, /activity-portal\.js\?v=20261124-single-pin-6/);
+  assert.match(portal, /mira-data\.js\?v=20261124-single-pin-6/);
+  assert.doesNotMatch(activityHtml, /miraModulePin|miraModulePinGate|pubPinSubmit/);
 });
