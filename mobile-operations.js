@@ -184,14 +184,16 @@
   };
   window.MIRA_SHOW_MOBILE_MODULES=showOperationsHome;
   document.getElementById('landingModulesBtn')?.addEventListener('click',()=>{
-   if(window.MIRA_CURRENT_USER){
-    mobileLoginRequested=true;window.MIRA_MOBILE_LOGIN_REQUESTED=true;
-    if(document.body.classList.contains('pmu-neomorphic'))showOperationsHome();
-    else if(typeof window.activarPMUAutenticado==='function')window.activarPMUAutenticado();
+   // «Módulos» abre el menú centralizado de autorizaciones, no el login PMU.
+   // El PIN de Registrar participante es independiente de la sesión PMU.
+   const modulesMenu=document.getElementById('miraQuickModules');
+   const modulesToggle=document.getElementById('miraQuickModulesToggle');
+   if(!modulesMenu||!modulesToggle){
+    console.error('[MIRA módulos] No se encontró el menú centralizado.');
     return;
    }
-   if(typeof window.abrirLoginAdmin==='function')window.abrirLoginAdmin();
-   else document.getElementById('landingLoginBtn')?.click();
+   modulesMenu.classList.remove('hidden');
+   modulesToggle.click();
   });
   const restorePublicLanding=()=>{
    // La restauración inicial de Neon puede emitir mira:signed-out antes de
