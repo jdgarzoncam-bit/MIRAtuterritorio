@@ -174,7 +174,7 @@ export const MIRA_DATA = {
   },
   async listPendingPeople({limit=25,offset=0}={}) {
     const safeLimit=Math.min(Math.max(Number(limit)||25,1),100);
-    const params={select:"id,cedula,cedula_normalizada,nombres,apellidos,telefono,correo,barrio,puesto_votacion,mesa_votacion,edad,tipo_participacion,observaciones,datos_pendientes,updated_at",order:"updated_at.desc,id.asc",limit:String(safeLimit),offset:String(Math.max(0,Number(offset)||0)),or:'(datos_pendientes.eq.true,telefono.is.null,telefono.eq."",barrio.is.null,barrio.eq."")'};
+    const params={select:"id,cedula,cedula_normalizada,nombres,apellidos,telefono,correo,barrio,puesto_votacion,mesa_votacion,edad,tipo_participacion,info_mira,tiene_app_infomira,observaciones,datos_pendientes,updated_at",order:"updated_at.desc,id.asc",limit:String(safeLimit),offset:String(Math.max(0,Number(offset)||0)),or:'(datos_pendientes.eq.true,telefono.is.null,telefono.eq."",barrio.is.null,barrio.eq."")'};
     return miraRequest("personas",{query:qs(params)});
   },
   async getPersonById(id) {
