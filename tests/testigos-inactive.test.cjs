@@ -33,6 +33,9 @@ function loadDataApi(disabledValue = true) {
     Headers,
     URLSearchParams,
     Blob,
+    AbortController,
+    setTimeout,
+    clearTimeout,
     Event: class Event {
       constructor(type) { this.type = type; }
     },
