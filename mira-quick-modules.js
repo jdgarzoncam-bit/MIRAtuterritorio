@@ -1,4 +1,4 @@
-import { MIRA_DATA } from "./mira-data.js?v=20261124-central-pin-1";
+import { MIRA_DATA } from "./mira-data.js?v=20261124-mobile-final-4";
 
 const TOKEN_KEY = "miraParticipantAccessToken";
 const PIN_SALT_HEX = "29a690124de6919817cc26c444b99359";
@@ -106,14 +106,14 @@ if (!menu || !toggle || !panel || !pinGate || !pinInput || !pinSubmit || !regist
     }
   }
 
+  // app.js conserva el control original de apertura/cierre del panel.
+  // Este listener en captura solo prepara la autorización y no duplica el toggle.
   toggle.addEventListener("click", () => {
     const opening = panel.classList.contains("hidden");
-    panel.classList.toggle("hidden", !opening);
-    toggle.setAttribute("aria-expanded", String(opening));
     if (opening && !authorized) showPinGate();
     else if (opening) renderAuthorization();
     else hidePinGate();
-  });
+  }, true);
 
   pinSubmit.addEventListener("click", authorize);
   pinInput.addEventListener("keydown", event => {
