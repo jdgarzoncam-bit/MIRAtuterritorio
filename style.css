@@ -5025,12 +5025,6 @@ a:hover {color:#E6EDFD;}
   .mobile-ops-back.is-visible {display:flex;}
   .mobile-ops-back>span {font-size:1rem;line-height:1;color:#AFC5F8;}
   .mobile-ops-back>b {font-size:.78rem;font-weight:800;letter-spacing:.01em;}
-  /* Control de retorno móvil: siempre horizontal, visible solo dentro del Centro de Operaciones. */
-  #mobileOpsBack {box-sizing:border-box!important;width:auto!important;min-width:118px!important;max-width:calc(100vw - 24px)!important;height:46px!important;min-height:46px!important;padding:0 16px 0 13px!important;display:none!important;flex-direction:row!important;flex-wrap:nowrap!important;justify-content:center!important;align-items:center!important;gap:9px!important;white-space:nowrap!important;line-height:1!important;}
-  #mobileOpsBack.is-visible:not([hidden]) {display:flex!important;}
-  #mobileOpsBack[hidden],body.mira-mobile-public-landing #mobileOpsBack {display:none!important;pointer-events:none!important;}
-  #mobileOpsBack>span {display:block!important;flex:0 0 auto!important;font-size:1.05rem!important;line-height:1!important;}
-  #mobileOpsBack>b {display:block!important;flex:0 0 auto!important;font-size:.82rem!important;line-height:1!important;white-space:nowrap!important;}
   #app-container.mobile-operations-module-active .neo-tactile-sidebar {pointer-events:auto !important;}
 }
 @media(max-width:370px) {
