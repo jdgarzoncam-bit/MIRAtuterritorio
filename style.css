@@ -8219,3 +8219,61 @@ input,select,textarea,button { max-width:100%; }
 @media(prefers-reduced-motion:reduce) {
   .mobile-ops-card {transition:none!important}
 }
+
+
+
+/* MIRA TU TERRITORIO — MOBILE REFERENCE 2026-11-24 */
+@media (max-width: 600px) {
+  html, body { width:100%; max-width:100%; min-height:100%; overflow-x:hidden!important; }
+  body { min-height:100dvh!important; height:100dvh!important; background:#050608!important; }
+  #app-container.mobile-operations-home-active { position:fixed!important; inset:0!important; width:100vw!important; height:100dvh!important; min-height:0!important; max-width:100vw!important; overflow:hidden!important; background:#050608!important; }
+  #mobileOperationsHome { position:absolute!important; inset:0!important; display:flex!important; flex-direction:column!important; width:100%!important; height:100%!important; min-height:0!important; padding: max(12px,env(safe-area-inset-top)) 18px max(18px,env(safe-area-inset-bottom))!important; overflow:hidden!important; background:radial-gradient(ellipse at 50% 66%,rgba(16,65,133,.12),transparent 43%),#050608!important; color:#f5f6fa!important; }
+  #mobileOperationsHome[hidden] { display:none!important; }
+  .mobile-ops-header { flex:0 0 auto!important; min-height:68px!important; padding:10px 0 13px!important; display:flex!important; align-items:center!important; justify-content:space-between!important; gap:8px!important; border-bottom:1px solid rgba(255,255,255,.12)!important; }
+  .mobile-ops-brand { min-width:0!important; gap:11px!important; }
+  .mobile-ops-brand-mark { width:42px!important; height:42px!important; flex:0 0 42px!important; border-radius:14px!important; background:#17191e!important; color:#b8bbc4!important; box-shadow:inset 0 1px 0 rgba(255,255,255,.12)!important; }
+  .mobile-ops-brand small { color:#9295a0!important; letter-spacing:.17em!important; font-size:9px!important; }
+  .mobile-ops-brand h1 { color:#f2f3f7!important; font-size:clamp(13px,3.8vw,17px)!important; white-space:nowrap!important; }
+  .mobile-ops-live { color:#a7abb5!important; font-size:9px!important; letter-spacing:.12em!important; white-space:nowrap!important; }
+  .mobile-ops-live i { background:#42d58a!important; box-shadow:0 0 10px rgba(66,213,138,.65)!important; }
+  .mobile-ops-exit { min-height:40px!important; padding:0 10px!important; border-radius:12px!important; background:rgba(255,255,255,.055)!important; border:1px solid rgba(255,255,255,.16)!important; color:#e8eaf0!important; font-size:11px!important; }
+  .mobile-ops-intro { flex:0 0 auto!important; display:flex!important; flex-direction:column!important; align-items:center!important; justify-content:center!important; text-align:center!important; padding:clamp(24px,6vh,54px) 0 clamp(18px,4vh,38px)!important; }
+  .mobile-ops-intro>span { display:none!important; }
+  .mobile-ops-intro h2 { max-width:340px!important; color:#f1f1f4!important; font-size:clamp(25px,7.2vw,35px)!important; font-weight:500!important; line-height:1.17!important; letter-spacing:-.045em!important; }
+  .mobile-ops-intro p { display:none!important; }
+  .mobile-ops-carousel-wrap { position:relative!important; flex:1 1 auto!important; min-height:0!important; width:100%!important; display:flex!important; align-items:center!important; justify-content:center!important; overflow:visible!important; perspective:1000px!important; }
+  .mobile-ops-carousel { position:relative!important; width:100%!important; height:100%!important; min-height:0!important; overflow:visible!important; touch-action:pan-y!important; }
+  .mobile-ops-card { left:50%!important; top:50%!important; width:min(78vw,360px)!important; height:min(54dvh,490px)!important; min-height:330px!important; max-height:490px!important; padding:25px 24px 22px!important; display:flex!important; flex-direction:column!important; justify-content:space-between!important; overflow:hidden!important; border-radius:clamp(34px,10vw,54px)!important; border:1px solid rgba(231,237,255,.24)!important; background:linear-gradient(160deg,rgba(68,73,85,.42) 0%,rgba(28,30,38,.82) 40%,rgba(9,13,23,.98) 75%,rgba(14,55,112,.96) 100%)!important; box-shadow:0 20px 46px rgba(0,0,0,.7),inset 0 1px 1px rgba(255,255,255,.32)!important; -webkit-backdrop-filter:blur(30px) saturate(140%)!important; backdrop-filter:blur(30px) saturate(140%)!important; }
+  .mobile-ops-card::before { content:""!important; position:absolute!important; inset:auto -20% -13% -20%!important; height:42%!important; border-radius:50%!important; background:radial-gradient(ellipse at 50% 100%,rgba(86,169,255,.98),rgba(34,105,230,.66) 34%,rgba(22,69,145,.18) 65%,transparent 78%)!important; filter:blur(20px)!important; opacity:1!important; }
+  .mobile-ops-card::after { content:""!important; position:absolute!important; left:10%!important; right:10%!important; bottom:0!important; top:auto!important; height:4px!important; border-radius:50%!important; background:linear-gradient(90deg,transparent,#68baff,#7b8cff,transparent)!important; box-shadow:0 0 28px 8px rgba(49,128,255,.7)!important; }
+  .mobile-ops-card.is-active { box-shadow:0 28px 58px rgba(0,0,0,.78),0 0 34px rgba(43,121,255,.34),inset 0 1px 1px rgba(255,255,255,.34)!important; }
+  .mobile-ops-card:not(.is-active) { pointer-events:auto!important; }
+  .mobile-ops-card-top { position:relative!important; z-index:1!important; display:flex!important; align-items:center!important; justify-content:space-between!important; }
+  .mobile-ops-card-icon { width:74px!important; height:74px!important; border-radius:24px!important; background:rgba(255,255,255,.075)!important; border:1px solid rgba(255,255,255,.22)!important; box-shadow:inset 0 1px 1px rgba(255,255,255,.2),0 10px 25px rgba(0,0,0,.2)!important; font-size:39px!important; }
+  .mobile-ops-card-number { color:#f0f2fa!important; font-size:15px!important; letter-spacing:.04em!important; }
+  .mobile-ops-card-content { position:relative!important; z-index:1!important; gap:8px!important; }
+  .mobile-ops-card-content small { color:rgba(236,239,249,.62)!important; font-size:12px!important; letter-spacing:.13em!important; }
+  .mobile-ops-card-content strong { color:#fff!important; font-size:clamp(29px,8vw,40px)!important; line-height:1.04!important; letter-spacing:-.04em!important; }
+  .mobile-ops-card-content>span { color:rgba(236,241,255,.76)!important; font-size:clamp(17px,4.7vw,22px)!important; line-height:1.18!important; max-width:95%!important; }
+  .mobile-ops-card-open { position:relative!important; z-index:1!important; min-height:44px!important; border-top:1px solid rgba(255,255,255,.19)!important; color:rgba(241,245,255,.78)!important; font-size:15px!important; }
+  .mobile-ops-card-open b { color:#c3ddff!important; font-size:26px!important; }
+  .mobile-ops-arrow { display:none!important; }
+  .mobile-ops-pagination { flex:0 0 auto!important; min-height:44px!important; display:flex!important; align-items:center!important; justify-content:center!important; gap:15px!important; padding:9px 0 4px!important; }
+  .mobile-ops-pagination button,.mobile-ops-pagination button.is-active { flex:0 0 12px!important; width:12px!important; min-width:12px!important; max-width:12px!important; height:12px!important; min-height:12px!important; max-height:12px!important; border:0!important; border-radius:50%!important; padding:0!important; background:rgba(220,225,239,.38)!important; box-shadow:none!important; }
+  .mobile-ops-pagination button.is-active { background:#fff!important; box-shadow:0 0 10px rgba(255,255,255,.48)!important; }
+  .mobile-ops-footer { flex:0 0 16px!important; min-height:16px!important; color:transparent!important; }
+  #mobileOpsBack { min-height:44px!important; padding:0 15px!important; border-radius:14px!important; background:rgba(8,17,37,.9)!important; border:1px solid rgba(173,203,255,.3)!important; color:#fff!important; }
+  #app-container.mobile-operations-workspace-active, #app-container.mobile-operations-module-active, #app-container.mobile-operations-map-active, #app-container.mobile-operations-map-panel-active { width:100vw!important; max-width:100vw!important; overflow-x:hidden!important; }
+  #app-container.mobile-operations-workspace-active { height:100dvh!important; min-height:100dvh!important; }
+  #app-container.mobile-operations-workspace-active button, #app-container.mobile-operations-module-active button, #app-container.mobile-operations-map-panel-active button { touch-action:manipulation!important; }
+  #app-container.mobile-operations-workspace-active input, #app-container.mobile-operations-workspace-active select, #app-container.mobile-operations-workspace-active textarea { font-size:16px!important; }
+}
+@media (max-width:390px) {
+  .mobile-ops-card { width:82vw!important; padding:21px 19px 18px!important; }
+  .mobile-ops-card-icon { width:62px!important; height:62px!important; }
+  .mobile-ops-pagination { gap:12px!important; }
+}
+@media (max-height:740px) and (max-width:600px) {
+  .mobile-ops-intro { padding:18px 0 14px!important; }
+  .mobile-ops-card { height:min(51dvh,390px)!important; min-height:300px!important; }
+}
