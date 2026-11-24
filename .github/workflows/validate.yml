@@ -28,5 +28,6 @@ jobs:
           node --check reportes.js
           if [ -f reportes-operativos.js ]; then node --check reportes-operativos.js; fi
           node --check pmu-navigation.js
+          node --check mira-quick-modules.js
       - name: Ejecutar pruebas de seguridad del cliente
         run: node --test tests/*.test.cjs
