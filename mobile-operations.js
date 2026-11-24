@@ -77,6 +77,7 @@
     e.style.setProperty('--stack-y',depth===0?'0px':(-Math.min(depth*11,44))+'px');
     e.style.setProperty('--stack-rotate',depth===0?'0deg':(side* Math.min(depth*2.2,8))+'deg');
     e.style.setProperty('--stack-scale',String(Math.max(.82,1-depth*.045)));
+    e.style.setProperty('--stack-opacity',String(Math.max(.42,1-depth*.105)));
     e.style.zIndex=String(20-depth);
     e.setAttribute('aria-current',n===active?'true':'false');
     e.tabIndex=n===active?0:-1;
