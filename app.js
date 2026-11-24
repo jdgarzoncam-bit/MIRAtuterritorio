@@ -558,7 +558,13 @@ function canManageActivities(action){
   return activityPermissions.has(action);
 }
 async function loadActivitiesFromNeon(){
-  if(activitiesLoading)return;
+  if(activitiesLoading){
+    await new Promise(resolve=>{
+      const waitForCurrentLoad=()=>activitiesLoading?window.setTimeout(waitForCurrentLoad,40):resolve();
+      waitForCurrentLoad();
+    });
+    return;
+  }
   activitiesLoading=true;
   try{
     if(!window.MIRA_DATA)throw new Error('El cliente de Neon todavía no está disponible.');
@@ -624,7 +630,8 @@ async function openActivities(view='registration'){
     }catch(error){activityPermissions=new Set();alert("No fue posible validar tus permisos de Actividades. El acceso permanece bloqueado.");return;}
   }
   if(!activityPermissions.has("view")&&!isPrimaryMiraAdmin()){alert("No tienes permiso de Consulta en Actividades.");return;}
-  if(!activitiesBackendReady)await loadActivitiesFromNeon();
+  // Refrescar desde Neon en cada apertura para recuperar carpetas e historial recientes.
+  await loadActivitiesFromNeon();
   if(!activitiesBackendReady){alert("No se pudo abrir Actividades. Verifica tu sesión, conexión y permisos.");return;}
   activitiesReturnContext=(document.getElementById('landing-hero-overlay').style.display==='none')?'platform':'landing';
   activitiesPlaceholder.classList.remove('hidden');
@@ -1055,12 +1062,48 @@ document.getElementById('activitySearch').addEventListener('input',renderActivit
 document.getElementById('activitiesArchiveSearch')?.addEventListener('input',renderActivities);
 function activityRows(activityId=null,query=''){return activitiesState.attendances.slice().sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0)).map(a=>({a,p:activitiesState.people.find(p=>p.id===a.personId)||{},act:activitiesState.activities.find(x=>x.id===a.activityId)||{}})).filter(x=>(!activityId||x.a.activityId===activityId)&&(!query||normActivityText([x.p.names,x.p.surnames,x.p.cedula,x.act.name].join(' ')).includes(query)));}
 function editAttendance(id){if(!canManageActivities("edit")){alert("No tienes permiso para editar asistencias.");return;}returnToRecentAfterEdit=true;const a=activitiesState.attendances.find(x=>x.id===id),p=a&&activitiesState.people.find(x=>x.id===a.personId);if(!a||!p)return;editingParticipantId=a.id;editingPersonId=p.id;document.getElementById('participantCedula').value=p.cedula;document.getElementById('participantNames').value=p.names;document.getElementById('participantSurnames').value=p.surnames;document.getElementById('participantPhone').value=p.phone||'';document.getElementById('participantInfoMira').value=p.infoMira||'';document.getElementById('participantType').value=p.type||'';document.getElementById('participantActivity').value=a.activityId;document.getElementById('saveParticipantBtn').textContent='Guardar cambios';const title=document.getElementById('participantFormTitle');if(title)title.textContent='Editar participante';const notice=document.getElementById('duplicateNotice');notice.textContent='Estás editando una asistencia existente. Los cambios se actualizarán en Neon.';notice.classList.remove('hidden');showActivityView('registration');document.getElementById('participantWorkspace').scrollIntoView({behavior:'smooth',block:'start'});}
-async function annulActivityAttendance(id){if(!canManageActivities('annul')){alert('No tienes permiso para anular asistencias.');return;}const reason=window.prompt('Indica el motivo de anulación.');if(reason===null)return;if(!reason.trim()){alert('Debes indicar un motivo.');return;}if(!window.confirm('¿Confirmas la anulación? Quedará registrada en el historial.'))return;try{await window.MIRA_DATA.annulAttendance(id,reason);await loadActivitiesFromNeon();alert('Asistencia anulada y registrada.');}catch(error){alert(error.message||'No fue posible anular la asistencia.');}}
-function renderActivityTable(){const canEdit=canManageActivities("edit");const body=document.getElementById('activityParticipantsBody');const q=normActivityText(document.getElementById('activitySearch').value);const allRows=activityRows(null,q);const rows=allRows.slice(0,10);document.getElementById('liveActivityCount').textContent='Mostrando '+rows.length+' de '+activitiesState.attendances.length+' registros';body.innerHTML=rows.length?rows.map(({a,p,act})=>`<tr><td>${escapeActivityHtml((p.names||'')+' '+(p.surnames||''))}</td><td>${escapeActivityHtml(p.cedula||'')}</td><td>${escapeActivityHtml(act.name||'—')}</td><td>${p.infoMira==='si'?'Sí':'No'}</td><td>${p.type==='externo'?'Externo':p.type==='interno'?'Interno':'—'}</td><td>${a.createdAt?new Date(a.createdAt).toLocaleString('es-CO'):''}</td>${canEdit?'<td><button class="activity-row-btn" data-edit="'+a.id+'" type="button">Editar</button></td>':'<td>Solo consulta</td>'}</tr>`).join(''):'<tr><td colspan="7">No hay registros recientes para mostrar.</td></tr>';body.querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',()=>editAttendance(b.dataset.edit)));body.querySelectorAll('tr').forEach((row,index)=>{const item=rows[index]?.a;if(!item)return;const cell=row.insertCell(-1);if(item.status==='anulada'){cell.textContent='Anulada';return;}if(canManageActivities('annul')){const button=document.createElement('button');button.type='button';button.className='activity-row-btn';button.textContent='Anular';button.addEventListener('click',()=>annulActivityAttendance(item.id));cell.appendChild(button);}else cell.textContent='—';});}
+async function deleteActivityAttendance(id){
+ if(!canManageActivities('annul')){alert("No tienes permiso para eliminar registros de asistencia.");return;}
+ if(!window.confirm("¿Eliminar definitivamente este registro de asistencia? Esta acción no se puede deshacer."))return;
+ try{
+  await window.MIRA_DATA.deleteAttendance(id);
+  await loadActivitiesFromNeon();
+  alert("Registro eliminado correctamente.");
+ }catch(error){
+  alert(error.message||"No fue posible eliminar el registro.");
+ }
+}
+function renderActivityTable(){
+ const canEdit=canManageActivities("edit"),canDelete=canManageActivities("annul");
+ const body=document.getElementById("activityParticipantsBody");
+ const q=normActivityText(document.getElementById("activitySearch").value);
+ const allRows=activityRows(null,q),rows=allRows.slice(0,10);
+ document.getElementById("liveActivityCount").textContent="Mostrando "+rows.length+" de "+activitiesState.attendances.length+" registros";
+ body.innerHTML=rows.length?rows.map(({a,p,act})=>{
+  const actions=[canEdit?'<button class="activity-row-btn" data-edit="'+escapeActivityHtml(a.id)+'" type="button">Editar</button>':"",canDelete?'<button class="activity-row-btn activity-manage-delete" data-delete-attendance="'+escapeActivityHtml(a.id)+'" type="button">Eliminar</button>':""].filter(Boolean).join(" ");
+  return '<tr><td>'+escapeActivityHtml((p.names||"")+" "+(p.surnames||""))+'</td><td>'+escapeActivityHtml(p.cedula||"")+'</td><td>'+escapeActivityHtml(act.name||"—")+'</td><td>'+(p.infoMira==="si"?"Sí":"No")+'</td><td>'+(p.type==="externo"?"Externo":p.type==="interno"?"Interno":"—")+'</td><td>'+(a.createdAt?new Date(a.createdAt).toLocaleString("es-CO"):"")+'</td><td>'+(actions||"—")+'</td></tr>';
+ }).join(""):'<tr><td colspan="7">No hay registros recientes para mostrar.</td></tr>';
+ body.querySelectorAll("[data-edit]").forEach(b=>b.addEventListener("click",()=>editAttendance(b.dataset.edit)));
+ body.querySelectorAll("[data-delete-attendance]").forEach(b=>b.addEventListener("click",()=>deleteActivityAttendance(b.dataset.deleteAttendance)));
+}
 function exportActivityExcel(activityId){if(!canManageActivities("view")||!canManageActivities("export")){alert('No tienes autorización para exportar registros. Solicita el permiso Exportar Excel al administrador.');return;}if(!window.XLSX){alert('No se pudo cargar la herramienta de Excel.');return;}const rows=activityRows(activityId).map(({a,p,act})=>({'Actividad':act.name||'','Fecha actividad':act.date||'','Lugar':act.place||'','Cédula':p.cedula||'','Nombres':p.names||'','Apellidos':p.surnames||'','Teléfono':p.phone||'','InfoMIRA':p.infoMira==='si'?'Sí':'No','Fecha registro':a.createdAt||''}));const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),'Registros');const act=activitiesState.activities.find(a=>a.id===activityId);XLSX.writeFile(wb,(act?act.name:'Mira_Tu_Territorio').replace(/[^a-z0-9_-]/gi,'_')+'.xlsx');}
 document.getElementById('exportSingleActivityBtn').addEventListener('click',()=>exportActivityExcel(detailActivityId));
 document.getElementById('exportSingleActivityBtn').hidden=true;
-function openActivityFolder(id){const act=activitiesState.activities.find(a=>a.id===id);if(!act)return;detailActivityId=id;document.getElementById('activityDetailTitle').textContent=act.name;document.getElementById('activityDetailMeta').textContent=[act.date,act.place,activitiesState.attendances.filter(x=>x.activityId===id).length+' registros'].filter(Boolean).join(' · ');const rows=activityRows(id),canEdit=canManageActivities("edit");document.getElementById('activityDetailBody').innerHTML=rows.length?rows.map(({a,p})=>`<tr><td>${escapeActivityHtml((p.names||'')+' '+(p.surnames||''))}</td><td>${escapeActivityHtml(p.cedula||'')}</td><td>${escapeActivityHtml(p.phone||'—')}</td><td>${p.infoMira==='si'?'Sí':'No'}</td><td>${a.createdAt?new Date(a.createdAt).toLocaleString('es-CO'):''}</td><td>${canEdit?'<button class="activity-row-btn" data-edit="'+a.id+'" type="button">Editar</button>':'Solo consulta'}</td></tr>`).join(''):'<tr><td colspan="6">Esta actividad aún no tiene registros.</td></tr>';const body=document.getElementById('activityDetailBody');body.querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',()=>editAttendance(b.dataset.edit)));body.querySelectorAll('tr').forEach((row,index)=>{const item=rows[index]?.a;if(!item)return;const cell=row.cells[row.cells.length-1];if(item.status==='anulada'){cell.textContent='Anulada';return;}if(canManageActivities('annul')){const button=document.createElement('button');button.type='button';button.className='activity-row-btn';button.textContent='Anular';button.addEventListener('click',()=>annulActivityAttendance(item.id));cell.appendChild(button);}});showActivityView('detail');}
+function openActivityFolder(id){
+ const act=activitiesState.activities.find(a=>a.id===id);if(!act)return;
+ detailActivityId=id;
+ document.getElementById("activityDetailTitle").textContent=act.name;
+ document.getElementById("activityDetailMeta").textContent=[act.date,act.place,activitiesState.attendances.filter(x=>x.activityId===id).length+" registros"].filter(Boolean).join(" · ");
+ const rows=activityRows(id),canEdit=canManageActivities("edit"),canDelete=canManageActivities("annul");
+ const body=document.getElementById("activityDetailBody");
+ body.innerHTML=rows.length?rows.map(({a,p})=>{
+  const actions=[canEdit?'<button class="activity-row-btn" data-edit="'+escapeActivityHtml(a.id)+'" type="button">Editar</button>':"",canDelete?'<button class="activity-row-btn activity-manage-delete" data-delete-attendance="'+escapeActivityHtml(a.id)+'" type="button">Eliminar</button>':""].filter(Boolean).join(" ");
+  return '<tr><td>'+escapeActivityHtml((p.names||"")+" "+(p.surnames||""))+'</td><td>'+escapeActivityHtml(p.cedula||"")+'</td><td>'+escapeActivityHtml(p.phone||"—")+'</td><td>'+(p.infoMira==="si"?"Sí":"No")+'</td><td>'+(a.createdAt?new Date(a.createdAt).toLocaleString("es-CO"):"")+'</td><td>'+(actions||"—")+'</td></tr>';
+ }).join(""):'<tr><td colspan="6">Esta actividad aún no tiene registros.</td></tr>';
+ body.querySelectorAll("[data-edit]").forEach(b=>b.addEventListener("click",()=>editAttendance(b.dataset.edit)));
+ body.querySelectorAll("[data-delete-attendance]").forEach(b=>b.addEventListener("click",()=>deleteActivityAttendance(b.dataset.deleteAttendance)));
+ showActivityView("detail");
+}
 function renderActivities(){
   const exportAllowed=canManageActivities("view")&&canManageActivities("export");
   const createAllowed=canManageActivities("create");
@@ -1484,12 +1527,22 @@ document.getElementById('sidebarToggleBtn').addEventListener('click', function()
         flyout.className = 'mira-module-flyout';
         flyout.setAttribute('role', 'region');
         flyout.setAttribute('aria-label', summary.innerText.trim());
-        const sidebarRect = sidebar.getBoundingClientRect();
-        const summaryRect = summary.getBoundingClientRect();
-        const maxHeight = Math.min(Math.round(window.innerHeight * .76), 720);
-        const top = Math.max(10, Math.min(summaryRect.top - sidebarRect.top - 8, window.innerHeight - maxHeight - 10 - sidebarRect.top));
-        flyout.style.top = top + 'px';
         flyout.appendChild(content);
+        const positionFlyout = () => {
+            const viewport = window.visualViewport;
+            const viewportTop = viewport?.offsetTop || 0;
+            const viewportHeight = viewport?.height || window.innerHeight;
+            const sidebarRect = sidebar.getBoundingClientRect();
+            const summaryRect = summary.getBoundingClientRect();
+            const maxHeight = Math.min(Math.round(viewportHeight * .76), 720);
+            flyout.style.maxHeight = maxHeight + 'px';
+            const actualHeight = Math.min(Math.max(flyout.scrollHeight, 1), maxHeight);
+            const preferredTop = summaryRect.top - sidebarRect.top - 8;
+            const maxTop = Math.max(8, viewportTop + viewportHeight - actualHeight - 10 - sidebarRect.top);
+            flyout.style.top = Math.max(8, Math.min(preferredTop, maxTop)) + 'px';
+        };
+        positionFlyout();
+        flyout._miraPosition = positionFlyout;
         sidebar.appendChild(flyout);
         content.classList.add('mira-floating-content');
         details.classList.add('mira-floating-active');
@@ -1597,11 +1650,14 @@ document.getElementById('sidebarToggleBtn').addEventListener('click', function()
             const summary = active.querySelector(':scope > summary');
             const flyout = sidebar.querySelector(':scope > .mira-module-flyout');
             if (summary && flyout) {
-                const sr = summary.getBoundingClientRect(), br = sidebar.getBoundingClientRect();
-                const mh = Math.min(Math.round(window.innerHeight * .76), 720);
-                flyout.style.top = Math.max(10, Math.min(sr.top - br.top - 8, window.innerHeight - mh - 10 - br.top)) + 'px';
+                flyout._miraPosition?.();
             }
         }
+    }, { passive: true });
+    window.visualViewport?.addEventListener('resize', () => {
+        const active = moduleDetails().find(item => item.classList.contains('mira-floating-active'));
+        const flyout = sidebar.querySelector(':scope > .mira-module-flyout');
+        if (active && flyout) flyout._miraPosition?.();
     }, { passive: true });
 })();
 
@@ -3197,6 +3253,7 @@ function inicializarSistemaMapa() {
                 const mesa = person?.mesa_votacion || row.mesa_votacion;
                 const barrio = row.barrio;
                 const asistencia = row.asistencia;
+                const movilidadDato = row?.movilidad ?? null;
                 const extras = [
                     person?.edad !== null && person?.edad !== undefined ? ['Edad',person.edad] : null,
                     person?.tipo_participacion ? ['Tipo de participación',person.tipo_participacion] : null,
@@ -3210,7 +3267,7 @@ function inicializarSistemaMapa() {
                     ['Barrio',barrio],
                     ['Puesto de votación',puesto],
                     ['Mesa',mesa],
-                    ['Movilidad',movilidad],
+                    ['Movilidad',movilidadDato],
                     ['Asistencia',asistencia],
                     ...extras
                 ].map(([label,value]) =>
@@ -3270,6 +3327,7 @@ function inicializarSistemaMapa() {
                         'Mesa': p.mesa_votacion || row.mesa_votacion || '',
                         'InfoMIRA': p.info_mira === true ? 'Sí' : p.info_mira === false ? 'No' : '',
                         'Activo': p.activo === true ? 'Sí' : p.activo === false ? 'No' : '',
+                        'Movilidad': row.movilidad || '',
                         'Asistencia': row.asistencia || '',
                         'Edad': p.edad ?? '',
                         'Tipo de participación': p.tipo_participacion || '',

@@ -13,26 +13,43 @@
  function installKeyboardFix(){
   if(window.__MIRA_MOBILE_KEYBOARD_FIX__)return;
   window.__MIRA_MOBILE_KEYBOARD_FIX__=true;
-  let savedScroll=null,restorePending=false;
+  let savedScroll=null,keyboardBaseline=0,keyboardOpen=false,restorePending=false;
   const editable=el=>el instanceof HTMLElement&&el.matches('input:not([readonly]):not([type=checkbox]):not([type=radio]),textarea:not([readonly]),select');
   const restore=()=>{
-   if(!matchMedia(MQ).matches||editable(document.activeElement)||!savedScroll)return;
+   if(!keyboardOpen||!matchMedia(MQ).matches)return;
+   const vv=window.visualViewport;
+   const currentHeight=vv?.height||window.innerHeight;
+   if(keyboardBaseline&&currentHeight<keyboardBaseline*.9)return;
+   keyboardOpen=false;
    document.documentElement.classList.remove('mira-mobile-keyboard-open');
    if(restorePending)return;
    restorePending=true;
+   const position=savedScroll;
    requestAnimationFrame(()=>{
-    const vv=window.visualViewport;
-    if(vv&&vv.scale>1.01)window.scrollTo({left:savedScroll.x,top:savedScroll.y,behavior:'auto'});
-    restorePending=false;savedScroll=null;
+    if(position)window.scrollTo({left:position.x,top:position.y,behavior:'auto'});
+    savedScroll=null;keyboardBaseline=0;restorePending=false;
    });
   };
-  document.addEventListener('focusin',e=>{
-   if(!matchMedia(MQ).matches||!editable(e.target))return;
-   if(!savedScroll)savedScroll={x:window.scrollX,y:window.scrollY};
+  document.addEventListener('focusin',event=>{
+   if(!matchMedia(MQ).matches||!editable(event.target))return;
+   if(!keyboardOpen){
+    savedScroll={x:window.scrollX,y:window.scrollY};
+    keyboardBaseline=window.visualViewport?.height||window.innerHeight;
+   }
+   keyboardOpen=true;
    document.documentElement.classList.add('mira-mobile-keyboard-open');
   },true);
-  document.addEventListener('focusout',()=>window.setTimeout(restore,180),true);
-  window.visualViewport?.addEventListener('resize',()=>{if(window.visualViewport.height>=window.innerHeight*.78)window.setTimeout(restore,80)},{passive:true});
+  document.addEventListener('focusout',()=>{
+   window.setTimeout(()=>{
+    if(!editable(document.activeElement))restore();
+    else if(window.visualViewport&&keyboardBaseline&&window.visualViewport.height>=keyboardBaseline*.9)restore();
+   },180);
+  },true);
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&!editable(document.activeElement))window.setTimeout(restore,90);});
+  window.addEventListener('pageshow',()=>{if(!editable(document.activeElement))window.setTimeout(restore,90);});
+  window.visualViewport?.addEventListener('resize',()=>{
+   if(keyboardOpen&&keyboardBaseline&&window.visualViewport.height>=keyboardBaseline*.9)window.setTimeout(restore,70);
+  },{passive:true});
  }
  function init(){
   installKeyboardFix();
@@ -101,6 +118,12 @@
    app.classList.add('mobile-operations-module-active');const side=sidebar.querySelector('.neo-tactile-sidebar');if(side)side.scrollTop=0;resizeMap();
   };
   const onBack=()=>{if(historyStateActive){window.history.back();return}closeToHome(true)};
+  window.addEventListener('pageshow',()=>{
+   if(!mobile())return;
+   if(!app.classList.contains('mobile-operations-module-active')&&!app.classList.contains('mobile-operations-map-active')&&!app.classList.contains('mobile-operations-map-panel-active')&&!app.classList.contains('mobile-operations-workspace-active')){
+    home.hidden=false;sidebar.hidden=true;back.classList.remove('is-visible');
+   }
+  });
   els.forEach((el,i)=>el.addEventListener('click',()=>{const r=el.getBoundingClientRect(),mid=carousel.getBoundingClientRect().left+carousel.clientWidth/2;if(Math.abs(r.left+r.width/2-mid)>Math.max(24,r.width*.16)){go(i);return}setActive(i);open(cards[i])}));
   dots.forEach((d,i)=>d.addEventListener('click',()=>go(i)));
   home.querySelector('.mobile-ops-prev').addEventListener('click',()=>go(centered()-1));home.querySelector('.mobile-ops-next').addEventListener('click',()=>go(centered()+1));
