@@ -7,7 +7,7 @@ const read = name => fs.readFileSync(path.join(root, name), "utf8");
 
 test("mobile entry stays on the public landing until Neon Auth confirms a user", () => {
   const mobile = read("mobile-operations.js");
-  assert.match(mobile, /if\(!window\.MIRA_CURRENT_USER\|\|!document\.body\.classList\.contains\('pmu-neomorphic'\)\)\{restorePublicLanding\(\);return;\}/);
+  assert.match(mobile, /if\(!mobileLoginRequested\|\|!window\.MIRA_CURRENT_USER\|\|!document\.body\.classList\.contains\('pmu-neomorphic'\)\)\{restorePublicLanding\(\);return;\}/);
   assert.match(mobile, /window\.addEventListener\('mira:authenticated',[\s\S]*showOperationsHome/);
   assert.match(mobile, /window\.addEventListener\('mira:signed-out',restorePublicLanding\)/);
 });
