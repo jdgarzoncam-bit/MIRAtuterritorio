@@ -3613,7 +3613,7 @@ if(homeReturnButton){
   const options=document.getElementById('concejalBarriosOptions');
   const list=document.getElementById('concejalHistoryList');
   const notice=document.getElementById('concejalFormNotice');
-  let records=[]; let commitments=[]; let editingId=null; let miniMap=null; let miniLayer=null; let miniTileLayer=null; let selectedFeatureLayer=null; let featureCollection=null; let concejalBackendReady=false; let concejalLoading=false;
+  let records=[]; let commitments=[]; let editingId=null; let miniMap=null; let miniLayer=null; let miniTileLayer=null; let selectedFeatureLayer=null; let featureCollection=null; let selectedConcejalBarrio=''; let concejalBackendReady=false; let concejalLoading=false;
   function persist(){document.getElementById('concejalSidebarCount').textContent=records.length+' actividades registradas en Neon';renderHistory();renderDashboard()}
   function mapConcejalActivity(r){return {id:r.id,barrio:r.barrio,description:r.descripcion||'',date:String(r.fecha||'').slice(0,10),createdAt:r.created_at||'',updatedAt:r.updated_at||''}}
   function mapConcejalCommitment(c){return {id:c.id,barrio:c.barrio,text:c.compromiso||'',with:c.adquirido_con||'',date:String(c.fecha||'').slice(0,10),deadline:c.fecha_limite?String(c.fecha_limite).slice(0,10):'',status:c.estado||'Pendiente',result:c.resultado||'',achieved:!!c.logrado,createdAt:c.created_at||'',updatedAt:c.updated_at||''}}
@@ -3646,14 +3646,76 @@ if(homeReturnButton){
   function norm(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim()}
   function getNames(){return Object.keys(poligonosPorNombre||{}).sort((a,b)=>a.localeCompare(b,'es'))}
   function populateNames(){const names=getNames(); options.innerHTML=names.map(n=>'<option value="'+esc(n)+'"></option>').join(''); if(!names.length) fetch('./barrios_poligonos_kml_aportado.geojson').then(r=>r.ok?r.json():Promise.reject()).then(fc=>{featureCollection=fc;const ns=(fc.features||[]).map(f=>(f.properties&&(f.properties.name||f.properties.Name||f.properties.nombre||f.properties.NOMBRE))||'').filter(Boolean);options.innerHTML=[...new Set(ns)].sort((a,b)=>a.localeCompare(b,'es')).map(n=>'<option value="'+esc(n)+'"></option>').join('');}).catch(()=>{});else if(!featureCollection)fetch('./barrios_poligonos_kml_aportado.geojson').then(r=>r.ok?r.json():Promise.reject()).then(fc=>{featureCollection=fc;}).catch(()=>{});}
-  function initMiniMap(){if(miniMap||!window.L)return;const el=document.getElementById('concejalMiniMap');if(!el)return;miniMap=L.map(el,{zoomControl:false,scrollWheelZoom:false,attributionControl:false}).setView([4.8123,-74.3542],13);L.control.zoom({position:'topright'}).addTo(miniMap);miniTileLayer=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'Imagery © Esri'}).addTo(miniMap);miniLayer=L.geoJSON(null,{style:f=>{const p=f.properties||{};const st=p.estilo_kml||{};return {color:st.line||p.stroke||p.color||'#36dce9',weight:st.lineWidth||2,fillColor:st.fill||p.fill||p.color||'#20c7df',fillOpacity:Math.max(.16,Math.min(.36,st.fillOpacity||.24))}},onEachFeature:(f,l)=>{const n=(f.properties&&(f.properties.name||f.properties.Name||f.properties.nombre||f.properties.NOMBRE))||'Sector';l.bindTooltip(n);}}).addTo(miniMap);if(featureCollection)miniLayer.addData(featureCollection);else fetch('./barrios_poligonos_kml_aportado.geojson').then(r=>r.json()).then(fc=>{featureCollection=fc;if(miniLayer)miniLayer.addData(fc);}).catch(()=>{});setTimeout(()=>miniMap&&miniMap.invalidateSize(),150);}
+  function initMiniMap(){
+    if(miniMap||!window.L)return;
+    const el=document.getElementById('concejalMiniMap');
+    if(!el)return;
+    miniMap=L.map(el,{zoomControl:false,scrollWheelZoom:false,attributionControl:true,preferCanvas:true}).setView([4.8123,-74.3542],13);
+    L.control.zoom({position:'topright'}).addTo(miniMap);
+    // La mini cartografía utiliza exactamente la misma fuente satelital que el mapa principal.
+    miniTileLayer=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{
+      minZoom:10,maxZoom:19,attribution:'Tiles © Esri',crossOrigin:true
+    }).addTo(miniMap);
+    miniLayer=L.geoJSON(null,{
+      style:f=>{
+        const p=f.properties||{},st=p.estilo_kml||{};
+        return {
+          color:st.line||p.stroke||p.color||'#36dce9',
+          weight:Math.max(2,Number(st.lineWidth)||2),
+          fillColor:st.fill||p.fill||p.color||'#20c7df',
+          fillOpacity:Math.max(.18,Math.min(.38,Number(st.fillOpacity)||.26))
+        };
+      },
+      onEachFeature:(f,l)=>{
+        const p=f.properties||{},n=p.name||p.Name||p.nombre||p.NOMBRE||'Sector';
+        l.bindTooltip(n,{sticky:true});
+      }
+    }).addTo(miniMap);
+    const applyFeatureCollection=fc=>{
+      if(!fc||!Array.isArray(fc.features))return;
+      featureCollection=fc;
+      if(miniLayer){miniLayer.clearLayers();miniLayer.addData(fc);}
+      if(selectedConcejalBarrio)requestAnimationFrame(()=>focusBarrio(selectedConcejalBarrio));
+    };
+    if(featureCollection)applyFeatureCollection(featureCollection);
+    else fetch('./barrios_poligonos_kml_aportado.geojson')
+      .then(response=>{if(!response.ok)throw new Error('No fue posible cargar los polígonos territoriales.');return response.json();})
+      .then(applyFeatureCollection)
+      .catch(error=>console.warn('[MIRA Concejal] No se pudo cargar la cartografía del mini mapa:',error));
+    setTimeout(()=>{if(miniMap){miniMap.invalidateSize({pan:false,animate:false});if(selectedConcejalBarrio)focusBarrio(selectedConcejalBarrio);}},220);
+    miniMap.on('resize',()=>{if(selectedConcejalBarrio)focusBarrio(selectedConcejalBarrio);});
+  }
   function findFeature(name){if(!featureCollection)return null;return (featureCollection.features||[]).find(f=>{const p=f.properties||{};return (p.name||p.Name||p.nombre||p.NOMBRE)===name})||null}
-  function focusBarrio(name){document.getElementById('concejalMapSelectedName').textContent=name||'Selecciona un barrio';if(!name){if(miniLayer)miniLayer.eachLayer(l=>l.setStyle({color:'#36dce9',weight:1,fillOpacity:.08}));return}initMiniMap();populateNames();let mainLayer=poligonosPorNombre&&poligonosPorNombre[name];if(mainLayer&&map){try{map.fitBounds(mainLayer.getBounds(),{padding:[50,50],maxZoom:16});}catch(e){}}
-    if(miniMap&&miniLayer){let matched=null;miniLayer.eachLayer(l=>{const p=l.feature&&l.feature.properties||{};const n=p.name||p.Name||p.nombre||p.NOMBRE;const yes=n===name;l.setStyle({color:yes?'#ffffff':'#36dce9',weight:yes?4:1,fillColor:yes?'#24cde2':'#36dce9',fillOpacity:yes?.48:.035});if(yes)matched=l;});if(matched){selectedFeatureLayer=matched;try{miniMap.fitBounds(matched.getBounds(),{padding:[20,20],maxZoom:16});}catch(e){}}}
+  function focusBarrio(name){
+    selectedConcejalBarrio=String(name||'').trim();
+    document.getElementById('concejalMapSelectedName').textContent=selectedConcejalBarrio||'Selecciona un barrio';
+    if(!selectedConcejalBarrio){
+      if(miniLayer)miniLayer.eachLayer(layer=>layer.setStyle({color:'#36dce9',weight:2,fillOpacity:.08}));
+      return;
+    }
+    initMiniMap();populateNames();
+    const mainLayer=poligonosPorNombre&&poligonosPorNombre[selectedConcejalBarrio];
+    if(mainLayer&&map){try{map.fitBounds(mainLayer.getBounds(),{padding:[50,50],maxZoom:16});}catch(error){}}
+    if(miniMap&&miniLayer){
+      const normalize=value=>String(value||'').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLocaleLowerCase('es').replace(/[^a-z0-9]+/g,' ').trim();
+      const wanted=normalize(selectedConcejalBarrio);
+      let matched=null;
+      miniLayer.eachLayer(layer=>{
+        const p=layer.feature&&layer.feature.properties||{};
+        const n=p.name||p.Name||p.nombre||p.NOMBRE||'';
+        const yes=normalize(n)===wanted;
+        layer.setStyle({color:yes?'#ffffff':'#36dce9',weight:yes?4:1.5,fillColor:yes?'#24cde2':'#36dce9',fillOpacity:yes?.48:.035});
+        if(yes)matched=layer;
+      });
+      if(matched){
+        selectedFeatureLayer=matched;
+        try{miniMap.fitBounds(matched.getBounds(),{padding:[22,22],maxZoom:16,animate:true,duration:.35});}catch(error){}
+      }
+    }
   }
   function showNotice(msg,type='success'){notice.textContent=msg;notice.classList.remove('hidden');notice.style.borderColor=type==='error'?'#fb7185':'#2dd4bf';}
   function resetForm(){editingId=null;form.reset();dateInput.value=new Date().toISOString().slice(0,10);document.getElementById('concejalFormTitle').textContent='Registrar actividad';document.getElementById('saveConcejalActivityBtn').textContent='Guardar actividad';document.getElementById('cancelEditConcejalBtn').classList.add('hidden');notice.classList.add('hidden');focusBarrio('')}
-  async function openModule(){document.getElementById('activitiesPlaceholder').classList.add('hidden');workspace.classList.remove('hidden');document.getElementById('landing-hero-overlay').style.display='none';document.getElementById('landingHeaderControls').style.display='none';populateNames();initMiniMap();setTimeout(()=>miniMap&&miniMap.invalidateSize(),180);if(!concejalBackendReady){try{await loadConcejalFromNeon()}catch(error){console.error('[MIRA Concejal] No fue posible cargar datos:',error);showNotice('No se pudo conectar con Neon: '+(error.message||'Error desconocido'),'error')}}else{renderHistory();renderCommitments();renderDashboard()}}
+  async function openModule(){document.getElementById('activitiesPlaceholder').classList.add('hidden');workspace.classList.remove('hidden');document.getElementById('landing-hero-overlay').style.display='none';document.getElementById('landingHeaderControls').style.display='none';populateNames();initMiniMap();setTimeout(()=>{if(miniMap){miniMap.invalidateSize({pan:false,animate:false});if(selectedConcejalBarrio)focusBarrio(selectedConcejalBarrio);}},260);if(!concejalBackendReady){try{await loadConcejalFromNeon()}catch(error){console.error('[MIRA Concejal] No fue posible cargar datos:',error);showNotice('No se pudo conectar con Neon: '+(error.message||'Error desconocido'),'error')}}else{renderHistory();renderCommitments();renderDashboard()}}
   function closeModule(){workspace.classList.add('hidden');if(miniMap){miniMap.remove();miniMap=null;miniLayer=null;miniTileLayer=null;selectedFeatureLayer=null;}document.getElementById('landing-hero-overlay').style.display='none';document.getElementById('landingHeaderControls').style.display='none';}
   function renderHistory(){const q=norm(document.getElementById('concejalHistorySearch').value);const from=document.getElementById('concejalFilterDateFrom').value;const to=document.getElementById('concejalFilterDateTo').value;const barrio=norm(document.getElementById('concejalFilterBarrio').value);const filtered=records.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')||(b.updatedAt||b.createdAt||'').localeCompare(a.updatedAt||a.createdAt||'')).filter(r=>(!q||norm(r.description+' '+r.barrio).includes(q))&&(!from||r.date>=from)&&(!to||r.date<=to)&&(!barrio||norm(r.barrio).includes(barrio)));document.getElementById('concejalHistoryCount').textContent=filtered.length+' de '+records.length+' registros';list.innerHTML=filtered.length?filtered.map(r=>'<article class="concejal-history-item"><h3>'+esc(r.barrio)+'</h3><div class="concejal-history-meta"><span>📅 '+esc(r.date)+'</span><span>Registro: '+esc((r.createdAt||'').slice(0,10))+'</span></div><p class="concejal-history-description">'+esc(r.description)+'</p><div class="concejal-history-actions"><button type="button" data-concejal-edit="'+esc(r.id)+'">Editar</button><button type="button" data-concejal-map="'+esc(r.barrio)+'">Ver barrio en mapa</button></div></article>').join(''):'<div class="activity-empty-drive"><h3>No hay coincidencias</h3><p>Ajusta la búsqueda o los filtros para consultar el historial.</p></div>';list.querySelectorAll('[data-concejal-edit]').forEach(b=>b.addEventListener('click',()=>editRecord(b.dataset.concejalEdit)));list.querySelectorAll('[data-concejal-map]').forEach(b=>b.addEventListener('click',()=>{barrioInput.value=b.dataset.concejalMap;focusBarrio(b.dataset.concejalMap);document.getElementById('concejalBarrioInput').scrollIntoView({behavior:'smooth',block:'center'});}));document.getElementById('concejalSidebarCount').textContent=records.length+' actividades registradas';renderHistoryCommitments(q,from,to,barrio); }
   function editRecord(id){const r=records.find(x=>x.id===id);if(!r)return;editingId=id;barrioInput.value=r.barrio;descriptionInput.value=r.description;dateInput.value=r.date;focusBarrio(r.barrio);document.getElementById('concejalFormTitle').textContent='Editar actividad';document.getElementById('saveConcejalActivityBtn').textContent='Guardar cambios';document.getElementById('cancelEditConcejalBtn').classList.remove('hidden');document.getElementById('concejalTitle').scrollIntoView({behavior:'smooth',block:'start'});}
