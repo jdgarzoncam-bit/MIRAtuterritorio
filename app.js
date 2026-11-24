@@ -1250,19 +1250,29 @@ function activarPMUAutenticado() {
     if (controls) controls.style.display = 'none';
     const card = document.getElementById('adminCardContainer');
     if (card) { card.classList.remove('is-open'); card.classList.add('hidden'); }
-    try {
-        if (typeof inicializarSistemaMapa === 'function') inicializarSistemaMapa();
-        // Recalcular Leaflet después de que el contenedor pase de oculto a visible.
-        [120, 350, 700].forEach(delay => setTimeout(() => {
-            const mapElement = document.getElementById('map');
-            if (map && mapElement && mapElement.clientWidth > 0 && mapElement.clientHeight > 0) {
-                map.invalidateSize({ pan: false, animate: false });
-            }
-        }, delay));
-    } catch (err) {
-        console.error('[MIRA TU TERRITORIO] Error al inicializar el mapa tras autenticar:', err);
-    }
+    // Mostrar primero la interfaz del Centro de Operaciones. La creación del
+    // mapa se difiere para que una inicialización cartográfica lenta no deje
+    // al usuario mirando una pantalla vacía después de autenticarse.
     window.dispatchEvent(new Event('mira:pmu-ready'));
+    const initializeMapAfterEntry = () => {
+        try {
+            if (typeof inicializarSistemaMapa === 'function') inicializarSistemaMapa();
+            [120, 350, 700].forEach(delay => setTimeout(() => {
+                const mapElement = document.getElementById('map');
+                if (map && mapElement && mapElement.clientWidth > 0 && mapElement.clientHeight > 0) {
+                    map.invalidateSize({ pan: false, animate: false });
+                }
+            }, delay));
+        } catch (err) {
+            console.error('[MIRA TU TERRITORIO] Error al inicializar el mapa tras autenticar:', err);
+            window.dispatchEvent(new CustomEvent('mira:map-init-error', {detail:{message:err?.message||'No fue posible inicializar el mapa.'}}));
+        }
+    };
+    if (window.matchMedia('(max-width: 600px)').matches) {
+        window.setTimeout(initializeMapAfterEntry, 80);
+    } else {
+        initializeMapAfterEntry();
+    }
 }
 
 // La autenticación y autorización se gestionan exclusivamente mediante Neon Auth.
