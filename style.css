@@ -8167,7 +8167,7 @@ input,select,textarea,button { max-width:100%; }
     height:min(43vh,370px)!important;min-height:285px!important;max-height:370px!important;
     margin:0!important;flex:none!important;
     transform:translate(calc(-50% + var(--stack-x,0px)),calc(-50% + var(--stack-y,0px))) rotate(var(--stack-rotate,0deg)) scale(var(--stack-scale,1))!important;
-    transform-origin:50% 55%!important;opacity:calc(1 - (var(--stack-depth,0) * .105))!important;
+    transform-origin:50% 55%!important;opacity:var(--stack-opacity,1)!important;
     border:1px solid rgba(210,218,245,.13)!important;border-radius:30px!important;
     background:linear-gradient(160deg,#20232c 0%,#11141d 56%,#090b12 100%)!important;
     box-shadow:0 25px 55px rgba(0,0,0,.62),inset 0 1px 1px rgba(255,255,255,.13)!important;
