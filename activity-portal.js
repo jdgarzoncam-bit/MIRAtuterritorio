@@ -1,18 +1,12 @@
-import { createInternalNeonAuth } from "https://esm.sh/@neondatabase/auth@0.7.0-beta";
-import { MIRA_DATA } from "./mira-data.js?v=20261124-activity-hotfix-3";
-
-const PUBLIC_AUTH_URL = "https://ep-mute-grass-b7qan4n6.neonauth.c-13.us-east-1.aws.neon.tech/neondb/auth";
-const publicNeonAuth = createInternalNeonAuth(PUBLIC_AUTH_URL,{allowAnonymous:true});
-const publicAuthAdapter = publicNeonAuth.adapter;
+// Reutiliza el JWT anónimo exacto con el que se validó el PIN en Módulos.
+// No crear una segunda identidad de Neon Auth en esta página.
+import { MIRA_DATA } from "./mira-data.js?v=20261124-single-pin-6";
 window.MIRA_AUTH = {
-  getJWTToken: () => publicNeonAuth.getJWTToken(),
-  getAnonymousToken: (...args) => publicAuthAdapter.getAnonymousToken(...args)
+  getJWTToken: () => sessionStorage.getItem("miraParticipantAuthJwt")
 };
 
 const $ = id => document.getElementById(id);
 const cleanCedula = value => String(value || "").replace(/\D/g, "");
-const PIN_SALT_HEX = "29a690124de6919817cc26c444b99359";
-const PIN_ITERATIONS = 310000;
 const MODULE_ACCESS_TOKEN_KEY = "miraParticipantAccessToken";
 const MODULE_ACCESS_TOKEN_EXPIRY_KEY = "miraParticipantAccessTokenExpiresAt";
 let busy = false;
@@ -67,6 +61,7 @@ function lockModule(message = "") {
   accessToken = null;
   sessionStorage.removeItem(MODULE_ACCESS_TOKEN_KEY);
   sessionStorage.removeItem(MODULE_ACCESS_TOKEN_EXPIRY_KEY);
+  sessionStorage.removeItem("miraParticipantAuthJwt");
   currentPersonBlocked = false;
   currentPersonAlreadyRegistered = false;
   personLookupCompleted = false;

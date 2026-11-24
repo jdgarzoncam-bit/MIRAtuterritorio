@@ -16,3 +16,5 @@ jobs:
       - name: Comprobar sintaxis JavaScript
         run: |
           find . -type f -name '*.js' -not -path './node_modules/*' -print0 | xargs -0 -r -n1 node --check
+      - name: Probar regresión de PIN único
+        run: node --test tests/single-pin.test.cjs
