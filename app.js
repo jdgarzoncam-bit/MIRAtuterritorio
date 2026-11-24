@@ -760,13 +760,13 @@ function initDatabaseExplorer(){
  }
  function renderIncorporate(){
   if(!allowed("personas","create"))throw new Error("No tienes permiso para incorporar personas en el módulo Personas.");
-  const fields=[["cedula","Cédula","text",true],["nombres","Nombres","text",true],["apellidos","Apellidos","text",true],["telefono","Teléfono","tel",false],["correo","Correo electrónico","email",false],["barrio","Barrio","text",false],["puesto_votacion","Puesto de votación","text",false],["mesa_votacion","Mesa","text",false],["edad","Edad","number",false],["tipo_participacion","Tipo de participación","text",false],["info_mira","InfoMIRA","boolean",false],["observaciones","Observaciones","text",false]];
+  const fields=[["cedula","Cédula","text",true],["nombres","Nombres","text",true],["apellidos","Apellidos","text",true],["telefono","Teléfono","tel",false],["correo","Correo electrónico","email",false],["barrio","Barrio","text",false],["puesto_votacion","Puesto de votación","text",false],["mesa_votacion","Mesa","text",false],["edad","Edad","number",false],["tipo_participacion","Tipo de participación","text",false],["info_mira","Inscrito a InfoMIRA","boolean",false],["tiene_app_infomira","Tiene la App InfoMIRA","boolean",false],["observaciones","Observaciones","text",false]];
   content.innerHTML='<form id="databasePersonForm"><div class="activity-form-grid">'+fields.map(([key,label,type,required])=>'<label>'+label+(type==='boolean'?'<select name="'+key+'"><option value="">Sin especificar</option><option value="true">Sí</option><option value="false">No</option></select>':'<input name="'+key+'" type="'+type+'" '+(required?'required':'')+'>')+'</label>').join('')+'</div><div class="activity-actions"><button class="login-btn" type="submit">Guardar persona</button><button class="activity-secondary-btn" type="reset">Limpiar</button></div><p id="databasePersonNotice" class="activity-local-warning" role="status"></p></form>';
   document.getElementById("databasePersonForm").addEventListener("submit",async event=>{
    event.preventDefault();const form=event.currentTarget,button=form.querySelector('[type="submit"]'),payload=Object.fromEntries(new FormData(form).entries());
    ["edad"].forEach(k=>{if(payload[k]==="")delete payload[k];else payload[k]=Number(payload[k]);});
-   ["info_mira"].forEach(k=>{if(payload[k]==="")delete payload[k];else payload[k]=payload[k]==="true";});
-   ["telefono","correo","barrio","puesto_votacion","mesa_votacion","tipo_participacion","info_mira","observaciones"].forEach(k=>{if(!payload[k])delete payload[k];});
+   ["info_mira","tiene_app_infomira"].forEach(k=>{if(payload[k]==="")delete payload[k];else payload[k]=payload[k]==="true";});
+   ["telefono","correo","barrio","puesto_votacion","mesa_votacion","tipo_participacion","info_mira","tiene_app_infomira","observaciones"].forEach(k=>{if(!payload[k])delete payload[k];});
    button.disabled=true;
    try{await window.MIRA_DATA.createPerson({...payload,activo:true,datos_pendientes:false,fuente_registro:"base_datos_general"});form.reset();document.getElementById("databasePersonNotice").textContent="Persona incorporada correctamente."; }
    catch(error){document.getElementById("databasePersonNotice").textContent=error.message||"No fue posible guardar la persona.";}
@@ -3267,6 +3267,7 @@ function inicializarSistemaMapa() {
                 const estadoRed = row.estado_original || person?.tipo_participacion || 'Sin estado';
                 const cuidador = row.cuidador_nombre || 'Sin cuidador/líder asociado';
                 const infoMira = person?.info_mira === true ? 'Sí' : person?.info_mira === false ? 'No' : 'Sin configurar';
+                const tieneAppInfoMira = person?.tiene_app_infomira === true ? 'Sí' : person?.tiene_app_infomira === false ? 'No' : 'Sin configurar';
                 const activo = person?.activo === true ? 'Activo' : person?.activo === false ? 'Inactivo' : 'Sin configurar';
                 const puesto = person?.puesto_votacion || row.puesto_votacion || row.puesto_original;
                 const mesa = person?.mesa_votacion || row.mesa_votacion;
@@ -3282,7 +3283,8 @@ function inicializarSistemaMapa() {
                     ['Teléfono',telefono],
                     ['Cuidador / líder',cuidador],
                     ['Estado de ficha',activo],
-                    ['InfoMIRA',infoMira],
+                    ['Inscrito a InfoMIRA',infoMira],
+                    ['Tiene la App InfoMIRA',tieneAppInfoMira],
                     ['Barrio',barrio],
                     ['Puesto de votación',puesto],
                     ['Mesa',mesa],
@@ -3344,7 +3346,8 @@ function inicializarSistemaMapa() {
                         'Barrio': row.barrio || '',
                         'Puesto de votación': p.puesto_votacion || row.puesto_votacion || row.puesto_original || '',
                         'Mesa': p.mesa_votacion || row.mesa_votacion || '',
-                        'InfoMIRA': p.info_mira === true ? 'Sí' : p.info_mira === false ? 'No' : '',
+                        'Inscrito a InfoMIRA': p.info_mira === true ? 'Sí' : p.info_mira === false ? 'No' : '',
+                        'Tiene la App InfoMIRA': p.tiene_app_infomira === true ? 'Sí' : p.tiene_app_infomira === false ? 'No' : '',
                         'Activo': p.activo === true ? 'Sí' : p.activo === false ? 'No' : '',
                         'Movilidad': row.movilidad || '',
                         'Asistencia': row.asistencia || '',
