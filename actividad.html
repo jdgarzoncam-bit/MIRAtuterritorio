@@ -115,6 +115,10 @@ body.theme-dark{display:block!important;width:100%!important;min-width:320px!imp
  .activity-public-lock{align-self:flex-start!important}
 }
 
+
+/* El atributo hidden debe prevalecer sobre los estilos flex del portal móvil.
+   Evita mostrar el PIN central y el formulario al mismo tiempo. */
+.activity-pin-gate[hidden] { display: none !important; }
 </style>
 </head>
 <body class="theme-dark">
