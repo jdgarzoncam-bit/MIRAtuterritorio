@@ -27,7 +27,8 @@ test("el estado de inscripción se consulta antes de recuperar la ficha y bloque
   const portal = read("activity-portal.js");
   const data = read("mira-data.js");
   assert.ok(portal.indexOf("checkPublicActivityParticipant(cedula, actividadId, accessToken)") <
-    portal.indexOf("lookupPublicPerson(cedula, accessToken)", portal.indexOf("checkPublicActivityParticipant(cedula, actividadId, accessToken)")));
+    portal.indexOf("const person = enrollment?.person || null;"));
+  assert.match(portal, /const person = enrollment\?\.person \|\| null/);
   assert.match(portal, /currentPersonAlreadyRegistered/);
   assert.match(portal, /Esta persona YA ESTÁ INSCRITA/);
   assert.match(portal, /currentPersonAlreadyRegistered \|\| !personLookupCompleted/);
