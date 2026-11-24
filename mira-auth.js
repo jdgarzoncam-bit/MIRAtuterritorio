@@ -277,6 +277,10 @@ async function loginWithNeon() {
   } finally {
     if(loginRevision===authFlowRevision) loginInProgress=false;
     if(button) button.disabled=false;
+    // El formulario puede haber iniciado sesión mientras el bootstrap de
+    // restauración seguía pendiente. Nunca dejar la capa de carga cubriendo
+    // el Centro de Operaciones o el mensaje de error.
+    finishAuthBootstrap();
   }
 }
 
