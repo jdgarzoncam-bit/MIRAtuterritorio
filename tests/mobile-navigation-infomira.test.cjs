@@ -53,3 +53,20 @@ test("Concejal mini-map uses the same Esri satellite imagery as the territorial 
   assert.match(app, /World_Imagery\/MapServer\/tile/);
   assert.doesNotMatch(app, /World_Street_Map\/MapServer\/tile/);
 });
+
+
+test("all participant registration paths collect both InfoMIRA values", () => {
+  const index = read("index.html");
+  const publicPage = read("actividad.html");
+  const internal = read("app.js");
+  const portal = read("activity-portal.js");
+  const data = read("mira-data.js");
+  const sql = read("migrations/20261124_public_activity_app_field.sql");
+  assert.match(index, /id="participantHasAppInfoMira"/);
+  assert.match(publicPage, /id="pubHasApp"/);
+  assert.match(internal, /tiene_app_infomira:hasApp==='si'/);
+  assert.match(portal, /tiene_app_infomira/);
+  assert.match(data, /tiene_app_infomira:tiene_app_infomira==="si"/);
+  assert.match(sql, /v_tiene_app_infomira/);
+  assert.match(sql, /tiene_app_infomira/);
+});
