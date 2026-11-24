@@ -84,10 +84,16 @@
    if(card.workspace){
     workspaceMode=card.workspace;app.classList.add('mobile-operations-workspace-active');
     requestAnimationFrame(async()=>{
-     if(card.workspace==='activities'){
-      if(typeof window.MIRA_OPEN_ACTIVITIES==='function')await window.MIRA_OPEN_ACTIVITIES('all');
-      else document.getElementById('sideAllActivitiesBtn')?.click();
-     }else document.getElementById('openConcejalRegisterBtn')?.click();
+     try{
+      if(card.workspace==='activities'){
+       if(typeof window.MIRA_OPEN_ACTIVITIES==='function')await window.MIRA_OPEN_ACTIVITIES('all');
+       else document.getElementById('sideAllActivitiesBtn')?.click();
+       if(document.getElementById('activitiesPlaceholder')?.classList.contains('hidden'))closeToHome(true);
+      }else{
+       document.getElementById('openConcejalRegisterBtn')?.click();
+       if(document.getElementById('concejalWorkspace')?.classList.contains('hidden'))closeToHome(true);
+      }
+     }catch(error){console.error('[MIRA móvil] No fue posible abrir el módulo:',error);closeToHome(true);}
     });
     return;
    }
