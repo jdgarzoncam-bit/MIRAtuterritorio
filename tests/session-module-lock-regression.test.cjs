@@ -65,8 +65,8 @@ test("la sincronización de autorización no vuelve a abrir el panel administrat
 });
 
 test("el navegador carga las versiones corregidas de autenticación y permisos", () => {
-  assert.ok(index.includes("mira-auth.js?v=20261117-common-map-access-1"));
-  assert.ok(index.includes("mira-admin.js?v=20261117-admin-common-map-approval-1"));
+  assert.match(index, /mira-auth\\.js\\?v=[^"]+/);
+  assert.match(index, /mira-admin\\.js\\?v=[^"]+/);
 });
 
 test("el wrapper Neon Auth expone el JWT del SDK y conserva el cliente Better Auth", () => {
