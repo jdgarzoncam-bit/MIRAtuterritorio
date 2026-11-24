@@ -184,7 +184,12 @@
   };
   window.MIRA_SHOW_MOBILE_MODULES=showOperationsHome;
   document.getElementById('landingModulesBtn')?.addEventListener('click',()=>{
-   if(window.MIRA_CURRENT_USER&&document.body.classList.contains('pmu-neomorphic')){showOperationsHome();return;}
+   if(window.MIRA_CURRENT_USER){
+    mobileLoginRequested=true;window.MIRA_MOBILE_LOGIN_REQUESTED=true;
+    if(document.body.classList.contains('pmu-neomorphic'))showOperationsHome();
+    else if(typeof window.activarPMUAutenticado==='function')window.activarPMUAutenticado();
+    return;
+   }
    if(typeof window.abrirLoginAdmin==='function')window.abrirLoginAdmin();
    else document.getElementById('landingLoginBtn')?.click();
   });
