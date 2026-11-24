@@ -124,7 +124,7 @@ export const MIRA_DATA = {
     const safeOffset=Math.max(0,Number(offset)||0);
     const term=String(search||cedula||"").trim();
     const documentDigits=cleanCedula(cedula||search);
-    if((cedula||/^\\s*[\\d.\\-\\s]+\\s*$/.test(term))&&!documentDigits){
+    if((cedula||/^\s*[\d.\-\s]+\s*$/.test(term))&&!documentDigits){
       throw new Error("La cédula debe contener al menos un dígito.");
     }
     if(!term)return [];
@@ -133,7 +133,7 @@ export const MIRA_DATA = {
     if(documentDigits){
       people=await miraRequest("personas",{query:qs({select:personSelect,cedula_normalizada:"eq."+documentDigits,limit:"100"})});
     }else{
-      const tokens=term.replace(/[,*()\\"]/g," ").replace(/\\s+/g," ").trim().slice(0,80).split(" ").filter(Boolean);
+      const tokens=term.replace(/[,*()"]/g," ").replace(/\s+/g," ").trim().slice(0,80).split(" ").filter(Boolean);
       if(!tokens.length)return [];
       const params={
         select:personSelect,
@@ -151,7 +151,7 @@ export const MIRA_DATA = {
         order:"fila_origen.asc,id.asc",limit:"1000"
       })}));
     }
-    const safeTerm=term.replace(/[,*()\\"]/g," ").replace(/\\s+/g," ").trim().slice(0,80);
+    const safeTerm=term.replace(/[,*()"]/g," ").replace(/\s+/g," ").trim().slice(0,80);
     if(safeTerm){
       let directFilter;
       if(documentDigits){
