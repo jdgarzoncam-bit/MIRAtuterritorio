@@ -229,7 +229,17 @@ async function loginWithNeon() {
       throw new Error("No fue posible iniciar sesión. Verifica tus credenciales.");
     }
     signInCompleted=true;
-    await withAuthTimeout(establishAuthenticatedUser(result?.data?.user),"validación de la cuenta");
+    // Better Auth puede devolver el usuario dentro de data.user o dentro de
+    // data.session.user según la respuesta del proveedor. Recuperar la sesión
+    // como respaldo evita dejar el acceso aceptado sin activar la interfaz.
+    let authenticatedUser=result?.data?.user||result?.data?.session?.user||null;
+    if(!authenticatedUser){
+      const sessionResult=await withAuthTimeout(auth.getSession(),"recuperación de la sesión");
+      if(sessionResult?.error)throw sessionResult.error;
+      authenticatedUser=sessionResult?.data?.user||sessionResult?.data?.session?.user||null;
+    }
+    if(!authenticatedUser)throw new Error("Neon aceptó la solicitud, pero no devolvió la sesión de usuario. Intenta ingresar nuevamente.");
+    await withAuthTimeout(establishAuthenticatedUser(authenticatedUser),"validación de la cuenta");
     const error=document.getElementById("loginError");
     if(error) error.style.display="none";
     const mobileLogin = window.matchMedia("(max-width: 600px)").matches;
