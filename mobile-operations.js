@@ -5,7 +5,7 @@
  // de una recarga ni de una página recuperada desde la caché del navegador.
  let mobileLoginRequested=false;
  window.MIRA_MOBILE_LOGIN_REQUESTED=false;
-  const loginRequested=()=>mobileLoginRequested===true;
+  const loginRequested=()=>mobileLoginRequested===true||window.MIRA_MOBILE_LOGIN_REQUESTED===true;
  const cards=[
   {id:'dropdown-infomira',icon:'💙',title:'InfoMIRA',desc:'Red de cuidadores y líderes',tone:'blue',mapPanel:true},
   {id:'dropdown-testigos',icon:'🗳️',title:'Auditoría de testigos',desc:'Actas y evidencias E-14',tone:'violet'},
@@ -206,9 +206,13 @@
    if(mobile()&&!mobileLoginRequested){restorePublicLanding();return;}
    showOperationsHome();
   }));
-  window.addEventListener('mira:pmu-ready',()=>requestAnimationFrame(()=>{
-   if(mobile()&&mobileLoginRequested&&window.MIRA_CURRENT_USER)showOperationsHome();
-  }));
+  window.addEventListener('mira:pmu-ready',()=>{
+   if(!mobile()||!loginRequested()||!window.MIRA_CURRENT_USER)return;
+   // El PMU puede terminar de mostrarse un frame después de inicializar el mapa.
+   requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    if(loginRequested()&&window.MIRA_CURRENT_USER)showOperationsHome();
+   }));
+  });
   window.addEventListener('mira:signed-out',restorePublicLanding);
   window.addEventListener('pageshow',()=>{
    if(!mobile()||document.body.classList.contains('admin-login-active'))return;
