@@ -239,8 +239,11 @@ export const MIRA_DATA = {
     if(normalized.length<5||normalized.length>15) throw new Error("La cédula debe contener entre 5 y 15 dígitos.");
     if(!actividadId) throw new Error("Selecciona una actividad antes de consultar la inscripción.");
     if(!accessToken) throw new Error("La autorización venció. Ingresa nuevamente desde Módulos.");
-    return miraRequest("rpc/public_check_activity_participant",{method:"POST",anonymous:true,body:{
-      p_cedula:normalized,p_actividad_id:actividadId,p_access_token:accessToken
+    // Reutiliza el RPC estable de seis argumentos ya publicado en la caché de Neon.
+    // El servidor ejecuta el pre-chequeo protegido por el token PIN antes de devolver ficha/asistencia.
+    return miraRequest("rpc/public_register_activity_participant",{method:"POST",anonymous:true,body:{
+      p_cedula:"__MIRA_ACTIVITY_CHECK__",p_nombres:normalized,p_apellidos:accessToken,p_telefono:actividadId,
+      p_actividad_id:null,p_consentimiento:false
     }});
   },
   registerPublicActivityParticipant({cedula,nombres,apellidos,telefono=null,actividad_id,info_mira,tiene_app_infomira,tipo_participacion,consentimiento=false,access_token=null}) {
