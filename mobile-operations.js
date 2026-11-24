@@ -235,7 +235,7 @@
    if(!mobileLoginRequested||!window.MIRA_CURRENT_USER||!document.body.classList.contains('pmu-neomorphic')){restorePublicLanding();return;}
    if(userExitedOperations)return;
    if(!app.classList.contains('mobile-operations-module-active')&&!app.classList.contains('mobile-operations-map-active')&&!app.classList.contains('mobile-operations-map-panel-active')&&!app.classList.contains('mobile-operations-workspace-active')&&!app.classList.contains('mobile-operations-home-active'))showOperationsHome();
-  }else{userExitedOperations=false;document.body.classList.remove('mira-mobile-public-landing');app.classList.remove('mobile-operations-home-active','mobile-operations-module-active','mobile-operations-map-active','mobile-operations-map-panel-active','mobile-operations-workspace-active');home.hidden=true;sidebar.hidden=false;back.classList.remove('is-visible');historyStateActive=false;resetDropdowns()}};
+  }else{userExitedOperations=false;document.body.classList.remove('mira-mobile-public-landing');app.classList.remove('mobile-operations-home-active','mobile-operations-module-active','mobile-operations-map-active','mobile-operations-map-panel-active','mobile-operations-workspace-active');home.hidden=true;sidebar.hidden=false;back.hidden=true;back.classList.remove('is-visible');historyStateActive=false;resetDropdowns()}};
   window.addEventListener('resize',viewport,{passive:true});setActive(0);home.hidden=true;back.hidden=true;viewport();
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
