@@ -22,7 +22,7 @@ test("la pérdida de Consulta sí cierra únicamente el espacio de Base de datos
 });
 
 test("el HTML solicita la versión nueva de app.js para evitar caché del navegador", () => {
-  assert.match(index, /app\\.js\\?v=[a-z0-9-]+/);
+  assert.ok(index.includes("app.js?v="));
 });
 
 test("el aviso de exportación vive dentro del espacio de trabajo visible", () => {
