@@ -1,4 +1,4 @@
-import { MIRA_DATA } from "./mira-data.js?v=20261124-single-pin-5";
+import { MIRA_DATA } from "./mira-data.js?v=20261124-single-pin-6";
 
 const TOKEN_KEY = "miraParticipantAccessToken";
 const TOKEN_EXPIRY_KEY = "miraParticipantAccessTokenExpiresAt";
@@ -33,6 +33,7 @@ if (!menu || !toggle || !panel || !pinGate || !pinInput || !pinSubmit || !regist
     if (!authorized) {
       sessionStorage.removeItem(TOKEN_KEY);
       sessionStorage.removeItem(TOKEN_EXPIRY_KEY);
+      sessionStorage.removeItem("miraParticipantAuthJwt");
     }
     renderAuthorization();
   }
@@ -81,6 +82,7 @@ if (!menu || !toggle || !panel || !pinGate || !pinInput || !pinSubmit || !regist
   function lockAuthorization(message = "La autorización quedó bloqueada.") {
     sessionStorage.removeItem(TOKEN_KEY);
     sessionStorage.removeItem(TOKEN_EXPIRY_KEY);
+    sessionStorage.removeItem("miraParticipantAuthJwt");
     authorized = false;
     renderAuthorization();
     hidePinGate();
