@@ -156,7 +156,7 @@ export const MIRA_DATA = {
     if(safeTerm){
       let directFilter;
       if(documentDigits){
-        directFilter="(cedula_original.eq."+documentDigits+")";
+        directFilter="(cedula_original.eq."+documentDigits+",cedula_original.ilike.*"+documentDigits+"*)";
       }else{
         const tokens=safeTerm.split(" ").filter(Boolean);
         directFilter="("+tokens.map(token=>"or(cuidador_nombre.ilike.*"+token+"*,nombre_original.ilike.*"+token+"*)").join(",")+")";
