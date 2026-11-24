@@ -624,7 +624,8 @@ async function openActivities(view='registration'){
     }catch(error){activityPermissions=new Set();alert("No fue posible validar tus permisos de Actividades. El acceso permanece bloqueado.");return;}
   }
   if(!activityPermissions.has("view")&&!isPrimaryMiraAdmin()){alert("No tienes permiso de Consulta en Actividades.");return;}
-  if(!activitiesBackendReady)await loadActivitiesFromNeon();
+  // Refrescar desde Neon en cada apertura para recuperar carpetas e historial recientes.
+  await loadActivitiesFromNeon();
   if(!activitiesBackendReady){alert("No se pudo abrir Actividades. Verifica tu sesión, conexión y permisos.");return;}
   activitiesReturnContext=(document.getElementById('landing-hero-overlay').style.display==='none')?'platform':'landing';
   activitiesPlaceholder.classList.remove('hidden');
@@ -3244,7 +3245,7 @@ function inicializarSistemaMapa() {
                 const mesa = person?.mesa_votacion || row.mesa_votacion;
                 const barrio = row.barrio;
                 const asistencia = row.asistencia;
-                const movilidad = row.movilidad;
+                const movilidadDato = row?.movilidad ?? null;
                 const extras = [
                     person?.edad !== null && person?.edad !== undefined ? ['Edad',person.edad] : null,
                     person?.tipo_participacion ? ['Tipo de participación',person.tipo_participacion] : null,
@@ -3258,7 +3259,7 @@ function inicializarSistemaMapa() {
                     ['Barrio',barrio],
                     ['Puesto de votación',puesto],
                     ['Mesa',mesa],
-                    ['Movilidad',movilidad],
+                    ['Movilidad',movilidadDato],
                     ['Asistencia',asistencia],
                     ...extras
                 ].map(([label,value]) =>
