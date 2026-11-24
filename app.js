@@ -3268,7 +3268,6 @@ function inicializarSistemaMapa() {
                 const cuidador = row.cuidador_nombre || 'Sin cuidador/líder asociado';
                 const infoMira = person?.info_mira === true ? 'Sí' : person?.info_mira === false ? 'No' : 'Sin configurar';
                 const tieneAppInfoMira = person?.tiene_app_infomira === true ? 'Sí' : person?.tiene_app_infomira === false ? 'No' : 'Sin configurar';
-                const tieneAppInfoMira = person?.tiene_app_infomira === true ? 'Sí' : person?.tiene_app_infomira === false ? 'No' : 'Sin configurar';
                 const activo = person?.activo === true ? 'Activo' : person?.activo === false ? 'Inactivo' : 'Sin configurar';
                 const puesto = person?.puesto_votacion || row.puesto_votacion || row.puesto_original;
                 const mesa = person?.mesa_votacion || row.mesa_votacion;
@@ -3285,7 +3284,6 @@ function inicializarSistemaMapa() {
                     ['Cuidador / líder',cuidador],
                     ['Estado de ficha',activo],
                     ['Inscrito a InfoMIRA',infoMira],
-                    ['Tiene la App InfoMIRA',tieneAppInfoMira],
                     ['Tiene la App InfoMIRA',tieneAppInfoMira],
                     ['Barrio',barrio],
                     ['Puesto de votación',puesto],
