@@ -177,6 +177,7 @@ if (!menu || !toggle || !panel || !pinGate || !pinInput || !pinSubmit || !regist
       authorized = false;
       sessionStorage.removeItem(TOKEN_KEY);
       sessionStorage.removeItem(TOKEN_EXPIRY_KEY);
+      sessionStorage.removeItem("miraParticipantAuthJwt");
       renderAuthorization();
       showPinGate();
       return;
