@@ -101,7 +101,7 @@ export const MIRA_DATA = {
     if(!dataset) throw new Error("Conjunto de datos no autorizado para el explorador.");
     const safeLimit=Math.min(Math.max(Number(limit)||25,1),100);
     const params={select:dataset.select,order:"created_at.desc,id.asc",limit:String(safeLimit),offset:String(Math.max(0,Number(offset)||0))};
-    const term=String(search||"").trim().replace(/[,*()\\"]/g," ").replace(/\\s+/g," ").slice(0,80);
+    const term=String(search||"").trim().replace(/[,*()\\"]/g," ").replace(/\s+/g," ").slice(0,80);
     const tokens=term.split(" ").filter(Boolean);
     const documentDigits=dataset.key==="personas"?cleanCedula(search):"";
     if(documentDigits.length>=5 && !/[a-zA-Z]/.test(term)){
@@ -138,7 +138,7 @@ export const MIRA_DATA = {
         limit:"100"
       })});
     } else if (term) {
-      const safeTerm=term.replace(/[,*()\\"]/g," ").replace(/\\s+/g," ").trim().slice(0,80);
+      const safeTerm=term.replace(/[,*()\\"]/g," ").replace(/\s+/g," ").trim().slice(0,80);
       const tokens=safeTerm.split(" ").filter(Boolean);
       if (!tokens.length) return [];
       const params={
@@ -179,7 +179,7 @@ export const MIRA_DATA = {
     if (tipoParticipacion) params.tipo_participacion = `eq.${tipoParticipacion}`;
     if (cedula) params.cedula_normalizada = `eq.${cleanCedula(cedula)}`;
     else if (search.trim()) {
-      const term=String(search).trim().replace(/[,*()\\"]/g," ").replace(/\\s+/g," ").slice(0,80);
+      const term=String(search).trim().replace(/[,*()\\"]/g," ").replace(/\s+/g," ").slice(0,80);
       const digits=cleanCedula(term);
       if(digits.length>=5 && !/[a-zA-Z]/.test(term)) params.or="(cedula_normalizada.eq."+digits+",cedula.eq."+digits+")";
       else {
