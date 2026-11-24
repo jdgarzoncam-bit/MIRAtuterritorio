@@ -597,7 +597,7 @@ async function loadActivitiesFromNeon(){
     activitiesLoadWarning=warnings.join(' · ');
     activitiesState.people=peopleRows.map(p=>{
       const parsed=splitLegacyPersonName(p.nombres,p.apellidos);
-      return {id:p.id,cedula:p.cedula||p.cedula_normalizada||'',names:parsed.names,surnames:parsed.surnames,phone:p.telefono||'',infoMira:p.info_mira===true?'si':p.info_mira===false?'no':'',type:p.tipo_participacion||''};
+      return {id:p.id,cedula:p.cedula||p.cedula_normalizada||'',names:parsed.names,surnames:parsed.surnames,phone:p.telefono||'',infoMira:p.info_mira===true?'si':p.info_mira===false?'no':'',hasApp:p.tiene_app_infomira===true?'si':p.tiene_app_infomira===false?'no':'',type:p.tipo_participacion||''};
     });
     activitiesState.activities=activityRows.map(a=>({
       id:a.id,name:a.nombre,date:a.fecha,place:a.lugar||'',
@@ -1008,7 +1008,7 @@ document.getElementById('saveActivityBtn').addEventListener('click',async()=>{
   }catch(error){console.error(error);alert('No fue posible guardar la actividad en Neon: '+(error.message||'Error desconocido'));}
   finally{button.disabled=false;}
 });
-function clearParticipantForm(){editingParticipantId=null;editingPersonId=null;['participantCedula','participantNames','participantSurnames','participantPhone'].forEach(id=>document.getElementById(id).value='');document.getElementById('participantInfoMira').value='';document.getElementById('participantType').value='';document.getElementById('duplicateNotice').classList.add('hidden');document.getElementById('saveParticipantBtn').textContent='Guardar asistencia';const title=document.getElementById('participantFormTitle');if(title)title.textContent='Registrar participante';}
+function clearParticipantForm(){editingParticipantId=null;editingPersonId=null;['participantCedula','participantNames','participantSurnames','participantPhone'].forEach(id=>document.getElementById(id).value='');document.getElementById('participantInfoMira').value='';document.getElementById('participantHasAppInfoMira').value='';document.getElementById('participantType').value='';document.getElementById('duplicateNotice').classList.add('hidden');document.getElementById('saveParticipantBtn').textContent='Guardar asistencia';const title=document.getElementById('participantFormTitle');if(title)title.textContent='Registrar participante';}
 document.getElementById('clearParticipantBtn').addEventListener('click',clearParticipantForm);
 async function lookupPerson(){
   const ced=normalizeCedula(document.getElementById('participantCedula').value);
@@ -1020,12 +1020,13 @@ async function lookupPerson(){
     const found=rows?.[0];
     if(found){
       const parsed=splitLegacyPersonName(found.nombres,found.apellidos);
-      const person={id:found.id,cedula:found.cedula||found.cedula_normalizada||'',names:parsed.names,surnames:parsed.surnames,phone:found.telefono||'',infoMira:found.info_mira===true?'si':found.info_mira===false?'no':'',type:found.tipo_participacion||''};
+      const person={id:found.id,cedula:found.cedula||found.cedula_normalizada||'',names:parsed.names,surnames:parsed.surnames,phone:found.telefono||'',infoMira:found.info_mira===true?'si':found.info_mira===false?'no':'',hasApp:found.tiene_app_infomira===true?'si':found.tiene_app_infomira===false?'no':'',type:found.tipo_participacion||''};
       const i=activitiesState.people.findIndex(p=>p.id===person.id);if(i>=0)activitiesState.people[i]=person;else activitiesState.people.push(person);
       document.getElementById('participantNames').value=person.names;
       document.getElementById('participantSurnames').value=person.surnames;
       document.getElementById('participantPhone').value=person.phone;
       document.getElementById('participantInfoMira').value=person.infoMira;
+      document.getElementById('participantHasAppInfoMira').value=person.hasApp;
       document.getElementById('participantType').value=found.tipo_participacion||'';
       notice.textContent='Ficha encontrada en Neon. Se cargaron los datos existentes.';
     }else notice.textContent='No se encontró esa cédula en Neon. Completa los datos para crear una ficha nueva.';
@@ -1047,15 +1048,16 @@ document.getElementById('saveParticipantBtn').addEventListener('click',async()=>
   const names=document.getElementById('participantNames').value.trim();
   const surnames=document.getElementById('participantSurnames').value.trim();
   const info=document.getElementById('participantInfoMira').value;
+  const hasApp=document.getElementById('participantHasAppInfoMira').value;
   const participantType=document.getElementById('participantType').value;
-  if(!ced||!names||!surnames||!info||!participantType){alert('Completa cédula, nombres, apellidos, InfoMIRA y tipo de participante.');return;}
+  if(!ced||!names||!surnames||!info||!hasApp||!participantType){alert('Completa cédula, nombres, apellidos, inscripción a InfoMIRA, disponibilidad de la App InfoMIRA y tipo de participante.');return;}
   const button=document.getElementById('saveParticipantBtn');button.disabled=true;
   try{
     const found=editingPersonId?[]:await window.MIRA_DATA.listPeople({cedula:ced,limit:1});
     let personRow=editingPersonId?activitiesState.people.find(p=>p.id===editingPersonId)||null:found?.[0]||null;
     const sameName=activitiesState.people.find(p=>normActivityText(p.names+' '+p.surnames)===normActivityText(names+' '+surnames)&&normalizeCedula(p.cedula)!==ced&&p.id!==editingPersonId);
     if(!personRow&&sameName&&!confirm('Existe una ficha con el mismo nombre y otra cédula. ¿Confirmas que es otra persona?'))return;
-    const payload={cedula:ced,nombres:names,apellidos:surnames,telefono:document.getElementById('participantPhone').value.trim()||null,info_mira:info==='si',tipo_participacion:participantType,actualizado_por:window.MIRA_CURRENT_USER?.email||null};
+    const payload={cedula:ced,nombres:names,apellidos:surnames,telefono:document.getElementById('participantPhone').value.trim()||null,info_mira:info==='si',tiene_app_infomira:hasApp==='si',tipo_participacion:participantType,actualizado_por:window.MIRA_CURRENT_USER?.email||null};
     if(personRow){
       const updated=await window.MIRA_DATA.updatePerson(personRow.id,payload);
       personRow=updated?.[0]||{...personRow,...payload,cedula};
@@ -1082,7 +1084,7 @@ document.getElementById('saveParticipantBtn').addEventListener('click',async()=>
 document.getElementById('activitySearch').addEventListener('input',renderActivityTable);
 document.getElementById('activitiesArchiveSearch')?.addEventListener('input',renderActivities);
 function activityRows(activityId=null,query=''){return activitiesState.attendances.slice().sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0)).map(a=>({a,p:activitiesState.people.find(p=>p.id===a.personId)||{},act:activitiesState.activities.find(x=>x.id===a.activityId)||{}})).filter(x=>(!activityId||x.a.activityId===activityId)&&(!query||normActivityText([x.p.names,x.p.surnames,x.p.cedula,x.act.name].join(' ')).includes(query)));}
-function editAttendance(id){if(!canManageActivities("edit")){alert("No tienes permiso para editar asistencias.");return;}returnToRecentAfterEdit=true;const a=activitiesState.attendances.find(x=>x.id===id),p=a&&activitiesState.people.find(x=>x.id===a.personId);if(!a||!p)return;editingParticipantId=a.id;editingPersonId=p.id;document.getElementById('participantCedula').value=p.cedula;document.getElementById('participantNames').value=p.names;document.getElementById('participantSurnames').value=p.surnames;document.getElementById('participantPhone').value=p.phone||'';document.getElementById('participantInfoMira').value=p.infoMira||'';document.getElementById('participantType').value=p.type||'';document.getElementById('participantActivity').value=a.activityId;document.getElementById('saveParticipantBtn').textContent='Guardar cambios';const title=document.getElementById('participantFormTitle');if(title)title.textContent='Editar participante';const notice=document.getElementById('duplicateNotice');notice.textContent='Estás editando una asistencia existente. Los cambios se actualizarán en Neon.';notice.classList.remove('hidden');showActivityView('registration');document.getElementById('participantWorkspace').scrollIntoView({behavior:'smooth',block:'start'});}
+function editAttendance(id){if(!canManageActivities("edit")){alert("No tienes permiso para editar asistencias.");return;}returnToRecentAfterEdit=true;const a=activitiesState.attendances.find(x=>x.id===id),p=a&&activitiesState.people.find(x=>x.id===a.personId);if(!a||!p)return;editingParticipantId=a.id;editingPersonId=p.id;document.getElementById('participantCedula').value=p.cedula;document.getElementById('participantNames').value=p.names;document.getElementById('participantSurnames').value=p.surnames;document.getElementById('participantPhone').value=p.phone||'';document.getElementById('participantInfoMira').value=p.infoMira||'';document.getElementById('participantHasAppInfoMira').value=p.hasApp||'';document.getElementById('participantType').value=p.type||'';document.getElementById('participantActivity').value=a.activityId;document.getElementById('saveParticipantBtn').textContent='Guardar cambios';const title=document.getElementById('participantFormTitle');if(title)title.textContent='Editar participante';const notice=document.getElementById('duplicateNotice');notice.textContent='Estás editando una asistencia existente. Los cambios se actualizarán en Neon.';notice.classList.remove('hidden');showActivityView('registration');document.getElementById('participantWorkspace').scrollIntoView({behavior:'smooth',block:'start'});}
 async function deleteActivityAttendance(id){
  if(!canManageActivities('annul')){alert("No tienes permiso para eliminar registros de asistencia.");return;}
  if(!window.confirm("¿Eliminar definitivamente este registro de asistencia? Esta acción no se puede deshacer."))return;
@@ -1107,7 +1109,7 @@ function renderActivityTable(){
  body.querySelectorAll("[data-edit]").forEach(b=>b.addEventListener("click",()=>editAttendance(b.dataset.edit)));
  body.querySelectorAll("[data-delete-attendance]").forEach(b=>b.addEventListener("click",()=>deleteActivityAttendance(b.dataset.deleteAttendance)));
 }
-function exportActivityExcel(activityId){if(!canManageActivities("view")||!canManageActivities("export")){alert('No tienes autorización para exportar registros. Solicita el permiso Exportar Excel al administrador.');return;}if(!window.XLSX){alert('No se pudo cargar la herramienta de Excel.');return;}const rows=activityRows(activityId).map(({a,p,act})=>({'Actividad':act.name||'','Fecha actividad':act.date||'','Lugar':act.place||'','Cédula':p.cedula||'','Nombres':p.names||'','Apellidos':p.surnames||'','Teléfono':p.phone||'','InfoMIRA':p.infoMira==='si'?'Sí':'No','Fecha registro':a.createdAt||''}));const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),'Registros');const act=activitiesState.activities.find(a=>a.id===activityId);XLSX.writeFile(wb,(act?act.name:'Mira_Tu_Territorio').replace(/[^a-z0-9_-]/gi,'_')+'.xlsx');}
+function exportActivityExcel(activityId){if(!canManageActivities("view")||!canManageActivities("export")){alert('No tienes autorización para exportar registros. Solicita el permiso Exportar Excel al administrador.');return;}if(!window.XLSX){alert('No se pudo cargar la herramienta de Excel.');return;}const rows=activityRows(activityId).map(({a,p,act})=>({'Actividad':act.name||'','Fecha actividad':act.date||'','Lugar':act.place||'','Cédula':p.cedula||'','Nombres':p.names||'','Apellidos':p.surnames||'','Teléfono':p.phone||'','Inscrito a InfoMIRA':p.infoMira==='si'?'Sí':'No','Tiene la App InfoMIRA':p.hasApp==='si'?'Sí':p.hasApp==='no'?'No':'','Fecha registro':a.createdAt||''}));const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),'Registros');const act=activitiesState.activities.find(a=>a.id===activityId);XLSX.writeFile(wb,(act?act.name:'Mira_Tu_Territorio').replace(/[^a-z0-9_-]/gi,'_')+'.xlsx');}
 document.getElementById('exportSingleActivityBtn').addEventListener('click',()=>exportActivityExcel(detailActivityId));
 document.getElementById('exportSingleActivityBtn').hidden=true;
 function openActivityFolder(id){
