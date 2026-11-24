@@ -8390,3 +8390,12 @@ input,select,textarea,button { max-width:100%; }
 }
 
 @media(max-width:600px){#miraQuickModules.is-mobile-open .mira-quick-panel.hidden{display:none!important}}
+
+
+/* PORTADA PÚBLICA MÓVIL: no mostrar el PMU por restauración automática de sesión */
+@media(max-width:600px){
+ body.mira-mobile-public-landing #app-container{display:none!important;visibility:hidden!important;pointer-events:none!important}
+ body.mira-mobile-public-landing #mobileOperationsHome{display:none!important}
+ body.mira-mobile-public-landing #landing-hero-overlay{display:flex!important}
+ body.mira-mobile-public-landing #landingHeaderControls{display:flex!important}
+}
