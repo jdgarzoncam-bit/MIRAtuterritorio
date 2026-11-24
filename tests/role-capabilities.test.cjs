@@ -362,7 +362,7 @@ test("Bloque 6: Base de datos general tiene ajustes responsivos y foco visible",
 
 test("InfoMIRA: consulta normaliza documentos, limita la consulta y pagina con orden estable",()=>{
   assert.match(dataSource,/async listInfoMiraDirectory\(\{cedula="",search="",limit=100,offset=0\}/);
-  assert.match(dataSource,/const documentDigits=cleanCedula\(cedula\)/);
+  assert.match(dataSource,/const documentDigits=isDocumentSearch\?cleanCedula\(cedula\|\|term\):""/);
   assert.match(dataSource,/order:"fila_origen.asc,id.asc"/);
   assert.match(dataSource,/Math\.min\(Math\.max\(Number\(limit\)\|\|100,1\),100\)/);
   assert.match(dataSource,/params\.cedula_original = `eq\.\$\{documentDigits\}`/);
