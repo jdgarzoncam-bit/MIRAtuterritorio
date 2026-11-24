@@ -145,7 +145,7 @@
    if(card.map){sidebar.hidden=true;app.classList.add('mobile-operations-map-active');back.hidden=false;back.classList.add('is-visible');document.getElementById('floatingPuestoWidget')?.classList.add('hidden');resizeMap();return}
    sidebar.hidden=false;
    document.querySelectorAll('#mainSidebar details.custom-dropdown').forEach(d=>{const yes=d.id===card.id;d.open=yes;d.classList.toggle('mobile-ops-selected-module',yes);d.querySelector(':scope > summary')?.setAttribute('aria-expanded',String(yes));d.setAttribute('aria-hidden',String(!yes));});
-   back.classList.add('is-visible');
+   back.hidden=false;back.classList.add('is-visible');
    if(card.workspace){
     workspaceMode=card.workspace;app.classList.add('mobile-operations-workspace-active');
     requestAnimationFrame(async()=>{
