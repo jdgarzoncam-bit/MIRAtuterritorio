@@ -54,7 +54,10 @@ test("el retorno a módulos restaura el panel después de volver desde el portal
 test("la navegación móvil usa flecha y las transiciones evitan clip-path animado", () => {
   const mobile = read("mobile-operations.js");
   const css = read("mira-mobile-performance.css");
-  assert.match(mobile, /aria-hidden="true">←/);
+  assert.match(mobile, /aria-hidden="true">☰/);
+  assert.match(mobile, /<b>Módulos<\/b>/);
+  assert.match(mobile, /mira:pmu-ready/);
+  assert.match(mobile, /mira:mobile-login-requested/);
   assert.match(css, /clip-path: none !important/);
   assert.match(css, /transition: opacity \.16s ease-out, transform \.18s/);
 });
@@ -77,4 +80,22 @@ test("el menú rápido solo se muestra en la portada pública", () => {
   const app = read("app.js");
   assert.match(app, /pmuVisible/);
   assert.match(app, /!landingVisible \|\| pmuVisible \|\| Boolean\(user\)/);
+});
+
+test("el portal de actividades fuerza una nueva versión del cliente de Neon", () => {
+  const html = read("actividad.html");
+  const portal = read("activity-portal.js");
+  assert.match(html, /activity-portal\.js\?v=20261124-activity-hotfix-3/);
+  assert.match(portal, /mira-data\.js\?v=20261124-activity-hotfix-3/);
+  assert.doesNotMatch(portal, /public_check_activity_participant/);
+});
+
+test("el inicio de sesión móvil abre el Centro de Operaciones cuando el PMU está listo", () => {
+  const auth = read("mira-auth.js");
+  const app = read("app.js");
+  const mobile = read("mobile-operations.js");
+  assert.match(auth, /mira:mobile-login-requested/);
+  assert.match(app, /mira:pmu-ready/);
+  assert.match(mobile, /mira:pmu-ready/);
+  assert.match(mobile, /if\(document\.body\.classList\.contains\('admin-login-active'\)\)return/);
 });
