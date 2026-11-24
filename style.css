@@ -8553,3 +8553,39 @@ input,select,textarea,button { max-width:100%; }
   }
   #concejalWorkspace .concejal-map-hint {font-size:.78rem!important;line-height:1.5!important;margin:10px 2px 0!important}
 }
+
+
+/* MTT QA · móvil: asegurar vistas completas y jerarquía ficha/mapa en iOS */
+@media (max-width:600px) {
+  #miraQuickModules.is-mobile-open {
+    min-height:100svh!important;
+    min-height:100dvh!important;
+    height:100svh!important;
+    height:100dvh!important;
+    padding-top:calc(env(safe-area-inset-top,0px) + 18px)!important;
+    padding-bottom:calc(env(safe-area-inset-bottom,0px) + 20px)!important;
+  }
+  #miraQuickModules.is-mobile-open .mira-module-pin-gate:not([hidden]) {
+    flex:1 0 auto!important;
+    min-height:calc(100svh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px) - 90px)!important;
+  }
+  #miraQuickModules.is-mobile-open .mira-quick-panel:not(.hidden) {
+    flex:1 0 auto!important;
+    min-height:0!important;
+  }
+  #app-container.mobile-operations-map-panel-active #map {
+    height:23dvh!important;
+    min-height:145px!important;
+    max-height:26dvh!important;
+  }
+  #app-container.mobile-operations-map-panel-active #mainSidebar {
+    top:calc(env(safe-area-inset-top,0px) + 54px)!important;
+    bottom:calc(23dvh + 10px)!important;
+  }
+  #app-container.mobile-operations-home-active,
+  #app-container.mobile-operations-home-active #mobileOperationsHome,
+  #app-container.mobile-operations-map-panel-active,
+  #miraQuickModules.is-mobile-open {
+    color:#eef5ff!important;
+  }
+}
