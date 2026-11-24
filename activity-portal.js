@@ -13,6 +13,8 @@ const $ = id => document.getElementById(id);
 const cleanCedula = value => String(value || "").replace(/\D/g, "");
 const PIN_SALT_HEX = "29a690124de6919817cc26c444b99359";
 const PIN_ITERATIONS = 310000;
+const MODULE_ACCESS_TOKEN_KEY = "miraParticipantAccessToken";
+const MODULE_ACCESS_TOKEN_EXPIRY_KEY = "miraParticipantAccessTokenExpiresAt";
 let busy = false;
 let activities = [];
 let accessToken = null;
@@ -66,6 +68,8 @@ function clearPersonDetails() {
 }
 function lockModule(message = "") {
   accessToken = null;
+  sessionStorage.removeItem(MODULE_ACCESS_TOKEN_KEY);
+  sessionStorage.removeItem(MODULE_ACCESS_TOKEN_EXPIRY_KEY);
   currentPersonBlocked = false;
   $("pubGate").hidden = false;
   $("pubFormArea").hidden = true;
@@ -107,6 +111,8 @@ $("pubPinSubmit").addEventListener("click", async () => {
     const result = await MIRA_DATA.verifyParticipantAccessPin(verifier);
     if (result?.status !== "ok" || !result?.access_token) throw new Error("No fue posible validar el código de acceso.");
     accessToken = result.access_token;
+    sessionStorage.setItem(MODULE_ACCESS_TOKEN_KEY, accessToken);
+    sessionStorage.setItem(MODULE_ACCESS_TOKEN_EXPIRY_KEY, String(Date.now() + Number(result.expires_in || 2700) * 1000));
     $("pubGate").hidden = true;
     $("pubFormArea").hidden = false;
     $("activityAvailability").hidden = false;
@@ -215,4 +221,24 @@ $("publicActivityForm").addEventListener("reset", () => {
     clearPersonDetails();
   },0);
 });
-lockModule();
+async function restoreCentralModuleAuthorization() {
+  const sharedToken = sessionStorage.getItem(MODULE_ACCESS_TOKEN_KEY);
+  const expiresAt = Number(sessionStorage.getItem(MODULE_ACCESS_TOKEN_EXPIRY_KEY) || 0);
+  if (!sharedToken || expiresAt <= Date.now()) {
+    lockModule(sharedToken ? "La autorización del servidor venció a los 45 minutos. Ingresa nuevamente el PIN." : "");
+    return;
+  }
+  accessToken = sharedToken;
+  $("pubGate").hidden = true;
+  $("pubFormArea").hidden = false;
+  $("activityAvailability").hidden = false;
+  $("publicActivityForm").hidden = false;
+  $("pubLock").hidden = false;
+  $("pubPinStatus").style.display = "none";
+  try {
+    await refreshActivities();
+  } catch (error) {
+    lockModule(error?.message || "La autorización no está disponible. Ingresa nuevamente el PIN.");
+  }
+}
+restoreCentralModuleAuthorization();
