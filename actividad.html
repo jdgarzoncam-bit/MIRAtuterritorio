@@ -16,7 +16,7 @@ body.theme-dark{display:block!important;width:100%!important;min-width:320px!imp
 .activity-public-head h1{margin:9px 0 4px;font-size:clamp(25px,4vw,36px);line-height:1.15;color:#edf5ff;overflow-wrap:anywhere}
 .activity-public-head p,.activity-public-note{color:#b2c3d7;line-height:1.5}
 .activity-public-pill{display:inline-block;border:1px solid #24d9ee;border-radius:30px;padding:4px 10px;color:#39e5f5;font-size:11px;font-weight:800;letter-spacing:.06em}
-.activity-public-back{color:#40e3f3;text-decoration:none;font-weight:700;white-space:nowrap}
+.activity-public-back{display:inline-flex;align-items:center;justify-content:center;width:46px;height:46px;border:1px solid rgba(116,198,246,.35);border-radius:14px;background:rgba(9,34,64,.72);color:#bde9ff;text-decoration:none;font-size:1.7rem;font-weight:800;white-space:nowrap}
 .activity-public-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px 16px;width:100%;min-width:0}
 .activity-public-form label{display:grid;gap:7px;min-width:0;color:#8ccfff;font-size:13px;font-weight:700}
 .activity-public-form input,.activity-public-form select{display:block;width:100%;min-width:0;max-width:100%;min-height:46px;box-sizing:border-box;background:#061124;border:1px solid #0878a7;border-radius:10px;padding:12px;color:#f4f8ff;font:inherit;font-size:16px}
@@ -35,6 +35,9 @@ body.theme-dark{display:block!important;width:100%!important;min-width:320px!imp
 .activity-public-status{padding:12px;border-radius:10px;margin-top:14px;display:none;line-height:1.5;overflow-wrap:anywhere}
 .activity-public-status[data-kind="error"]{background:#b4231820;border:1px solid #ef444470;color:#ffb4ae}
 .activity-public-status[data-kind="success"]{background:#1bbe8920;border:1px solid #1bbe8970;color:#8ff0cb}
+.activity-enrollment-status{padding:13px 15px;border:1px solid rgba(72,232,242,.3);border-radius:13px;background:rgba(9,35,59,.82);color:#dcecff;line-height:1.5;font-weight:750}
+.activity-enrollment-status[data-kind="success"]{border-color:rgba(39,205,151,.55);background:rgba(19,120,92,.16);color:#9df0d0}
+.activity-enrollment-status[data-kind="warning"]{border-color:rgba(245,180,75,.58);background:rgba(143,91,20,.18);color:#ffdaa0}
 .activity-public-consent{display:flex!important;align-items:flex-start;gap:10px!important;color:#c4d1e0!important;font-weight:500!important;line-height:1.5}
 .activity-public-consent input{flex:0 0 18px;width:18px;height:18px;min-height:18px;margin:2px 0 0;padding:0;accent-color:#20cde3}
 [hidden]{display:none!important}
@@ -72,20 +75,13 @@ body.theme-dark{display:block!important;width:100%!important;min-width:320px!imp
  .activity-public-card,.activity-public-form *{scroll-behavior:auto!important;transition:none!important;animation:none!important}
 }
 
-.activity-pin-gate{max-width:520px;margin:30px auto;padding:clamp(20px,4vw,32px);border:1px solid rgba(36,217,238,.55);border-radius:18px;background:linear-gradient(145deg,#14263e,#0b1830);box-shadow:0 18px 50px #0005}
-.activity-pin-gate h2{font-size:clamp(23px,4vw,30px);margin:14px 0 8px;color:#f4f8ff}
-.activity-pin-gate p{color:#b2c3d7;line-height:1.55;margin:0 0 18px}
-.activity-pin-gate label{display:block;color:#8ccfff;font-size:13px;font-weight:800;margin-bottom:7px}
-.activity-pin-gate input{width:100%;box-sizing:border-box;min-height:52px;border:1px solid #0878a7;border-radius:10px;background:#061124;color:white;padding:12px 15px;font-size:20px;letter-spacing:.24em;text-align:center}
-.activity-pin-gate button,.activity-public-lock{width:100%;min-height:48px;margin-top:12px;border:1px solid #24d9ee;border-radius:10px;background:linear-gradient(110deg,#087fc7,#2455df);color:white;font-weight:800;cursor:pointer}
-.activity-public-lock{width:auto;padding:9px 14px;margin:0 0 16px;background:#10243b}
 .activity-person-details{border:1px solid #31516b;border-radius:12px;background:#0c1b30;padding:15px}
 .activity-person-details h3{margin:0 0 12px;color:#dcecff}
 .activity-person-details-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .activity-person-details-grid div{min-width:0;display:grid;gap:4px}
 .activity-person-details-grid span{font-size:11px;color:#8ccfff}
 .activity-person-details-grid strong{font-size:13px;color:#f4f8ff;overflow-wrap:anywhere}
-@media(max-width:480px){.activity-pin-gate{margin:16px 0;padding:18px}.activity-person-details-grid{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:480px){.activity-person-details-grid{grid-template-columns:minmax(0,1fr)}}
 
 /* PORTAL DE PARTICIPACIÓN — experiencia móvil a pantalla completa, coherente con el PMU */
 @media(max-width:600px){
@@ -107,7 +103,6 @@ body.theme-dark{display:block!important;width:100%!important;min-width:320px!imp
  .activity-public-head{display:block!important;padding-bottom:14px!important}
  .activity-public-head h1{font-size:clamp(26px,7vw,34px)!important}
  .activity-public-back{display:inline-flex!important;margin-top:12px!important}
- .activity-pin-gate{display:flex!important;flex-direction:column!important;justify-content:center!important;flex:1 0 auto!important;width:100%!important;max-width:none!important;margin:0!important;padding:clamp(24px,7vh,44px) 18px!important;border-radius:20px!important;border-color:rgba(74,190,238,.34)!important;background:linear-gradient(155deg,rgba(11,37,65,.98),rgba(4,17,35,.99))!important}
  .activity-public-form{grid-template-columns:minmax(0,1fr)!important;gap:14px!important}
  .activity-public-form .full{grid-column:1!important}
  .activity-public-actions{display:grid!important;grid-template-columns:minmax(0,1fr)!important}
@@ -118,31 +113,21 @@ body.theme-dark{display:block!important;width:100%!important;min-width:320px!imp
 
 /* El atributo hidden debe prevalecer sobre los estilos flex del portal móvil.
    Evita mostrar el PIN central y el formulario al mismo tiempo. */
-.activity-pin-gate[hidden] { display: none !important; }
 </style>
 </head>
 <body class="theme-dark">
 <main class="activity-public-shell"><section class="activity-public-card">
-<header class="activity-public-head"><div><span class="activity-public-pill">REGISTRO DE PARTICIPACIÓN</span><h1>Registrar participante</h1><p>Busca la ficha por cédula o completa los datos para registrar la asistencia. El acceso requiere el PIN autorizado desde el menú Módulos.</p></div><a class="activity-public-back" href="index.html">← Volver al inicio</a></header>
-<section id="pubGate" class="activity-pin-gate" aria-labelledby="pubPinTitle">
-  <span class="activity-public-pill">ACCESO AUTORIZADO</span>
-  <h2 id="pubPinTitle">Ingresa tu código de acceso</h2>
-  <p>Introduce el PIN del equipo autorizado para habilitar la búsqueda y el registro de participantes.</p>
-  <label for="pubPin">Código PIN</label>
-  <input id="pubPin" type="password" inputmode="numeric" autocomplete="one-time-code" maxlength="10" pattern="[0-9]{10}" placeholder="Ingresa los 10 dígitos">
-  <button id="pubPinSubmit" type="button">Desbloquear módulo</button>
-  <div id="pubPinStatus" class="activity-public-status" role="status" aria-live="polite"></div>
-</section>
-<button id="pubLock" class="activity-public-lock" type="button" hidden>Bloquear módulo</button>
+<header class="activity-public-head"><div><span class="activity-public-pill">REGISTRO DE PARTICIPACIÓN</span><h1>Registrar participante</h1><p>Busca la ficha por cédula o completa los datos para registrar la asistencia. El acceso requiere el PIN autorizado desde el menú Módulos.</p></div><a class="activity-public-back" href="index.html?openModules=1" aria-label="Volver a módulos">←</a></header>
 <div id="pubFormArea" hidden>
 <div id="activityAvailability" class="activity-public-note" role="status" hidden>Consultando actividades disponibles…</div>
 <form id="publicActivityForm" hidden class="activity-public-form" autocomplete="on" novalidate>
+<label class="full">Actividad<select id="pubActivity" required disabled><option value="">Primero selecciona una actividad</option></select></label>
+<div id="pubEnrollmentStatus" class="activity-enrollment-status full" role="status" aria-live="polite" hidden></div>
 <label>Cédula<input id="pubCedula" inputmode="numeric" autocomplete="off" maxlength="20" required placeholder="Número de documento"></label>
-<label class="activity-public-lookup"><button id="pubLookup" type="button">⌕ Buscar ficha</button></label>
+<label class="activity-public-lookup"><button id="pubLookup" type="button" disabled>⌕ Verificar inscripción y buscar ficha</button></label>
 <label>Nombres<input id="pubNames" autocomplete="given-name" maxlength="120" required placeholder="Nombres"></label>
 <label>Apellidos<input id="pubSurnames" autocomplete="family-name" maxlength="120" required placeholder="Apellidos"></label>
 <label>Teléfono (opcional)<input id="pubPhone" inputmode="tel" autocomplete="tel" maxlength="30" placeholder="Teléfono"></label>
-<label>Actividad<select id="pubActivity" required><option value="">Selecciona una actividad</option></select></label>
 <label>Inscrito a InfoMIRA<select id="pubInfoMira" required><option value="">Seleccionar Sí / No</option><option value="si">Sí</option><option value="no">No</option></select></label><label>Tiene la App InfoMIRA<select id="pubHasApp" required><option value="">Seleccionar Sí / No</option><option value="si">Sí</option><option value="no">No</option></select></label>
 <label>Tipo de participante<select id="pubType" required><option value="">Seleccionar tipo</option><option value="externo">Externo</option><option value="interno">Interno</option></select></label>
 <label class="activity-public-consent full"><input id="pubConsent" type="checkbox" required><span>Autorizo el tratamiento de mis datos personales para gestionar mi inscripción y participación en la actividad seleccionada.</span></label>
@@ -164,5 +149,5 @@ body.theme-dark{display:block!important;width:100%!important;min-width:320px!imp
 <div id="pubStatus" class="activity-public-status" role="status" aria-live="polite"></div>
 <p class="activity-public-note">El registro se guarda de forma centralizada en Neon. Si la cédula ya tiene una ficha, el sistema evita crear una persona duplicada. Por seguridad, el formulario no expone datos personales almacenados.</p>
 </section></main>
-<script type="module" src="activity-portal.js?v=20261124-mobile-responsive-4"></script>
+<script type="module" src="activity-portal.js?v=20261124-activity-precheck-1"></script>
 </body></html>

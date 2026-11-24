@@ -1,0 +1,71 @@
+/* MIRA TU TERRITORIO · QA · Interacciones móviles de bajo coste de composición */
+@media (prefers-reduced-motion: no-preference) {
+  #mainSidebar .neo-tactile-sidebar > .mira-module-flyout {
+    clip-path: none !important;
+    -webkit-backdrop-filter: blur(14px) saturate(125%) !important;
+    backdrop-filter: blur(14px) saturate(125%) !important;
+    transition: opacity .16s ease-out, transform .18s cubic-bezier(.2,.7,.2,1) !important;
+    will-change: opacity, transform;
+  }
+  #mainSidebar .neo-tactile-sidebar > .mira-module-flyout.is-visible {
+    clip-path: none !important;
+  }
+  .mobile-ops-card {
+    transition: transform .18s cubic-bezier(.2,.7,.2,1), opacity .14s linear !important;
+    will-change: transform, opacity;
+  }
+  .mobile-ops-pagination button {
+    transition: opacity .12s linear, background-color .12s linear !important;
+  }
+}
+.mobile-ops-back {
+  width: 46px !important;
+  height: 46px !important;
+  min-width: 46px !important;
+  min-height: 46px !important;
+  display: grid !important;
+  place-items: center !important;
+  padding: 0 !important;
+  border-radius: 15px !important;
+}
+.mobile-ops-back > span {
+  display: block;
+  font-size: 1.55rem;
+  line-height: 1;
+}
+.mobile-ops-back .sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0,0,0,0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+@media (max-width: 600px) {
+  .mobile-ops-back {
+    top: max(10px, env(safe-area-inset-top, 0px)) !important;
+    left: 12px !important;
+    z-index: 6500 !important;
+    background: rgba(8,27,49,.92) !important;
+    border: 1px solid rgba(116,198,246,.38) !important;
+    color: #d9f2ff !important;
+    box-shadow: 0 8px 24px rgba(0,0,0,.25) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    backdrop-filter: blur(12px) !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #mainSidebar .neo-tactile-sidebar > .mira-module-flyout,
+  .mobile-ops-card,
+  .mobile-ops-pagination button,
+  .mira-quick-item,
+  .mira-quick-toggle {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+    will-change: auto !important;
+  }
+}

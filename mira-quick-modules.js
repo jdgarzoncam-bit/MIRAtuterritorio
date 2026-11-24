@@ -1,4 +1,4 @@
-import { MIRA_DATA } from "./mira-data.js?v=20261124-infomira-app-field-3";
+import { MIRA_DATA } from "./mira-data.js?v=20261124-activity-precheck-1";
 
 const TOKEN_KEY = "miraParticipantAccessToken";
 const TOKEN_EXPIRY_KEY = "miraParticipantAccessTokenExpiresAt";
@@ -60,8 +60,8 @@ if (!menu || !toggle || !panel || !pinGate || !pinInput || !pinSubmit || !regist
     toggle.setAttribute("aria-expanded", String(open));
     const icon = toggle.querySelector(".mira-quick-toggle-icon");
     const label = toggle.querySelector("span:last-child");
-    if (icon) icon.textContent = open ? "×" : "☰";
-    if (label) label.textContent = open ? "Cerrar" : "Módulos";
+    if (icon) icon.textContent = open ? "←" : "☰";
+    if (label) label.textContent = open ? "Inicio" : "Módulos";
   }
 
   function showPinGate() {
@@ -119,8 +119,10 @@ if (!menu || !toggle || !panel || !pinGate || !pinInput || !pinSubmit || !regist
       authorized = true;
       renderAuthorization();
       hidePinGate();
-      if (isMobileMenu() && menu.classList.contains("is-mobile-open")) panel.classList.remove("hidden");
-      setStatus("Acceso guardado en esta pestaña. La autorización del servidor vence a los 45 minutos; después deberás validar el PIN nuevamente.", "success");
+      menu.classList.remove("hidden");
+      panel.classList.remove("hidden");
+      if (isMobileMenu()) menu.classList.add("is-mobile-open");
+      updateMobileMenuLabel(true);
     } catch (error) {
       setStatus(error?.message || "No fue posible validar el PIN.");
     } finally {
@@ -133,33 +135,29 @@ if (!menu || !toggle || !panel || !pinGate || !pinInput || !pinSubmit || !regist
   // app.js conserva el control original de apertura/cierre del panel.
   // Este listener en captura solo prepara la autorización y no duplica el toggle.
   toggle.addEventListener("click", event => {
-    if (isMobileMenu()) {
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      const opening = !menu.classList.contains("is-mobile-open");
-      if (!opening) {
-        menu.classList.remove("is-mobile-open");
-        panel.classList.add("hidden");
-        hidePinGate();
-        updateMobileMenuLabel(false);
-        return;
-      }
-      menu.classList.add("is-mobile-open");
-      updateMobileMenuLabel(true);
-      syncAuthorization();
-      if (authorized) {
-        hidePinGate();
-        panel.classList.remove("hidden");
-      } else {
-        panel.classList.add("hidden");
-        showPinGate();
-      }
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    const mobile = isMobileMenu();
+    const opening = mobile
+      ? !menu.classList.contains("is-mobile-open")
+      : panel.classList.contains("hidden");
+    if (!opening) {
+      menu.classList.remove("is-mobile-open");
+      panel.classList.add("hidden");
+      hidePinGate();
+      updateMobileMenuLabel(false);
       return;
     }
-    const opening = panel.classList.contains("hidden");
-    if (opening && !authorized) showPinGate();
-    else if (opening) renderAuthorization();
-    else hidePinGate();
+    if (mobile) menu.classList.add("is-mobile-open");
+    updateMobileMenuLabel(true);
+    syncAuthorization();
+    if (authorized) {
+      hidePinGate();
+      panel.classList.remove("hidden");
+    } else {
+      panel.classList.add("hidden");
+      showPinGate();
+    }
   }, true);
 
   pinSubmit.addEventListener("click", authorize);
@@ -207,4 +205,20 @@ if (!menu || !toggle || !panel || !pinGate || !pinInput || !pinSubmit || !regist
   window.addEventListener("pageshow", syncAuthorization);
   window.addEventListener("focus", syncAuthorization);
   document.addEventListener("visibilitychange", () => { if (!document.hidden) syncAuthorization(); });
+
+  const returnToModules = new URLSearchParams(window.location.search).get("openModules") === "1";
+  if (returnToModules) {
+    menu.classList.remove("hidden");
+    if (isMobileMenu()) menu.classList.add("is-mobile-open");
+    updateMobileMenuLabel(true);
+    syncAuthorization();
+    if (authorized) {
+      hidePinGate();
+      panel.classList.remove("hidden");
+    } else {
+      panel.classList.add("hidden");
+      showPinGate();
+    }
+    history.replaceState(null, "", window.location.pathname);
+  }
 }

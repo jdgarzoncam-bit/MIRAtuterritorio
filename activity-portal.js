@@ -1,5 +1,5 @@
 import { createInternalNeonAuth } from "https://esm.sh/@neondatabase/auth@0.7.0-beta";
-import { MIRA_DATA } from "./mira-data.js?v=20261124-infomira-app-field-3";
+import { MIRA_DATA } from "./mira-data.js?v=20261124-activity-precheck-1";
 
 const PUBLIC_AUTH_URL = "https://ep-mute-grass-b7qan4n6.neonauth.c-13.us-east-1.aws.neon.tech/neondb/auth";
 const publicNeonAuth = createInternalNeonAuth(PUBLIC_AUTH_URL,{allowAnonymous:true});
@@ -19,6 +19,8 @@ let busy = false;
 let activities = [];
 let accessToken = null;
 let currentPersonBlocked = false;
+let currentPersonAlreadyRegistered = false;
+let personLookupCompleted = false;
 
 function status(message, kind = "success") {
   const node = $("pubStatus");
@@ -26,28 +28,23 @@ function status(message, kind = "success") {
   node.dataset.kind = kind;
   node.style.display = "block";
 }
-function pinStatus(message, kind = "error") {
-  const node = $("pubPinStatus");
+function setEnrollmentStatus(message, kind = "info") {
+  const node = $("pubEnrollmentStatus");
   node.textContent = message;
   node.dataset.kind = kind;
-  node.style.display = "block";
+  node.hidden = !message;
+}
+function clearEnrollmentStatus() { setEnrollmentStatus(""); }
+function syncLookupButton() {
+  $("pubLookup").disabled = !accessToken || !$("pubActivity").value || busy;
 }
 function setAvailable(enabled) {
-  $("pubSubmit").disabled = !enabled || busy || currentPersonBlocked || !accessToken;
+  $("pubSubmit").disabled = !enabled || busy || currentPersonBlocked || currentPersonAlreadyRegistered || !personLookupCompleted || !accessToken;
   $("pubActivity").disabled = !enabled || !accessToken;
+  syncLookupButton();
 }
 function hexToBytes(hex) {
   return new Uint8Array(hex.match(/.{1,2}/g).map(byte => parseInt(byte,16)));
-}
-async function derivePinVerifier(pin) {
-  if (!/^\d{10}$/.test(pin)) throw new Error("El PIN debe contener exactamente 10 dígitos.");
-  if (!globalThis.crypto?.subtle) throw new Error("Este navegador no permite verificar el PIN de forma segura. Abre el sitio mediante HTTPS o localhost.");
-  const key = await crypto.subtle.importKey("raw",new TextEncoder().encode(pin),"PBKDF2",false,["deriveBits"]);
-  const bits = await crypto.subtle.deriveBits(
-    {name:"PBKDF2",salt:hexToBytes(PIN_SALT_HEX),iterations:PIN_ITERATIONS,hash:"SHA-256"},
-    key,256
-  );
-  return [...new Uint8Array(bits)].map(byte=>byte.toString(16).padStart(2,"0")).join("");
 }
 function showPersonDetails(person) {
   const fields = {
@@ -71,18 +68,9 @@ function lockModule(message = "") {
   sessionStorage.removeItem(MODULE_ACCESS_TOKEN_KEY);
   sessionStorage.removeItem(MODULE_ACCESS_TOKEN_EXPIRY_KEY);
   currentPersonBlocked = false;
-  $("pubGate").hidden = false;
-  $("pubFormArea").hidden = true;
-  $("pubPin").value = "";
-  $("pubPinStatus").style.display = message ? "block" : "none";
-  $("pubPinStatus").textContent = message;
-  $("pubPinStatus").dataset.kind = "error";
-  $("pubPinSubmit").disabled = false;
-  $("pubLock").hidden = true;
-  $("publicActivityForm").reset();
-  clearPersonDetails();
-  $("pubStatus").style.display = "none";
-  setAvailable(false);
+  currentPersonAlreadyRegistered = false;
+  personLookupCompleted = false;
+  window.location.replace("index.html?openModules=1&authorization=expired");
 }
 async function refreshActivities() {
   const rows = await MIRA_DATA.listPublicActivityOptions();
@@ -102,44 +90,49 @@ async function refreshActivities() {
   setAvailable(true);
 }
 
-$("pubPinSubmit").addEventListener("click", async () => {
-  const pin = $("pubPin").value.trim();
-  $("pubPinSubmit").disabled = true;
-  try {
-    pinStatus("Verificando código de acceso…","success");
-    const verifier = await derivePinVerifier(pin);
-    const result = await MIRA_DATA.verifyParticipantAccessPin(verifier);
-    if (result?.status !== "ok" || !result?.access_token) throw new Error("No fue posible validar el código de acceso.");
-    accessToken = result.access_token;
-    sessionStorage.setItem(MODULE_ACCESS_TOKEN_KEY, accessToken);
-    sessionStorage.setItem(MODULE_ACCESS_TOKEN_EXPIRY_KEY, String(Date.now() + Number(result.expires_in || 2700) * 1000));
-    $("pubGate").hidden = true;
-    $("pubFormArea").hidden = false;
-    $("activityAvailability").hidden = false;
-    $("publicActivityForm").hidden = false;
-    $("pubLock").hidden = false;
-    $("pubPinStatus").style.display = "none";
-    await refreshActivities();
-  } catch (error) {
-    pinStatus(error.message || "No fue posible validar el PIN.");
-  } finally {
-    $("pubPinSubmit").disabled = false;
-  }
+$("pubActivity").addEventListener("change", () => {
+  currentPersonAlreadyRegistered = false;
+  personLookupCompleted = false;
+  currentPersonBlocked = false;
+  clearEnrollmentStatus();
+  clearPersonDetails();
+  setAvailable(activities.length > 0);
+  if ($("pubCedula").value.trim()) $("pubLookup").click();
 });
-$("pubPin").addEventListener("keydown", event => {
-  if (event.key === "Enter") { event.preventDefault(); $("pubPinSubmit").click(); }
+$("pubCedula").addEventListener("input", () => {
+  currentPersonAlreadyRegistered = false;
+  personLookupCompleted = false;
+  currentPersonBlocked = false;
+  clearEnrollmentStatus();
+  clearPersonDetails();
+  setAvailable(activities.length > 0);
 });
-$("pubLock").addEventListener("click", () => lockModule("El módulo quedó bloqueado. Ingresa nuevamente el PIN para continuar."));
 
 $("pubLookup").addEventListener("click", async () => {
   const cedula = cleanCedula($("pubCedula").value);
-  if (!accessToken) return lockModule("La autorización venció. Ingresa nuevamente el PIN.");
+  const actividadId = $("pubActivity").value;
+  if (!accessToken) return lockModule("La autorización venció. Ingresa nuevamente desde Módulos.");
+  if (!actividadId) return status("Primero selecciona la actividad en la que deseas consultar la inscripción.", "error");
   if (cedula.length < 5 || cedula.length > 15) return status("Escribe una cédula válida para buscar la ficha.", "error");
   const button = $("pubLookup");
   button.disabled = true;
   currentPersonBlocked = false;
+  currentPersonAlreadyRegistered = false;
+  personLookupCompleted = false;
+  clearPersonDetails();
+  clearEnrollmentStatus();
   try {
-    const person = await MIRA_DATA.lookupPublicPerson(cedula,accessToken);
+    const enrollment = await MIRA_DATA.checkPublicActivityParticipant(cedula, actividadId, accessToken);
+    const person = await MIRA_DATA.lookupPublicPerson(cedula, accessToken);
+    personLookupCompleted = true;
+    currentPersonAlreadyRegistered = Boolean(enrollment?.already_registered);
+    if (currentPersonAlreadyRegistered) {
+      setEnrollmentStatus(enrollment.attendance_status === "anulada"
+        ? "Existe un registro ANULADO de esta persona en la actividad. No se puede volver a inscribir hasta que el registro sea revisado administrativamente."
+        : "Esta persona YA ESTÁ INSCRITA en la actividad seleccionada. No es necesario registrar otra asistencia.", "warning");
+    } else {
+      setEnrollmentStatus("Esta persona NO está inscrita en la actividad seleccionada. Puedes continuar con el registro.", "success");
+    }
     if (!person) {
       $("pubNames").value = "";
       $("pubSurnames").value = "";
@@ -147,9 +140,10 @@ $("pubLookup").addEventListener("click", async () => {
       $("pubInfoMira").value = "";
       $("pubHasApp").value = "";
       $("pubType").value = "";
-      clearPersonDetails();
       setAvailable(activities.length > 0);
-      status("No encontramos una ficha con esta cédula. Completa los datos para crearla al guardar la asistencia.","success");
+      status(currentPersonAlreadyRegistered
+        ? "La asistencia ya existe; no se permite duplicarla."
+        : "No encontramos una ficha con esta cédula. Completa los datos para crearla al guardar la asistencia.", currentPersonAlreadyRegistered ? "error" : "success");
       return;
     }
     $("pubNames").value = person.nombres || "";
@@ -163,16 +157,22 @@ $("pubLookup").addEventListener("click", async () => {
     if (person.inactivo || person.activo === false) {
       currentPersonBlocked = true;
       setAvailable(activities.length > 0);
-      status("La ficha existe, pero está marcada como inactiva. No se puede registrar asistencia hasta que sea revisada por un administrador.","error");
+      status("La ficha existe, pero está marcada como inactiva. No se puede registrar asistencia hasta que sea revisada por un administrador.", "error");
       return;
     }
     setAvailable(activities.length > 0);
-    status("Ficha recuperada correctamente. Verifica los datos, selecciona la actividad y confirma el consentimiento para registrar la asistencia.","success");
+    status(currentPersonAlreadyRegistered
+      ? "Ficha recuperada. La asistencia de esta persona ya existe para esta actividad."
+      : "Ficha recuperada. Verifica los datos y confirma el consentimiento para registrar la asistencia.",
+      currentPersonAlreadyRegistered ? "error" : "success");
   } catch (error) {
-    const message = error.message || "No fue posible consultar la ficha.";
+    const message = error.message || "No fue posible consultar la inscripción.";
     if (/autorización venció|PIN de acceso|no es válida/i.test(message)) lockModule(message);
-    else status(message,"error");
-  } finally { button.disabled = false; }
+    else status(message, "error");
+  } finally {
+    button.disabled = false;
+    syncLookupButton();
+  }
 });
 
 $("publicActivityForm").addEventListener("submit", async event => {
@@ -191,6 +191,8 @@ $("publicActivityForm").addEventListener("submit", async event => {
   const tipo_participacion = $("pubType").value;
   if (!info_mira || !tiene_app_infomira || !tipo_participacion) return status("Indica si está inscrito a InfoMIRA, si tiene la App InfoMIRA y el tipo de participante.","error");
   if (!$("pubConsent").checked) return status("Debes aceptar el tratamiento de datos para continuar.","error");
+  if (!personLookupCompleted) return status("Selecciona una actividad y busca la cédula antes de diligenciar el registro.", "error");
+  if (currentPersonAlreadyRegistered) return status("Esta persona ya tiene una asistencia registrada en la actividad seleccionada.", "error");
   if (currentPersonBlocked) return status("La ficha está inactiva y requiere revisión administrativa.","error");
   busy = true;
   setAvailable(false);
@@ -208,6 +210,9 @@ $("publicActivityForm").addEventListener("submit", async event => {
     $("publicActivityForm").reset();
     clearPersonDetails();
     currentPersonBlocked = false;
+    currentPersonAlreadyRegistered = false;
+    personLookupCompleted = false;
+    clearEnrollmentStatus();
     status("¡Asistencia registrada correctamente! La participación quedó guardada.");
   } catch (error) {
     const message = error.message || "No fue posible guardar la asistencia.";
@@ -222,26 +227,30 @@ $("publicActivityForm").addEventListener("reset", () => {
   setTimeout(() => {
     if ($("pubStatus")) { $("pubStatus").style.display = "none"; $("pubStatus").textContent = ""; }
     clearPersonDetails();
+    currentPersonBlocked = false;
+    currentPersonAlreadyRegistered = false;
+    personLookupCompleted = false;
+    clearEnrollmentStatus();
+    setAvailable(activities.length > 0);
   },0);
 });
 async function restoreCentralModuleAuthorization() {
   const sharedToken = sessionStorage.getItem(MODULE_ACCESS_TOKEN_KEY);
   const expiresAt = Number(sessionStorage.getItem(MODULE_ACCESS_TOKEN_EXPIRY_KEY) || 0);
   if (!sharedToken || expiresAt <= Date.now()) {
-    lockModule(sharedToken ? "La autorización del servidor venció a los 45 minutos. Ingresa nuevamente el PIN." : "");
+    lockModule(sharedToken ? "La autorización venció." : "");
     return;
   }
   accessToken = sharedToken;
-  $("pubGate").hidden = true;
   $("pubFormArea").hidden = false;
   $("activityAvailability").hidden = false;
   $("publicActivityForm").hidden = false;
-  $("pubLock").hidden = false;
-  $("pubPinStatus").style.display = "none";
   try {
     await refreshActivities();
   } catch (error) {
-    lockModule(error?.message || "La autorización no está disponible. Ingresa nuevamente el PIN.");
+    const message = error?.message || "No fue posible consultar las actividades.";
+    if (/autorización venció|PIN de acceso|no es válida|permission denied/i.test(message)) lockModule(message);
+    else status(message, "error");
   }
 }
 restoreCentralModuleAuthorization();
