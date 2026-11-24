@@ -197,10 +197,13 @@ if (!menu || !toggle || !panel || !pinGate || !pinInput || !pinSubmit || !regist
     }
   });
   document.addEventListener("mira:signed-out", () => {
-    // El PIN de participantes es una autorización independiente de la sesión PMU.
-    // No borrar su token al restaurar una página sin usuario autenticado; el RPC
-    // valida actor y vencimiento en Neon antes de permitir cualquier operación.
+    // El PIN de participantes es independiente de la sesión PMU. Si el navegador
+    // está regresando a Módulos, no cerrar ni borrar su autorización temporal.
     syncAuthorization();
+    const returningToModules =
+      new URLSearchParams(window.location.search).get("openModules") === "1" ||
+      history.state?.miraReturnToModules === true;
+    if (returningToModules) return;
     menu.classList.remove("is-mobile-open");
     panel.classList.add("hidden");
     menu.classList.add("hidden");
