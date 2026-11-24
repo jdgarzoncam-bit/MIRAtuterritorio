@@ -65,9 +65,26 @@
   if(!back){back=document.createElement('button');back.id='mobileOpsBack';back.className='mobile-ops-back';back.type='button';back.innerHTML='<span>‹</span><b>Volver a módulos</b>';back.setAttribute('aria-label','Volver al Centro de Operaciones');document.body.appendChild(back);}
   const carousel=home.querySelector('#mobileOpsCarousel'),els=[...carousel.querySelectorAll('.mobile-ops-card')],dots=[...home.querySelectorAll('#mobileOpsPagination button')];
   const mobile=()=>matchMedia(MQ).matches;let active=0,timer=0,workspaceMode=null,historyStateActive=false;
-  const setActive=i=>{active=Math.max(0,Math.min(cards.length-1,i));els.forEach((e,n)=>{e.classList.toggle('is-active',n===active);e.setAttribute('aria-current',n===active?'true':'false')});dots.forEach((d,n)=>d.classList.toggle('is-active',n===active))};
-  const centered=()=>{const mid=carousel.getBoundingClientRect().left+carousel.clientWidth/2;let best=0,dist=Infinity;els.forEach((e,i)=>{const r=e.getBoundingClientRect(),d=Math.abs(r.left+r.width/2-mid);if(d<dist){dist=d;best=i}});return best};
-  const go=i=>{i=Math.max(0,Math.min(cards.length-1,i));els[i].scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});setActive(i)};
+  const setActive=i=>{
+   active=Math.max(0,Math.min(cards.length-1,i));
+   els.forEach((e,n)=>{
+    const delta=n-active,depth=Math.abs(delta),side=Math.sign(delta);
+    e.classList.toggle('is-active',n===active);
+    e.classList.toggle('is-prev',delta<0);
+    e.classList.toggle('is-next',delta>0);
+    e.style.setProperty('--stack-depth',String(depth));
+    e.style.setProperty('--stack-x',depth===0?'0px':(side* Math.min(depth*5,18))+'px');
+    e.style.setProperty('--stack-y',depth===0?'0px':(-Math.min(depth*11,44))+'px');
+    e.style.setProperty('--stack-rotate',depth===0?'0deg':(side* Math.min(depth*2.2,8))+'deg');
+    e.style.setProperty('--stack-scale',String(Math.max(.82,1-depth*.045)));
+    e.style.zIndex=String(20-depth);
+    e.setAttribute('aria-current',n===active?'true':'false');
+    e.tabIndex=n===active?0:-1;
+   });
+   dots.forEach((d,n)=>{d.classList.toggle('is-active',n===active);d.setAttribute('aria-current',n===active?'true':'false')});
+  };
+  const centered=()=>active;
+  const go=i=>{setActive(i)};
   const resizeMap=()=>requestAnimationFrame(()=>requestAnimationFrame(()=>{window.dispatchEvent(new Event('resize'));window.dispatchEvent(new CustomEvent('mira:mobile-map-visible'))}));
   const closeWorkspace=()=>{
    if(workspaceMode==='activities'){
@@ -141,10 +158,12 @@
     home.hidden=false;sidebar.hidden=true;back.classList.remove('is-visible');
    }
   });
-  els.forEach((el,i)=>el.addEventListener('click',()=>{const r=el.getBoundingClientRect(),mid=carousel.getBoundingClientRect().left+carousel.clientWidth/2;if(Math.abs(r.left+r.width/2-mid)>Math.max(24,r.width*.16)){go(i);return}setActive(i);open(cards[i])}));
+  els.forEach((el,i)=>el.addEventListener('click',()=>{if(i!==active){go(i);return}open(cards[i])}));
   dots.forEach((d,i)=>d.addEventListener('click',()=>go(i)));
   home.querySelector('.mobile-ops-prev').addEventListener('click',()=>go(centered()-1));home.querySelector('.mobile-ops-next').addEventListener('click',()=>go(centered()+1));
-  carousel.addEventListener('scroll',()=>{clearTimeout(timer);timer=setTimeout(()=>setActive(centered()),100)},{passive:true});carousel.addEventListener('scrollend',()=>setActive(centered()),{passive:true});
+  let swipeStartX=0,swipeStartY=0;
+  carousel.addEventListener('touchstart',e=>{const t=e.touches[0];swipeStartX=t.clientX;swipeStartY=t.clientY},{passive:true});
+  carousel.addEventListener('touchend',e=>{const t=e.changedTouches[0],dx=t.clientX-swipeStartX,dy=t.clientY-swipeStartY;if(Math.abs(dx)>38&&Math.abs(dx)>Math.abs(dy)*1.15)go(active+(dx<0?1:-1))},{passive:true});
   carousel.addEventListener('keydown',e=>{if(e.key==='ArrowRight'){e.preventDefault();go(centered()+1)}if(e.key==='ArrowLeft'){e.preventDefault();go(centered()-1)}if(e.key==='Enter'){e.preventDefault();open(cards[centered()])}});
   back.addEventListener('click',onBack);
   window.addEventListener('popstate',()=>{if(historyStateActive){historyStateActive=false;closeToHome(true)}});
