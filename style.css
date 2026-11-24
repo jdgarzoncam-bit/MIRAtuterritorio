@@ -7982,3 +7982,109 @@ input,select,textarea,button { max-width:100%; }
   }
   input, select, textarea { font-size: 16px !important; }
 }
+
+
+/* MIRA MOBILE FINAL PASS · six-point intervention · 2026-11-24 */
+@media (max-width: 600px) {
+  #mainSidebar .neo-tactile-sidebar > .mira-module-flyout {
+    position: fixed !important; top: 50dvh !important;
+    left: 84px !important; right: 10px !important;
+    width: auto !important; max-width: 420px !important;
+    max-height: min(76dvh,620px) !important;
+    transform: translate3d(-18px,-50%,0) scale(.94) !important;
+    transform-origin: left center !important; z-index: 6200 !important;
+  }
+  #mainSidebar .neo-tactile-sidebar > .mira-module-flyout.is-visible {
+    transform: translate3d(0,-50%,0) scale(1) !important;
+  }
+  #mainSidebar .neo-tactile-sidebar > .mira-module-flyout > .dropdown-content,
+  #mainSidebar .neo-tactile-sidebar > .mira-module-flyout > .dropdown-content.mira-floating-content {
+    max-height: min(76dvh,620px) !important; overflow-y: auto !important;
+    overscroll-behavior: contain !important;
+  }
+  #app-container.mobile-operations-map-panel-active {
+    position: fixed !important; inset: 0 !important; width: 100vw !important;
+    height: 100dvh !important; overflow: hidden !important; isolation: isolate !important;
+  }
+  #app-container.mobile-operations-map-panel-active #map {
+    position: absolute !important; inset: 0 !important; width: 100% !important;
+    height: 100% !important; min-height: 100% !important; max-height: none !important;
+    visibility: visible !important; z-index: 1 !important;
+  }
+  #app-container.mobile-operations-map-panel-active #mainSidebar {
+    position: absolute !important; top: auto !important; left: 10px !important;
+    right: 10px !important; bottom: max(10px,env(safe-area-inset-bottom,0px)) !important;
+    width: auto !important; height: min(48dvh,430px) !important;
+    max-height: min(48dvh,430px) !important; min-height: 0 !important;
+    padding: 0 !important; margin: 0 !important; overflow: hidden !important;
+    background: transparent !important; z-index: 1800 !important;
+  }
+  #app-container.mobile-operations-map-panel-active #mainSidebar > .neo-tactile-sidebar {
+    width: 100% !important; height: 100% !important; max-height: 100% !important;
+    min-height: 0 !important; overflow: hidden !important; border-radius: 23px !important;
+    border: 1px solid rgba(137,194,255,.32) !important;
+    background: linear-gradient(145deg,rgba(12,35,65,.78),rgba(4,17,39,.84)) !important;
+    box-shadow: 0 -16px 42px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.16) !important;
+    -webkit-backdrop-filter: blur(25px) saturate(155%) !important;
+    backdrop-filter: blur(25px) saturate(155%) !important;
+  }
+  #app-container.mobile-operations-map-panel-active #mainSidebar .sidebar-header {
+    background: rgba(15,43,76,.34) !important;
+    -webkit-backdrop-filter: blur(16px) !important; backdrop-filter: blur(16px) !important;
+  }
+  #app-container.mobile-operations-map-panel-active #mainSidebar .sidebar-content {
+    background: transparent !important; overflow-y: auto !important; overscroll-behavior: contain !important;
+  }
+  .mobile-ops-card {
+    border: 1px solid rgba(190,220,255,.26) !important;
+    background: radial-gradient(ellipse at 78% 18%,rgba(133,180,255,.26),transparent 48%),
+      linear-gradient(145deg,rgba(40,88,164,.82),rgba(8,27,72,.94)) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(145%) !important;
+    backdrop-filter: blur(24px) saturate(145%) !important;
+    box-shadow: 0 24px 54px rgba(0,0,0,.34),inset 0 1px 0 rgba(255,255,255,.22) !important;
+  }
+  .mobile-ops-card.is-active {
+    border-left: 3px solid #48e8f2 !important;
+    box-shadow: 0 28px 62px rgba(0,0,0,.42),0 0 30px rgba(60,145,255,.22),inset 0 1px 0 rgba(255,255,255,.26) !important;
+  }
+  .mobile-ops-card-icon {
+    background: rgba(215,231,255,.14) !important; border: 1px solid rgba(215,231,255,.24) !important;
+    box-shadow: inset 0 1px 1px rgba(255,255,255,.2),0 8px 20px rgba(0,0,0,.12) !important;
+  }
+  .mobile-ops-pagination { gap: 9px !important; }
+  .mobile-ops-pagination button,.mobile-ops-pagination button.is-active {
+    flex: 0 0 auto !important; width: 7px !important; height: 7px !important;
+    min-width: 7px !important; min-height: 7px !important; border-radius: 50% !important; transform: none !important;
+  }
+  .mobile-ops-pagination button.is-active {
+    width: 9px !important; height: 9px !important; min-width: 9px !important; min-height: 9px !important;
+    background: #78a4ff !important; box-shadow: 0 0 0 3px rgba(120,164,255,.16),0 0 12px rgba(120,164,255,.7) !important;
+  }
+  input,select,textarea,.mira-input-group input,.activity-search,
+  .concejal-filters input,.pqrs-form-grid input,.pqrs-form-grid select,.pqrs-form-grid textarea {
+    font-size: 16px !important; max-width: 100% !important;
+  }
+  .activities-workspace,.pqrs-workspace,.concejal-workspace,.database-workspace,#adminPermissionsPanel {
+    box-sizing: border-box !important; width: 100% !important; max-width: 100vw !important;
+    overflow-x: hidden !important; -webkit-overflow-scrolling: touch !important;
+  }
+  .activity-form-grid,.concejal-form-grid,.pqrs-form-grid,.database-grid,.admin-permissions-grid {
+    grid-template-columns: minmax(0,1fr) !important;
+  }
+  .activity-toolbar,.activities-header,.activities-footer { min-width: 0 !important; flex-wrap: wrap !important; }
+  .activity-table-wrap,.concejal-people-table-wrap,.pqrs-table-wrap { max-width: 100% !important; overflow-x: auto !important; }
+  #mobileOpsBack { position: fixed !important; top: max(10px,env(safe-area-inset-top,0px)) !important; left: 12px !important; z-index: 6500 !important; }
+  #app-container.mobile-operations-workspace-active {
+    min-height: 100dvh !important; height: 100dvh !important;
+    overflow-y: auto !important; overscroll-behavior-y: contain !important;
+  }
+}
+@media (max-width: 380px) {
+  #mainSidebar .neo-tactile-sidebar > .mira-module-flyout { left: 78px !important; right: 7px !important; }
+  .mobile-ops-card { min-height: 260px !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mobile-ops-card,.mobile-ops-pagination button,#mainSidebar .neo-tactile-sidebar > .mira-module-flyout {
+    transition-duration: .01ms !important; animation-duration: .01ms !important;
+  }
+}
