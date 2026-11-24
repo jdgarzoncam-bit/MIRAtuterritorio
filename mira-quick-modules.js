@@ -232,7 +232,7 @@ if (!menu || !toggle || !panel || !pinGate || !pinInput || !pinSubmit || !regist
       panel.classList.add("hidden");
       showPinGate();
     }
-    history.replaceState(history.state, "", window.location.pathname);
+    history.replaceState({...history.state, miraReturnToModules:true}, "", window.location.pathname);
   }
   restoreModulesFromNavigation();
   window.addEventListener("pageshow", restoreModulesFromNavigation);
