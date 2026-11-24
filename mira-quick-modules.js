@@ -7,6 +7,11 @@ const PIN_ITERATIONS = 310000;
 
 const $ = id => document.getElementById(id);
 const menu = $("miraQuickModules");
+// El menú de autorización debe abrirse desde la portada pública, antes del login
+// PMU. Si permanece dentro de #app-container, queda oculto porque ese contenedor
+// solo se muestra después de autenticar. Se eleva al body para que el PIN sea
+// independiente del acceso al Centro de Operaciones.
+if (menu && menu.parentElement !== document.body) document.body.appendChild(menu);
 const toggle = $("miraQuickModulesToggle");
 const panel = $("miraQuickModulesPanel");
 const pinGate = $("miraModulePinGate");
