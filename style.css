@@ -8277,3 +8277,21 @@ input,select,textarea,button { max-width:100%; }
   .mobile-ops-intro { padding:18px 0 14px!important; }
   .mobile-ops-card { height:min(51dvh,390px)!important; min-height:300px!important; }
 }
+
+
+/* MENÚ GLOBAL CON AUTORIZACIÓN CENTRALIZADA POR PIN */
+.mira-module-pin-gate{position:absolute;top:calc(100% + 9px);left:0;width:min(330px,calc(100vw - 20px));box-sizing:border-box;padding:17px;border:1px solid var(--neo-border-glow);border-radius:16px;background:rgba(7,20,38,.97);color:var(--text-main);box-shadow:var(--shadow-tactile-extrude),0 14px 36px rgba(0,0,0,.38);backdrop-filter:blur(24px);z-index:3}
+.mira-module-pin-gate[hidden],.mira-quick-lock-action[hidden]{display:none!important}
+.mira-module-pin-eyebrow{display:inline-flex;padding:4px 8px;border:1px solid var(--neo-border-glow);border-radius:999px;color:var(--cyan-tactile);font-size:.65rem;font-weight:800;letter-spacing:.06em}
+.mira-module-pin-gate h2{margin:10px 0 6px;font-size:1.05rem}
+.mira-module-pin-gate p{margin:0 0 12px;color:var(--text-muted);font-size:.76rem;line-height:1.45}
+.mira-module-pin-gate label{display:block;margin:0 0 6px;color:var(--text-muted);font-size:.72rem;font-weight:700}
+.mira-module-pin-gate input{width:100%;box-sizing:border-box;padding:11px 12px;border:1px solid var(--neo-border-glow);border-radius:10px;background:rgba(3,10,23,.9);color:var(--text-main);font:inherit;letter-spacing:.14em;outline:none}
+.mira-module-pin-gate input:focus{border-color:var(--cyan-tactile);box-shadow:0 0 0 3px rgba(56,189,248,.13)}
+.mira-module-pin-gate button{width:100%;margin-top:10px;padding:11px 12px;border:1px solid rgba(56,189,248,.6);border-radius:10px;background:linear-gradient(110deg,#0878c9,#2458db);color:white;font:inherit;font-size:.8rem;font-weight:800;cursor:pointer}
+.mira-module-pin-status{margin:10px 0 0!important;padding:8px 9px;border-radius:8px;background:rgba(255,255,255,.055);font-size:.72rem!important}
+.mira-module-pin-status[data-kind="error"]{color:#fca5a5}
+.mira-module-pin-status[data-kind="success"]{color:#86efac}
+.mira-quick-lock-action{width:100%;padding:9px 10px;border:1px solid rgba(248,113,113,.35);border-radius:10px;background:rgba(127,29,29,.16);color:#fecaca;font:inherit;font-size:.73rem;font-weight:800;cursor:pointer}
+.mira-quick-item:disabled{opacity:.55;cursor:not-allowed}
+@media(max-width:600px){.mira-module-pin-gate{width:min(320px,calc(100vw - 20px));padding:14px}.mira-module-pin-gate input{font-size:16px}}
