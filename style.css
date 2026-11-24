@@ -5023,7 +5023,8 @@ a:hover {color:#E6EDFD;}
     font-size:.72rem;font-weight:800;
   }
   .mobile-ops-back.is-visible {display:flex;}
-  .mobile-ops-back>span {font-size:1.45rem;line-height:1;color:#AFC5F8;}
+  .mobile-ops-back>span {font-size:1rem;line-height:1;color:#AFC5F8;}
+  .mobile-ops-back>b {font-size:.78rem;font-weight:800;letter-spacing:.01em;}
   #app-container.mobile-operations-module-active .neo-tactile-sidebar {pointer-events:auto !important;}
 }
 @media(max-width:370px) {

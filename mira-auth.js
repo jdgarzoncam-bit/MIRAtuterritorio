@@ -275,6 +275,7 @@ document.addEventListener("DOMContentLoaded",()=>{
   if(loginForm) loginForm.addEventListener("submit",event=>{
     event.preventDefault();
     event.stopImmediatePropagation();
+    if(window.matchMedia("(max-width: 600px)").matches){window.MIRA_MOBILE_LOGIN_REQUESTED=true;window.dispatchEvent(new Event("mira:mobile-login-requested"));}
     loginWithNeon();
   },true);
   const reset=document.getElementById("forgotPasswordBtn");
