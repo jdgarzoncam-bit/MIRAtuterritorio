@@ -33,6 +33,8 @@
    if(!editable(document.activeElement))restore();
    else if(window.visualViewport&&keyboardBaseline&&window.visualViewport.height>=keyboardBaseline*.9)restore();
   },180),true);
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&!editable(document.activeElement))window.setTimeout(restore,90);});
+  window.addEventListener('pageshow',()=>{if(!editable(document.activeElement))window.setTimeout(restore,90);});
   window.visualViewport?.addEventListener('resize',()=>{
    if(keyboardOpen&&keyboardBaseline&&window.visualViewport.height>=keyboardBaseline*.9)window.setTimeout(restore,70);
   },{passive:true});
@@ -104,6 +106,12 @@
    app.classList.add('mobile-operations-module-active');const side=sidebar.querySelector('.neo-tactile-sidebar');if(side)side.scrollTop=0;resizeMap();
   };
   const onBack=()=>{if(historyStateActive){window.history.back();return}closeToHome(true)};
+  window.addEventListener('pageshow',()=>{
+   if(!mobile())return;
+   if(!app.classList.contains('mobile-operations-module-active')&&!app.classList.contains('mobile-operations-map-active')&&!app.classList.contains('mobile-operations-map-panel-active')&&!app.classList.contains('mobile-operations-workspace-active')){
+    home.hidden=false;sidebar.hidden=true;back.classList.remove('is-visible');
+   }
+  });
   els.forEach((el,i)=>el.addEventListener('click',()=>{const r=el.getBoundingClientRect(),mid=carousel.getBoundingClientRect().left+carousel.clientWidth/2;if(Math.abs(r.left+r.width/2-mid)>Math.max(24,r.width*.16)){go(i);return}setActive(i);open(cards[i])}));
   dots.forEach((d,i)=>d.addEventListener('click',()=>go(i)));
   home.querySelector('.mobile-ops-prev').addEventListener('click',()=>go(centered()-1));home.querySelector('.mobile-ops-next').addEventListener('click',()=>go(centered()+1));
