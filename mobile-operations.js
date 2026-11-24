@@ -165,7 +165,12 @@
    if(card.mapPanel){app.classList.add('mobile-operations-map-panel-active');const side=sidebar.querySelector('.neo-tactile-sidebar');if(side)side.scrollTop=0;resizeMap();return}
    app.classList.add('mobile-operations-module-active');const side=sidebar.querySelector('.neo-tactile-sidebar');if(side)side.scrollTop=0;resizeMap();
   };
-  const onBack=()=>{if(historyStateActive){window.history.back();return}closeToHome(true)};
+  const onBack=()=>{
+   if(!mobile()||!window.MIRA_CURRENT_USER||!document.body.classList.contains('pmu-neomorphic')){
+    back.hidden=true;back.classList.remove('is-visible');return;
+   }
+   closeToHome(false);
+  };
   home.querySelector('#mobileOpsExit')?.addEventListener('click',exitToPlatform);
   const showOperationsHome=()=>{
    if(!mobile()||!window.MIRA_CURRENT_USER||!document.body.classList.contains('pmu-neomorphic'))return;
@@ -185,6 +190,7 @@
    window.MIRA_MOBILE_LOGIN_REQUESTED=false;
    userExitedOperations=true;
    document.body.classList.add('mira-mobile-public-landing');
+   back.hidden=true;back.classList.remove('is-visible');
    app.classList.remove('mobile-operations-home-active','mobile-operations-module-active','mobile-operations-map-active','mobile-operations-map-panel-active','mobile-operations-workspace-active');
    home.hidden=true;sidebar.hidden=false;back.hidden=true;back.classList.remove('is-visible');
    app.style.display='none';
@@ -221,6 +227,7 @@
   carousel.addEventListener('touchend',e=>{const t=e.changedTouches[0],dx=t.clientX-swipeStartX,dy=t.clientY-swipeStartY;if(Math.abs(dx)>38&&Math.abs(dx)>Math.abs(dy)*1.15)go(active+(dx<0?1:-1))},{passive:true});
   carousel.addEventListener('keydown',e=>{if(e.key==='ArrowRight'){e.preventDefault();go(centered()+1)}if(e.key==='ArrowLeft'){e.preventDefault();go(centered()-1)}if(e.key==='Enter'){e.preventDefault();open(cards[centered()])}});
   back.addEventListener('click',onBack);
+  back.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();onBack();}});
   window.addEventListener('popstate',()=>{if(historyStateActive){historyStateActive=false;closeToHome(true)}});
   document.addEventListener('click',event=>{
    const close=event.target?.closest?.('#closeActivitiesPlaceholder,#returnFromActivities,#closeConcejalModuleBtn');
