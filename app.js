@@ -1208,6 +1208,19 @@ function cerrarCapaAccesoPMU() {
 }
 
 function activarPMUAutenticado() {
+    // En móviles, una sesión recordada de Neon nunca debe abrir el PMU por sí sola.
+    // El acceso móvil solo se habilita después de que el usuario pulse "Ingresar".
+    const mobileViewport = window.matchMedia('(max-width: 600px)').matches;
+    if (mobileViewport && window.MIRA_MOBILE_LOGIN_REQUESTED !== true) {
+        document.body.classList.remove('pmu-neomorphic');
+        const appContainer = document.getElementById('app-container');
+        const landing = document.getElementById('landing-hero-overlay');
+        const controls = document.getElementById('landingHeaderControls');
+        if (appContainer) appContainer.style.display = 'none';
+        if (landing) landing.style.display = 'flex';
+        if (controls) controls.style.display = 'flex';
+        return;
+    }
     // Retirar primero el backdrop del login: no debe cubrir ni desenfocar el PMU.
     cerrarCapaAccesoPMU();
     // Transición visual del portal al PMU tras validar la sesión de Neon Auth.
