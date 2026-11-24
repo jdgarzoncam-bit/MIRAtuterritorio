@@ -70,3 +70,12 @@ test("all participant registration paths collect both InfoMIRA values", () => {
   assert.match(sql, /v_tiene_app_infomira/);
   assert.match(sql, /tiene_app_infomira/);
 });
+
+
+test("restored mobile sessions do not bypass the public landing before an explicit login tap", () => {
+  const mobile = read("mobile-operations.js");
+  assert.match(mobile, /mobileLoginRequested=false/);
+  assert.match(mobile, /landingLoginBtn/);
+  assert.match(mobile, /if\(mobile\(\)&&!mobileLoginRequested\)\{restorePublicLanding\(\);return;\}/);
+  assert.match(mobile, /app\.style\.display='none'/);
+});
