@@ -558,7 +558,15 @@ function canManageActivities(action){
   return activityPermissions.has(action);
 }
 async function loadActivitiesFromNeon(){
-  if(activitiesLoading)return;
+  // Si otra inicialización ya está consultando Neon, esperar su resultado y no
+  // devolver al módulo un estado transitoriamente vacío.
+  if(activitiesLoading){
+    await new Promise(resolve=>{
+      const waitForCurrentLoad=()=>activitiesLoading?window.setTimeout(waitForCurrentLoad,40):resolve();
+      waitForCurrentLoad();
+    });
+    return;
+  }
   activitiesLoading=true;
   try{
     if(!window.MIRA_DATA)throw new Error('El cliente de Neon todavía no está disponible.');
