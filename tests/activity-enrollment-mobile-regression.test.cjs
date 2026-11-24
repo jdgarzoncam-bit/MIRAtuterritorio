@@ -31,7 +31,9 @@ test("el estado de inscripción se consulta antes de recuperar la ficha y bloque
   assert.match(portal, /currentPersonAlreadyRegistered/);
   assert.match(portal, /Esta persona YA ESTÁ INSCRITA/);
   assert.match(portal, /currentPersonAlreadyRegistered \|\| !personLookupCompleted/);
-  assert.match(data, /rpc\/public_check_activity_participant/);
+  assert.match(data, /p_cedula:"__MIRA_ACTIVITY_CHECK__"/);
+  assert.match(data, /rpc\/public_register_activity_participant/);
+  assert.doesNotMatch(portal, /lookupPublicPerson\(cedula, accessToken\)/);
 });
 
 test("el retorno a módulos restaura el panel después de volver desde el portal", () => {
@@ -39,6 +41,11 @@ test("el retorno a módulos restaura el panel después de volver desde el portal
   const html = read("actividad.html");
   assert.match(html, /index\.html\?openModules=1/);
   assert.match(quick, /get\("openModules"\) === "1"/);
+  assert.match(quick, /addEventListener\("pageshow", restoreModulesFromNavigation\)/);
+  assert.match(quick, /history\.replaceState\(\{miraReturnToModules:true\}/);
+  assert.match(quick, /menu\.classList\.add\("hidden"\)/);
+  assert.doesNotMatch(quick, /label\.textContent = open \? "Inicio"/);
+  assert.doesNotMatch(quick, /lockAuthorization\("La sesión se cerró/);
   assert.match(quick, /panel\.classList\.remove\("hidden"\)/);
 });
 
@@ -48,4 +55,24 @@ test("la navegación móvil usa flecha y las transiciones evitan clip-path anima
   assert.match(mobile, /aria-hidden="true">←/);
   assert.match(css, /clip-path: none !important/);
   assert.match(css, /transition: opacity \.16s ease-out, transform \.18s/);
+});
+
+test("el selector de barrios no despliega todo el listado al enfocar", () => {
+  const app = read("app.js");
+  assert.match(app, /Escribe el nombre de un barrio o sector para buscarlo/);
+  assert.match(app, /slice\(0,30\)/);
+});
+
+test("la restauración anónima de Neon no cancela el intento de login móvil", () => {
+  const mobile = read("mobile-operations.js");
+  const auth = read("mira-auth.js");
+  assert.match(mobile, /admin-login-active.*MIRA_CURRENT_USER/);
+  assert.match(auth, /interfaceReady/);
+  assert.match(auth, /if\(interfaceReady\)/);
+});
+
+test("el menú rápido solo se muestra en la portada pública", () => {
+  const app = read("app.js");
+  assert.match(app, /pmuVisible/);
+  assert.match(app, /!landingVisible \|\| pmuVisible \|\| Boolean\(user\)/);
 });
