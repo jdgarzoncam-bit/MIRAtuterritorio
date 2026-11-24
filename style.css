@@ -8388,3 +8388,5 @@ input,select,textarea,button { max-width:100%; }
   #app-container.mobile-operations-map-panel-active #map{height:25dvh!important;min-height:150px!important}
   #app-container.mobile-operations-map-panel-active #mainSidebar{bottom:25dvh!important}
 }
+
+@media(max-width:600px){#miraQuickModules.is-mobile-open .mira-quick-panel.hidden{display:none!important}}
