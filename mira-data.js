@@ -123,7 +123,8 @@ export const MIRA_DATA = {
     const safeLimit=Math.min(Math.max(Number(limit)||100,1),100);
     const safeOffset=Math.max(0,Number(offset)||0);
     const term=String(search||cedula||"").trim();
-    const documentDigits=cleanCedula(cedula||search);
+    const isDocumentSearch=Boolean(cedula)||/^\s*[\d.\-\s]+$/.test(term);
+    const documentDigits=isDocumentSearch?cleanCedula(cedula||term):"";
     if((cedula||/^\s*[\d.\-\s]+\s*$/.test(term))&&!documentDigits){
       throw new Error("La cédula debe contener al menos un dígito.");
     }
@@ -156,7 +157,7 @@ export const MIRA_DATA = {
       if(documentDigits)directFilter="(cedula_original.eq."+documentDigits+")";
       else{
         const tokens=safeTerm.split(" ").filter(Boolean);
-        directFilter="and("+tokens.map(token=>"or(cuidador_nombre.ilike.*"+token+"*,nombre_original.ilike.*"+token+"*)").join(",")+")";
+        directFilter="("+tokens.map(token=>"or(cuidador_nombre.ilike.*"+token+"*,nombre_original.ilike.*"+token+"*)").join(",")+")";
       }
       const directParams={select:redSelect,order:"fila_origen.asc,id.asc",limit:"1000"};
       if(documentDigits)directParams.or=directFilter;
