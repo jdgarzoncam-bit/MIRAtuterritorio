@@ -1,4 +1,4 @@
-import { MIRA_DATA } from "./mira-data.js?v=20261124-activity-hotfix-3";
+import { MIRA_DATA } from "./mira-data.js?v=20261124-single-pin-5";
 
 const TOKEN_KEY = "miraParticipantAccessToken";
 const TOKEN_EXPIRY_KEY = "miraParticipantAccessTokenExpiresAt";
