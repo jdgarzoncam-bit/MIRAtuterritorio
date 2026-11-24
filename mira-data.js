@@ -101,11 +101,13 @@ export const MIRA_DATA = {
     if(!dataset) throw new Error("Conjunto de datos no autorizado para el explorador.");
     const safeLimit=Math.min(Math.max(Number(limit)||25,1),100);
     const params={select:dataset.select,order:"created_at.desc,id.asc",limit:String(safeLimit),offset:String(Math.max(0,Number(offset)||0))};
-    const term=String(search||"").trim().replace(/[,*()]/g," ").slice(0,80);
-    if(term){
-      const clauses=dataset.search.map(column=>column+".ilike.*"+term+"*");
-      if(dataset.key==="personas"){const digits=cleanCedula(search);if(digits)clauses.push("cedula_normalizada.eq."+digits);}
-      params.or="("+clauses.join(",")+")";
+    const term=String(search||"").trim().replace(/[,*()\\"]/g," ").replace(/\\s+/g," ").slice(0,80);
+    const tokens=term.split(" ").filter(Boolean);
+    const documentDigits=dataset.key==="personas"?cleanCedula(search):"";
+    if(documentDigits.length>=5 && !/[a-zA-Z]/.test(term)){
+      params.or="(cedula_normalizada.eq."+documentDigits+",cedula.eq."+documentDigits+")";
+    }else if(tokens.length){
+      params.and="("+tokens.map(token=>"or("+dataset.search.map(column=>column+".ilike.*"+token+"*").join(",")+")").join(",")+")";
     }
     if(dataset.key==="personas"&&personStatus!=="all") params.inactivo="eq."+(personStatus==="inactive"?"true":"false");
     if(filterField&&filterValue!==undefined&&String(filterValue).trim()){
@@ -136,15 +138,15 @@ export const MIRA_DATA = {
         limit:"100"
       })});
     } else if (term) {
-      const safeTerm=term.replace(/[,*()\\"]/g," ").replace(/\s+/g," ").trim().slice(0,80);
-      if (!safeTerm) return [];
-      const clauses=[`nombres.ilike.*${safeTerm}*`,`apellidos.ilike.*${safeTerm}*`];
-      if (documentDigits) clauses.push("cedula_normalizada.eq."+documentDigits);
-      people=await miraRequest("personas",{query:qs({
+      const safeTerm=term.replace(/[,*()\\"]/g," ").replace(/\\s+/g," ").trim().slice(0,80);
+      const tokens=safeTerm.split(" ").filter(Boolean);
+      if (!tokens.length) return [];
+      const params={
         select:"id,cedula,cedula_normalizada,nombres,apellidos,telefono,correo,info_mira,puesto_votacion,mesa_votacion,edad,tipo_participacion,activo,inactivo",
-        or:"("+clauses.join(",")+")",
+        and:"("+tokens.map(token=>"or(nombres.ilike.*"+token+"*,apellidos.ilike.*"+token+"*)").join(",")+")",
         limit:"100"
-      })});
+      };
+      people=await miraRequest("personas",{query:qs(params)});
     } else {
       return [];
     }
@@ -177,8 +179,13 @@ export const MIRA_DATA = {
     if (tipoParticipacion) params.tipo_participacion = `eq.${tipoParticipacion}`;
     if (cedula) params.cedula_normalizada = `eq.${cleanCedula(cedula)}`;
     else if (search.trim()) {
-      const term = search.trim().replace(/[,*()]/g," ");
-      params.or = `(nombres.ilike.*${term}*,apellidos.ilike.*${term}*)`;
+      const term=String(search).trim().replace(/[,*()\\"]/g," ").replace(/\\s+/g," ").slice(0,80);
+      const digits=cleanCedula(term);
+      if(digits.length>=5 && !/[a-zA-Z]/.test(term)) params.or="(cedula_normalizada.eq."+digits+",cedula.eq."+digits+")";
+      else {
+        const tokens=term.split(" ").filter(Boolean);
+        params.and="("+tokens.map(token=>"or(nombres.ilike.*"+token+"*,apellidos.ilike.*"+token+"*)").join(",")+")";
+      }
     }
     return miraRequest("personas",{query:qs(params)});
   },
