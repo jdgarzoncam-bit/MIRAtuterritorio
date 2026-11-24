@@ -61,5 +61,7 @@ test("el token de autorización central sigue siendo válido entre identidades N
   assert.match(migration, /credencial bearer/);
   assert.match(migration, /s\.token = p_access_token AND s\.expires_at > now\(\)/);
   assert.doesNotMatch(migration, /s\.actor_uid = v_actor/);
+  assert.equal((migration.match(/v_attendance_id mira\.asistencias\.id%TYPE/g) || []).length, 2);
+  assert.doesNotMatch(migration, /v_attendance record|v_attendance\.estado|v_attendance\.id/);
   assert.match(migration, /expires_at>now\(\)/);
 });
