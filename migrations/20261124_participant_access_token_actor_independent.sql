@@ -15,7 +15,7 @@ DECLARE
   v_config mira.participant_access_pin_config%ROWTYPE;
   v_attempts integer; v_locked_until timestamptz; v_token uuid;
   v_payload jsonb; v_cedula text; v_persona_id uuid; v_telefono text;
-  v_info_mira boolean; v_tiene_app_infomira boolean; v_tipo_participacion text; v_access_token uuid; v_person jsonb; v_activity_id uuid; v_attendance record; v_already_registered boolean := false;
+  v_info_mira boolean; v_tiene_app_infomira boolean; v_tipo_participacion text; v_access_token uuid; v_person jsonb; v_activity_id uuid; v_attendance_id mira.asistencias.id%TYPE; v_attendance_status mira.asistencias.estado%TYPE; v_registered_at mira.asistencias.fecha_registro%TYPE; v_already_registered boolean := false;
 BEGIN
   IF p_cedula='__MIRA_PIN_VERIFY__' THEN
     SELECT * INTO v_config FROM mira.participant_access_pin_config WHERE id=1 AND enabled=true;
@@ -58,15 +58,15 @@ BEGIN
     INTO v_persona_id,v_person FROM mira.personas p
     WHERE p.cedula_normalizada=v_cedula LIMIT 1;
     IF v_persona_id IS NOT NULL THEN
-      SELECT a.id,a.estado,a.fecha_registro INTO v_attendance
+      SELECT a.id,a.estado,a.fecha_registro INTO v_attendance_id,v_attendance_status,v_registered_at
       FROM mira.asistencias a
       WHERE a.persona_id=v_persona_id AND a.actividad_id=v_activity_id
       LIMIT 1;
       v_already_registered:=FOUND;
     END IF;
     RETURN jsonb_build_object('status','ok','person_found',v_persona_id IS NOT NULL,'person',v_person,
-      'already_registered',v_already_registered,'attendance_status',v_attendance.estado,
-      'attendance_id',v_attendance.id,'registered_at',v_attendance.fecha_registro);
+      'already_registered',v_already_registered,'attendance_status',v_attendance_status,
+      'attendance_id',v_attendance_id,'registered_at',v_registered_at);
   END IF;
 
   IF p_cedula='__MIRA_PIN_LOOKUP__' THEN
@@ -131,7 +131,9 @@ AS $function$
 DECLARE
   v_cedula text;
   v_persona_id uuid;
-  v_attendance record;
+  v_attendance_id mira.asistencias.id%TYPE;
+  v_attendance_status mira.asistencias.estado%TYPE;
+  v_registered_at mira.asistencias.fecha_registro%TYPE;
   v_already_registered boolean := false;
 BEGIN
   IF p_access_token IS NULL OR NOT EXISTS (
@@ -153,12 +155,12 @@ BEGIN
     RETURN jsonb_build_object('status','ok','person_found',false,'already_registered',false,
       'attendance_status',null,'attendance_id',null,'registered_at',null);
   END IF;
-  SELECT a.id, a.estado, a.fecha_registro INTO v_attendance
+  SELECT a.id, a.estado, a.fecha_registro INTO v_attendance_id,v_attendance_status,v_registered_at
   FROM mira.asistencias a
   WHERE a.persona_id = v_persona_id AND a.actividad_id = p_actividad_id LIMIT 1;
   v_already_registered := FOUND;
   RETURN jsonb_build_object('status','ok','person_found',true,'already_registered',v_already_registered,
-    'attendance_status',v_attendance.estado,'attendance_id',v_attendance.id,'registered_at',v_attendance.fecha_registro);
+    'attendance_status',v_attendance_status,'attendance_id',v_attendance_id,'registered_at',v_registered_at);
 END;
 $function$;
 
