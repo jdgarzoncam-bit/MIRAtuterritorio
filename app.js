@@ -1642,29 +1642,12 @@ document.getElementById('sidebarToggleBtn').addEventListener('click', function()
             return;
         }
 
-        if (reducedMotion) {
-            details.open = false;
-            summary.setAttribute('aria-expanded', 'false');
-            return;
-        }
-        if (details.dataset.miraClosing === 'true') return;
-        details.dataset.miraClosing = 'true';
-        content.style.setProperty('max-height', content.scrollHeight + 'px', 'important');
-        void content.offsetHeight;
-        requestAnimationFrame(() => content.style.setProperty('max-height', '0px', 'important'));
-        const finish = () => {
-            if (details.dataset.miraClosing !== 'true') return;
-            details.open = false;
-            delete details.dataset.miraClosing;
-            content.style.removeProperty('max-height');
-            summary.setAttribute('aria-expanded', 'false');
-        };
-        content.addEventListener('transitionend', function onEnd(e) {
-            if (e.target !== content || e.propertyName !== 'max-height') return;
-            content.removeEventListener('transitionend', onEnd);
-            finish();
-        });
-        window.setTimeout(finish, 560);
+        // Cierre sin animar max-height: evita lecturas/escrituras de layout
+        // y el reflow forzado que producía jank en Safari móvil.
+        details.open = false;
+        delete details.dataset.miraClosing;
+        content.style.removeProperty('max-height');
+        summary.setAttribute('aria-expanded', 'false');
     });
 
     // Si se contrae con un módulo abierto, se convierte en panel lateral flotante.
