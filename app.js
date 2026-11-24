@@ -597,7 +597,7 @@ async function loadActivitiesFromNeon(){
     activitiesLoadWarning=warnings.join(' · ');
     activitiesState.people=peopleRows.map(p=>{
       const parsed=splitLegacyPersonName(p.nombres,p.apellidos);
-      return {id:p.id,cedula:p.cedula||p.cedula_normalizada||'',names:parsed.names,surnames:parsed.surnames,phone:p.telefono||'',infoMira:p.info_mira===true?'si':p.info_mira===false?'no':'',type:p.tipo_participacion||''};
+      return {id:p.id,cedula:p.cedula||p.cedula_normalizada||'',names:parsed.names,surnames:parsed.surnames,phone:p.telefono||'',infoMira:p.info_mira===true?'si':p.info_mira===false?'no':'',hasApp:p.tiene_app_infomira===true?'si':p.tiene_app_infomira===false?'no':'',type:p.tipo_participacion||''};
     });
     activitiesState.activities=activityRows.map(a=>({
       id:a.id,name:a.nombre,date:a.fecha,place:a.lugar||'',
@@ -760,13 +760,13 @@ function initDatabaseExplorer(){
  }
  function renderIncorporate(){
   if(!allowed("personas","create"))throw new Error("No tienes permiso para incorporar personas en el módulo Personas.");
-  const fields=[["cedula","Cédula","text",true],["nombres","Nombres","text",true],["apellidos","Apellidos","text",true],["telefono","Teléfono","tel",false],["correo","Correo electrónico","email",false],["barrio","Barrio","text",false],["puesto_votacion","Puesto de votación","text",false],["mesa_votacion","Mesa","text",false],["edad","Edad","number",false],["tipo_participacion","Tipo de participación","text",false],["info_mira","InfoMIRA","boolean",false],["observaciones","Observaciones","text",false]];
-  content.innerHTML='<form id="databasePersonForm"><div class="activity-form-grid">'+fields.map(([key,label,type,required])=>'<label>'+label+(type==='boolean'?'<select name="'+key+'"><option value="">Sin especificar</option><option value="true">Sí</option><option value="false">No</option></select>':'<input name="'+key+'" type="'+type+'" '+(required?'required':'')+'>')+'</label>').join('')+'</div><div class="activity-actions"><button class="login-btn" type="submit">Guardar persona</button><button class="activity-secondary-btn" type="reset">Limpiar</button></div><p id="databasePersonNotice" class="activity-local-warning" role="status"></p></form>';
+  const fields=[["cedula","Cédula","text",true],["nombres","Nombres","text",true],["apellidos","Apellidos","text",true],["telefono","Teléfono","tel",false],["correo","Correo electrónico","email",false],["barrio","Barrio","text",false],["puesto_votacion","Puesto de votación","text",false],["mesa_votacion","Mesa","text",false],["edad","Edad","number",false],["tipo_participacion","Tipo de participación","text",false],["info_mira","Inscrito a InfoMIRA","boolean",true],["tiene_app_infomira","Tiene la App InfoMIRA","boolean",true],["observaciones","Observaciones","text",false]];
+  content.innerHTML='<form id="databasePersonForm"><div class="activity-form-grid">'+fields.map(([key,label,type,required])=>'<label>'+label+(type==='boolean'?'<select name="'+key+'" '+(required?'required':'')+'><option value="">Sin especificar</option><option value="true">Sí</option><option value="false">No</option></select>':'<input name="'+key+'" type="'+type+'" '+(required?'required':'')+'>')+'</label>').join('')+'</div><div class="activity-actions"><button class="login-btn" type="submit">Guardar persona</button><button class="activity-secondary-btn" type="reset">Limpiar</button></div><p id="databasePersonNotice" class="activity-local-warning" role="status"></p></form>';
   document.getElementById("databasePersonForm").addEventListener("submit",async event=>{
    event.preventDefault();const form=event.currentTarget,button=form.querySelector('[type="submit"]'),payload=Object.fromEntries(new FormData(form).entries());
    ["edad"].forEach(k=>{if(payload[k]==="")delete payload[k];else payload[k]=Number(payload[k]);});
-   ["info_mira"].forEach(k=>{if(payload[k]==="")delete payload[k];else payload[k]=payload[k]==="true";});
-   ["telefono","correo","barrio","puesto_votacion","mesa_votacion","tipo_participacion","info_mira","observaciones"].forEach(k=>{if(!payload[k])delete payload[k];});
+   ["info_mira","tiene_app_infomira"].forEach(k=>{if(payload[k]==="")delete payload[k];else payload[k]=payload[k]==="true";});
+   ["telefono","correo","barrio","puesto_votacion","mesa_votacion","tipo_participacion","info_mira","tiene_app_infomira","observaciones"].forEach(k=>{if(!payload[k])delete payload[k];});
    button.disabled=true;
    try{await window.MIRA_DATA.createPerson({...payload,activo:true,datos_pendientes:false,fuente_registro:"base_datos_general"});form.reset();document.getElementById("databasePersonNotice").textContent="Persona incorporada correctamente."; }
    catch(error){document.getElementById("databasePersonNotice").textContent=error.message||"No fue posible guardar la persona.";}
@@ -797,10 +797,12 @@ function initDatabaseExplorer(){
 function editPending(person){
   if(!allowed("personas","edit")){alert("No tienes permiso para editar fichas de Personas.");return;}
   const editor=document.getElementById("databasePendingEditor");
-  const fields=["cedula","nombres","apellidos","telefono","correo","barrio","puesto_votacion","mesa_votacion","edad","tipo_participacion","observaciones"];
-  editor.innerHTML='<form id="databasePendingForm" class="activity-panel"><h3>Completar ficha: '+esc(person.nombres+" "+person.apellidos)+'</h3><div class="activity-form-grid">'+fields.map(k=>'<label>'+k.replaceAll("_"," ")+'<input name="'+k+'" value="'+esc(person[k]??"")+'"></label>').join("")+'</div><div class="activity-actions"><button class="login-btn" type="submit">Guardar cambios</button></div><p id="databasePendingNotice" class="activity-local-warning"></p></form>';
+  const fields=["cedula","nombres","apellidos","telefono","correo","barrio","puesto_votacion","mesa_votacion","edad","tipo_participacion","info_mira","tiene_app_infomira","observaciones"];
+  const booleanFields=new Set(["info_mira","tiene_app_infomira"]);
+  const fieldLabel={info_mira:"Inscrito a InfoMIRA",tiene_app_infomira:"Tiene la App InfoMIRA"};
+  editor.innerHTML='<form id="databasePendingForm" class="activity-panel"><h3>Completar ficha: '+esc(person.nombres+" "+person.apellidos)+'</h3><div class="activity-form-grid">'+fields.map(k=>'<label>'+(fieldLabel[k]||k.replaceAll("_"," "))+(booleanFields.has(k)?'<select name="'+k+'"><option value="">Sin especificar</option><option value="true" '+(person[k]===true?'selected':'')+'>Sí</option><option value="false" '+(person[k]===false?'selected':'')+'>No</option></select>':'<input name="'+k+'" value="'+esc(person[k]??"")+'">')+'</label>').join("")+'</div><div class="activity-actions"><button class="login-btn" type="submit">Guardar cambios</button></div><p id="databasePendingNotice" class="activity-local-warning"></p></form>';
   editor.scrollIntoView({behavior:"smooth",block:"start"});
-  editor.querySelector("form").addEventListener("submit",async event=>{event.preventDefault();const payload=Object.fromEntries(new FormData(event.currentTarget).entries());if(payload.edad==="")delete payload.edad;else payload.edad=Number(payload.edad);try{const stillPending=!String(payload.telefono||"").trim()||!String(payload.barrio||"").trim();await window.MIRA_DATA.updatePerson(person.id,{...payload,datos_pendientes:stillPending});document.getElementById("databasePendingNotice").textContent=stillPending?"Ficha guardada. Sigue pendiente porque falta teléfono o barrio.":"Ficha guardada y completa según los campos de seguimiento.";await renderPending();}catch(error){document.getElementById("databasePendingNotice").textContent=error.message||"No fue posible actualizar la ficha.";}} ,{once:true});
+  editor.querySelector("form").addEventListener("submit",async event=>{event.preventDefault();const payload=Object.fromEntries(new FormData(event.currentTarget).entries());if(payload.edad==="")delete payload.edad;else payload.edad=Number(payload.edad);["info_mira","tiene_app_infomira"].forEach(k=>{if(payload[k]==="")delete payload[k];else payload[k]=payload[k]==="true";});try{const stillPending=!String(payload.telefono||"").trim()||!String(payload.barrio||"").trim();await window.MIRA_DATA.updatePerson(person.id,{...payload,datos_pendientes:stillPending});document.getElementById("databasePendingNotice").textContent=stillPending?"Ficha guardada. Sigue pendiente porque falta teléfono o barrio.":"Ficha guardada y completa según los campos de seguimiento.";await renderPending();}catch(error){document.getElementById("databasePendingNotice").textContent=error.message||"No fue posible actualizar la ficha.";}} ,{once:true});
  }
  async function renderHistory(){
   if(!allowed("base_datos_general","view"))throw new Error("No tienes permiso para consultar el historial de Base de datos general.");
@@ -1006,7 +1008,7 @@ document.getElementById('saveActivityBtn').addEventListener('click',async()=>{
   }catch(error){console.error(error);alert('No fue posible guardar la actividad en Neon: '+(error.message||'Error desconocido'));}
   finally{button.disabled=false;}
 });
-function clearParticipantForm(){editingParticipantId=null;editingPersonId=null;['participantCedula','participantNames','participantSurnames','participantPhone'].forEach(id=>document.getElementById(id).value='');document.getElementById('participantInfoMira').value='';document.getElementById('participantType').value='';document.getElementById('duplicateNotice').classList.add('hidden');document.getElementById('saveParticipantBtn').textContent='Guardar asistencia';const title=document.getElementById('participantFormTitle');if(title)title.textContent='Registrar participante';}
+function clearParticipantForm(){editingParticipantId=null;editingPersonId=null;['participantCedula','participantNames','participantSurnames','participantPhone'].forEach(id=>document.getElementById(id).value='');document.getElementById('participantInfoMira').value='';document.getElementById('participantHasAppInfoMira').value='';document.getElementById('participantType').value='';document.getElementById('duplicateNotice').classList.add('hidden');document.getElementById('saveParticipantBtn').textContent='Guardar asistencia';const title=document.getElementById('participantFormTitle');if(title)title.textContent='Registrar participante';}
 document.getElementById('clearParticipantBtn').addEventListener('click',clearParticipantForm);
 async function lookupPerson(){
   const ced=normalizeCedula(document.getElementById('participantCedula').value);
@@ -1018,12 +1020,13 @@ async function lookupPerson(){
     const found=rows?.[0];
     if(found){
       const parsed=splitLegacyPersonName(found.nombres,found.apellidos);
-      const person={id:found.id,cedula:found.cedula||found.cedula_normalizada||'',names:parsed.names,surnames:parsed.surnames,phone:found.telefono||'',infoMira:found.info_mira===true?'si':found.info_mira===false?'no':'',type:found.tipo_participacion||''};
+      const person={id:found.id,cedula:found.cedula||found.cedula_normalizada||'',names:parsed.names,surnames:parsed.surnames,phone:found.telefono||'',infoMira:found.info_mira===true?'si':found.info_mira===false?'no':'',hasApp:found.tiene_app_infomira===true?'si':found.tiene_app_infomira===false?'no':'',type:found.tipo_participacion||''};
       const i=activitiesState.people.findIndex(p=>p.id===person.id);if(i>=0)activitiesState.people[i]=person;else activitiesState.people.push(person);
       document.getElementById('participantNames').value=person.names;
       document.getElementById('participantSurnames').value=person.surnames;
       document.getElementById('participantPhone').value=person.phone;
       document.getElementById('participantInfoMira').value=person.infoMira;
+      document.getElementById('participantHasAppInfoMira').value=person.hasApp;
       document.getElementById('participantType').value=found.tipo_participacion||'';
       notice.textContent='Ficha encontrada en Neon. Se cargaron los datos existentes.';
     }else notice.textContent='No se encontró esa cédula en Neon. Completa los datos para crear una ficha nueva.';
@@ -1045,15 +1048,16 @@ document.getElementById('saveParticipantBtn').addEventListener('click',async()=>
   const names=document.getElementById('participantNames').value.trim();
   const surnames=document.getElementById('participantSurnames').value.trim();
   const info=document.getElementById('participantInfoMira').value;
+  const hasApp=document.getElementById('participantHasAppInfoMira').value;
   const participantType=document.getElementById('participantType').value;
-  if(!ced||!names||!surnames||!info||!participantType){alert('Completa cédula, nombres, apellidos, InfoMIRA y tipo de participante.');return;}
+  if(!ced||!names||!surnames||!info||!hasApp||!participantType){alert('Completa cédula, nombres, apellidos, inscripción a InfoMIRA, disponibilidad de la App InfoMIRA y tipo de participante.');return;}
   const button=document.getElementById('saveParticipantBtn');button.disabled=true;
   try{
     const found=editingPersonId?[]:await window.MIRA_DATA.listPeople({cedula:ced,limit:1});
     let personRow=editingPersonId?activitiesState.people.find(p=>p.id===editingPersonId)||null:found?.[0]||null;
     const sameName=activitiesState.people.find(p=>normActivityText(p.names+' '+p.surnames)===normActivityText(names+' '+surnames)&&normalizeCedula(p.cedula)!==ced&&p.id!==editingPersonId);
     if(!personRow&&sameName&&!confirm('Existe una ficha con el mismo nombre y otra cédula. ¿Confirmas que es otra persona?'))return;
-    const payload={cedula:ced,nombres:names,apellidos:surnames,telefono:document.getElementById('participantPhone').value.trim()||null,info_mira:info==='si',tipo_participacion:participantType,actualizado_por:window.MIRA_CURRENT_USER?.email||null};
+    const payload={cedula:ced,nombres:names,apellidos:surnames,telefono:document.getElementById('participantPhone').value.trim()||null,info_mira:info==='si',tiene_app_infomira:hasApp==='si',tipo_participacion:participantType,actualizado_por:window.MIRA_CURRENT_USER?.email||null};
     if(personRow){
       const updated=await window.MIRA_DATA.updatePerson(personRow.id,payload);
       personRow=updated?.[0]||{...personRow,...payload,cedula};
@@ -1080,7 +1084,7 @@ document.getElementById('saveParticipantBtn').addEventListener('click',async()=>
 document.getElementById('activitySearch').addEventListener('input',renderActivityTable);
 document.getElementById('activitiesArchiveSearch')?.addEventListener('input',renderActivities);
 function activityRows(activityId=null,query=''){return activitiesState.attendances.slice().sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0)).map(a=>({a,p:activitiesState.people.find(p=>p.id===a.personId)||{},act:activitiesState.activities.find(x=>x.id===a.activityId)||{}})).filter(x=>(!activityId||x.a.activityId===activityId)&&(!query||normActivityText([x.p.names,x.p.surnames,x.p.cedula,x.act.name].join(' ')).includes(query)));}
-function editAttendance(id){if(!canManageActivities("edit")){alert("No tienes permiso para editar asistencias.");return;}returnToRecentAfterEdit=true;const a=activitiesState.attendances.find(x=>x.id===id),p=a&&activitiesState.people.find(x=>x.id===a.personId);if(!a||!p)return;editingParticipantId=a.id;editingPersonId=p.id;document.getElementById('participantCedula').value=p.cedula;document.getElementById('participantNames').value=p.names;document.getElementById('participantSurnames').value=p.surnames;document.getElementById('participantPhone').value=p.phone||'';document.getElementById('participantInfoMira').value=p.infoMira||'';document.getElementById('participantType').value=p.type||'';document.getElementById('participantActivity').value=a.activityId;document.getElementById('saveParticipantBtn').textContent='Guardar cambios';const title=document.getElementById('participantFormTitle');if(title)title.textContent='Editar participante';const notice=document.getElementById('duplicateNotice');notice.textContent='Estás editando una asistencia existente. Los cambios se actualizarán en Neon.';notice.classList.remove('hidden');showActivityView('registration');document.getElementById('participantWorkspace').scrollIntoView({behavior:'smooth',block:'start'});}
+function editAttendance(id){if(!canManageActivities("edit")){alert("No tienes permiso para editar asistencias.");return;}returnToRecentAfterEdit=true;const a=activitiesState.attendances.find(x=>x.id===id),p=a&&activitiesState.people.find(x=>x.id===a.personId);if(!a||!p)return;editingParticipantId=a.id;editingPersonId=p.id;document.getElementById('participantCedula').value=p.cedula;document.getElementById('participantNames').value=p.names;document.getElementById('participantSurnames').value=p.surnames;document.getElementById('participantPhone').value=p.phone||'';document.getElementById('participantInfoMira').value=p.infoMira||'';document.getElementById('participantHasAppInfoMira').value=p.hasApp||'';document.getElementById('participantType').value=p.type||'';document.getElementById('participantActivity').value=a.activityId;document.getElementById('saveParticipantBtn').textContent='Guardar cambios';const title=document.getElementById('participantFormTitle');if(title)title.textContent='Editar participante';const notice=document.getElementById('duplicateNotice');notice.textContent='Estás editando una asistencia existente. Los cambios se actualizarán en Neon.';notice.classList.remove('hidden');showActivityView('registration');document.getElementById('participantWorkspace').scrollIntoView({behavior:'smooth',block:'start'});}
 async function deleteActivityAttendance(id){
  if(!canManageActivities('annul')){alert("No tienes permiso para eliminar registros de asistencia.");return;}
  if(!window.confirm("¿Eliminar definitivamente este registro de asistencia? Esta acción no se puede deshacer."))return;
@@ -1100,12 +1104,12 @@ function renderActivityTable(){
  document.getElementById("liveActivityCount").textContent="Mostrando "+rows.length+" de "+activitiesState.attendances.length+" registros";
  body.innerHTML=rows.length?rows.map(({a,p,act})=>{
   const actions=[canEdit?'<button class="activity-row-btn" data-edit="'+escapeActivityHtml(a.id)+'" type="button">Editar</button>':"",canDelete?'<button class="activity-row-btn activity-manage-delete" data-delete-attendance="'+escapeActivityHtml(a.id)+'" type="button">Eliminar</button>':""].filter(Boolean).join(" ");
-  return '<tr><td>'+escapeActivityHtml((p.names||"")+" "+(p.surnames||""))+'</td><td>'+escapeActivityHtml(p.cedula||"")+'</td><td>'+escapeActivityHtml(act.name||"—")+'</td><td>'+(p.infoMira==="si"?"Sí":"No")+'</td><td>'+(p.type==="externo"?"Externo":p.type==="interno"?"Interno":"—")+'</td><td>'+(a.createdAt?new Date(a.createdAt).toLocaleString("es-CO"):"")+'</td><td>'+(actions||"—")+'</td></tr>';
- }).join(""):'<tr><td colspan="7">No hay registros recientes para mostrar.</td></tr>';
+  return '<tr><td>'+escapeActivityHtml((p.names||"")+" "+(p.surnames||""))+'</td><td>'+escapeActivityHtml(p.cedula||"")+'</td><td>'+escapeActivityHtml(act.name||"—")+'</td><td>'+(p.infoMira==="si"?"Sí":"No")+'</td><td>'+(p.hasApp==="si"?"Sí":p.hasApp==="no"?"No":"—")+'</td><td>'+(p.type==="externo"?"Externo":p.type==="interno"?"Interno":"—")+'</td><td>'+(a.createdAt?new Date(a.createdAt).toLocaleString("es-CO"):"")+'</td><td>'+(actions||"—")+'</td></tr>';
+ }).join(""):'<tr><td colspan="8">No hay registros recientes para mostrar.</td></tr>';
  body.querySelectorAll("[data-edit]").forEach(b=>b.addEventListener("click",()=>editAttendance(b.dataset.edit)));
  body.querySelectorAll("[data-delete-attendance]").forEach(b=>b.addEventListener("click",()=>deleteActivityAttendance(b.dataset.deleteAttendance)));
 }
-function exportActivityExcel(activityId){if(!canManageActivities("view")||!canManageActivities("export")){alert('No tienes autorización para exportar registros. Solicita el permiso Exportar Excel al administrador.');return;}if(!window.XLSX){alert('No se pudo cargar la herramienta de Excel.');return;}const rows=activityRows(activityId).map(({a,p,act})=>({'Actividad':act.name||'','Fecha actividad':act.date||'','Lugar':act.place||'','Cédula':p.cedula||'','Nombres':p.names||'','Apellidos':p.surnames||'','Teléfono':p.phone||'','InfoMIRA':p.infoMira==='si'?'Sí':'No','Fecha registro':a.createdAt||''}));const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),'Registros');const act=activitiesState.activities.find(a=>a.id===activityId);XLSX.writeFile(wb,(act?act.name:'Mira_Tu_Territorio').replace(/[^a-z0-9_-]/gi,'_')+'.xlsx');}
+function exportActivityExcel(activityId){if(!canManageActivities("view")||!canManageActivities("export")){alert('No tienes autorización para exportar registros. Solicita el permiso Exportar Excel al administrador.');return;}if(!window.XLSX){alert('No se pudo cargar la herramienta de Excel.');return;}const rows=activityRows(activityId).map(({a,p,act})=>({'Actividad':act.name||'','Fecha actividad':act.date||'','Lugar':act.place||'','Cédula':p.cedula||'','Nombres':p.names||'','Apellidos':p.surnames||'','Teléfono':p.phone||'','Inscrito a InfoMIRA':p.infoMira==='si'?'Sí':'No','Tiene la App InfoMIRA':p.hasApp==='si'?'Sí':p.hasApp==='no'?'No':'','Fecha registro':a.createdAt||''}));const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),'Registros');const act=activitiesState.activities.find(a=>a.id===activityId);XLSX.writeFile(wb,(act?act.name:'Mira_Tu_Territorio').replace(/[^a-z0-9_-]/gi,'_')+'.xlsx');}
 document.getElementById('exportSingleActivityBtn').addEventListener('click',()=>exportActivityExcel(detailActivityId));
 document.getElementById('exportSingleActivityBtn').hidden=true;
 function openActivityFolder(id){
@@ -1117,8 +1121,8 @@ function openActivityFolder(id){
  const body=document.getElementById("activityDetailBody");
  body.innerHTML=rows.length?rows.map(({a,p})=>{
   const actions=[canEdit?'<button class="activity-row-btn" data-edit="'+escapeActivityHtml(a.id)+'" type="button">Editar</button>':"",canDelete?'<button class="activity-row-btn activity-manage-delete" data-delete-attendance="'+escapeActivityHtml(a.id)+'" type="button">Eliminar</button>':""].filter(Boolean).join(" ");
-  return '<tr><td>'+escapeActivityHtml((p.names||"")+" "+(p.surnames||""))+'</td><td>'+escapeActivityHtml(p.cedula||"")+'</td><td>'+escapeActivityHtml(p.phone||"—")+'</td><td>'+(p.infoMira==="si"?"Sí":"No")+'</td><td>'+(a.createdAt?new Date(a.createdAt).toLocaleString("es-CO"):"")+'</td><td>'+(actions||"—")+'</td></tr>';
- }).join(""):'<tr><td colspan="6">Esta actividad aún no tiene registros.</td></tr>';
+  return '<tr><td>'+escapeActivityHtml((p.names||"")+" "+(p.surnames||""))+'</td><td>'+escapeActivityHtml(p.cedula||"")+'</td><td>'+escapeActivityHtml(p.phone||"—")+'</td><td>'+(p.infoMira==="si"?"Sí":"No")+'</td><td>'+(p.hasApp==="si"?"Sí":p.hasApp==="no"?"No":"—")+'</td><td>'+(a.createdAt?new Date(a.createdAt).toLocaleString("es-CO"):"")+'</td><td>'+(actions||"—")+'</td></tr>';
+ }).join(""):'<tr><td colspan="7">Esta actividad aún no tiene registros.</td></tr>';
  body.querySelectorAll("[data-edit]").forEach(b=>b.addEventListener("click",()=>editAttendance(b.dataset.edit)));
  body.querySelectorAll("[data-delete-attendance]").forEach(b=>b.addEventListener("click",()=>deleteActivityAttendance(b.dataset.deleteAttendance)));
  showActivityView("detail");
@@ -1204,6 +1208,19 @@ function cerrarCapaAccesoPMU() {
 }
 
 function activarPMUAutenticado() {
+    // En móviles, una sesión recordada de Neon nunca debe abrir el PMU por sí sola.
+    // El acceso móvil solo se habilita después de que el usuario pulse "Ingresar".
+    const mobileViewport = window.matchMedia('(max-width: 600px)').matches;
+    if (mobileViewport && window.MIRA_MOBILE_LOGIN_REQUESTED !== true) {
+        document.body.classList.remove('pmu-neomorphic');
+        const appContainer = document.getElementById('app-container');
+        const landing = document.getElementById('landing-hero-overlay');
+        const controls = document.getElementById('landingHeaderControls');
+        if (appContainer) appContainer.style.display = 'none';
+        if (landing) landing.style.display = 'flex';
+        if (controls) controls.style.display = 'flex';
+        return;
+    }
     // Retirar primero el backdrop del login: no debe cubrir ni desenfocar el PMU.
     cerrarCapaAccesoPMU();
     // Transición visual del portal al PMU tras validar la sesión de Neon Auth.
@@ -3267,6 +3284,7 @@ function inicializarSistemaMapa() {
                 const estadoRed = row.estado_original || person?.tipo_participacion || 'Sin estado';
                 const cuidador = row.cuidador_nombre || 'Sin cuidador/líder asociado';
                 const infoMira = person?.info_mira === true ? 'Sí' : person?.info_mira === false ? 'No' : 'Sin configurar';
+                const tieneAppInfoMira = person?.tiene_app_infomira === true ? 'Sí' : person?.tiene_app_infomira === false ? 'No' : 'Sin configurar';
                 const activo = person?.activo === true ? 'Activo' : person?.activo === false ? 'Inactivo' : 'Sin configurar';
                 const puesto = person?.puesto_votacion || row.puesto_votacion || row.puesto_original;
                 const mesa = person?.mesa_votacion || row.mesa_votacion;
@@ -3282,7 +3300,8 @@ function inicializarSistemaMapa() {
                     ['Teléfono',telefono],
                     ['Cuidador / líder',cuidador],
                     ['Estado de ficha',activo],
-                    ['InfoMIRA',infoMira],
+                    ['Inscrito a InfoMIRA',infoMira],
+                    ['Tiene la App InfoMIRA',tieneAppInfoMira],
                     ['Barrio',barrio],
                     ['Puesto de votación',puesto],
                     ['Mesa',mesa],
@@ -3344,7 +3363,8 @@ function inicializarSistemaMapa() {
                         'Barrio': row.barrio || '',
                         'Puesto de votación': p.puesto_votacion || row.puesto_votacion || row.puesto_original || '',
                         'Mesa': p.mesa_votacion || row.mesa_votacion || '',
-                        'InfoMIRA': p.info_mira === true ? 'Sí' : p.info_mira === false ? 'No' : '',
+                        'Inscrito a InfoMIRA': p.info_mira === true ? 'Sí' : p.info_mira === false ? 'No' : '',
+                        'Tiene la App InfoMIRA': p.tiene_app_infomira === true ? 'Sí' : p.tiene_app_infomira === false ? 'No' : '',
                         'Activo': p.activo === true ? 'Sí' : p.activo === false ? 'No' : '',
                         'Movilidad': row.movilidad || '',
                         'Asistencia': row.asistencia || '',
@@ -3593,7 +3613,7 @@ if(homeReturnButton){
   const options=document.getElementById('concejalBarriosOptions');
   const list=document.getElementById('concejalHistoryList');
   const notice=document.getElementById('concejalFormNotice');
-  let records=[]; let commitments=[]; let editingId=null; let miniMap=null; let miniLayer=null; let miniTileLayer=null; let selectedFeatureLayer=null; let featureCollection=null; let concejalBackendReady=false; let concejalLoading=false;
+  let records=[]; let commitments=[]; let editingId=null; let miniMap=null; let miniLayer=null; let miniTileLayer=null; let selectedFeatureLayer=null; let featureCollection=null; let selectedConcejalBarrio=''; let concejalBackendReady=false; let concejalLoading=false;
   function persist(){document.getElementById('concejalSidebarCount').textContent=records.length+' actividades registradas en Neon';renderHistory();renderDashboard()}
   function mapConcejalActivity(r){return {id:r.id,barrio:r.barrio,description:r.descripcion||'',date:String(r.fecha||'').slice(0,10),createdAt:r.created_at||'',updatedAt:r.updated_at||''}}
   function mapConcejalCommitment(c){return {id:c.id,barrio:c.barrio,text:c.compromiso||'',with:c.adquirido_con||'',date:String(c.fecha||'').slice(0,10),deadline:c.fecha_limite?String(c.fecha_limite).slice(0,10):'',status:c.estado||'Pendiente',result:c.resultado||'',achieved:!!c.logrado,createdAt:c.created_at||'',updatedAt:c.updated_at||''}}
@@ -3626,14 +3646,76 @@ if(homeReturnButton){
   function norm(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim()}
   function getNames(){return Object.keys(poligonosPorNombre||{}).sort((a,b)=>a.localeCompare(b,'es'))}
   function populateNames(){const names=getNames(); options.innerHTML=names.map(n=>'<option value="'+esc(n)+'"></option>').join(''); if(!names.length) fetch('./barrios_poligonos_kml_aportado.geojson').then(r=>r.ok?r.json():Promise.reject()).then(fc=>{featureCollection=fc;const ns=(fc.features||[]).map(f=>(f.properties&&(f.properties.name||f.properties.Name||f.properties.nombre||f.properties.NOMBRE))||'').filter(Boolean);options.innerHTML=[...new Set(ns)].sort((a,b)=>a.localeCompare(b,'es')).map(n=>'<option value="'+esc(n)+'"></option>').join('');}).catch(()=>{});else if(!featureCollection)fetch('./barrios_poligonos_kml_aportado.geojson').then(r=>r.ok?r.json():Promise.reject()).then(fc=>{featureCollection=fc;}).catch(()=>{});}
-  function initMiniMap(){if(miniMap||!window.L)return;const el=document.getElementById('concejalMiniMap');if(!el)return;miniMap=L.map(el,{zoomControl:false,scrollWheelZoom:false,attributionControl:false}).setView([4.8123,-74.3542],13);L.control.zoom({position:'topright'}).addTo(miniMap);miniTileLayer=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'Tiles © Esri'}).addTo(miniMap);miniLayer=L.geoJSON(null,{style:f=>{const p=f.properties||{};const st=p.estilo_kml||{};return {color:st.line||p.stroke||p.color||'#36dce9',weight:st.lineWidth||2,fillColor:st.fill||p.fill||p.color||'#20c7df',fillOpacity:Math.max(.16,Math.min(.36,st.fillOpacity||.24))}},onEachFeature:(f,l)=>{const n=(f.properties&&(f.properties.name||f.properties.Name||f.properties.nombre||f.properties.NOMBRE))||'Sector';l.bindTooltip(n);}}).addTo(miniMap);if(featureCollection)miniLayer.addData(featureCollection);else fetch('./barrios_poligonos_kml_aportado.geojson').then(r=>r.json()).then(fc=>{featureCollection=fc;if(miniLayer)miniLayer.addData(fc);}).catch(()=>{});setTimeout(()=>miniMap&&miniMap.invalidateSize(),150);}
+  function initMiniMap(){
+    if(miniMap||!window.L)return;
+    const el=document.getElementById('concejalMiniMap');
+    if(!el)return;
+    miniMap=L.map(el,{zoomControl:false,scrollWheelZoom:false,attributionControl:true,preferCanvas:true}).setView([4.8123,-74.3542],13);
+    L.control.zoom({position:'topright'}).addTo(miniMap);
+    // La mini cartografía utiliza exactamente la misma fuente satelital que el mapa principal.
+    miniTileLayer=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{
+      minZoom:10,maxZoom:19,attribution:'Tiles © Esri',crossOrigin:true
+    }).addTo(miniMap);
+    miniLayer=L.geoJSON(null,{
+      style:f=>{
+        const p=f.properties||{},st=p.estilo_kml||{};
+        return {
+          color:st.line||p.stroke||p.color||'#36dce9',
+          weight:Math.max(2,Number(st.lineWidth)||2),
+          fillColor:st.fill||p.fill||p.color||'#20c7df',
+          fillOpacity:Math.max(.18,Math.min(.38,Number(st.fillOpacity)||.26))
+        };
+      },
+      onEachFeature:(f,l)=>{
+        const p=f.properties||{},n=p.name||p.Name||p.nombre||p.NOMBRE||'Sector';
+        l.bindTooltip(n,{sticky:true});
+      }
+    }).addTo(miniMap);
+    const applyFeatureCollection=fc=>{
+      if(!fc||!Array.isArray(fc.features))return;
+      featureCollection=fc;
+      if(miniLayer){miniLayer.clearLayers();miniLayer.addData(fc);}
+      if(selectedConcejalBarrio)requestAnimationFrame(()=>focusBarrio(selectedConcejalBarrio));
+    };
+    if(featureCollection)applyFeatureCollection(featureCollection);
+    else fetch('./barrios_poligonos_kml_aportado.geojson')
+      .then(response=>{if(!response.ok)throw new Error('No fue posible cargar los polígonos territoriales.');return response.json();})
+      .then(applyFeatureCollection)
+      .catch(error=>console.warn('[MIRA Concejal] No se pudo cargar la cartografía del mini mapa:',error));
+    setTimeout(()=>{if(miniMap){miniMap.invalidateSize({pan:false,animate:false});if(selectedConcejalBarrio)focusBarrio(selectedConcejalBarrio);}},220);
+    miniMap.on('resize',()=>{if(selectedConcejalBarrio)focusBarrio(selectedConcejalBarrio);});
+  }
   function findFeature(name){if(!featureCollection)return null;return (featureCollection.features||[]).find(f=>{const p=f.properties||{};return (p.name||p.Name||p.nombre||p.NOMBRE)===name})||null}
-  function focusBarrio(name){document.getElementById('concejalMapSelectedName').textContent=name||'Selecciona un barrio';if(!name){if(miniLayer)miniLayer.eachLayer(l=>l.setStyle({color:'#36dce9',weight:1,fillOpacity:.08}));return}initMiniMap();populateNames();let mainLayer=poligonosPorNombre&&poligonosPorNombre[name];if(mainLayer&&map){try{map.fitBounds(mainLayer.getBounds(),{padding:[50,50],maxZoom:16});}catch(e){}}
-    if(miniMap&&miniLayer){let matched=null;miniLayer.eachLayer(l=>{const p=l.feature&&l.feature.properties||{};const n=p.name||p.Name||p.nombre||p.NOMBRE;const yes=n===name;l.setStyle({color:yes?'#ffffff':'#36dce9',weight:yes?4:1,fillColor:yes?'#24cde2':'#36dce9',fillOpacity:yes?.48:.035});if(yes)matched=l;});if(matched){selectedFeatureLayer=matched;try{miniMap.fitBounds(matched.getBounds(),{padding:[20,20],maxZoom:16});}catch(e){}}}
+  function focusBarrio(name){
+    selectedConcejalBarrio=String(name||'').trim();
+    document.getElementById('concejalMapSelectedName').textContent=selectedConcejalBarrio||'Selecciona un barrio';
+    if(!selectedConcejalBarrio){
+      if(miniLayer)miniLayer.eachLayer(layer=>layer.setStyle({color:'#36dce9',weight:2,fillOpacity:.08}));
+      return;
+    }
+    initMiniMap();populateNames();
+    const mainLayer=poligonosPorNombre&&poligonosPorNombre[selectedConcejalBarrio];
+    if(mainLayer&&map){try{map.fitBounds(mainLayer.getBounds(),{padding:[50,50],maxZoom:16});}catch(error){}}
+    if(miniMap&&miniLayer){
+      const normalize=value=>String(value||'').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLocaleLowerCase('es').replace(/[^a-z0-9]+/g,' ').trim();
+      const wanted=normalize(selectedConcejalBarrio);
+      let matched=null;
+      miniLayer.eachLayer(layer=>{
+        const p=layer.feature&&layer.feature.properties||{};
+        const n=p.name||p.Name||p.nombre||p.NOMBRE||'';
+        const yes=normalize(n)===wanted;
+        layer.setStyle({color:yes?'#ffffff':'#36dce9',weight:yes?4:1.5,fillColor:yes?'#24cde2':'#36dce9',fillOpacity:yes?.48:.035});
+        if(yes)matched=layer;
+      });
+      if(matched){
+        selectedFeatureLayer=matched;
+        try{miniMap.fitBounds(matched.getBounds(),{padding:[22,22],maxZoom:16,animate:true,duration:.35});}catch(error){}
+      }
+    }
   }
   function showNotice(msg,type='success'){notice.textContent=msg;notice.classList.remove('hidden');notice.style.borderColor=type==='error'?'#fb7185':'#2dd4bf';}
   function resetForm(){editingId=null;form.reset();dateInput.value=new Date().toISOString().slice(0,10);document.getElementById('concejalFormTitle').textContent='Registrar actividad';document.getElementById('saveConcejalActivityBtn').textContent='Guardar actividad';document.getElementById('cancelEditConcejalBtn').classList.add('hidden');notice.classList.add('hidden');focusBarrio('')}
-  async function openModule(){document.getElementById('activitiesPlaceholder').classList.add('hidden');workspace.classList.remove('hidden');document.getElementById('landing-hero-overlay').style.display='none';document.getElementById('landingHeaderControls').style.display='none';populateNames();initMiniMap();setTimeout(()=>miniMap&&miniMap.invalidateSize(),180);if(!concejalBackendReady){try{await loadConcejalFromNeon()}catch(error){console.error('[MIRA Concejal] No fue posible cargar datos:',error);showNotice('No se pudo conectar con Neon: '+(error.message||'Error desconocido'),'error')}}else{renderHistory();renderCommitments();renderDashboard()}}
+  async function openModule(){document.getElementById('activitiesPlaceholder').classList.add('hidden');workspace.classList.remove('hidden');document.getElementById('landing-hero-overlay').style.display='none';document.getElementById('landingHeaderControls').style.display='none';populateNames();initMiniMap();setTimeout(()=>{if(miniMap){miniMap.invalidateSize({pan:false,animate:false});if(selectedConcejalBarrio)focusBarrio(selectedConcejalBarrio);}},260);if(!concejalBackendReady){try{await loadConcejalFromNeon()}catch(error){console.error('[MIRA Concejal] No fue posible cargar datos:',error);showNotice('No se pudo conectar con Neon: '+(error.message||'Error desconocido'),'error')}}else{renderHistory();renderCommitments();renderDashboard()}}
   function closeModule(){workspace.classList.add('hidden');if(miniMap){miniMap.remove();miniMap=null;miniLayer=null;miniTileLayer=null;selectedFeatureLayer=null;}document.getElementById('landing-hero-overlay').style.display='none';document.getElementById('landingHeaderControls').style.display='none';}
   function renderHistory(){const q=norm(document.getElementById('concejalHistorySearch').value);const from=document.getElementById('concejalFilterDateFrom').value;const to=document.getElementById('concejalFilterDateTo').value;const barrio=norm(document.getElementById('concejalFilterBarrio').value);const filtered=records.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')||(b.updatedAt||b.createdAt||'').localeCompare(a.updatedAt||a.createdAt||'')).filter(r=>(!q||norm(r.description+' '+r.barrio).includes(q))&&(!from||r.date>=from)&&(!to||r.date<=to)&&(!barrio||norm(r.barrio).includes(barrio)));document.getElementById('concejalHistoryCount').textContent=filtered.length+' de '+records.length+' registros';list.innerHTML=filtered.length?filtered.map(r=>'<article class="concejal-history-item"><h3>'+esc(r.barrio)+'</h3><div class="concejal-history-meta"><span>📅 '+esc(r.date)+'</span><span>Registro: '+esc((r.createdAt||'').slice(0,10))+'</span></div><p class="concejal-history-description">'+esc(r.description)+'</p><div class="concejal-history-actions"><button type="button" data-concejal-edit="'+esc(r.id)+'">Editar</button><button type="button" data-concejal-map="'+esc(r.barrio)+'">Ver barrio en mapa</button></div></article>').join(''):'<div class="activity-empty-drive"><h3>No hay coincidencias</h3><p>Ajusta la búsqueda o los filtros para consultar el historial.</p></div>';list.querySelectorAll('[data-concejal-edit]').forEach(b=>b.addEventListener('click',()=>editRecord(b.dataset.concejalEdit)));list.querySelectorAll('[data-concejal-map]').forEach(b=>b.addEventListener('click',()=>{barrioInput.value=b.dataset.concejalMap;focusBarrio(b.dataset.concejalMap);document.getElementById('concejalBarrioInput').scrollIntoView({behavior:'smooth',block:'center'});}));document.getElementById('concejalSidebarCount').textContent=records.length+' actividades registradas';renderHistoryCommitments(q,from,to,barrio); }
   function editRecord(id){const r=records.find(x=>x.id===id);if(!r)return;editingId=id;barrioInput.value=r.barrio;descriptionInput.value=r.description;dateInput.value=r.date;focusBarrio(r.barrio);document.getElementById('concejalFormTitle').textContent='Editar actividad';document.getElementById('saveConcejalActivityBtn').textContent='Guardar cambios';document.getElementById('cancelEditConcejalBtn').classList.remove('hidden');document.getElementById('concejalTitle').scrollIntoView({behavior:'smooth',block:'start'});}

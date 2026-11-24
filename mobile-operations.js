@@ -1,6 +1,9 @@
 /* MIRA TU TERRITORIO — navegación móvil estable y recuperación de módulos. */
 (()=> {
  const MQ='(max-width:600px)';
+ let mobileLoginRequested=window.MIRA_MOBILE_LOGIN_REQUESTED===true;
+  window.MIRA_MOBILE_LOGIN_REQUESTED=mobileLoginRequested;
+  const loginRequested=()=>window.MIRA_MOBILE_LOGIN_REQUESTED===true;
  const cards=[
   {id:'dropdown-infomira',icon:'💙',title:'InfoMIRA',desc:'Red de cuidadores y líderes',tone:'blue',mapPanel:true},
   {id:'dropdown-testigos',icon:'🗳️',title:'Auditoría de testigos',desc:'Actas y evidencias E-14',tone:'violet'},
@@ -64,7 +67,7 @@
   let back=document.getElementById('mobileOpsBack');
   if(!back){back=document.createElement('button');back.id='mobileOpsBack';back.className='mobile-ops-back';back.type='button';back.innerHTML='<span>‹</span><b>Volver a módulos</b>';back.setAttribute('aria-label','Volver al Centro de Operaciones');document.body.appendChild(back);}
   const carousel=home.querySelector('#mobileOpsCarousel'),els=[...carousel.querySelectorAll('.mobile-ops-card')],dots=[...home.querySelectorAll('#mobileOpsPagination button')];
-  const mobile=()=>matchMedia(MQ).matches;let active=0,timer=0,workspaceMode=null,historyStateActive=false;
+  const mobile=()=>matchMedia(MQ).matches;let active=0,timer=0,workspaceMode=null,historyStateActive=false,userExitedOperations=false;
   const setActive=i=>{
    active=Math.max(0,Math.min(cards.length-1,i));
    els.forEach((e,n)=>{
@@ -119,8 +122,12 @@
    closeWorkspace();
    const hadHistory=historyStateActive;historyStateActive=false;
    app.classList.remove('mobile-operations-home-active','mobile-operations-module-active','mobile-operations-map-active','mobile-operations-map-panel-active','mobile-operations-workspace-active');
-   home.hidden=true;sidebar.hidden=false;back.classList.remove('is-visible');
-   resetDropdowns();if(hadHistory)window.history.back();resizeMap();
+   home.hidden=true;back.classList.remove('is-visible');
+   resetDropdowns();
+   if(hadHistory)window.history.back();
+   // Salir del PMU devuelve a la portada pública y cierra la sesión Neon.
+   document.getElementById('platformHomeBtn')?.click();
+   document.body.classList.remove('pmu-neomorphic');
   };
   const ensureHistory=()=>{if(!historyStateActive){window.history.pushState({miraMobileOperations:true},'','#centro-operaciones');historyStateActive=true}};
   const open=async card=>{
@@ -153,11 +160,41 @@
   };
   const onBack=()=>{if(historyStateActive){window.history.back();return}closeToHome(true)};
   home.querySelector('#mobileOpsExit')?.addEventListener('click',exitToPlatform);
+  const showOperationsHome=()=>{
+   if(!mobile()||!window.MIRA_CURRENT_USER||!document.body.classList.contains('pmu-neomorphic'))return;
+   document.body.classList.remove('mira-mobile-public-landing');
+   userExitedOperations=false;
+   app.style.display='block';
+   app.classList.remove('mobile-operations-module-active','mobile-operations-map-active','mobile-operations-map-panel-active','mobile-operations-workspace-active');
+   app.classList.add('mobile-operations-home-active');
+   home.hidden=false;sidebar.hidden=true;back.classList.remove('is-visible');
+   resizeMap();
+  };
+  const restorePublicLanding=()=>{
+   userExitedOperations=true;
+   document.body.classList.add('mira-mobile-public-landing');
+   app.classList.remove('mobile-operations-home-active','mobile-operations-module-active','mobile-operations-map-active','mobile-operations-map-panel-active','mobile-operations-workspace-active');
+   home.hidden=true;sidebar.hidden=false;back.classList.remove('is-visible');
+   app.style.display='none';
+   document.body.classList.remove('pmu-neomorphic');
+   document.getElementById('landing-hero-overlay')?.style.setProperty('display','flex');
+   document.getElementById('landingHeaderControls')?.style.setProperty('display','flex');
+  };
+  document.getElementById('landingLoginBtn')?.addEventListener('click',()=>{if(mobile()){mobileLoginRequested=true;window.MIRA_MOBILE_LOGIN_REQUESTED=true;}});
+   document.getElementById('cancelAdminInlineBtn')?.addEventListener('click',()=>{if(mobile()&&!window.MIRA_CURRENT_USER){mobileLoginRequested=false;window.MIRA_MOBILE_LOGIN_REQUESTED=false;}});
+  window.addEventListener('mira:authenticated',()=>requestAnimationFrame(()=>{
+   if(mobile()&&!loginRequested()){restorePublicLanding();return;}
+   showOperationsHome();
+  }));
+  window.addEventListener('mira:signed-out',()=>{mobileLoginRequested=false;window.MIRA_MOBILE_LOGIN_REQUESTED=false;restorePublicLanding();});
   window.addEventListener('pageshow',()=>{
    if(!mobile())return;
-   if(!app.classList.contains('mobile-operations-module-active')&&!app.classList.contains('mobile-operations-map-active')&&!app.classList.contains('mobile-operations-map-panel-active')&&!app.classList.contains('mobile-operations-workspace-active')){
-    home.hidden=false;sidebar.hidden=true;back.classList.remove('is-visible');
-   }
+   // Una sesión restaurada no debe saltarse la portada pública ni abrir el PMU automáticamente.
+   // El Centro de Operaciones solo aparece después de que el usuario pulse Ingresar.
+   if(!loginRequested()){restorePublicLanding();return;}
+   if(window.MIRA_CURRENT_USER&&document.body.classList.contains('pmu-neomorphic')){
+    if(!app.classList.contains('mobile-operations-module-active')&&!app.classList.contains('mobile-operations-map-active')&&!app.classList.contains('mobile-operations-map-panel-active')&&!app.classList.contains('mobile-operations-workspace-active'))showOperationsHome();
+   }else restorePublicLanding();
   });
   els.forEach((el,i)=>el.addEventListener('click',()=>{if(i!==active){go(i);return}open(cards[i])}));
   dots.forEach((d,i)=>d.addEventListener('click',()=>go(i)));
@@ -177,14 +214,12 @@
     if((workspaceMode==='activities'&&activitiesHidden)||(workspaceMode==='concejal'&&concejalHidden))closeToHome(false);
    },0);
   },true);
-  let reloadExitHandled=false,userExitedOperations=false;
-  const isPageReload=()=>window.performance?.getEntriesByType?.('navigation')?.[0]?.type==='reload';
   const viewport=()=>{if(mobile()){
-   if(isPageReload()&&!reloadExitHandled){reloadExitHandled=true;exitToPlatform();return;}
+   if(!loginRequested()||!window.MIRA_CURRENT_USER||!document.body.classList.contains('pmu-neomorphic')){restorePublicLanding();return;}
    if(userExitedOperations)return;
-   if(!app.classList.contains('mobile-operations-module-active')&&!app.classList.contains('mobile-operations-map-active')&&!app.classList.contains('mobile-operations-map-panel-active')&&!app.classList.contains('mobile-operations-workspace-active')&&!app.classList.contains('mobile-operations-home-active')){home.hidden=false;sidebar.hidden=true;app.classList.add('mobile-operations-home-active')}
-  }else{userExitedOperations=false;app.classList.remove('mobile-operations-home-active','mobile-operations-module-active','mobile-operations-map-active','mobile-operations-map-panel-active','mobile-operations-workspace-active');home.hidden=true;sidebar.hidden=false;back.classList.remove('is-visible');historyStateActive=false;resetDropdowns()}};
-  window.addEventListener('resize',viewport,{passive:true});setActive(0);viewport();
+   if(!app.classList.contains('mobile-operations-module-active')&&!app.classList.contains('mobile-operations-map-active')&&!app.classList.contains('mobile-operations-map-panel-active')&&!app.classList.contains('mobile-operations-workspace-active')&&!app.classList.contains('mobile-operations-home-active'))showOperationsHome();
+  }else{userExitedOperations=false;document.body.classList.remove('mira-mobile-public-landing');app.classList.remove('mobile-operations-home-active','mobile-operations-module-active','mobile-operations-map-active','mobile-operations-map-panel-active','mobile-operations-workspace-active');home.hidden=true;sidebar.hidden=false;back.classList.remove('is-visible');historyStateActive=false;resetDropdowns()}};
+  window.addEventListener('resize',viewport,{passive:true});setActive(0);home.hidden=true;viewport();
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();

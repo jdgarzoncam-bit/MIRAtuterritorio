@@ -1,5 +1,5 @@
 import { createInternalNeonAuth } from "https://esm.sh/@neondatabase/auth@0.7.0-beta";
-import { MIRA_DATA } from "./mira-data.js?v=20261124-participant-pin-3";
+import { MIRA_DATA } from "./mira-data.js?v=20261124-infomira-app-field-3";
 
 const PUBLIC_AUTH_URL = "https://ep-mute-grass-b7qan4n6.neonauth.c-13.us-east-1.aws.neon.tech/neondb/auth";
 const publicNeonAuth = createInternalNeonAuth(PUBLIC_AUTH_URL,{allowAnonymous:true});
@@ -145,6 +145,7 @@ $("pubLookup").addEventListener("click", async () => {
       $("pubSurnames").value = "";
       $("pubPhone").value = "";
       $("pubInfoMira").value = "";
+      $("pubHasApp").value = "";
       $("pubType").value = "";
       clearPersonDetails();
       setAvailable(activities.length > 0);
@@ -155,6 +156,7 @@ $("pubLookup").addEventListener("click", async () => {
     $("pubSurnames").value = person.apellidos || "";
     $("pubPhone").value = person.telefono || "";
     $("pubInfoMira").value = person.info_mira == null ? "" : (person.info_mira ? "si" : "no");
+    $("pubHasApp").value = person.tiene_app_infomira == null ? "" : (person.tiene_app_infomira ? "si" : "no");
     $("pubType").value = ["interno","externo"].includes(String(person.tipo_participacion||"").toLowerCase())
       ? String(person.tipo_participacion).toLowerCase() : "";
     showPersonDetails(person);
@@ -185,8 +187,9 @@ $("publicActivityForm").addEventListener("submit", async event => {
   if (nombres.length < 2 || apellidos.length < 2) return status("Escribe los nombres y apellidos completos.","error");
   if (!actividad_id || !activities.some(a => String(a.activity_id) === actividad_id)) return status("Selecciona una actividad que esté abierta para inscripción.","error");
   const info_mira = $("pubInfoMira").value;
+  const tiene_app_infomira = $("pubHasApp").value;
   const tipo_participacion = $("pubType").value;
-  if (!info_mira || !tipo_participacion) return status("Selecciona InfoMIRA y el tipo de participante.","error");
+  if (!info_mira || !tiene_app_infomira || !tipo_participacion) return status("Indica si está inscrito a InfoMIRA, si tiene la App InfoMIRA y el tipo de participante.","error");
   if (!$("pubConsent").checked) return status("Debes aceptar el tratamiento de datos para continuar.","error");
   if (currentPersonBlocked) return status("La ficha está inactiva y requiere revisión administrativa.","error");
   busy = true;
@@ -195,7 +198,7 @@ $("publicActivityForm").addEventListener("submit", async event => {
   try {
     const result = await MIRA_DATA.registerPublicActivityParticipant({
       cedula,nombres,apellidos,telefono:$("pubPhone").value.trim()||null,
-      actividad_id,info_mira,tipo_participacion,consentimiento:true,access_token:accessToken
+      actividad_id,info_mira,tiene_app_infomira,tipo_participacion,consentimiento:true,access_token:accessToken
     });
     if (result?.status === "duplicate") {
       status(result.message || "Esta cédula ya tiene asistencia registrada en la actividad seleccionada.","error");

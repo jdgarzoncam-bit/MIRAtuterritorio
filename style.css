@@ -8295,3 +8295,261 @@ input,select,textarea,button { max-width:100%; }
 .mira-quick-lock-action{width:100%;padding:9px 10px;border:1px solid rgba(248,113,113,.35);border-radius:10px;background:rgba(127,29,29,.16);color:#fecaca;font:inherit;font-size:.73rem;font-weight:800;cursor:pointer}
 .mira-quick-item:disabled{opacity:.55;cursor:not-allowed}
 @media(max-width:600px){.mira-module-pin-gate{width:min(320px,calc(100vw - 20px));padding:14px}.mira-module-pin-gate input{font-size:16px}}
+
+
+/* MIRA · CONSISTENCIA VISUAL Y NAVEGACIÓN MÓVIL QA 2026-11-24 */
+@media(max-width:600px){
+  .mobile-operations-home{
+    background:
+      radial-gradient(ellipse at 50% 38%,rgba(21,108,220,.30),transparent 52%),
+      radial-gradient(ellipse at 0% 100%,rgba(24,190,220,.13),transparent 42%),
+      linear-gradient(155deg,#030712 0%,#07152c 48%,#030916 100%) !important;
+  }
+  .mobile-ops-card,.mobile-ops-card.tone-blue,.mobile-ops-card.tone-cyan,.mobile-ops-card.tone-map,
+  .mobile-ops-card.tone-violet,.mobile-ops-card.tone-pink,.mobile-ops-card.tone-green,.mobile-ops-card.tone-gold{
+    background:linear-gradient(155deg,rgba(19,53,82,.97) 0%,rgba(8,28,54,.98) 58%,rgba(9,72,145,.98) 100%) !important;
+    border-color:rgba(91,190,235,.30) !important;
+    box-shadow:0 24px 54px rgba(0,0,0,.52),0 0 26px rgba(20,132,255,.16),inset 0 1px 0 rgba(255,255,255,.16) !important;
+  }
+  .mobile-ops-card::before{background:radial-gradient(ellipse at 50% 78%,rgba(27,127,255,.52),rgba(19,186,220,.16) 42%,transparent 74%) !important}
+  .mobile-ops-card::after{background:linear-gradient(90deg,#168bdf,#26c5e6,#2563eb) !important}
+  .mobile-ops-card-icon{background:rgba(100,190,230,.13)!important;border-color:rgba(150,220,255,.22)!important}
+  .mobile-ops-pagination button.is-active{background:#29c6e8!important;box-shadow:0 0 12px rgba(41,198,232,.55)!important}
+  /* Módulos InfoMIRA y Barrios: resultados primero, mapa compacto debajo. */
+  #app-container.mobile-operations-map-panel-active #map{
+    inset:auto 0 0 0 !important;top:auto!important;bottom:0!important;
+    width:100%!important;height:27dvh!important;min-height:170px!important;max-height:31dvh!important;
+    border-top:1px solid rgba(75,190,235,.35)!important;border-radius:18px 18px 0 0!important;
+    overflow:hidden!important;z-index:1500!important;
+  }
+  #app-container.mobile-operations-map-panel-active #mainSidebar{
+    top:0!important;left:0!important;right:0!important;bottom:27dvh!important;
+    width:100%!important;height:auto!important;max-height:none!important;min-height:0!important;
+    padding:calc(env(safe-area-inset-top,0px) + 54px) 9px 8px!important;
+    overflow:hidden!important;z-index:1800!important;
+  }
+  #app-container.mobile-operations-map-panel-active #mainSidebar>.neo-tactile-sidebar{
+    height:100%!important;max-height:100%!important;border-radius:20px!important;
+    background:linear-gradient(155deg,rgba(10,34,62,.98),rgba(3,13,31,.99))!important;
+  }
+  #app-container.mobile-operations-map-panel-active #mainSidebar .sidebar-content{
+    flex:1 1 auto!important;min-height:0!important;max-height:none!important;height:auto!important;
+    overflow-y:auto!important;overscroll-behavior:contain!important;
+  }
+  #app-container.mobile-operations-map-panel-active .leaflet-control-zoom{margin-top:8px!important;margin-bottom:8px!important}
+  #app-container.mobile-operations-map-panel-active #mobileOpsBack{top:calc(env(safe-area-inset-top,0px) + 8px)!important}
+  /* Menú PIN y módulos: pantalla completa y tarjetas verticales. */
+  #miraQuickModules.is-mobile-open{
+    position:fixed!important;inset:0!important;top:0!important;left:0!important;right:0!important;bottom:0!important;
+    z-index:30000!important;width:100vw!important;height:100dvh!important;max-width:none!important;
+    box-sizing:border-box!important;display:flex!important;flex-direction:column!important;align-items:stretch!important;
+    gap:14px!important;padding:calc(env(safe-area-inset-top,0px) + 14px) 16px calc(env(safe-area-inset-bottom,0px) + 18px)!important;
+    overflow-y:auto!important;background:radial-gradient(ellipse at 50% 0%,rgba(17,105,194,.28),transparent 48%),linear-gradient(155deg,#07162c 0%,#061126 58%,#030916 100%)!important;
+    -webkit-backdrop-filter:blur(26px) saturate(145%)!important;backdrop-filter:blur(26px) saturate(145%)!important;
+  }
+  #miraQuickModules.is-mobile-open .mira-quick-toggle{
+    width:100%!important;min-height:54px!important;justify-content:flex-start!important;padding:12px 15px!important;
+    border-radius:16px!important;background:rgba(12,38,67,.88)!important;border-color:rgba(74,190,238,.36)!important;
+    font-size:1rem!important;box-shadow:0 10px 28px rgba(0,0,0,.22)!important;
+  }
+  #miraQuickModules.is-mobile-open .mira-quick-toggle-icon{font-size:1.5rem!important}
+  #miraQuickModules.is-mobile-open .mira-quick-panel{
+    display:flex!important;flex:1 0 auto!important;width:100%!important;min-width:0!important;box-sizing:border-box!important;
+    flex-direction:column!important;gap:12px!important;padding:14px!important;border-radius:20px!important;
+    border:1px solid rgba(74,190,238,.32)!important;background:rgba(8,27,49,.82)!important;
+    box-shadow:0 18px 48px rgba(0,0,0,.34),inset 0 1px 0 rgba(255,255,255,.09)!important;
+  }
+  #miraQuickModules.is-mobile-open .mira-quick-item{
+    min-height:82px!important;grid-template-columns:42px minmax(0,1fr) 22px!important;gap:13px!important;
+    padding:16px!important;border:1px solid rgba(92,174,220,.20)!important;border-radius:15px!important;
+    background:linear-gradient(120deg,rgba(16,57,91,.92),rgba(9,35,66,.94))!important;
+  }
+  #miraQuickModules.is-mobile-open .mira-quick-item>span:first-child{font-size:1.45rem!important;text-align:center}
+  #miraQuickModules.is-mobile-open .mira-quick-item strong{font-size:1rem!important}
+  #miraQuickModules.is-mobile-open .mira-quick-item small{font-size:.78rem!important;line-height:1.4!important}
+  #miraQuickModules.is-mobile-open .mira-quick-lock-action{min-height:48px!important;margin-top:auto!important}
+  #miraQuickModules.is-mobile-open .mira-module-pin-gate{
+    position:relative!important;inset:auto!important;top:auto!important;left:auto!important;transform:none!important;
+    display:flex!important;flex:1 0 auto!important;width:100%!important;max-width:none!important;min-height:0!important;
+    box-sizing:border-box!important;flex-direction:column!important;justify-content:center!important;align-self:stretch!important;
+    margin:0!important;padding:clamp(22px,6vh,42px) 20px!important;border-radius:22px!important;
+    border:1px solid rgba(74,190,238,.34)!important;background:linear-gradient(155deg,rgba(11,37,65,.98),rgba(4,17,35,.99))!important;
+    box-shadow:0 22px 60px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.1)!important;
+  }
+  #miraQuickModules.is-mobile-open .mira-module-pin-gate[hidden]{display:none!important}
+  #miraQuickModules.is-mobile-open .mira-module-pin-gate h2{font-size:1.55rem!important;margin:15px 0 10px!important}
+  #miraQuickModules.is-mobile-open .mira-module-pin-gate>p:not(.mira-module-pin-status){font-size:.95rem!important;line-height:1.6!important}
+  #miraQuickModules.is-mobile-open .mira-module-pin-gate label{font-size:.9rem!important;margin-top:20px!important}
+  #miraQuickModules.is-mobile-open .mira-module-pin-gate input{min-height:58px!important;font-size:1.15rem!important;letter-spacing:.2em!important}
+  #miraQuickModules.is-mobile-open .mira-module-pin-gate button{min-height:58px!important;font-size:1rem!important}
+  #miraQuickModules.is-mobile-open .mira-module-pin-status{font-size:.82rem!important;line-height:1.45!important}
+}
+@media(max-width:380px){
+  #app-container.mobile-operations-map-panel-active #map{height:25dvh!important;min-height:150px!important}
+  #app-container.mobile-operations-map-panel-active #mainSidebar{bottom:25dvh!important}
+}
+
+@media(max-width:600px){#miraQuickModules.is-mobile-open .mira-quick-panel.hidden{display:none!important}}
+
+
+/* PORTADA PÚBLICA MÓVIL: no mostrar el PMU por restauración automática de sesión */
+@media(max-width:600px){
+ body.mira-mobile-public-landing #app-container{display:none!important;visibility:hidden!important;pointer-events:none!important}
+ body.mira-mobile-public-landing #mobileOperationsHome{display:none!important}
+ body.mira-mobile-public-landing #landing-hero-overlay{display:flex!important}
+ body.mira-mobile-public-landing #landingHeaderControls{display:flex!important}
+}
+
+
+/* MIRA TU TERRITORIO — revisión integral móvil QA · 2026-11-24 */
+@media (max-width:600px) {
+  html,body { width:100%; max-width:100%; overflow-x:hidden!important; }
+  body { background:#061329!important; color:#eef5ff!important; }
+  body.pmu-neomorphic { background:#061329!important; }
+  body.pmu-neomorphic #app-container {
+    background:linear-gradient(145deg,#061329 0%,#071a35 54%,#092b50 100%)!important;
+  }
+  body.pmu-neomorphic #map { filter:saturate(.9) brightness(.88)!important; }
+
+  /* Centro de Operaciones: un solo sistema cromático azul profundo + vidrio */
+  #app-container.mobile-operations-home-active,
+  #app-container.mobile-operations-home-active #mobileOperationsHome {
+    background:
+      radial-gradient(ellipse at 50% 72%,rgba(18,91,180,.24),transparent 48%),
+      linear-gradient(160deg,#061329 0%,#071a35 58%,#030b19 100%)!important;
+  }
+  #mobileOperationsHome .mobile-ops-header { border-bottom-color:rgba(111,190,239,.2)!important; }
+  #mobileOperationsHome .mobile-ops-brand-mark {
+    background:linear-gradient(145deg,rgba(29,90,145,.52),rgba(9,28,55,.92))!important;
+    border:1px solid rgba(118,201,245,.22)!important;color:#d9efff!important;
+  }
+  #mobileOperationsHome .mobile-ops-card,
+  #mobileOperationsHome .mobile-ops-card.tone-blue,
+  #mobileOperationsHome .mobile-ops-card.tone-cyan,
+  #mobileOperationsHome .mobile-ops-card.tone-map,
+  #mobileOperationsHome .mobile-ops-card.tone-violet,
+  #mobileOperationsHome .mobile-ops-card.tone-pink,
+  #mobileOperationsHome .mobile-ops-card.tone-green,
+  #mobileOperationsHome .mobile-ops-card.tone-gold,
+  #mobileOperationsHome .mobile-ops-card.tone-orange {
+    background:
+      radial-gradient(ellipse at 50% 100%,rgba(37,117,224,.72),transparent 56%),
+      linear-gradient(145deg,rgba(35,76,108,.94),rgba(12,39,68,.98) 58%,rgba(5,24,50,.99))!important;
+    border:1px solid rgba(155,216,255,.27)!important;
+    box-shadow:0 25px 55px rgba(0,0,0,.48),inset 0 1px 0 rgba(255,255,255,.16)!important;
+  }
+  #mobileOperationsHome .mobile-ops-card::before {
+    background:radial-gradient(ellipse at 50% 100%,rgba(42,133,255,.95),rgba(24,93,207,.4) 44%,transparent 76%)!important;
+  }
+  #mobileOperationsHome .mobile-ops-card::after {
+    background:linear-gradient(90deg,transparent,#28b8f0,#3577ff,transparent)!important;
+  }
+
+  /* Consulta InfoMIRA / territorial: ficha arriba y mapa en una franja inferior */
+  #app-container.mobile-operations-map-panel-active {
+    position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;
+    overflow:hidden!important;background:#061329!important;
+  }
+  #app-container.mobile-operations-map-panel-active #map {
+    position:absolute!important;left:0!important;right:0!important;top:auto!important;bottom:0!important;
+    width:100%!important;height:24dvh!important;min-height:155px!important;max-height:30dvh!important;
+    visibility:visible!important;z-index:1!important;
+  }
+  #app-container.mobile-operations-map-panel-active #mainSidebar {
+    position:absolute!important;left:10px!important;right:10px!important;
+    top:calc(env(safe-area-inset-top,0px) + 58px)!important;bottom:calc(24dvh + 10px)!important;
+    width:auto!important;height:auto!important;max-height:none!important;min-height:0!important;
+    display:flex!important;overflow:hidden!important;z-index:20!important;
+  }
+  #app-container.mobile-operations-map-panel-active #mainSidebar>.neo-tactile-sidebar {
+    display:flex!important;flex-direction:column!important;width:100%!important;height:100%!important;
+    min-height:0!important;max-height:none!important;overflow:hidden!important;
+    border:1px solid rgba(116,196,242,.3)!important;border-radius:22px!important;
+    background:linear-gradient(155deg,rgba(11,37,65,.97),rgba(4,17,35,.98))!important;
+    box-shadow:0 20px 50px rgba(0,0,0,.38),inset 0 1px 0 rgba(255,255,255,.1)!important;
+    backdrop-filter:blur(22px) saturate(145%)!important;-webkit-backdrop-filter:blur(22px) saturate(145%)!important;
+  }
+  #app-container.mobile-operations-map-panel-active #mainSidebar .sidebar-header {
+    flex:0 0 auto!important;background:linear-gradient(120deg,rgba(17,65,105,.94),rgba(9,34,65,.96))!important;
+    border-bottom:1px solid rgba(120,196,240,.2)!important;
+  }
+  #app-container.mobile-operations-map-panel-active #mainSidebar .sidebar-content {
+    flex:1 1 auto!important;min-height:0!important;overflow-y:auto!important;overscroll-behavior:contain!important;
+    padding:12px!important;background:transparent!important;
+  }
+  #app-container.mobile-operations-map-panel-active #mainSidebar .sidebar-content>.section-title,
+  #app-container.mobile-operations-map-panel-active #mainSidebar .sidebar-content>details.custom-dropdown:not(.mobile-ops-selected-module) {
+    display:none!important;
+  }
+  #app-container.mobile-operations-map-panel-active #mainSidebar .sidebar-content>details.custom-dropdown.mobile-ops-selected-module {
+    display:block!important;width:100%!important;max-height:none!important;overflow:visible!important;
+    border:0!important;background:transparent!important;
+  }
+  #app-container.mobile-operations-map-panel-active #mainSidebar .sidebar-content>details.custom-dropdown.mobile-ops-selected-module>.dropdown-content {
+    display:block!important;max-height:none!important;height:auto!important;overflow:visible!important;
+    padding:10px 0!important;background:transparent!important;
+  }
+  #app-container.mobile-operations-map-panel-active #mainSidebar #adminDashboardCard { display:none!important; }
+  #app-container.mobile-operations-map-panel-active #mobileOpsBack {
+    position:absolute!important;top:calc(env(safe-area-inset-top,0px) + 8px)!important;left:10px!important;z-index:40!important;
+  }
+  #app-container.mobile-operations-map-panel-active .leaflet-control-zoom { margin:8px!important; }
+
+  /* Módulos rápidos: pantalla completa, tarjetas verticales y PIN como vista propia */
+  #miraQuickModules.is-mobile-open {
+    position:fixed!important;inset:0!important;z-index:25000!important;
+    display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:14px!important;
+    width:100vw!important;height:100dvh!important;max-height:100dvh!important;box-sizing:border-box!important;
+    overflow-y:auto!important;overscroll-behavior:contain!important;
+    padding:calc(env(safe-area-inset-top,0px) + 18px) 18px calc(env(safe-area-inset-bottom,0px) + 20px)!important;
+    background:radial-gradient(ellipse at 50% 0%,rgba(24,112,205,.24),transparent 48%),linear-gradient(155deg,#071a35,#030b19)!important;
+  }
+  #miraQuickModules.is-mobile-open .mira-quick-toggle {
+    align-self:flex-start!important;flex:0 0 auto!important;min-height:52px!important;
+    padding:12px 18px!important;border:1px solid rgba(116,198,246,.35)!important;border-radius:16px!important;
+    background:rgba(9,34,64,.82)!important;color:#eef7ff!important;
+  }
+  #miraQuickModules.is-mobile-open .mira-quick-panel:not(.hidden) {
+    display:flex!important;flex:1 0 auto!important;flex-direction:column!important;gap:12px!important;
+    width:100%!important;min-width:0!important;max-width:none!important;box-sizing:border-box!important;
+    padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;
+  }
+  #miraQuickModules.is-mobile-open .mira-quick-item {
+    display:grid!important;grid-template-columns:48px minmax(0,1fr) 22px!important;align-items:center!important;
+    flex:0 0 auto!important;width:100%!important;min-height:88px!important;padding:17px!important;
+    border:1px solid rgba(115,191,238,.25)!important;border-radius:19px!important;
+    background:linear-gradient(145deg,rgba(22,69,111,.94),rgba(7,30,59,.98))!important;
+    color:#f3f8ff!important;box-shadow:0 12px 28px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.08)!important;
+  }
+  #miraQuickModules.is-mobile-open .mira-quick-item strong {font-size:1.04rem!important;color:#f4f8ff!important}
+  #miraQuickModules.is-mobile-open .mira-quick-item small {font-size:.8rem!important;color:rgba(218,235,250,.72)!important}
+  #miraQuickModules.is-mobile-open .mira-quick-item.is-locked {opacity:.62!important}
+  #miraQuickModules.is-mobile-open .mira-quick-lock-action {flex:0 0 auto!important;min-height:50px!important;margin-top:auto!important}
+  #miraQuickModules.is-mobile-open .mira-module-pin-gate:not([hidden]) {
+    position:relative!important;inset:auto!important;transform:none!important;display:flex!important;
+    flex:1 0 auto!important;flex-direction:column!important;justify-content:center!important;align-self:stretch!important;
+    width:100%!important;max-width:none!important;min-height:0!important;box-sizing:border-box!important;
+    margin:0!important;padding:clamp(24px,7vh,48px) 20px!important;border-radius:24px!important;
+    border:1px solid rgba(116,198,246,.34)!important;
+    background:linear-gradient(155deg,rgba(13,48,82,.98),rgba(4,17,35,.99))!important;
+    box-shadow:0 24px 60px rgba(0,0,0,.44),inset 0 1px 0 rgba(255,255,255,.1)!important;
+  }
+  #miraQuickModules.is-mobile-open .mira-module-pin-gate h2 {font-size:clamp(27px,7vw,34px)!important;color:#f4f8ff!important}
+  #miraQuickModules.is-mobile-open .mira-module-pin-gate>p:not(.mira-module-pin-status) {font-size:1rem!important;line-height:1.65!important;color:#b8cce2!important}
+  #miraQuickModules.is-mobile-open .mira-module-pin-gate input {min-height:62px!important;font-size:1.2rem!important;letter-spacing:.2em!important}
+  #miraQuickModules.is-mobile-open .mira-module-pin-gate button {min-height:60px!important;font-size:1rem!important}
+  #miraQuickModules.is-mobile-open .mira-module-pin-gate[hidden],
+  #miraQuickModules.is-mobile-open .mira-quick-panel.hidden {display:none!important}
+
+  /* Concejal: formulario vertical, mapa territorial legible y de mayor altura */
+  #concejalWorkspace .concejal-mini-map-wrap {
+    margin-top:14px!important;padding:12px!important;border:1px solid rgba(116,196,242,.24)!important;
+    border-radius:18px!important;background:linear-gradient(145deg,rgba(15,43,72,.92),rgba(6,24,48,.96))!important;
+  }
+  #concejalWorkspace #concejalMiniMap {
+    width:100%!important;height:clamp(210px,31dvh,290px)!important;min-height:210px!important;
+    border:1px solid rgba(112,190,238,.24)!important;border-radius:14px!important;overflow:hidden!important;
+    background:#10233b!important;
+  }
+  #concejalWorkspace .concejal-map-hint {font-size:.78rem!important;line-height:1.5!important;margin:10px 2px 0!important}
+}
