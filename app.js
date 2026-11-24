@@ -440,6 +440,9 @@ function abrirLoginAdmin() {
         cerrarLoginAdmin();
         return;
     }
+    // Registrar intención antes de que Neon restaure o emita eventos de sesión.
+    // Evita que una restauración anónima cancele el acceso iniciado desde iPhone.
+    if (window.matchMedia('(max-width: 600px)').matches) window.MIRA_MOBILE_LOGIN_REQUESTED = true;
     // El acceso se presenta como una vista modal centrada que cubre toda la pantalla.
     adminCardContainer.style.display = '';
     adminLoginBackdrop.style.display = '';
@@ -946,7 +949,11 @@ async function syncMiraQuickModules(){
   const user=window.MIRA_CURRENT_USER;
   const landing=document.getElementById('landing-hero-overlay');
   const landingVisible=Boolean(landing&&getComputedStyle(landing).display!=='none');
-  if(root)root.classList.toggle('hidden',!landingVisible);
+  const pmuVisible=document.body.classList.contains('pmu-neomorphic') ||
+    Boolean(document.getElementById('app-container') && getComputedStyle(document.getElementById('app-container')).display!=='none');
+  // El acceso rápido pertenece a la portada pública. No debe flotar encima
+  // del Centro de Operaciones, PQRS, Concejal ni otros módulos.
+  if(root)root.classList.toggle('hidden',!landingVisible || pmuVisible || Boolean(user));
   if(testigos){
     testigos.disabled=true;
     testigos.setAttribute('aria-disabled','true');
@@ -3712,7 +3719,15 @@ if(homeReturnButton){
   function renderBarrioSuggestions(input,menu,mode){
     if(!input||!menu)return;
     const query=norm(input.value.trim());
-    const names=getNames().filter(n=>!query||norm(n).includes(query)).slice(0,80);
+    // No desplegar todos los barrios al enfocar: exigir texto de búsqueda.
+    // Reduce la lista visual y evita que el selector cubra el formulario.
+    if(query.length<1){
+      menu.innerHTML='<div class="mira-combobox-empty">Escribe el nombre de un barrio o sector para buscarlo.</div>';
+      menu.classList.remove('hidden');
+      input.setAttribute('aria-expanded','true');
+      return;
+    }
+    const names=getNames().filter(n=>norm(n).includes(query)).slice(0,30);
     menu.innerHTML=names.length?names.map(n=>'<button type="button" class="mira-combobox-option" role="option" data-barrio-option="'+esc(n)+'">'+esc(n)+'</button>').join(''):'<div class="mira-combobox-empty">No hay barrios coincidentes</div>';
     menu.classList.remove('hidden');input.setAttribute('aria-expanded','true');
     menu.querySelectorAll('[data-barrio-option]').forEach(option=>{

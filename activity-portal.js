@@ -123,7 +123,7 @@ $("pubLookup").addEventListener("click", async () => {
   clearEnrollmentStatus();
   try {
     const enrollment = await MIRA_DATA.checkPublicActivityParticipant(cedula, actividadId, accessToken);
-    const person = await MIRA_DATA.lookupPublicPerson(cedula, accessToken);
+    const person = enrollment?.person || null;
     personLookupCompleted = true;
     currentPersonAlreadyRegistered = Boolean(enrollment?.already_registered);
     if (currentPersonAlreadyRegistered) {

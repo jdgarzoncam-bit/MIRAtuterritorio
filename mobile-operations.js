@@ -177,6 +177,9 @@
    resizeMap();
   };
   const restorePublicLanding=()=>{
+   // La restauración inicial de Neon puede emitir mira:signed-out antes de
+   // que el usuario envíe el formulario. No cancelar la intención de login.
+   if(document.body.classList.contains('admin-login-active') && !window.MIRA_CURRENT_USER)return;
    mobileLoginRequested=false;
    window.MIRA_MOBILE_LOGIN_REQUESTED=false;
    userExitedOperations=true;
@@ -196,7 +199,7 @@
   }));
   window.addEventListener('mira:signed-out',restorePublicLanding);
   window.addEventListener('pageshow',()=>{
-   if(!mobile())return;
+   if(!mobile()||document.body.classList.contains('admin-login-active'))return;
    // Una sesión restaurada no debe saltarse la portada pública ni abrir el PMU automáticamente.
    // El Centro de Operaciones solo aparece después de que el usuario pulse Ingresar.
    if(!loginRequested()){restorePublicLanding();return;}
@@ -222,7 +225,7 @@
     if((workspaceMode==='activities'&&activitiesHidden)||(workspaceMode==='concejal'&&concejalHidden))closeToHome(false);
    },0);
   },true);
-  const viewport=()=>{if(mobile()){
+  const viewport=()=>{if(document.body.classList.contains('admin-login-active'))return;if(mobile()){
    if(!mobileLoginRequested||!window.MIRA_CURRENT_USER||!document.body.classList.contains('pmu-neomorphic')){restorePublicLanding();return;}
    if(userExitedOperations)return;
    if(!app.classList.contains('mobile-operations-module-active')&&!app.classList.contains('mobile-operations-map-active')&&!app.classList.contains('mobile-operations-map-panel-active')&&!app.classList.contains('mobile-operations-workspace-active')&&!app.classList.contains('mobile-operations-home-active'))showOperationsHome();
