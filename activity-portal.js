@@ -186,7 +186,7 @@ $("publicActivityForm").addEventListener("submit", async event => {
   if (!actividad_id || !activities.some(a => String(a.activity_id) === actividad_id)) return status("Selecciona una actividad que esté abierta para inscripción.","error");
   const info_mira = $("pubInfoMira").value;
   const tipo_participacion = $("pubType").value;
-  if (!info_mira || !tipo_participacion) return status("Selecciona InfoMIRA y el tipo de participante.","error");
+  if (!info_mira || !tipo_participacion) return status("Selecciona si está inscrito a InfoMIRA y el tipo de participante.","error");
   if (!$("pubConsent").checked) return status("Debes aceptar el tratamiento de datos para continuar.","error");
   if (currentPersonBlocked) return status("La ficha está inactiva y requiere revisión administrativa.","error");
   busy = true;
