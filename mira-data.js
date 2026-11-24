@@ -1,6 +1,6 @@
 // MIRA TU TERRITORIO — cliente REST de Neon Data API
 // No contiene contraseñas ni cadenas de conexión. Los permisos se aplican en PostgreSQL RLS.
-const MIRA_DATA_API_URL = "https://ep-mute-grass-b7qan4n6.apirest.c-13.us-east-1.aws.neon.tech/neondb/rest/v1";
+const MIRA_DATA_API_URL = "https://ep-round-dawn-b7l3ya3h.apirest.c-13.us-east-1.aws.neon.tech/neondb/rest/v1";
 
 async function miraToken({anonymous=false}={}) {
   const auth = window.MIRA_AUTH;
@@ -119,49 +119,55 @@ export const MIRA_DATA = {
     return miraRequest(dataset.table,{query:qs(params)});
   },
 
-  async listInfoMiraDirectory({cedula="", search="", limit=100, offset=0}={}) {
+  async listInfoMiraDirectory({cedula="",search="",limit=100,offset=0}={}) {
     const safeLimit=Math.min(Math.max(Number(limit)||100,1),100);
     const safeOffset=Math.max(0,Number(offset)||0);
-    const documentDigits=cleanCedula(cedula || search);
-    const term=String(search || cedula || "").trim();
-    if ((cedula || /^\s*[\d.\-\s]+\s*$/.test(term)) && !documentDigits) {
+    const term=String(search||cedula||"").trim();
+    const documentDigits=cleanCedula(cedula||search);
+    if((cedula||/^\s*[\d.\-\s]+\s*$/.test(term))&&!documentDigits){
       throw new Error("La cédula debe contener al menos un dígito.");
     }
-
-    // InfoMIRA es un visualizador: la ficha personal siempre procede de personas.
-    // Buscar primero en la fuente central y después resolver sus relaciones de red.
+    if(!term)return [];
+    const personSelect="id,cedula,cedula_normalizada,nombres,apellidos,telefono,correo,info_mira,puesto_votacion,mesa_votacion,edad,tipo_participacion,activo,inactivo";
     let people=[];
-    if (documentDigits) {
+    if(documentDigits){
+      people=await miraRequest("personas",{query:qs({select:personSelect,cedula_normalizada:"eq."+documentDigits,limit:"100"})});
+    }else{
+      const tokens=term.replace(/[,*()"]/g," ").replace(/\s+/g," ").trim().slice(0,80).split(" ").filter(Boolean);
+      if(!tokens.length)return [];
       people=await miraRequest("personas",{query:qs({
-        select:"id,cedula,cedula_normalizada,nombres,apellidos,telefono,correo,info_mira,puesto_votacion,mesa_votacion,edad,tipo_participacion,activo,inactivo",
-        cedula_normalizada:"eq."+documentDigits,
-        limit:"100"
-      })});
-    } else if (term) {
-      const safeTerm=term.replace(/[,*()\\"]/g," ").replace(/\s+/g," ").trim().slice(0,80);
-      const tokens=safeTerm.split(" ").filter(Boolean);
-      if (!tokens.length) return [];
-      const params={
-        select:"id,cedula,cedula_normalizada,nombres,apellidos,telefono,correo,info_mira,puesto_votacion,mesa_votacion,edad,tipo_participacion,activo,inactivo",
+        select:personSelect,
         and:"("+tokens.map(token=>"or(nombres.ilike.*"+token+"*,apellidos.ilike.*"+token+"*)").join(",")+")",
         limit:"100"
-      };
-      people=await miraRequest("personas",{query:qs(params)});
-    } else {
-      return [];
+      })});
     }
-
     const ids=[...new Set((people||[]).map(person=>person.id).filter(Boolean))];
-    if (!ids.length) return [];
-    const pageIds=ids.slice(safeOffset,safeOffset+safeLimit);
-    if (!pageIds.length) return [];
-    const rows=await miraRequest("infomira_red",{query:qs({
-      select:"id,fila_origen,barrio,estado_original,cuidador_nombre,puesto_votacion,puesto_original,mesa_votacion,asistencia,persona_id,personas!inner(id,cedula,cedula_normalizada,nombres,apellidos,telefono,correo,info_mira,puesto_votacion,mesa_votacion,edad,tipo_participacion,activo,inactivo)",
-      persona_id:"in.("+pageIds.join(",")+")",
-      order:"fila_origen.asc,id.asc",
-      limit:String(safeLimit)
-    })});
-    return rows || [];
+    const redSelect="id,fila_origen,nombre_original,cedula_original,telefono,barrio,estado_original,cuidador_nombre,puesto_votacion,puesto_original,mesa_votacion,movilidad,asistencia,persona_id,personas(id,cedula,cedula_normalizada,nombres,apellidos,telefono,correo,info_mira,puesto_votacion,mesa_votacion,edad,tipo_participacion,activo,inactivo)";
+    const requests=[];
+    if(ids.length){
+      requests.push(miraRequest("infomira_red",{query:qs({
+        select:redSelect,persona_id:"in.("+ids.join(",")+")",
+        order:"fila_origen.asc,id.asc",limit:"1000"
+      })}));
+    }
+    const safeTerm=term.replace(/[,*()"]/g," ").replace(/\s+/g," ").trim().slice(0,80);
+    if(safeTerm){
+      let directFilter;
+      if(documentDigits)directFilter="(cedula_original.eq."+documentDigits+")";
+      else{
+        const tokens=safeTerm.split(" ").filter(Boolean);
+        directFilter="and("+tokens.map(token=>"or(cuidador_nombre.ilike.*"+token+"*,nombre_original.ilike.*"+token+"*)").join(",")+")";
+      }
+      const directParams={select:redSelect,order:"fila_origen.asc,id.asc",limit:"1000"};
+      if(documentDigits)directParams.or=directFilter;
+      else directParams.and=directFilter;
+      requests.push(miraRequest("infomira_red",{query:qs(directParams)}));
+    }
+    const resultSets=await Promise.all(requests);
+    const unique=new Map();
+    resultSets.flat().forEach(row=>{if(row?.id)unique.set(row.id,row);});
+    const rows=[...unique.values()].sort((a,b)=>(a.fila_origen??0)-(b.fila_origen??0));
+    return rows.slice(safeOffset,safeOffset+safeLimit);
   },
   async listPendingPeople({limit=25,offset=0}={}) {
     const safeLimit=Math.min(Math.max(Number(limit)||25,1),100);
@@ -274,8 +280,8 @@ export const MIRA_DATA = {
     return miraRequest("asistencias",{method:"POST",body:payload});
   },
   updateAttendance(id,payload) { return miraRequest("asistencias",{method:"PATCH",query:qs({id:`eq.${id}`}),body:payload}); },
-  deleteAttendance(id) { return miraRequest("asistencias",{method:"DELETE",query:qs({id:`eq.${id}`}),prefer:"return=representation",requireRows:true}); },
-  annulAttendance(id,reason) { if(!id||!reason?.trim()) throw new Error("Selecciona la asistencia e indica el motivo."); return miraRequest("rpc/annul_attendance",{method:"POST",body:{p_attendance_id:id,p_reason:reason.trim()},requireRows:true}); },
+  deleteAttendance(id) { if(!id) throw new Error("Identificador de asistencia no válido."); return miraRequest("rpc/delete_attendance",{method:"POST",body:{p_attendance_id:id},requireRows:true}); },
+  annulAttendance(id) { return this.deleteAttendance(id); },
   async listPeopleAudit({personaId,limit=100,offset=0}={}) { const params={select:"*",order:"created_at.desc",limit:String(Math.min(Math.max(limit,1),500)),offset:String(Math.max(0,Number(offset)||0))}; if(personaId) params.persona_id=`eq.${personaId}`; return miraRequest("personas_change_audit",{query:qs(params)}); },
   async listAttendanceAudit({attendanceId,limit=100,offset=0}={}) { const params={select:"*",order:"created_at.desc",limit:String(Math.min(Math.max(limit,1),500)),offset:String(Math.max(0,Number(offset)||0))}; if(attendanceId) params.asistencia_id=`eq.${attendanceId}`; return miraRequest("asistencias_change_audit",{query:qs(params)}); },
   async listActivitiesAudit({activityId,limit=100,offset=0}={}) { const params={select:"*",order:"created_at.desc",limit:String(Math.min(Math.max(limit,1),500)),offset:String(Math.max(0,Number(offset)||0))}; if(activityId) params.actividad_id=`eq.${activityId}`; return miraRequest("actividades_change_audit",{query:qs(params)}); },
