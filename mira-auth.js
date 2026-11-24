@@ -232,7 +232,18 @@ async function loginWithNeon() {
     await withAuthTimeout(establishAuthenticatedUser(result?.data?.user),"validación de la cuenta");
     const error=document.getElementById("loginError");
     if(error) error.style.display="none";
-    const pass=document.getElementById("password"); if(pass) pass.value="";
+    const mobileLogin = window.matchMedia("(max-width: 600px)").matches;
+    const interfaceReady = Boolean(window.MIRA_CURRENT_USER?.authUserId) &&
+      (!mobileLogin || document.body.classList.contains("pmu-neomorphic"));
+    // No borrar la contraseña si Neon aceptó el login pero la interfaz móvil
+    // todavía no terminó de abrir el Centro de Operaciones.
+    if(interfaceReady) {
+      const pass=document.getElementById("password");
+      if(pass) pass.value="";
+    } else {
+      showLoginError("La cuenta fue autenticada, pero la interfaz todavía no terminó de abrir. Conservamos la contraseña; intenta nuevamente en unos segundos.");
+      scheduleSessionRestore();
+    }
   } catch(error) {
     if(isDefinitiveAuthorizationFailure(error)){
       clearAuthenticatedState();
