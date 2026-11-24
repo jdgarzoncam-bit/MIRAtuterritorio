@@ -7961,3 +7961,24 @@ input,select,textarea,button { max-width:100%; }
   .mobile-ops-pagination { padding-bottom: 10px !important; }
   .activities-header h1, .activities-header h2 { font-size: 1.35rem !important; }
 }
+
+
+/* MIRA MOBILE FLYOUT ANCHOR — mantiene cada panel junto al módulo seleccionado. */
+@media (max-width: 600px) {
+  #mainSidebar .neo-tactile-sidebar > .mira-module-flyout {
+    max-height: min(76dvh, 720px) !important;
+    overflow: hidden !important;
+    transform-origin: left center !important;
+  }
+  #mainSidebar .neo-tactile-sidebar > .mira-module-flyout > .dropdown-content {
+    max-height: min(76dvh, 720px) !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain !important;
+  }
+  #mainSidebar .neo-tactile-sidebar > .mira-module-flyout .mira-filter-box,
+  #mainSidebar .neo-tactile-sidebar > .mira-module-flyout .pqrs-sidebar-content {
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+  input, select, textarea { font-size: 16px !important; }
+}
