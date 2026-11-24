@@ -1,6 +1,6 @@
 // MIRA TU TERRITORIO — Control Administrativo: permisos granulares.
 const MODULE_ACTIONS = {
-  actividades:[["view","Consulta"],["create","Crear"],["edit","Editar"],["annul","Anular asistencia"],["export","Exportar Excel"],["delete","Eliminar"]],
+  actividades:[["view","Consulta"],["create","Crear"],["edit","Editar"],["annul","Eliminar registro de asistencia"],["export","Exportar Excel"],["delete","Eliminar"]],
   personas:[["view","Consultar personas"],["create","Crear / Incorporar personas"],["edit","Completar / editar fichas"],["export","Exportar fichas"]],
   base_datos_general:[["view","Consultar bases autorizadas"],["export","Exportar información"]],
   concejal:[["view","Consulta"],["create","Crear"],["edit","Editar"],["delete","Eliminar"]],
