@@ -1259,6 +1259,7 @@ function activarPMUAutenticado() {
     } catch (err) {
         console.error('[MIRA TU TERRITORIO] Error al inicializar el mapa tras autenticar:', err);
     }
+    window.dispatchEvent(new Event('mira:pmu-ready'));
 }
 
 // La autenticación y autorización se gestionan exclusivamente mediante Neon Auth.
