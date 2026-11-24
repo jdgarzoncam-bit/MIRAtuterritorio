@@ -8102,3 +8102,23 @@ input,select,textarea,button { max-width:100%; }
     transition-duration: .01ms !important; animation-duration: .01ms !important;
   }
 }
+
+
+/* MIRA QA FINAL — mobile operations: visible exit, safe return and floating map */
+@media (max-width:600px) {
+  .mobile-ops-header-actions { display:flex; align-items:center; gap:9px; flex:0 0 auto; }
+  .mobile-ops-exit { display:inline-flex !important; align-items:center; justify-content:center; gap:5px; min-height:34px; padding:0 11px; border-radius:11px; color:#eef5ff; background:rgba(9,24,58,.64); border:1px solid rgba(177,207,255,.3); font-size:.68rem; font-weight:800; -webkit-backdrop-filter:blur(16px); backdrop-filter:blur(16px); }
+  .mobile-ops-exit span { color:#8fdcff; font-size:.85rem; }
+  .mobile-ops-back { position:fixed !important; top:max(10px,env(safe-area-inset-top,0px)) !important; left:12px !important; z-index:6500 !important; }
+  .mobile-ops-pagination { gap:9px !important; }
+  .mobile-ops-pagination button,.mobile-ops-pagination button.is-active { appearance:none !important; display:block !important; flex:0 0 7px !important; width:7px !important; min-width:7px !important; max-width:7px !important; height:7px !important; min-height:7px !important; max-height:7px !important; margin:0 !important; padding:0 !important; border:0 !important; border-radius:50% !important; line-height:0 !important; font-size:0 !important; transform:none !important; background:rgba(180,205,255,.42) !important; }
+  .mobile-ops-pagination button.is-active { flex-basis:9px !important; width:9px !important; min-width:9px !important; max-width:9px !important; height:9px !important; min-height:9px !important; max-height:9px !important; background:#78a4ff !important; box-shadow:0 0 0 3px rgba(120,164,255,.16),0 0 12px rgba(120,164,255,.7) !important; }
+  #app-container.mobile-operations-map-panel-active { position:fixed !important; inset:0 !important; width:100vw !important; height:100dvh !important; overflow:hidden !important; isolation:isolate !important; }
+  #app-container.mobile-operations-map-panel-active #map { position:absolute !important; inset:0 !important; width:100% !important; height:100% !important; min-height:100% !important; max-height:none !important; z-index:1 !important; visibility:visible !important; }
+  #app-container.mobile-operations-map-panel-active #mainSidebar { display:flex !important; position:absolute !important; left:10px !important; right:10px !important; top:auto !important; bottom:max(10px,env(safe-area-inset-bottom,0px)) !important; width:auto !important; height:min(38dvh,350px) !important; min-height:230px !important; max-height:min(38dvh,350px) !important; padding:0 !important; margin:0 !important; overflow:hidden !important; background:transparent !important; z-index:1800 !important; }
+  #app-container.mobile-operations-map-panel-active #mainSidebar > .neo-tactile-sidebar { display:flex !important; width:100% !important; height:100% !important; min-height:0 !important; max-height:100% !important; overflow:hidden !important; border-radius:22px !important; border:1px solid rgba(160,205,255,.34) !important; background:linear-gradient(145deg,rgba(12,35,65,.72),rgba(4,17,39,.79)) !important; box-shadow:0 16px 44px rgba(0,0,0,.34),inset 0 1px 0 rgba(255,255,255,.16) !important; -webkit-backdrop-filter:blur(26px) saturate(155%) !important; backdrop-filter:blur(26px) saturate(155%) !important; }
+  #app-container.mobile-operations-map-panel-active #mainSidebar .sidebar-content { overflow-y:auto !important; min-height:0 !important; background:transparent !important; }
+  .mobile-ops-card { border:1px solid rgba(190,220,255,.28) !important; background:radial-gradient(ellipse at 78% 18%,rgba(133,180,255,.27),transparent 48%),linear-gradient(145deg,rgba(40,88,164,.84),rgba(8,27,72,.95)) !important; -webkit-backdrop-filter:blur(24px) saturate(150%) !important; backdrop-filter:blur(24px) saturate(150%) !important; }
+  .mobile-ops-card.is-active { border-left:3px solid #48e8f2 !important; box-shadow:0 28px 62px rgba(0,0,0,.42),0 0 30px rgba(60,145,255,.22),inset 0 1px 0 rgba(255,255,255,.26) !important; }
+  .activity-load-warning { margin:0 0 12px; padding:10px 12px; border:1px solid rgba(245,190,80,.38); border-radius:12px; background:rgba(120,76,15,.18); color:#f7d99b; font-size:.78rem; line-height:1.4; overflow-wrap:anywhere; }
+}
