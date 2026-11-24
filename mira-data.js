@@ -84,7 +84,7 @@ function assertTestigosEnabled() {
 }
 
 const EXPLORER_DATASETS = Object.freeze([
-  {key:"personas",label:"Personas",table:"personas",module:"personas",select:"id,cedula,cedula_normalizada,nombres,apellidos,telefono,correo,barrio,puesto_votacion,mesa_votacion,activo,inactivo,datos_pendientes,created_at,updated_at",search:["cedula","cedula_normalizada","nombres","apellidos","barrio"],columns:[["cedula","Cédula"],["nombres","Nombres"],["apellidos","Apellidos"],["telefono","Teléfono"],["correo","Correo"],["barrio","Barrio"],["activo","No archivado"],["inactivo","Inactivo"],["datos_pendientes","Datos pendientes"]]},
+  {key:"personas",label:"Personas",table:"personas",module:"personas",select:"id,cedula,cedula_normalizada,nombres,apellidos,telefono,correo,barrio,puesto_votacion,mesa_votacion,info_mira,tiene_app_infomira,activo,inactivo,datos_pendientes,created_at,updated_at",search:["cedula","cedula_normalizada","nombres","apellidos","barrio"],columns:[["cedula","Cédula"],["nombres","Nombres"],["apellidos","Apellidos"],["telefono","Teléfono"],["correo","Correo"],["barrio","Barrio"],["info_mira","Inscrito a InfoMIRA"],["tiene_app_infomira","Tiene la App InfoMIRA"],["activo","No archivado"],["inactivo","Inactivo"],["datos_pendientes","Datos pendientes"]]},
   {key:"actividades",label:"Actividades",table:"actividades",module:"actividades",select:"id,nombre,fecha,lugar,estado,created_at",search:["nombre","lugar","estado"],columns:[["nombre","Actividad"],["fecha","Fecha"],["lugar","Lugar"],["estado","Estado"],["created_at","Creación"]]},
   {key:"asistencias",label:"Asistencias",table:"asistencias",module:"actividades",select:"id,persona_id,actividad_id,fecha_registro,estado,motivo_anulacion",search:["estado","motivo_anulacion"],columns:[["persona_id","Persona ID"],["actividad_id","Actividad ID"],["fecha_registro","Fecha de registro"],["estado","Estado"],["motivo_anulacion","Motivo de anulación"]]},
   {key:"pqrs",label:"PQRS",table:"pqrs",module:"pqrs",select:"id,tipo,modulo_key,asunto,descripcion,estado,created_at,updated_at",search:["tipo","modulo_key","asunto","descripcion","estado"],columns:[["tipo","Tipo"],["modulo_key","Módulo"],["asunto","Asunto"],["descripcion","Descripción"],["estado","Estado"],["created_at","Radicación"]]},
@@ -129,7 +129,7 @@ export const MIRA_DATA = {
       throw new Error("La cédula debe contener al menos un dígito.");
     }
     if(!term)return [];
-    const personSelect="id,cedula,cedula_normalizada,nombres,apellidos,telefono,correo,info_mira,puesto_votacion,mesa_votacion,edad,tipo_participacion,activo,inactivo";
+    const personSelect="id,cedula,cedula_normalizada,nombres,apellidos,telefono,correo,info_mira,tiene_app_infomira,puesto_votacion,mesa_votacion,edad,tipo_participacion,activo,inactivo";
     let people=[];
     if(documentDigits){
       people=await miraRequest("personas",{query:qs({select:personSelect,cedula_normalizada:"eq."+documentDigits,limit:"100"})});
@@ -144,7 +144,7 @@ export const MIRA_DATA = {
       people=await miraRequest("personas",{query:qs(params)});
     }
     const ids=[...new Set((people||[]).map(person=>person.id).filter(Boolean))];
-    const redSelect="id,fila_origen,nombre_original,cedula_original,telefono,barrio,estado_original,cuidador_nombre,puesto_votacion,puesto_original,mesa_votacion,movilidad,asistencia,persona_id,personas(id,cedula,cedula_normalizada,nombres,apellidos,telefono,correo,info_mira,puesto_votacion,mesa_votacion,edad,tipo_participacion,activo,inactivo)";
+    const redSelect="id,fila_origen,nombre_original,cedula_original,telefono,barrio,estado_original,cuidador_nombre,puesto_votacion,puesto_original,mesa_votacion,movilidad,asistencia,persona_id,personas(id,cedula,cedula_normalizada,nombres,apellidos,telefono,correo,info_mira,tiene_app_infomira,puesto_votacion,mesa_votacion,edad,tipo_participacion,activo,inactivo)";
     const requests=[];
     if(ids.length){
       requests.push(miraRequest("infomira_red",{query:qs({
@@ -184,7 +184,7 @@ export const MIRA_DATA = {
     return rows[0];
   },
   async listPeople({cedula="", search="", limit=100, offset=0, tipoParticipacion=""}={}) {
-    const params = {select:"id,cedula,cedula_normalizada,nombres,apellidos,telefono,correo,info_mira,barrio,puesto_votacion,mesa_votacion,edad,tipo_participacion,observaciones,activo,inactivo,datos_pendientes,fuente_registro,created_at,updated_at",order:"updated_at.desc",limit:String(Math.min(Math.max(limit,1),1000)),offset:String(Math.max(0,Number(offset)||0))};
+    const params = {select:"id,cedula,cedula_normalizada,nombres,apellidos,telefono,correo,info_mira,tiene_app_infomira,barrio,puesto_votacion,mesa_votacion,edad,tipo_participacion,observaciones,activo,inactivo,datos_pendientes,fuente_registro,created_at,updated_at",order:"updated_at.desc",limit:String(Math.min(Math.max(limit,1),1000)),offset:String(Math.max(0,Number(offset)||0))};
     if (tipoParticipacion) params.tipo_participacion = `eq.${tipoParticipacion}`;
     if (cedula) params.cedula_normalizada = `eq.${cleanCedula(cedula)}`;
     else if (search.trim()) {
