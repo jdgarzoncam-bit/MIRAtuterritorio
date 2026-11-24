@@ -43,8 +43,8 @@ test("people records include enrollment and app ownership as independent nullabl
   assert.match(data, /info_mira,tiene_app_infomira/);
   assert.match(data, /\[\"info_mira\",\"Inscrito a InfoMIRA\"\]/);
   assert.match(data, /\[\"tiene_app_infomira\",\"Tiene la App InfoMIRA\"\]/);
-  assert.match(app, /\[\"info_mira\",\"Inscrito a InfoMIRA\",\"boolean\",false\]/);
-  assert.match(app, /\[\"tiene_app_infomira\",\"Tiene la App InfoMIRA\",\"boolean\",false\]/);
+  assert.match(app, /\[\"info_mira\",\"Inscrito a InfoMIRA\",\"boolean\",true\]/);
+  assert.match(app, /\[\"tiene_app_infomira\",\"Tiene la App InfoMIRA\",\"boolean\",true\]/);
   assert.match(app, /tiene_app_infomira/);
 });
 
