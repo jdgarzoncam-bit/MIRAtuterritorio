@@ -43,6 +43,7 @@ test("el retorno a módulos restaura el panel después de volver desde el portal
   assert.match(html, /index\.html\?openModules=1/);
   assert.match(quick, /get\("openModules"\) === "1"/);
   assert.match(quick, /addEventListener\("pageshow", restoreModulesFromNavigation\)/);
+  assert.match(quick, /miraReturnToModules:true/);
   assert.match(quick, /history\.replaceState\(\{miraReturnToModules:true\}/);
   assert.match(quick, /menu\.classList\.add\("hidden"\)/);
   assert.doesNotMatch(quick, /label\.textContent = open \? "Inicio"/);
