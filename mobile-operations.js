@@ -67,7 +67,7 @@
   <div class="mobile-ops-pagination" id="mobileOpsPagination">${cards.map((_,i)=>`<button type="button" data-index="${i}" aria-label="Ir al módulo ${i+1}"></button>`).join('')}</div><footer class="mobile-ops-footer"><span>Desliza para cambiar de módulo</span></footer>`;
   app.insertBefore(home,app.firstChild);
   let back=document.getElementById('mobileOpsBack');
-  if(!back){back=document.createElement('button');back.id='mobileOpsBack';back.className='mobile-ops-back';back.type='button';back.innerHTML='<span aria-hidden="true">←</span><b class="sr-only">Volver a módulos</b>';back.setAttribute('aria-label','Volver al Centro de Operaciones');document.body.appendChild(back);}
+  if(!back){back=document.createElement('button');back.id='mobileOpsBack';back.className='mobile-ops-back';back.type='button';back.innerHTML='<span aria-hidden="true">☰</span><b>Módulos</b>';back.setAttribute('aria-label','Volver al menú de módulos del Centro de Operaciones');document.body.appendChild(back);}
   const carousel=home.querySelector('#mobileOpsCarousel'),els=[...carousel.querySelectorAll('.mobile-ops-card')],dots=[...home.querySelectorAll('#mobileOpsPagination button')];
   const mobile=()=>matchMedia(MQ).matches;let active=0,timer=0,workspaceMode=null,historyStateActive=false,userExitedOperations=false;
   const setActive=i=>{
@@ -179,7 +179,7 @@
   const restorePublicLanding=()=>{
    // La restauración inicial de Neon puede emitir mira:signed-out antes de
    // que el usuario envíe el formulario. No cancelar la intención de login.
-   if(document.body.classList.contains('admin-login-active') && !window.MIRA_CURRENT_USER)return;
+   if(document.body.classList.contains('admin-login-active'))return;
    mobileLoginRequested=false;
    window.MIRA_MOBILE_LOGIN_REQUESTED=false;
    userExitedOperations=true;
@@ -191,11 +191,18 @@
    document.getElementById('landing-hero-overlay')?.style.setProperty('display','flex');
    document.getElementById('landingHeaderControls')?.style.setProperty('display','flex');
   };
-  document.getElementById('landingLoginBtn')?.addEventListener('click',()=>{if(mobile()){mobileLoginRequested=true;window.MIRA_MOBILE_LOGIN_REQUESTED=true;}});
+  const markMobileLoginRequested=()=>{if(!mobile())return;mobileLoginRequested=true;window.MIRA_MOBILE_LOGIN_REQUESTED=true;};
+  document.getElementById('landingLoginBtn')?.addEventListener('click',markMobileLoginRequested);
+  window.addEventListener('mira:mobile-login-requested',markMobileLoginRequested);
    document.getElementById('cancelAdminInlineBtn')?.addEventListener('click',()=>{if(mobile()&&!window.MIRA_CURRENT_USER){mobileLoginRequested=false;window.MIRA_MOBILE_LOGIN_REQUESTED=false;}});
   window.addEventListener('mira:authenticated',()=>requestAnimationFrame(()=>{
    if(mobile()&&!mobileLoginRequested){restorePublicLanding();return;}
    showOperationsHome();
+  }));
+  // La autenticación se emite antes de activar el PMU; este evento confirma
+  // que el contenedor ya está visible y permite abrir el menú sin carreras.
+  window.addEventListener('mira:pmu-ready',()=>requestAnimationFrame(()=>{
+   if(mobile()&&mobileLoginRequested&&window.MIRA_CURRENT_USER)showOperationsHome();
   }));
   window.addEventListener('mira:signed-out',restorePublicLanding);
   window.addEventListener('pageshow',()=>{
