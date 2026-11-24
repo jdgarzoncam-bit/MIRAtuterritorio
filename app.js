@@ -442,7 +442,10 @@ function abrirLoginAdmin() {
     }
     // Registrar intención antes de que Neon restaure o emita eventos de sesión.
     // Evita que una restauración anónima cancele el acceso iniciado desde iPhone.
-    if (window.matchMedia('(max-width: 600px)').matches) window.MIRA_MOBILE_LOGIN_REQUESTED = true;
+    if (window.matchMedia('(max-width: 600px)').matches) {
+        window.MIRA_MOBILE_LOGIN_REQUESTED = true;
+        window.dispatchEvent(new Event('mira:mobile-login-requested'));
+    }
     // El acceso se presenta como una vista modal centrada que cubre toda la pantalla.
     adminCardContainer.style.display = '';
     adminLoginBackdrop.style.display = '';
