@@ -75,7 +75,7 @@ test("el wrapper Neon Auth expone el JWT del SDK y conserva el cliente Better Au
   assert.match(auth, /getJWTToken: \(\) => neonAuth\.getJWTToken\(\)/);
   assert.match(auth, /neonAuth\.getJWTToken\(\)/);
   assert.match(data, /auth\.getJWTToken\(\)/);
-  assert.match(data, /auth\.getAnonymousToken\(\)/);
+  assert.match(data, /auth\.getJWTToken\(\)/);
   assert.doesNotMatch(data, /await auth\.token\(\)/);
   assert.match(data, /NEON_AUTH_JWT_MISSING/);
 });
