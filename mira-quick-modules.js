@@ -27,6 +27,11 @@ if (!menu || !toggle || !panel || !pinGate || !pinInput || !pinSubmit || !regist
     pinStatus.hidden = !message;
   }
 
+  function syncAuthorization() {
+    authorized = Boolean(sessionStorage.getItem(TOKEN_KEY));
+    renderAuthorization();
+  }
+
   function renderAuthorization() {
     registerButton.disabled = !authorized;
     registerButton.setAttribute("aria-disabled", String(!authorized));
@@ -142,4 +147,7 @@ if (!menu || !toggle || !panel || !pinGate || !pinInput || !pinSubmit || !regist
   });
 
   renderAuthorization();
+  window.addEventListener("pageshow", syncAuthorization);
+  window.addEventListener("focus", syncAuthorization);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) syncAuthorization(); });
 }
