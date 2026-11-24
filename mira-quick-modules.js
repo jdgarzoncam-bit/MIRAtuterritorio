@@ -1,4 +1,4 @@
-import { MIRA_DATA } from "./mira-data.js?v=20261124-infomira-app-field-2";
+import { MIRA_DATA } from "./mira-data.js?v=20261124-infomira-app-field-3";
 
 const TOKEN_KEY = "miraParticipantAccessToken";
 const TOKEN_EXPIRY_KEY = "miraParticipantAccessTokenExpiresAt";
