@@ -1,7 +1,9 @@
-// Reutiliza exactamente el cliente de Neon Auth de la plataforma.
-// No crear otra identidad anónima: el token del PIN central está vinculado a esta sesión.
-import "./mira-auth.js?v=20261124-single-pin-5";
-import { MIRA_DATA } from "./mira-data.js?v=20261124-single-pin-5";
+// Reutiliza el JWT anónimo exacto con el que se validó el PIN en Módulos.
+// No crear una segunda identidad de Neon Auth en esta página.
+import { MIRA_DATA } from "./mira-data.js?v=20261124-single-pin-6";
+window.MIRA_AUTH = {
+  getJWTToken: () => sessionStorage.getItem("miraParticipantAuthJwt")
+};
 
 const $ = id => document.getElementById(id);
 const cleanCedula = value => String(value || "").replace(/\D/g, "");
@@ -61,6 +63,7 @@ function lockModule(message = "") {
   accessToken = null;
   sessionStorage.removeItem(MODULE_ACCESS_TOKEN_KEY);
   sessionStorage.removeItem(MODULE_ACCESS_TOKEN_EXPIRY_KEY);
+  sessionStorage.removeItem("miraParticipantAuthJwt");
   currentPersonBlocked = false;
   currentPersonAlreadyRegistered = false;
   personLookupCompleted = false;
