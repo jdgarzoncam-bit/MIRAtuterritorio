@@ -264,7 +264,9 @@ test("Reportes ciudadanos utiliza el cliente central y no una segunda instancia 
 test("el portal independiente de Actividades usa el wrapper oficial de Neon Auth y la autorización PIN", () => {
   assert.match(activityPortalSource, /getJWTToken: \(\) => sessionStorage\.getItem\("miraParticipantAuthJwt"\)/);
   assert.match(activityPortalSource, /sessionStorage\.getItem\("miraParticipantAuthJwt"\)/);
-  assert.match(activityPortalSource, /MIRA_DATA\.verifyParticipantAccessPin\(verifier\)/);
+  const quickSource = fs.readFileSync(path.join(__dirname, "..", "mira-quick-modules.js"), "utf8");
+  assert.match(quickSource, /MIRA_DATA\.verifyParticipantAccessPin\(verifier\)/);
+  assert.doesNotMatch(activityPortalSource, /verifyParticipantAccessPin/);
   assert.doesNotMatch(activityPortalSource, /createAuthClient|auth\.token\(\)|"witness"/);
 });
 
