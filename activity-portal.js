@@ -72,6 +72,11 @@ async function refreshActivities() {
   const select = $("pubActivity");
   availability.hidden = false;
   availability.textContent = "Consultando actividades disponibles…";
+  $("pubStatus").style.display = "none";
+  const addRetry = () => {
+    if (availability.querySelector(".activity-public-retry")) return;
+    addRetry();
+  };
   select.disabled = true;
   syncLookupButton();
   try {
@@ -92,7 +97,8 @@ async function refreshActivities() {
       `<option value="${String(a.activity_id)}">${String(a.activity_name)} · ${String(a.activity_date).slice(0,10)}${a.activity_place ? " · " + String(a.activity_place) : ""}</option>`
     ).join("");
     if (!activities.length) {
-      availability.textContent = "No hay actividades abiertas para inscripción. Si sabes que existe una actividad activa, pulsa Reintentar.";
+      availability.textContent = "No hay actividades abiertas para inscripción. Si sabes que existe una actividad activa, puedes volver a consultar.";
+      addRetry();
       setAvailable(false);
       return;
     }
