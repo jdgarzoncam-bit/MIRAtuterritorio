@@ -579,7 +579,7 @@ async function loadActivitiesFromNeon({force=false}={}){
     else activityPermissions=effectiveActivityPermissions(await window.MIRA_DATA.listMyModulePermissions());
     if(!activityPermissions.has("view"))throw new Error("No tienes permiso de Consulta en Actividades.");
     const loadAllPages=async fetchPage=>{
-      const pageSize=1000,all=[];
+      const pageSize=100,all=[];
       for(let offset=0;offset<100000;offset+=pageSize){
         const page=await fetchPage({limit:pageSize,offset});
         if(!Array.isArray(page))throw new Error("Neon devolvió una respuesta de paginación inválida.");
@@ -614,6 +614,10 @@ async function loadActivitiesFromNeon({force=false}={}){
         }
       }catch(error){warnings.push('No se pudieron consultar las fichas vinculadas a las asistencias: '+(error?.message||'error de consulta'));}
     }
+    const expectedPersonIds=new Set(attendanceRows.map(row=>row.persona_id).filter(Boolean));
+    const returnedPersonIds=new Set(peopleRows.map(person=>person.id));
+    const missingPeopleCount=[...expectedPersonIds].filter(id=>!returnedPersonIds.has(id)).length;
+    if(missingPeopleCount)warnings.push('No se recuperaron '+missingPeopleCount+' fichas personales de '+expectedPersonIds.size+' asistencias. Revisa permisos o paginación.');
     activitiesLoadWarning=warnings.join(' · ');
     activitiesState.people=peopleRows.map(p=>{
       const parsed=splitLegacyPersonName(p.nombres,p.apellidos);
@@ -1128,12 +1132,12 @@ function renderActivityTable(){
  document.getElementById("liveActivityCount").textContent="Mostrando "+rows.length+" de "+activitiesState.attendances.length+" registros";
  body.innerHTML=rows.length?rows.map(({a,p,act})=>{
   const actions=[canEdit?'<button class="activity-row-btn" data-edit="'+escapeActivityHtml(a.id)+'" type="button">Editar</button>':"",canDelete?'<button class="activity-row-btn activity-manage-delete" data-delete-attendance="'+escapeActivityHtml(a.id)+'" type="button">Eliminar</button>':""].filter(Boolean).join(" ");
-  return '<tr><td>'+escapeActivityHtml((p.names||"")+" "+(p.surnames||""))+'</td><td>'+escapeActivityHtml(p.cedula||"")+'</td><td>'+escapeActivityHtml(act.name||"—")+'</td><td>'+(p.infoMira==="si"?"Sí":"No")+'</td><td>'+(p.hasApp==="si"?"Sí":p.hasApp==="no"?"No":"—")+'</td><td>'+(p.type==="externo"?"Externo":p.type==="interno"?"Interno":"—")+'</td><td>'+(a.createdAt?new Date(a.createdAt).toLocaleString("es-CO"):"")+'</td><td>'+(actions||"—")+'</td></tr>';
+  return '<tr><td>'+escapeActivityHtml((p.names||"")+" "+(p.surnames||""))+'</td><td>'+escapeActivityHtml(p.cedula||"")+'</td><td>'+escapeActivityHtml(act.name||"—")+'</td><td>'+(p.infoMira==="si"?"Sí":p.infoMira==="no"?"No":"—")+'</td><td>'+(p.hasApp==="si"?"Sí":p.hasApp==="no"?"No":"—")+'</td><td>'+(p.type==="externo"?"Externo":p.type==="interno"?"Interno":"—")+'</td><td>'+(a.createdAt?new Date(a.createdAt).toLocaleString("es-CO"):"")+'</td><td>'+(actions||"—")+'</td></tr>';
  }).join(""):'<tr><td colspan="8">No hay registros recientes para mostrar.</td></tr>';
  body.querySelectorAll("[data-edit]").forEach(b=>b.addEventListener("click",()=>editAttendance(b.dataset.edit)));
  body.querySelectorAll("[data-delete-attendance]").forEach(b=>b.addEventListener("click",()=>deleteActivityAttendance(b.dataset.deleteAttendance)));
 }
-function exportActivityExcel(activityId){if(!canManageActivities("view")||!canManageActivities("export")){alert('No tienes autorización para exportar registros. Solicita el permiso Exportar Excel al administrador.');return;}if(!window.XLSX){alert('No se pudo cargar la herramienta de Excel.');return;}const rows=activityRows(activityId).map(({a,p,act})=>({'Actividad':act.name||'','Fecha actividad':act.date||'','Lugar':act.place||'','Cédula':p.cedula||'','Nombres':p.names||'','Apellidos':p.surnames||'','Teléfono':p.phone||'','Inscrito a InfoMIRA':p.infoMira==='si'?'Sí':'No','Tiene la App InfoMIRA':p.hasApp==='si'?'Sí':p.hasApp==='no'?'No':'','Fecha registro':a.createdAt||''}));const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),'Registros');const act=activitiesState.activities.find(a=>a.id===activityId);XLSX.writeFile(wb,(act?act.name:'Mira_Tu_Territorio').replace(/[^a-z0-9_-]/gi,'_')+'.xlsx');}
+function exportActivityExcel(activityId){if(!canManageActivities("view")||!canManageActivities("export")){alert('No tienes autorización para exportar registros. Solicita el permiso Exportar Excel al administrador.');return;}if(!window.XLSX){alert('No se pudo cargar la herramienta de Excel.');return;}const rows=activityRows(activityId).map(({a,p,act})=>({'Actividad':act.name||'','Fecha actividad':act.date||'','Lugar':act.place||'','Cédula':p.cedula||'','Nombres':p.names||'','Apellidos':p.surnames||'','Teléfono':p.phone||'','Inscrito a InfoMIRA':p.infoMira==='si'?'Sí':p.infoMira==='no'?'No':'','Tiene la App InfoMIRA':p.hasApp==='si'?'Sí':p.hasApp==='no'?'No':'','Tipo de participante':p.type==='interno'?'Interno':p.type==='externo'?'Externo':'','Fecha registro':a.createdAt||''}));const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),'Registros');const act=activitiesState.activities.find(a=>a.id===activityId);XLSX.writeFile(wb,(act?act.name:'Mira_Tu_Territorio').replace(/[^a-z0-9_-]/gi,'_')+'.xlsx');}
 document.getElementById('exportSingleActivityBtn').addEventListener('click',()=>exportActivityExcel(detailActivityId));
 document.getElementById('exportSingleActivityBtn').hidden=true;
 function openActivityFolder(id){
@@ -1145,8 +1149,9 @@ function openActivityFolder(id){
  const body=document.getElementById("activityDetailBody");
  body.innerHTML=rows.length?rows.map(({a,p})=>{
   const actions=[canEdit?'<button class="activity-row-btn" data-edit="'+escapeActivityHtml(a.id)+'" type="button">Editar</button>':"",canDelete?'<button class="activity-row-btn activity-manage-delete" data-delete-attendance="'+escapeActivityHtml(a.id)+'" type="button">Eliminar</button>':""].filter(Boolean).join(" ");
-  return '<tr><td>'+escapeActivityHtml((p.names||"")+" "+(p.surnames||""))+'</td><td>'+escapeActivityHtml(p.cedula||"")+'</td><td>'+escapeActivityHtml(p.phone||"—")+'</td><td>'+(p.infoMira==="si"?"Sí":"No")+'</td><td>'+(p.hasApp==="si"?"Sí":p.hasApp==="no"?"No":"—")+'</td><td>'+(a.createdAt?new Date(a.createdAt).toLocaleString("es-CO"):"")+'</td><td>'+(actions||"—")+'</td></tr>';
- }).join(""):'<tr><td colspan="7">Esta actividad aún no tiene registros.</td></tr>';
+  const personName=((p.names||"")+" "+(p.surnames||"")).trim()||"Ficha no recuperada";
+  return '<tr><td>'+escapeActivityHtml(personName)+'</td><td>'+escapeActivityHtml(p.cedula||"—")+'</td><td>'+escapeActivityHtml(p.phone||"—")+'</td><td>'+(p.infoMira==="si"?"Sí":p.infoMira==="no"?"No":"—")+'</td><td>'+(p.hasApp==="si"?"Sí":p.hasApp==="no"?"No":"—")+'</td><td>'+escapeActivityHtml(p.type==="interno"?"Interno":p.type==="externo"?"Externo":"—")+'</td><td>'+(a.createdAt?new Date(a.createdAt).toLocaleString("es-CO"):"—")+'</td><td>'+(actions||"—")+'</td></tr>';
+ }).join(""):'<tr><td colspan="8">Esta actividad aún no tiene registros.</td></tr>';
  body.querySelectorAll("[data-edit]").forEach(b=>b.addEventListener("click",()=>editAttendance(b.dataset.edit)));
  body.querySelectorAll("[data-delete-attendance]").forEach(b=>b.addEventListener("click",()=>deleteActivityAttendance(b.dataset.deleteAttendance)));
  showActivityView("detail");
