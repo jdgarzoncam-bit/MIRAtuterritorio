@@ -588,18 +588,21 @@ async function loadActivitiesFromNeon({force=false}={}){
       throw new Error("Se alcanzó el límite de seguridad de paginación. Solicita revisión.");
     };
     // El archivo y sus carpetas no dependen de que las consultas auxiliares respondan.
-    const [activityResult,attendanceResult,peopleResult]=await Promise.allSettled([
+    const [activityResult,attendanceResult]=await Promise.allSettled([
       loadAllPages(({limit,offset})=>window.MIRA_DATA.listActivities({limit,offset})),
-      loadAllPages(({limit,offset})=>window.MIRA_DATA.listAttendances({limit,offset})),
-      loadAllPages(({limit,offset})=>window.MIRA_DATA.listPeople({limit,offset}))
+      loadAllPages(({limit,offset})=>window.MIRA_DATA.listAttendances({limit,offset}))
     ]);
     if(activityResult.status==='rejected')throw activityResult.reason;
     const activityRows=activityResult.value||[];
     const attendanceRows=attendanceResult.status==='fulfilled'?(attendanceResult.value||[]):[];
-    const peopleRows=peopleResult.status==='fulfilled'?(peopleResult.value||[]):[];
     const warnings=[];
     if(attendanceResult.status==='rejected')warnings.push('No se pudieron consultar las asistencias: '+(attendanceResult.reason?.message||'error de consulta'));
-    if(peopleResult.status==='rejected')warnings.push('No se pudieron consultar las fichas personales: '+(peopleResult.reason?.message||'error de consulta'));
+    let peopleRows=[];
+    if(attendanceResult.status==='fulfilled'){
+      const personIds=[...new Set(attendanceRows.map(row=>row.persona_id).filter(Boolean))];
+      try{peopleRows=await window.MIRA_DATA.listPeopleByIds(personIds);}
+      catch(error){warnings.push('No se pudieron consultar las fichas vinculadas a las asistencias: '+(error?.message||'error de consulta'));}
+    }
     activitiesLoadWarning=warnings.join(' · ');
     activitiesState.people=peopleRows.map(p=>{
       const parsed=splitLegacyPersonName(p.nombres,p.apellidos);
@@ -1161,12 +1164,32 @@ function renderActivities(){
     const count=activitiesState.attendances.filter(x=>x.activityId===a.id).length;
     const statusLabel=a.status==='active'?'En curso':a.status==='finished'?'Finalizada':a.status==='cancelada'?'Cancelada':a.status||'Sin estado';
     const statusClass=a.status==='active'?'active':a.status==='cancelada'?'cancelled':'closed';
+    const renameButton=editAllowed?`<button class="activity-row-btn" data-activity-rename="${escapeActivityHtml(a.id)}" type="button">Renombrar</button>`:'';
     const cancelButton=a.status==='active'&&editAllowed?`<button class="activity-row-btn activity-manage-cancel" data-activity-cancel="${escapeActivityHtml(a.id)}" type="button">Cancelar</button>`:'';
     const deleteButton=canManageActivities('delete')?(count===0?`<button class="activity-row-btn activity-manage-delete" data-activity-delete="${escapeActivityHtml(a.id)}" type="button">Eliminar</button>`:'<span class="activity-delete-locked" title="Tiene asistencias asociadas">No eliminable · '+count+' registros</span>'):'';
-    return `<article class="activity-folder"><div class="folder-icon">📁</div><h3>${escapeActivityHtml(a.name)}</h3><p>${escapeActivityHtml(a.date||'Sin fecha')} · ${count} registros</p><span class="activity-state-pill ${statusClass}">${escapeActivityHtml(statusLabel)}</span><div class="activity-folder-actions"><button class="activity-row-btn" data-folder-open="${escapeActivityHtml(a.id)}" type="button">📂 Abrir</button>${cancelButton}${deleteButton}</div></article>${exportAllowed?'<button class="activity-file-card" data-folder-export="'+escapeActivityHtml(a.id)+'" type="button" aria-label="Descargar Excel de '+escapeActivityHtml(a.name)+'"><span class="file-icon">📊</span><strong>'+escapeActivityHtml(a.name)+'.xlsx</strong><small>Archivo de registros · '+count+' filas</small><span class="file-type">EXCEL · DESCARGAR</span></button>':''}`;
+    return `<article class="activity-folder"><div class="folder-icon">📁</div><h3>${escapeActivityHtml(a.name)}</h3><p>${escapeActivityHtml(a.date||'Sin fecha')} · ${count} registros</p><span class="activity-state-pill ${statusClass}">${escapeActivityHtml(statusLabel)}</span><div class="activity-folder-actions"><button class="activity-row-btn" data-folder-open="${escapeActivityHtml(a.id)}" type="button">📂 Abrir</button>${renameButton}${cancelButton}${deleteButton}</div></article>${exportAllowed?'<button class="activity-file-card" data-folder-export="'+escapeActivityHtml(a.id)+'" type="button" aria-label="Descargar Excel de '+escapeActivityHtml(a.name)+'"><span class="file-icon">📊</span><strong>'+escapeActivityHtml(a.name)+'.xlsx</strong><small>Archivo de registros · '+count+' filas</small><span class="file-type">EXCEL · DESCARGAR</span></button>':''}`;
   }).join(''):activitiesState.activities.length?'<div class="activity-empty-drive"><div>🔎</div><h3>No encontramos actividades</h3><p>Prueba con otro nombre, fecha o lugar.</p></div>':'<div class="activity-empty-drive"><div>📂</div><h3>Aún no hay actividades</h3><p>Crea una actividad para que aparezca aquí su carpeta y su archivo Excel.</p></div>');
   folders.querySelectorAll('[data-folder-open]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();openActivityFolder(b.dataset.folderOpen);}));
   folders.querySelectorAll('[data-folder-export]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();exportActivityExcel(b.dataset.folderExport);}));
+  folders.querySelectorAll('[data-activity-rename]').forEach(b=>b.addEventListener('click',async e=>{
+    e.stopPropagation();
+    const item=activitiesState.activities.find(x=>x.id===b.dataset.activityRename);
+    if(!item)return;
+    const nextName=window.prompt('Nuevo nombre para la actividad:',item.name);
+    if(nextName===null)return;
+    const cleanName=nextName.trim();
+    if(!cleanName){alert('El nombre de la actividad no puede quedar vacío.');return;}
+    if(cleanName===item.name)return;
+    b.disabled=true;
+    try{
+      const result=await window.MIRA_DATA.updateActivity(item.id,{nombre:cleanName,actualizado_por:window.MIRA_CURRENT_USER?.email||null});
+      if(!Array.isArray(result)||result.length!==1)throw new Error('Neon no confirmó el cambio de nombre.');
+      await loadActivitiesFromNeon({force:true});
+      if(detailActivityId===item.id)openActivityFolder(item.id);
+      alert('Nombre de la actividad actualizado correctamente.');
+    }catch(error){alert('No fue posible renombrar la actividad: '+(error.message||'Error desconocido.'));}
+    finally{b.disabled=false;}
+  }));
   folders.querySelectorAll('[data-activity-cancel]').forEach(b=>b.addEventListener('click',async e=>{
     e.stopPropagation();const item=activitiesState.activities.find(a=>a.id===b.dataset.activityCancel);if(!item)return;
     if(!confirm('¿Cancelar la actividad "'+item.name+'"? Se conservarán todos sus registros y ya no se podrán agregar nuevas asistencias.'))return;
@@ -1187,7 +1210,7 @@ function renderActivities(){
   }));
   document.getElementById('sideActivityPeople').textContent=activitiesState.people.length;
   document.getElementById('sideActivityAttendances').textContent=activitiesState.attendances.length;
-  document.getElementById('sideActivityCount').textContent=activitiesState.activities.length+' actividades guardadas';
+  document.getElementById('sideActivityCount').textContent=activitiesState.activities.filter(x=>x.status==='active').length+' actividades activas';
   renderActivityTable();
 }
 renderActivities();
