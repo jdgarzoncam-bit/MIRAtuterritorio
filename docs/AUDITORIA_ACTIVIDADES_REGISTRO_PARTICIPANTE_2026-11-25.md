@@ -103,3 +103,12 @@ Se preparó `migrations/20261125_fix_public_participant_registration_integrity.s
 - No se ejecutó ninguna migración SQL en QA ni en producción.
 - Se conserva la rama QA y el PR abierto.
 - La promoción a producción permanece bloqueada hasta que la suite completa esté verde y se realicen pruebas funcionales en localhost.
+
+
+### Verificación automatizada y estado de datos tras la segunda pasada
+- GitHub Actions ejecutó la suite completa: **136 pruebas aprobadas, 0 fallidas**.
+- La validación de sintaxis JavaScript terminó correctamente.
+- Neon QA conserva el nombre exacto `Inscripción Adulto maayor evento 28 nov` y devuelve 19 asistencias, 19 personas relacionadas y 0 fichas sin nombres/apellidos.
+- Neon producción permanece sin cambios: `Adulto mayor noviembre`, 36 asistencias y 36 personas relacionadas.
+- La migración SQL descrita arriba sigue pendiente de ejecución en QA; por ello el bloqueo de persona inactiva está protegido en la interfaz, pero la defensa final del servidor quedará efectiva solo después de aplicar y probar esa migración.
+- La validación automatizada es estática/estructural. Aún falta la prueba manual de navegador en localhost:8000 (PIN, alta nueva, actualización existente, duplicado, inactiva, renombrar, edición y Excel) antes de promoción.
