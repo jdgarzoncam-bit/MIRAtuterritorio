@@ -204,12 +204,17 @@ export const MIRA_DATA = {
   async listPeopleByIds(ids=[]) {
     const safeIds=[...new Set((ids||[]).filter(id=>/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(id))))];
     if(!safeIds.length) return [];
-    const params={
-      select:"id,cedula,cedula_normalizada,nombres,apellidos,telefono,correo,info_mira,tiene_app_infomira,barrio,puesto_votacion,mesa_votacion,edad,tipo_participacion,observaciones,activo,inactivo,datos_pendientes,fuente_registro,created_at,updated_at",
-      id:"in.("+safeIds.join(",")+")",
-      limit:String(safeIds.length)
-    };
-    return miraRequest("personas",{query:qs(params)});
+    const select="id,cedula,cedula_normalizada,nombres,apellidos,telefono,correo,info_mira,tiene_app_infomira,barrio,puesto_votacion,mesa_votacion,edad,tipo_participacion,observaciones,activo,inactivo,datos_pendientes,fuente_registro,created_at,updated_at";
+    const pageSize=100;
+    const all=[];
+    for(let offset=0;offset<safeIds.length;offset+=pageSize){
+      const batch=safeIds.slice(offset,offset+pageSize);
+      const params={select,id:"in.("+batch.join(",")+")",limit:String(batch.length)};
+      const rows=await miraRequest("personas",{query:qs(params)});
+      if(!Array.isArray(rows))throw new Error("Neon devolvió una respuesta inválida al recuperar las fichas vinculadas.");
+      all.push(...rows);
+    }
+    return all;
   },
   createPerson(payload) {
     const cedula=cleanCedula(payload.cedula);
