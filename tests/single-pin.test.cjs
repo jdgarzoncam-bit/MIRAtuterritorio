@@ -6,6 +6,7 @@ const read = file => fs.readFileSync(file, "utf8");
 const quick = read("mira-quick-modules.js");
 const portal = read("activity-portal.js");
 const data = read("mira-data.js");
+const auth = read("mira-auth.js");
 const home = read("index.html");
 const portalHtml = read("actividad.html");
 
@@ -17,28 +18,29 @@ test("solo el menú Módulos solicita y verifica el PIN", () => {
 });
 
 test("el portal usa el mismo JWT de Neon que autorizó el PIN central", () => {
-  assert.match(data, /sessionStorage\.setItem\("miraParticipantAuthJwt",authToken\)/);
+  assert.match(data, /sessionStorage\\.setItem\\("miraParticipantAuthJwt",authToken\\)/);
   assert.match(data, /authToken=null/);
-  assert.match(portal, /getJWTToken: \(\) => sessionStorage\.getItem\("miraParticipantAuthJwt"\)/);
-  assert.match(portal, /sessionStorage\.getItem\(MODULE_ACCESS_TOKEN_KEY\)/);
-  assert.match(quick, /sessionStorage\.removeItem\("miraParticipantAuthJwt"\)/);
+  assert.match(portal, /getJWTToken: \\(\\) => sessionStorage\\.getItem\\("miraParticipantAuthJwt"\\)/);
+  assert.match(portal, /sessionStorage\\.getItem\\(MODULE_ACCESS_TOKEN_KEY\\)/);
+  assert.match(quick, /sessionStorage\\.removeItem\\("miraParticipantAuthJwt"\\)/);
 });
 
 test("las páginas cargan las versiones coordinadas del flujo de PIN único", () => {
-  assert.match(home, /mira-data\.js\?v=20261124-single-pin-7/);
-  assert.match(home, /mira-quick-modules\.js\?v=20261124-single-pin-7/);
-  assert.match(portalHtml, /activity-portal\.js\?v=20261124-single-pin-7/);
-  assert.match(portal, /mira-data\.js\?v=20261124-single-pin-7/);
+  assert.ok(home.includes("mira-data.js?v=20261124-single-pin-7"));
+  assert.ok(home.includes("mira-quick-modules.js?v=20261124-single-pin-7"));
+  assert.ok(portalHtml.includes("activity-portal.js?v=20261124-single-pin-7"));
+  assert.ok(portal.includes('mira-data.js?v=20261124-single-pin-7'));
 });
 
-test("el portal no vuelve a pedir el PIN por un error genérico de permisos al cargar actividades", () => {
-  assert.doesNotMatch(portal, /permission denied\\/i\\.test\\(message\\)\\) lockModule/);
-  assert.match(quick, /actividad\\.html\\?v=20261124-single-pin-7/);
+test("un error genérico de permisos no borra la autorización ni provoca otro PIN", () => {
+  assert.equal(portal.includes('permission denied/i.test(message)) lockModule'), false);
+  assert.ok(portal.includes('if (/autorización venció|PIN de acceso|token de acceso.*(venc|inválid)|no es válida/i.test(message)) lockModule(message);'));
+  assert.ok(quick.includes("actividad.html?v=20261124-single-pin-7"));
 });
 
 test("el Centro de Operaciones se activa antes de notificar autenticación", () => {
   const activation = auth.indexOf("window.activarPMUAutenticado();");
   const authenticated = auth.indexOf('window.dispatchEvent(new Event("mira:authenticated"));');
   assert.ok(activation >= 0 && authenticated > activation);
-  assert.match(auth, /window\\.MIRA_SHOW_MOBILE_MODULES\\(\\)/);
+  assert.ok(auth.includes("window.MIRA_SHOW_MOBILE_MODULES();"));
 });
