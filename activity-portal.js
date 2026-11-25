@@ -12,7 +12,6 @@ const MODULE_ACCESS_TOKEN_EXPIRY_KEY = "miraParticipantAccessTokenExpiresAt";
 let busy = false;
 let activities = [];
 let accessToken = null;
-let currentPersonBlocked = false;
 let currentPersonAlreadyRegistered = false;
 let personLookupCompleted = false;
 
@@ -33,7 +32,7 @@ function syncLookupButton() {
   $("pubLookup").disabled = !accessToken || !$("pubActivity").value || busy;
 }
 function setAvailable(enabled) {
-  $("pubSubmit").disabled = !enabled || busy || currentPersonBlocked || currentPersonAlreadyRegistered || !personLookupCompleted || !accessToken;
+  $("pubSubmit").disabled = !enabled || busy || currentPersonAlreadyRegistered || !personLookupCompleted || !accessToken;
   $("pubActivity").disabled = !enabled || !accessToken;
   syncLookupButton();
 }
@@ -48,7 +47,7 @@ function showPersonDetails(person) {
     pubPollingTableValue: person.mesa_votacion || "No registrada",
     pubAgeValue: person.edad == null ? "No registrada" : String(person.edad),
     pubTransportValue: person.requiere_transporte == null ? "No registrado" : (person.requiere_transporte ? "Sí" : "No"),
-    pubStateValue: person.inactivo || person.activo === false ? "Inactiva · requiere revisión" : "Activa"
+    pubStateValue: person.info_mira === true ? "Inscrita a InfoMIRA" : person.info_mira === false ? "No inscrita a InfoMIRA" : "Sin clasificación InfoMIRA"
   };
   for (const [id,value] of Object.entries(fields)) $(id).textContent = value;
   $("pubPersonDetails").hidden = false;
@@ -62,8 +61,7 @@ function lockModule(message = "") {
   sessionStorage.removeItem(MODULE_ACCESS_TOKEN_KEY);
   sessionStorage.removeItem(MODULE_ACCESS_TOKEN_EXPIRY_KEY);
   sessionStorage.removeItem("miraParticipantAuthJwt");
-  currentPersonBlocked = false;
-  currentPersonAlreadyRegistered = false;
+    currentPersonAlreadyRegistered = false;
   personLookupCompleted = false;
   window.location.replace("index.html?openModules=1&authorization=expired");
 }
@@ -88,8 +86,7 @@ async function refreshActivities() {
 $("pubActivity").addEventListener("change", () => {
   currentPersonAlreadyRegistered = false;
   personLookupCompleted = false;
-  currentPersonBlocked = false;
-  clearEnrollmentStatus();
+    clearEnrollmentStatus();
   clearPersonDetails();
   setAvailable(activities.length > 0);
   if ($("pubCedula").value.trim()) $("pubLookup").click();
@@ -97,8 +94,7 @@ $("pubActivity").addEventListener("change", () => {
 $("pubCedula").addEventListener("input", () => {
   currentPersonAlreadyRegistered = false;
   personLookupCompleted = false;
-  currentPersonBlocked = false;
-  clearEnrollmentStatus();
+    clearEnrollmentStatus();
   clearPersonDetails();
   setAvailable(activities.length > 0);
 });
@@ -111,8 +107,7 @@ $("pubLookup").addEventListener("click", async () => {
   if (cedula.length < 5 || cedula.length > 15) return status("Escribe una cédula válida para buscar la ficha.", "error");
   const button = $("pubLookup");
   button.disabled = true;
-  currentPersonBlocked = false;
-  currentPersonAlreadyRegistered = false;
+    currentPersonAlreadyRegistered = false;
   personLookupCompleted = false;
   clearPersonDetails();
   clearEnrollmentStatus();
@@ -150,8 +145,7 @@ $("pubLookup").addEventListener("click", async () => {
       ? String(person.tipo_participacion).toLowerCase() : "";
     showPersonDetails(person);
     if (person.inactivo || person.activo === false) {
-      currentPersonBlocked = true;
-      setAvailable(activities.length > 0);
+            setAvailable(activities.length > 0);
       status("La ficha existe, pero está marcada como inactiva. No se puede registrar asistencia hasta que sea revisada por un administrador.", "error");
       return;
     }
@@ -188,7 +182,6 @@ $("publicActivityForm").addEventListener("submit", async event => {
   if (!$("pubConsent").checked) return status("Debes aceptar el tratamiento de datos para continuar.","error");
   if (!personLookupCompleted) return status("Selecciona una actividad y busca la cédula antes de diligenciar el registro.", "error");
   if (currentPersonAlreadyRegistered) return status("Esta persona ya tiene una asistencia registrada en la actividad seleccionada.", "error");
-  if (currentPersonBlocked) return status("La ficha está inactiva y requiere revisión administrativa.","error");
   busy = true;
   setAvailable(false);
   status("Guardando la asistencia…");
@@ -204,8 +197,7 @@ $("publicActivityForm").addEventListener("submit", async event => {
     if (result?.status !== "ok") throw new Error(result?.message || "No se pudo confirmar la inscripción.");
     $("publicActivityForm").reset();
     clearPersonDetails();
-    currentPersonBlocked = false;
-    currentPersonAlreadyRegistered = false;
+        currentPersonAlreadyRegistered = false;
     personLookupCompleted = false;
     clearEnrollmentStatus();
     status("¡Asistencia registrada correctamente! La participación quedó guardada.");
@@ -222,8 +214,7 @@ $("publicActivityForm").addEventListener("reset", () => {
   setTimeout(() => {
     if ($("pubStatus")) { $("pubStatus").style.display = "none"; $("pubStatus").textContent = ""; }
     clearPersonDetails();
-    currentPersonBlocked = false;
-    currentPersonAlreadyRegistered = false;
+        currentPersonAlreadyRegistered = false;
     personLookupCompleted = false;
     clearEnrollmentStatus();
     setAvailable(activities.length > 0);
