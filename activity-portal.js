@@ -144,11 +144,6 @@ $("pubLookup").addEventListener("click", async () => {
     $("pubType").value = ["interno","externo"].includes(String(person.tipo_participacion||"").toLowerCase())
       ? String(person.tipo_participacion).toLowerCase() : "";
     showPersonDetails(person);
-    if (person.inactivo || person.activo === false) {
-            setAvailable(activities.length > 0);
-      status("La ficha existe, pero está marcada como inactiva. No se puede registrar asistencia hasta que sea revisada por un administrador.", "error");
-      return;
-    }
     setAvailable(activities.length > 0);
     status(currentPersonAlreadyRegistered
       ? "Ficha recuperada. La asistencia de esta persona ya existe para esta actividad."
