@@ -218,59 +218,53 @@ export const MIRA_DATA = {
   archivePerson(id) { if(!id) throw new Error("No se identificó la ficha que deseas marcar como inactiva."); return this.updatePerson(id,{activo:false,inactivo:true}); },
   restorePerson(id) { if(!id) throw new Error("No se identificó la ficha que deseas activar."); return this.updatePerson(id,{activo:true,inactivo:false}); },
   async listPublicActivityOptions() {
-    // Firma antigua estable, ya reconocida por la caché de Neon Data API.
-    return miraRequest("rpc/public_list_active_activities",{method:"POST",body:{},anonymous:true});
+    return miraRequest("rpc/public_activity_options_v2",{method:"POST",body:{},anonymous:true});
   },
   async verifyParticipantAccessPin(pinVerifier) {
     if(!/^[a-f0-9]{64}$/i.test(String(pinVerifier||""))) throw new Error("El código de acceso no tiene un formato válido.");
-    // Captura el JWT exacto que representa al actor que valida el PIN.
-    // El portal posterior lo reutiliza: no crea una segunda identidad anónima.
     const authToken=await miraToken({anonymous:true});
     sessionStorage.setItem("miraParticipantAuthJwt",authToken);
-    return miraRequest("rpc/public_register_activity_participant",{method:"POST",anonymous:true,authToken,body:{
-      p_cedula:"__MIRA_PIN_VERIFY__",p_nombres:pinVerifier,p_apellidos:"",p_telefono:"",
-      p_actividad_id:null,p_consentimiento:false
-    }});
+    return miraRequest("rpc/public_verify_participant_pin",{
+      method:"POST",anonymous:true,authToken,body:{p_verifier_hex:String(pinVerifier).toLowerCase()}
+    });
   },
   async lookupPublicPerson(cedula,accessToken) {
     const normalized=cleanCedula(cedula);
     if(normalized.length<5||normalized.length>15) throw new Error("La cédula debe contener entre 5 y 15 dígitos.");
     if(!accessToken) throw new Error("Ingresa el PIN de acceso antes de consultar personas.");
-    return miraRequest("rpc/public_register_activity_participant",{method:"POST",anonymous:true,body:{
-      p_cedula:"__MIRA_PIN_LOOKUP__",p_nombres:normalized,p_apellidos:accessToken,p_telefono:"",
-      p_actividad_id:null,p_consentimiento:false
-    }});
+    return miraRequest("rpc/public_lookup_participant",{
+      method:"POST",anonymous:true,body:{p_cedula:normalized,p_access_token:accessToken}
+    });
   },
   async checkPublicActivityParticipant(cedula,actividadId,accessToken) {
     const normalized=cleanCedula(cedula);
     if(normalized.length<5||normalized.length>15) throw new Error("La cédula debe contener entre 5 y 15 dígitos.");
     if(!actividadId) throw new Error("Selecciona una actividad antes de consultar la inscripción.");
     if(!accessToken) throw new Error("La autorización venció. Ingresa nuevamente desde Módulos.");
-    // Reutiliza el RPC estable de seis argumentos ya publicado en la caché de Neon.
-    // El servidor ejecuta el pre-chequeo protegido por el token PIN antes de devolver ficha/asistencia.
-    return miraRequest("rpc/public_register_activity_participant",{method:"POST",anonymous:true,body:{
-      p_cedula:"__MIRA_ACTIVITY_CHECK__",p_nombres:normalized,p_apellidos:accessToken,p_telefono:actividadId,
-      p_actividad_id:null,p_consentimiento:false
-    }});
+    const [person,enrollment]=await Promise.all([
+      this.lookupPublicPerson(normalized,accessToken),
+      miraRequest("rpc/public_check_activity_participant",{
+        method:"POST",anonymous:true,body:{p_cedula:normalized,p_actividad_id:actividadId,p_access_token:accessToken}
+      })
+    ]);
+    return {...(enrollment||{}),person:person||null};
   },
   registerPublicActivityParticipant({cedula,nombres,apellidos,telefono=null,actividad_id,info_mira,tiene_app_infomira,tipo_participacion,consentimiento=false,access_token=null}) {
     const normalized=cleanCedula(cedula);
     if(normalized.length<5||normalized.length>15) throw new Error("La cédula debe contener entre 5 y 15 dígitos.");
-    if(!nombres?.trim()||!apellidos?.trim()||!actividad_id||![ "si","no" ].includes(info_mira)||![ "si","no" ].includes(tiene_app_infomira)||![ "interno","externo" ].includes(tipo_participacion)||consentimiento!==true) throw new Error("Completa los datos obligatorios y acepta el tratamiento de datos.");
-    // Empaquetamos los campos nuevos en el argumento de teléfono para mantener
-    // la firma RPC de seis parámetros que Neon ya tiene en caché.
+    if(!nombres?.trim()||!apellidos?.trim()||!actividad_id||!["si","no"].includes(info_mira)||!["si","no"].includes(tiene_app_infomira)||!["interno","externo"].includes(tipo_participacion)||consentimiento!==true) throw new Error("Completa los datos obligatorios y acepta el tratamiento de datos.");
+    if(!access_token) throw new Error("Ingresa el PIN de acceso antes de registrar la asistencia.");
     const registrationData=JSON.stringify({
-      access_token:access_token,
-      telefono:telefono,
+      telefono,
       info_mira:info_mira==="si",
       tiene_app_infomira:tiene_app_infomira==="si",
       tipo_participacion
     });
-    if(!access_token) throw new Error("Ingresa el PIN de acceso antes de registrar la asistencia.");
-    return miraRequest("rpc/public_register_activity_participant",{
+    return miraRequest("rpc/public_register_activity_participant_v2",{
       method:"POST",anonymous:true,body:{
         p_cedula:normalized,p_nombres:nombres.trim(),p_apellidos:apellidos.trim(),
-        p_telefono:registrationData,p_actividad_id:actividad_id,p_consentimiento:true,
+        p_telefono:registrationData,p_actividad_id:actividad_id,
+        p_consentimiento:true,p_access_token:access_token
       }
     });
   },
