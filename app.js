@@ -633,7 +633,8 @@ async function loadActivitiesFromNeon(){
     }
   }finally{activitiesLoading=false;}
 }
-window.addEventListener('mira:authenticated',loadActivitiesFromNeon);
+// No cargar cientos de personas/asistencias al iniciar sesión: se consultan al abrir Actividades.
+// Así el Centro de Operaciones aparece sin esperar consultas de un módulo que aún no se abrió.
 function normActivityText(v){return (v||'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');}
 function normalizeCedula(v){return (v||'').replace(/\D/g,'');}
 function splitLegacyPersonName(nombres,apellidos){
@@ -1268,11 +1269,16 @@ function activarPMUAutenticado() {
             window.dispatchEvent(new CustomEvent('mira:map-init-error', {detail:{message:err?.message||'No fue posible inicializar el mapa.'}}));
         }
     };
-    if (window.matchMedia('(max-width: 600px)').matches) {
-        window.setTimeout(initializeMapAfterEntry, 80);
-    } else {
-        initializeMapAfterEntry();
-    }
+    // Priorizar que el Centro de Operaciones quede interactivo. La cartografía
+    // se inicializa cuando el navegador tenga un espacio libre, sin bloquear la entrada.
+    const scheduleMapInitialization = () => {
+        if ('requestIdleCallback' in window) {
+            window.requestIdleCallback(initializeMapAfterEntry, { timeout: 1800 });
+        } else {
+            window.setTimeout(initializeMapAfterEntry, 450);
+        }
+    };
+    window.requestAnimationFrame(scheduleMapInitialization);
 }
 
 // La autenticación y autorización se gestionan exclusivamente mediante Neon Auth.
