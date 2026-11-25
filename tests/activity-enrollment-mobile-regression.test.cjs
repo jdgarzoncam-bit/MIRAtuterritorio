@@ -31,7 +31,7 @@ test("el estado de inscripción se consulta antes de recuperar la ficha y bloque
   assert.match(portal, /const person = enrollment\?\.person \|\| null/);
   assert.match(portal, /currentPersonAlreadyRegistered/);
   assert.match(portal, /Esta persona YA ESTÁ INSCRITA/);
-  assert.match(portal, /currentPersonAlreadyRegistered \|\| !personLookupCompleted/);
+  assert.match(portal, /currentPersonAlreadyRegistered \\|\\| currentPersonBlocked \\|\\| !personLookupCompleted/);
   assert.match(data, /rpc\/public_check_activity_participant/);
   assert.match(data, /lookupPublicPerson\(normalized,accessToken\)/);
   assert.match(data, /rpc\/public_register_activity_participant/);
