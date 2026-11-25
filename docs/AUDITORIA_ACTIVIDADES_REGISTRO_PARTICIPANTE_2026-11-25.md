@@ -150,3 +150,5 @@ Commits de esta intervención:
 - 4a5845b9e31aa8a445491e9e4fa3dff0fdc5487d — pruebas de regresión.
 
 La suite se debe considerar pendiente hasta obtener el resultado de GitHub Actions asociado a los nuevos commits. Estas comprobaciones no sustituyen la prueba de navegador ni confirman por sí solas el funcionamiento de Neon.
+
+- 6e13db06cc190539eba9fd0398f5a76affb066ac — ajuste de los patrones de las dos pruebas nuevas para que validen la sintaxis real del código.
