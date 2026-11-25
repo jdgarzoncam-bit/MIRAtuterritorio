@@ -244,7 +244,7 @@ async function restoreCentralModuleAuthorization() {
     await refreshActivities();
   } catch (error) {
     const message = error?.message || "No fue posible consultar las actividades.";
-    if (/autorización venció|PIN de acceso|no es válida|permission denied/i.test(message)) lockModule(message);
+    if (/autorización venció|PIN de acceso|token de acceso.*(venc|inválid)|no es válida/i.test(message)) lockModule(message);
     else status(message, "error");
   }
 }
