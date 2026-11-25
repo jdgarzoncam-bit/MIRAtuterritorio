@@ -52,7 +52,7 @@ La rama `qa-role-capabilities-2026-11-10` no es una copia idéntica de producci�
 Workflow: `.github/workflows/pages.yml`
 URL del sitio: https://jdgarzoncam-bit.github.io/MIRAtuterritorio/
 
-El commit `5c4ecad6adf4b4b71d398347dca44a5f3c493603` renovó la versión de caché de `app.js`. La validación de sintaxis fue correcta, pero GitHub Pages devolvió `Deployment failed, try again later` al crear/consultar el deployment. No declarar la publicación como exitosa hasta que Actions informe `success` y el sitio sirva la versión nueva.
+El commit `5c4ecad6adf4b4b71d398347dca44a5f3c493603` renovó la versión de caché de `app.js`. El primer intento de publicación falló; después, el commit `3e919962fd364aa5c18870347a9c13b36db0544b` terminó con GitHub Actions run 215 en estado `success` el 2026-11-25. La publicación de main está confirmada por Actions. Falta validar manualmente en navegador que el usuario recibe el HTML y los scripts nuevos.
 
 ## Procedimiento obligatorio antes de migrar
 
