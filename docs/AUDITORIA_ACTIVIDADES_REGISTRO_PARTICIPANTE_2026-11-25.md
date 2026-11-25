@@ -71,3 +71,35 @@ Neon Auth QA ya tenía como trusted origins GitHub Pages, `http://localhost:8000
 - No se modificó la base de datos de producción.
 - No se ejecutaron migraciones SQL.
 - No se borraron personas ni actividades adicionales.
+
+
+## Actualización de correcciones — 2026-11-25, segunda pasada
+
+### Nombre confirmado por el responsable
+El nombre definitivo en QA es exactamente **`Inscripción Adulto maayor evento 28 nov`**. Se conserva la doble “a” porque el responsable confirmó que así lo nombró intencionalmente. No normalizar ni corregir ortografía.
+
+### Hallazgos adicionales corregidos en código QA
+- Se encontró y eliminó una asignación suelta de `currentPersonBlocked` antes de su declaración en `activity-portal.js`. En módulos ES eso podía detener la inicialización del portal con un error de referencia.
+- El menú rápido cargaba `mira-data.js` con una versión de caché distinta a la usada por `index.html` y `actividad.html`. Se unificó el identificador de versión para compartir una sola instancia del cliente.
+- Se actualizó la navegación a `actividad.html` para forzar la nueva versión del portal.
+- El botón Renombrar está presente y persiste mediante `MIRA_DATA.updateActivity`; se conserva la confirmación de respuesta de Neon antes de actualizar la interfaz.
+- Se amplió la validación automatizada para ejecutar la suite completa del repositorio, no solo comprobaciones de sintaxis.
+
+### Hallazgo de seguridad SQL pendiente de migración
+En QA se detectó un overload heredado de `public_register_activity_participant_v2` con ocho argumentos que no recibe token de autorización. Su función permite crear asistencias con rol SECURITY DEFINER. También se detectó que la función interna no bloqueaba por sí sola a una persona inactiva y no actualizaba nombres/apellidos de personas existentes.
+
+Se preparó `migrations/20261125_fix_public_participant_registration_integrity.sql` para:
+- Actualizar nombres, apellidos, teléfono, InfoMIRA, Tiene la App InfoMIRA y tipo de participante a partir del formulario confirmado.
+- No modificar campos personales que el formulario no captura.
+- Rechazar en PostgreSQL las fichas inactivas, aunque se intente saltar la validación del navegador.
+- Revocar ejecución directa de la función interna y del overload heredado sin token.
+- Mantener ejecutable por el rol anónimo únicamente el wrapper de registro que recibe el token central.
+
+**La migración está preparada, revisada estáticamente y NO ha sido ejecutada.** Debe aplicarse primero en QA, probar altas de persona nueva, actualización de persona existente, rechazo de persona inactiva y duplicado, y después considerar producción.
+
+### Estado de cambios y protección
+- No se modificó `main`.
+- No se modificó Neon producción.
+- No se ejecutó ninguna migración SQL en QA ni en producción.
+- Se conserva la rama QA y el PR abierto.
+- La promoción a producción permanece bloqueada hasta que la suite completa esté verde y se realicen pruebas funcionales en localhost.
