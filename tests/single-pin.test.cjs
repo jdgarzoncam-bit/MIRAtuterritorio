@@ -30,3 +30,15 @@ test("las páginas cargan las versiones coordinadas del flujo de PIN único", ()
   assert.match(portalHtml, /activity-portal\.js\?v=20261124-single-pin-7/);
   assert.match(portal, /mira-data\.js\?v=20261124-single-pin-7/);
 });
+
+test("el portal no vuelve a pedir el PIN por un error genérico de permisos al cargar actividades", () => {
+  assert.doesNotMatch(portal, /permission denied\\/i\\.test\\(message\\)\\) lockModule/);
+  assert.match(quick, /actividad\\.html\\?v=20261124-single-pin-7/);
+});
+
+test("el Centro de Operaciones se activa antes de notificar autenticación", () => {
+  const activation = auth.indexOf("window.activarPMUAutenticado();");
+  const authenticated = auth.indexOf('window.dispatchEvent(new Event("mira:authenticated"));');
+  assert.ok(activation >= 0 && authenticated > activation);
+  assert.match(auth, /window\\.MIRA_SHOW_MOBILE_MODULES\\(\\)/);
+});
