@@ -1,6 +1,6 @@
 // Reutiliza el JWT anónimo exacto con el que se validó el PIN en Módulos.
 // No crear una segunda identidad de Neon Auth en esta página.
-import { MIRA_DATA } from "./mira-data.js?v=20261124-single-pin-7";
+import { MIRA_DATA } from "./mira-data.js?v=20261124-activity-retry-8";
 window.MIRA_AUTH = {
   getJWTToken: () => sessionStorage.getItem("miraParticipantAuthJwt")
 };
@@ -68,21 +68,52 @@ function lockModule(message = "") {
   window.location.replace("index.html?openModules=1&authorization=expired");
 }
 async function refreshActivities() {
-  const rows = await MIRA_DATA.listPublicActivityOptions();
-  activities = Array.isArray(rows) ? rows : [];
+  const availability = $("activityAvailability");
   const select = $("pubActivity");
-  select.innerHTML = '<option value="">Selecciona una actividad</option>' + activities.map(a =>
-    `<option value="${String(a.activity_id)}">${String(a.activity_name)} · ${String(a.activity_date).slice(0,10)}${a.activity_place ? " · " + String(a.activity_place) : ""}</option>`
-  ).join("");
-  if (!activities.length) {
-    $("activityAvailability").textContent = "En este momento no hay actividades abiertas para inscripción. Vuelve a consultar más tarde.";
+  availability.hidden = false;
+  availability.textContent = "Consultando actividades disponibles…";
+  select.disabled = true;
+  syncLookupButton();
+  try {
+    const response = await MIRA_DATA.listPublicActivityOptions();
+    // La Data API suele devolver arrays; aceptar también los envoltorios usados
+    // por proxies sin convertir una respuesta de error en una lista vacía.
+    const rows = Array.isArray(response) ? response
+      : Array.isArray(response?.data) ? response.data
+      : Array.isArray(response?.result) ? response.result : null;
+    if (!rows) throw new Error("Neon respondió con un formato inesperado al consultar las actividades.");
+    activities = rows.filter(a => a && (a.activity_id || a.id)).map(a => ({
+      activity_id: a.activity_id || a.id,
+      activity_name: a.activity_name || a.nombre || a.name || "Actividad sin nombre",
+      activity_date: a.activity_date || a.fecha || "",
+      activity_place: a.activity_place || a.lugar || ""
+    }));
+    select.innerHTML = '<option value="">Selecciona una actividad</option>' + activities.map(a =>
+      `<option value="${String(a.activity_id)}">${String(a.activity_name)} · ${String(a.activity_date).slice(0,10)}${a.activity_place ? " · " + String(a.activity_place) : ""}</option>`
+    ).join("");
+    if (!activities.length) {
+      availability.textContent = "No hay actividades abiertas para inscripción. Si sabes que existe una actividad activa, pulsa Reintentar.";
+      setAvailable(false);
+      return;
+    }
+    availability.textContent = activities.length === 1
+      ? "Hay una actividad disponible para inscripción."
+      : `Hay ${activities.length} actividades disponibles. Selecciona en cuál deseas participar.`;
+    setAvailable(true);
+  } catch (error) {
+    activities = [];
+    select.innerHTML = '<option value="">No fue posible cargar las actividades</option>';
     setAvailable(false);
-    return;
+    availability.textContent = "No fue posible cargar las actividades: " + (error?.message || "Error de conexión.");
+    const retry = document.createElement("button");
+    retry.type = "button";
+    retry.textContent = "Reintentar consulta";
+    retry.className = "activity-public-retry";
+    retry.addEventListener("click", () => refreshActivities());
+    availability.append(" ", retry);
+    status("La consulta de actividades falló. Reintenta; el botón de búsqueda se habilitará cuando la lista cargue correctamente.", "error");
+    throw error;
   }
-  $("activityAvailability").textContent = activities.length === 1
-    ? "Hay una actividad disponible para inscripción."
-    : `Hay ${activities.length} actividades disponibles. Selecciona en cuál deseas participar.`;
-  setAvailable(true);
 }
 
 $("pubActivity").addEventListener("change", () => {
