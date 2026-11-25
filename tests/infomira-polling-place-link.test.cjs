@@ -29,5 +29,5 @@ test("InfoMIRA enlaza resultados con el catálogo de puestos y sustituye marcado
 });
 
 test("GitHub Pages carga la nueva versión de app.js y evita reutilizar el archivo anterior en caché", () => {
-  assert.ok(index.includes('app.js?v=20261125-activity-join-fix-1'));
+  assert.ok(index.includes('app.js?v=20261125-connected-1'));
 });
