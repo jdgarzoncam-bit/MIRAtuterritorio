@@ -284,7 +284,7 @@ export const MIRA_DATA = {
     });
   },
   async listActivities({limit=100,offset=0}={}) {
-    return miraRequest("actividades",{query:qs({select:"*",order:"fecha.desc",limit:String(Math.min(Math.max(limit,1),1000)),offset:String(Math.max(0,Number(offset)||0))})});
+    return miraRequest("actividades",{query:qs({select:"*",order:"fecha.desc,id.asc",limit:String(Math.min(Math.max(limit,1),1000)),offset:String(Math.max(0,Number(offset)||0))})});
   },
   createActivity(payload) {
     if (!payload.nombre?.trim() || !payload.fecha) throw new Error("Nombre y fecha son obligatorios.");
@@ -303,7 +303,7 @@ export const MIRA_DATA = {
   cancelActivity(id) { return this.updateActivity(id,{estado:"cancelada"}); },
   deleteActivity(id) { if(!id) throw new Error("Identificador de actividad no válido."); return miraRequest("actividades",{method:"DELETE",query:qs({id:`eq.${id}`}),prefer:"return=representation",requireRows:true}); },
   async listAttendances({activityId,limit=100,offset=0}={}) {
-    const params={select:"*",order:"fecha_registro.desc",limit:String(Math.min(Math.max(limit,1),1000)),offset:String(Math.max(0,Number(offset)||0))};
+    const params={select:"*",order:"fecha_registro.desc,id.asc",limit:String(Math.min(Math.max(limit,1),1000)),offset:String(Math.max(0,Number(offset)||0))};
     if(activityId) params.actividad_id=`eq.${activityId}`;
     return miraRequest("asistencias",{query:qs(params)});
   },
