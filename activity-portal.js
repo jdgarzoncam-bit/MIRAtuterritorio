@@ -175,6 +175,7 @@ $("publicActivityForm").addEventListener("submit", async event => {
   event.preventDefault();
   if (busy) return;
   if (!accessToken) return lockModule("La autorización venció. Ingresa nuevamente el PIN.");
+  if (currentPersonBlocked) return status("La ficha está inactiva y requiere revisión administrativa.", "error");
   const cedula = cleanCedula($("pubCedula").value);
   const nombres = $("pubNames").value.trim();
   const apellidos = $("pubSurnames").value.trim();
