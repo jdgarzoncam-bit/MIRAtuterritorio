@@ -433,6 +433,6 @@ test("the landing routes participant registration through the central PIN-protec
   assert.doesNotMatch(indexSource, /id="btnSelectActividadesPublic"/);
   assert.match(indexSource, /id="miraQuickRegisterParticipantBtn"/);
   assert.match(indexSource, /id="miraModulePinGate"/);
-  assert.match(activityPage, /activity-portal\.js\?v=20261125-participant-guard-3/);
+  assert.match(activityPage, /activity-portal\.js\?v=20261125-connected-1/);
   assert.match(signupPage, /id="signupForm"/);
 });
