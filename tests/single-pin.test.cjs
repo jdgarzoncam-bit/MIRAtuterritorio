@@ -25,8 +25,8 @@ test("el portal usa el mismo JWT de Neon que autorizó el PIN central", () => {
 });
 
 test("las páginas cargan las versiones coordinadas del flujo de PIN único", () => {
-  assert.match(home, /mira-data\.js\?v=20261124-single-pin-6/);
-  assert.match(home, /mira-quick-modules\.js\?v=20261124-single-pin-6/);
-  assert.match(portalHtml, /activity-portal\.js\?v=20261124-single-pin-6/);
-  assert.match(portal, /mira-data\.js\?v=20261124-single-pin-6/);
+  assert.match(home, /mira-data\.js\?v=20261124-single-pin-7/);
+  assert.match(home, /mira-quick-modules\.js\?v=20261124-single-pin-7/);
+  assert.match(portalHtml, /activity-portal\.js\?v=20261124-single-pin-7/);
+  assert.match(portal, /mira-data\.js\?v=20261124-single-pin-7/);
 });
