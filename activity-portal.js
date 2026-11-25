@@ -1,6 +1,6 @@
 // Reutiliza el JWT anónimo exacto con el que se validó el PIN en Módulos.
 // No crear una segunda identidad de Neon Auth en esta página.
-import { MIRA_DATA } from "./mira-data.js?v=20261124-single-pin-6";
+import { MIRA_DATA } from "./mira-data.js?v=20261124-single-pin-7";
 window.MIRA_AUTH = {
   getJWTToken: () => sessionStorage.getItem("miraParticipantAuthJwt")
 };
@@ -244,7 +244,7 @@ async function restoreCentralModuleAuthorization() {
     await refreshActivities();
   } catch (error) {
     const message = error?.message || "No fue posible consultar las actividades.";
-    if (/autorización venció|PIN de acceso|no es válida|permission denied/i.test(message)) lockModule(message);
+    if (/autorización venció|PIN de acceso|token de acceso.*(venc|inválid)|no es válida/i.test(message)) lockModule(message);
     else status(message, "error");
   }
 }
