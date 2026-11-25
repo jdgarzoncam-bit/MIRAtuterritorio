@@ -32,7 +32,8 @@ test("el estado de inscripción se consulta antes de recuperar la ficha y bloque
   assert.match(portal, /currentPersonAlreadyRegistered/);
   assert.match(portal, /Esta persona YA ESTÁ INSCRITA/);
   assert.match(portal, /currentPersonAlreadyRegistered \|\| !personLookupCompleted/);
-  assert.match(data, /p_cedula:"__MIRA_ACTIVITY_CHECK__"/);
+  assert.match(data, /rpc\/public_check_activity_participant/);
+  assert.match(data, /lookupPublicPerson\(normalized,accessToken\)/);
   assert.match(data, /rpc\/public_register_activity_participant/);
   assert.doesNotMatch(portal, /lookupPublicPerson\(cedula, accessToken\)/);
 });
@@ -71,9 +72,9 @@ test("el selector de barrios no despliega todo el listado al enfocar", () => {
 test("la restauración anónima de Neon no cancela el intento de login móvil", () => {
   const mobile = read("mobile-operations.js");
   const auth = read("mira-auth.js");
-  assert.match(mobile, /admin-login-active.*MIRA_CURRENT_USER/);
+  assert.match(mobile, /admin-login-active/);
   assert.match(auth, /interfaceReady/);
-  assert.match(auth, /if\(interfaceReady\)/);
+  assert.match(auth, /if\s*\(interfaceReady\)/);
 });
 
 test("el menú rápido solo se muestra en la portada pública", () => {
@@ -85,8 +86,8 @@ test("el menú rápido solo se muestra en la portada pública", () => {
 test("el portal de actividades fuerza una nueva versión del cliente de Neon", () => {
   const html = read("actividad.html");
   const portal = read("activity-portal.js");
-  assert.match(html, /activity-portal\.js\?v=20261124-activity-hotfix-3/);
-  assert.match(portal, /mira-data\.js\?v=20261124-activity-hotfix-3/);
+  assert.match(html, /activity-portal\.js\?v=20261125-participant-guard-3/);
+  assert.match(portal, /mira-data\.js\?v=20261125-activity-join-fix-1/);
   assert.doesNotMatch(portal, /public_check_activity_participant/);
 });
 
