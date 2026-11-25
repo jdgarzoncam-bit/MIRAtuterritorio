@@ -201,6 +201,16 @@ export const MIRA_DATA = {
     }
     return miraRequest("personas",{query:qs(params)});
   },
+  async listPeopleByIds(ids=[]) {
+    const safeIds=[...new Set((ids||[]).filter(id=>/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(id))))];
+    if(!safeIds.length) return [];
+    const params={
+      select:"id,cedula,cedula_normalizada,nombres,apellidos,telefono,correo,info_mira,tiene_app_infomira,barrio,puesto_votacion,mesa_votacion,edad,tipo_participacion,observaciones,activo,inactivo,datos_pendientes,fuente_registro,created_at,updated_at",
+      id:"in.("+safeIds.join(",")+")",
+      limit:String(safeIds.length)
+    };
+    return miraRequest("personas",{query:qs(params)});
+  },
   createPerson(payload) {
     const cedula=cleanCedula(payload.cedula);
     if (!cedula || !payload.nombres?.trim() || !payload.apellidos?.trim()) throw new Error("Cédula, nombres y apellidos son obligatorios.");
