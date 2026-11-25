@@ -1,4 +1,4 @@
-import { MIRA_DATA } from "./mira-data.js?v=20261124-activity-retry-9";
+import { MIRA_DATA } from "./mira-data.js?v=20261124-activity-retry-8";
 
 const TOKEN_KEY = "miraParticipantAccessToken";
 const TOKEN_EXPIRY_KEY = "miraParticipantAccessTokenExpiresAt";
