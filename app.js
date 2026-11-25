@@ -510,7 +510,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && adminCardC
         const email = document.getElementById('recoveryEmail')?.value.trim() || '';
         const password = document.getElementById('recoveryNewPassword')?.value || '';
         const confirmation = document.getElementById('recoveryConfirmPassword')?.value || '';
-        const emailValid = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email);
+        const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
         let message = '';
         if (!name || !email || !password || !confirmation) {
