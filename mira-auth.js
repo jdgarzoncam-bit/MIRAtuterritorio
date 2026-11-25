@@ -1,8 +1,8 @@
 // MIRA TU TERRITORIO — autenticación Neon Auth (Better Auth administrado)
 import { createInternalNeonAuth } from "https://esm.sh/@neondatabase/auth@0.7.0-beta";
 
-const AUTH_URL = "https://ep-round-dawn-b7l3ya3h.neonauth.c-13.us-east-1.aws.neon.tech/neondb/auth";
-const DATA_API_URL = "https://ep-round-dawn-b7l3ya3h.apirest.c-13.us-east-1.aws.neon.tech/neondb/rest/v1";
+const AUTH_URL = "https://ep-mute-grass-b7qan4n6.neonauth.c-13.us-east-1.aws.neon.tech/neondb/auth";
+const DATA_API_URL = "https://ep-mute-grass-b7qan4n6.apirest.c-13.us-east-1.aws.neon.tech/neondb/rest/v1";
 const PRIMARY_ADMIN_AUTH_ID = "beef5bf3-82a8-4c35-a12c-17771be59da1";
 const neonAuth = createInternalNeonAuth(AUTH_URL,{allowAnonymous:true});
 const auth = neonAuth.adapter;
@@ -88,14 +88,10 @@ async function establishAuthenticatedUser(authUser,expectedRevision=null) {
   // después, en la interfaz y en PostgreSQL/RLS; no se exige un permiso de módulo
   // para autenticar ni para consultar la cartografía base.
   window.MIRA_CURRENT_USER={role:profile.role,authUserId:profile.auth_user_id,displayName:profile.display_name||authUser.name||profile.email,email:profile.email||authUser.email};
-  // Primero se abre el contenedor principal; después se notifica autenticación.
-  // Así los controladores móviles nunca reciben el evento antes de que el PMU
-  // tenga su estado visual activo.
+  // Primero se abre el contenedor PMU; luego se notifican eventos a los módulos móviles.
   if(typeof window.activarPMUAutenticado!=="function") throw new Error("No se pudo iniciar la interfaz principal.");
   window.activarPMUAutenticado();
-  if(window.matchMedia("(max-width: 600px)").matches &&
-     window.MIRA_MOBILE_LOGIN_REQUESTED===true &&
-     typeof window.MIRA_SHOW_MOBILE_MODULES==="function") {
+  if(window.matchMedia("(max-width: 600px)").matches && window.MIRA_MOBILE_LOGIN_REQUESTED===true && typeof window.MIRA_SHOW_MOBILE_MODULES==="function") {
     window.MIRA_SHOW_MOBILE_MODULES();
   }
   window.dispatchEvent(new Event("mira:authenticated"));
@@ -237,17 +233,7 @@ async function loginWithNeon() {
       throw new Error("No fue posible iniciar sesión. Verifica tus credenciales.");
     }
     signInCompleted=true;
-    // Better Auth puede devolver el usuario dentro de data.user o dentro de
-    // data.session.user según la respuesta del proveedor. Recuperar la sesión
-    // como respaldo evita dejar el acceso aceptado sin activar la interfaz.
-    let authenticatedUser=result?.data?.user||result?.data?.session?.user||null;
-    if(!authenticatedUser){
-      const sessionResult=await withAuthTimeout(auth.getSession(),"recuperación de la sesión");
-      if(sessionResult?.error)throw sessionResult.error;
-      authenticatedUser=sessionResult?.data?.user||sessionResult?.data?.session?.user||null;
-    }
-    if(!authenticatedUser)throw new Error("Neon aceptó la solicitud, pero no devolvió la sesión de usuario. Intenta ingresar nuevamente.");
-    await withAuthTimeout(establishAuthenticatedUser(authenticatedUser),"validación de la cuenta");
+    await withAuthTimeout(establishAuthenticatedUser(result?.data?.user),"validación de la cuenta");
     const error=document.getElementById("loginError");
     if(error) error.style.display="none";
     const mobileLogin = window.matchMedia("(max-width: 600px)").matches;
@@ -285,10 +271,6 @@ async function loginWithNeon() {
   } finally {
     if(loginRevision===authFlowRevision) loginInProgress=false;
     if(button) button.disabled=false;
-    // El formulario puede haber iniciado sesión mientras el bootstrap de
-    // restauración seguía pendiente. Nunca dejar la capa de carga cubriendo
-    // el Centro de Operaciones o el mensaje de error.
-    finishAuthBootstrap();
   }
 }
 
@@ -297,7 +279,10 @@ document.addEventListener("DOMContentLoaded",()=>{
   if(loginForm) loginForm.addEventListener("submit",event=>{
     event.preventDefault();
     event.stopImmediatePropagation();
-    if(window.matchMedia("(max-width: 600px)").matches){window.MIRA_MOBILE_LOGIN_REQUESTED=true;window.dispatchEvent(new Event("mira:mobile-login-requested"));}
+    if(window.matchMedia("(max-width: 600px)").matches){
+      window.MIRA_MOBILE_LOGIN_REQUESTED=true;
+      window.dispatchEvent(new Event("mira:mobile-login-requested"));
+    }
     loginWithNeon();
   },true);
   window.MIRA_AUTH_LOGIN_READY=true;

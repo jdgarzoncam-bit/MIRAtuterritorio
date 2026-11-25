@@ -5,7 +5,7 @@
  // de una recarga ni de una página recuperada desde la caché del navegador.
  let mobileLoginRequested=false;
  window.MIRA_MOBILE_LOGIN_REQUESTED=false;
-  const loginRequested=()=>mobileLoginRequested===true||window.MIRA_MOBILE_LOGIN_REQUESTED===true;
+  const loginRequested=()=>mobileLoginRequested===true;
  const cards=[
   {id:'dropdown-infomira',icon:'💙',title:'InfoMIRA',desc:'Red de cuidadores y líderes',tone:'blue',mapPanel:true},
   {id:'dropdown-testigos',icon:'🗳️',title:'Auditoría de testigos',desc:'Actas y evidencias E-14',tone:'violet'},
@@ -59,7 +59,7 @@
  function init(){
   installKeyboardFix();
   const app=document.getElementById('app-container'),sidebar=document.getElementById('mainSidebar'),map=document.getElementById('map');
-  if(!app||!sidebar||document.getElementById('mobileOperationsHome'))return;
+  if(!app||!sidebar||!map||document.getElementById('mobileOperationsHome'))return;
   const home=document.createElement('section');home.id='mobileOperationsHome';home.className='mobile-operations-home';home.setAttribute('aria-label','Centro de Operaciones móvil');
   home.innerHTML=`<header class="mobile-ops-header"><div class="mobile-ops-brand"><span class="mobile-ops-brand-mark">TF</span><div><small>TERRITORIO FACA</small><h1>Centro de Operaciones</h1></div></div><div class="mobile-ops-header-actions"><span class="mobile-ops-live"><i></i> EN LÍNEA</span><button class="mobile-ops-exit" id="mobileOpsExit" type="button" aria-label="Salir del Centro de Operaciones">Salir <span>↗</span></button></div></header>
   <div class="mobile-ops-intro"><span>PLATAFORMA DE GESTIÓN TERRITORIAL</span><h2>¿Qué necesitas gestionar?</h2><p>Desliza las tarjetas para explorar los módulos.</p></div>
@@ -68,7 +68,6 @@
   app.insertBefore(home,app.firstChild);
   let back=document.getElementById('mobileOpsBack');
   if(!back){back=document.createElement('button');back.id='mobileOpsBack';back.className='mobile-ops-back';back.type='button';back.innerHTML='<span aria-hidden="true">☰</span><b>Módulos</b>';back.setAttribute('aria-label','Volver al menú de módulos del Centro de Operaciones');document.body.appendChild(back);}
-  back.hidden=true;
   const carousel=home.querySelector('#mobileOpsCarousel'),els=[...carousel.querySelectorAll('.mobile-ops-card')],dots=[...home.querySelectorAll('#mobileOpsPagination button')];
   const mobile=()=>matchMedia(MQ).matches;let active=0,timer=0,workspaceMode=null,historyStateActive=false,userExitedOperations=false;
   const setActive=i=>{
@@ -116,7 +115,7 @@
    closeWorkspace();
    app.classList.remove('mobile-operations-module-active','mobile-operations-map-active','mobile-operations-map-panel-active','mobile-operations-workspace-active');
    app.classList.add('mobile-operations-home-active');
-   sidebar.hidden=true;home.hidden=false;back.hidden=true;back.classList.remove('is-visible');
+   sidebar.hidden=true;home.hidden=false;back.classList.remove('is-visible');
    resetDropdowns();resizeMap();
    if(!fromPopstate&&historyStateActive){historyStateActive=false;window.history.back();}
   };
@@ -127,7 +126,7 @@
    closeWorkspace();
    const hadHistory=historyStateActive;historyStateActive=false;
    app.classList.remove('mobile-operations-home-active','mobile-operations-module-active','mobile-operations-map-active','mobile-operations-map-panel-active','mobile-operations-workspace-active');
-   home.hidden=true;back.hidden=true;back.classList.remove('is-visible');
+   home.hidden=true;back.classList.remove('is-visible');
    resetDropdowns();
    if(hadHistory)window.history.back();
    // Primero se restaura visualmente la portada y se elimina la intención de
@@ -142,10 +141,10 @@
    userExitedOperations=false;
    ensureHistory();home.hidden=true;
    app.classList.remove('mobile-operations-home-active','mobile-operations-map-active','mobile-operations-module-active','mobile-operations-map-panel-active','mobile-operations-workspace-active');
-   if(card.map){sidebar.hidden=true;app.classList.add('mobile-operations-map-active');back.hidden=false;back.classList.add('is-visible');document.getElementById('floatingPuestoWidget')?.classList.add('hidden');resizeMap();return}
+   if(card.map){sidebar.hidden=true;app.classList.add('mobile-operations-map-active');back.classList.add('is-visible');document.getElementById('floatingPuestoWidget')?.classList.add('hidden');resizeMap();return}
    sidebar.hidden=false;
    document.querySelectorAll('#mainSidebar details.custom-dropdown').forEach(d=>{const yes=d.id===card.id;d.open=yes;d.classList.toggle('mobile-ops-selected-module',yes);d.querySelector(':scope > summary')?.setAttribute('aria-expanded',String(yes));d.setAttribute('aria-hidden',String(!yes));});
-   back.hidden=false;back.classList.add('is-visible');
+   back.classList.add('is-visible');
    if(card.workspace){
     workspaceMode=card.workspace;app.classList.add('mobile-operations-workspace-active');
     requestAnimationFrame(async()=>{
@@ -165,12 +164,7 @@
    if(card.mapPanel){app.classList.add('mobile-operations-map-panel-active');const side=sidebar.querySelector('.neo-tactile-sidebar');if(side)side.scrollTop=0;resizeMap();return}
    app.classList.add('mobile-operations-module-active');const side=sidebar.querySelector('.neo-tactile-sidebar');if(side)side.scrollTop=0;resizeMap();
   };
-  const onBack=()=>{
-   if(!mobile()||!window.MIRA_CURRENT_USER||!document.body.classList.contains('pmu-neomorphic')){
-    back.hidden=true;back.classList.remove('is-visible');return;
-   }
-   closeToHome(false);
-  };
+  const onBack=()=>{if(historyStateActive){window.history.back();return}closeToHome(true)};
   home.querySelector('#mobileOpsExit')?.addEventListener('click',exitToPlatform);
   const showOperationsHome=()=>{
    if(!mobile()||!window.MIRA_CURRENT_USER||!document.body.classList.contains('pmu-neomorphic'))return;
@@ -179,13 +173,11 @@
    app.style.display='block';
    app.classList.remove('mobile-operations-module-active','mobile-operations-map-active','mobile-operations-map-panel-active','mobile-operations-workspace-active');
    app.classList.add('mobile-operations-home-active');
-   home.hidden=false;sidebar.hidden=true;back.hidden=true;back.classList.remove('is-visible');
+   home.hidden=false;sidebar.hidden=true;back.classList.remove('is-visible');
    resizeMap();
   };
   window.MIRA_SHOW_MOBILE_MODULES=showOperationsHome;
   document.getElementById('landingModulesBtn')?.addEventListener('click',()=>{
-   // «Módulos» abre el menú centralizado de autorizaciones, no el login PMU.
-   // El PIN de Registrar participante es independiente de la sesión PMU.
    const modulesMenu=document.getElementById('miraQuickModules');
    const modulesToggle=document.getElementById('miraQuickModulesToggle');
    if(!modulesMenu||!modulesToggle){
@@ -203,9 +195,8 @@
    window.MIRA_MOBILE_LOGIN_REQUESTED=false;
    userExitedOperations=true;
    document.body.classList.add('mira-mobile-public-landing');
-   back.hidden=true;back.classList.remove('is-visible');
    app.classList.remove('mobile-operations-home-active','mobile-operations-module-active','mobile-operations-map-active','mobile-operations-map-panel-active','mobile-operations-workspace-active');
-   home.hidden=true;sidebar.hidden=false;back.hidden=true;back.classList.remove('is-visible');
+   home.hidden=true;sidebar.hidden=false;back.classList.remove('is-visible');
    app.style.display='none';
    document.body.classList.remove('pmu-neomorphic');
    document.getElementById('landing-hero-overlay')?.style.setProperty('display','flex');
@@ -219,13 +210,14 @@
    if(mobile()&&!mobileLoginRequested){restorePublicLanding();return;}
    showOperationsHome();
   }));
-  window.addEventListener('mira:pmu-ready',()=>{
-   if(!mobile()||!loginRequested()||!window.MIRA_CURRENT_USER)return;
-   // El PMU puede terminar de mostrarse un frame después de inicializar el mapa.
-   requestAnimationFrame(()=>requestAnimationFrame(()=>{
-    if(loginRequested()&&window.MIRA_CURRENT_USER)showOperationsHome();
-   }));
-  });
+  window.addEventListener('mira:pmu-ready',()=>requestAnimationFrame(()=>{
+   if(mobile()&&mobileLoginRequested&&window.MIRA_CURRENT_USER)showOperationsHome();
+  }));
+  // La autenticación se emite antes de activar el PMU; este evento confirma
+  // que el contenedor ya está visible y permite abrir el menú sin carreras.
+  window.addEventListener('mira:pmu-ready',()=>requestAnimationFrame(()=>{
+   if(mobile()&&mobileLoginRequested&&window.MIRA_CURRENT_USER)showOperationsHome();
+  }));
   window.addEventListener('mira:signed-out',restorePublicLanding);
   window.addEventListener('pageshow',()=>{
    if(!mobile()||document.body.classList.contains('admin-login-active'))return;
@@ -244,7 +236,6 @@
   carousel.addEventListener('touchend',e=>{const t=e.changedTouches[0],dx=t.clientX-swipeStartX,dy=t.clientY-swipeStartY;if(Math.abs(dx)>38&&Math.abs(dx)>Math.abs(dy)*1.15)go(active+(dx<0?1:-1))},{passive:true});
   carousel.addEventListener('keydown',e=>{if(e.key==='ArrowRight'){e.preventDefault();go(centered()+1)}if(e.key==='ArrowLeft'){e.preventDefault();go(centered()-1)}if(e.key==='Enter'){e.preventDefault();open(cards[centered()])}});
   back.addEventListener('click',onBack);
-  back.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();onBack();}});
   window.addEventListener('popstate',()=>{if(historyStateActive){historyStateActive=false;closeToHome(true)}});
   document.addEventListener('click',event=>{
    const close=event.target?.closest?.('#closeActivitiesPlaceholder,#returnFromActivities,#closeConcejalModuleBtn');
@@ -259,8 +250,8 @@
    if(!mobileLoginRequested||!window.MIRA_CURRENT_USER||!document.body.classList.contains('pmu-neomorphic')){restorePublicLanding();return;}
    if(userExitedOperations)return;
    if(!app.classList.contains('mobile-operations-module-active')&&!app.classList.contains('mobile-operations-map-active')&&!app.classList.contains('mobile-operations-map-panel-active')&&!app.classList.contains('mobile-operations-workspace-active')&&!app.classList.contains('mobile-operations-home-active'))showOperationsHome();
-  }else{userExitedOperations=false;document.body.classList.remove('mira-mobile-public-landing');app.classList.remove('mobile-operations-home-active','mobile-operations-module-active','mobile-operations-map-active','mobile-operations-map-panel-active','mobile-operations-workspace-active');home.hidden=true;sidebar.hidden=false;back.hidden=true;back.classList.remove('is-visible');historyStateActive=false;resetDropdowns()}};
-  window.addEventListener('resize',viewport,{passive:true});setActive(0);home.hidden=true;back.hidden=true;viewport();
+  }else{userExitedOperations=false;document.body.classList.remove('mira-mobile-public-landing');app.classList.remove('mobile-operations-home-active','mobile-operations-module-active','mobile-operations-map-active','mobile-operations-map-panel-active','mobile-operations-workspace-active');home.hidden=true;sidebar.hidden=false;back.classList.remove('is-visible');historyStateActive=false;resetDropdowns()}};
+  window.addEventListener('resize',viewport,{passive:true});setActive(0);home.hidden=true;viewport();
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();

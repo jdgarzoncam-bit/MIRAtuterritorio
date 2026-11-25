@@ -1,4 +1,4 @@
-import { MIRA_DATA } from "./mira-data.js?v=20261125-prod-endpoint-1";
+import { MIRA_DATA } from "./mira-data.js?v=20261125-connected-1";
 
 const TOKEN_KEY = "miraParticipantAccessToken";
 const TOKEN_EXPIRY_KEY = "miraParticipantAccessTokenExpiresAt";
@@ -7,11 +7,6 @@ const PIN_ITERATIONS = 310000;
 
 const $ = id => document.getElementById(id);
 const menu = $("miraQuickModules");
-// El menú de autorización debe abrirse desde la portada pública, antes del login
-// PMU. Si permanece dentro de #app-container, queda oculto porque ese contenedor
-// solo se muestra después de autenticar. Se eleva al body para que el PIN sea
-// independiente del acceso al Centro de Operaciones.
-if (menu && menu.parentElement !== document.body) document.body.appendChild(menu);
 const toggle = $("miraQuickModulesToggle");
 const panel = $("miraQuickModulesPanel");
 const pinGate = $("miraModulePinGate");
@@ -194,7 +189,7 @@ if (!menu || !toggle || !panel || !pinGate || !pinInput || !pinSubmit || !regist
     menu.classList.add("hidden");
     panel.classList.add("hidden");
     updateMobileMenuLabel(false);
-    window.location.assign("actividad.html?v=20261125-prod-endpoint-1");
+    window.location.assign("actividad.html?v=20261125-participant-guard-3");
   });
 
   lockButton.addEventListener("click", () => {

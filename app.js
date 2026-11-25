@@ -442,10 +442,7 @@ function abrirLoginAdmin() {
     }
     // Registrar intención antes de que Neon restaure o emita eventos de sesión.
     // Evita que una restauración anónima cancele el acceso iniciado desde iPhone.
-    if (window.matchMedia('(max-width: 600px)').matches) {
-        window.MIRA_MOBILE_LOGIN_REQUESTED = true;
-        window.dispatchEvent(new Event('mira:mobile-login-requested'));
-    }
+    if (window.matchMedia('(max-width: 600px)').matches) window.MIRA_MOBILE_LOGIN_REQUESTED = true;
     // El acceso se presenta como una vista modal centrada que cubre toda la pantalla.
     adminCardContainer.style.display = '';
     adminLoginBackdrop.style.display = '';
@@ -513,7 +510,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && adminCardC
         const email = document.getElementById('recoveryEmail')?.value.trim() || '';
         const password = document.getElementById('recoveryNewPassword')?.value || '';
         const confirmation = document.getElementById('recoveryConfirmPassword')?.value || '';
-        const emailValid = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email);
+        const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
         let message = '';
         if (!name || !email || !password || !confirmation) {
@@ -545,6 +542,8 @@ let detailActivityId = null;
 let returnToRecentAfterEdit = false;
 let activitiesBackendReady = false;
 let activitiesLoading = false;
+let activitiesLastLoadedAt = 0;
+const ACTIVITIES_CACHE_TTL_MS = 30000;
 let activitiesLoadWarning = '';
 let activityPermissions = new Set();
 function isPrimaryMiraAdmin(){
@@ -564,7 +563,8 @@ function canManageActivities(action){
   if(isPrimaryMiraAdmin()) return ["view","create","edit","delete","export","manage","annul"].includes(action);
   return activityPermissions.has(action);
 }
-async function loadActivitiesFromNeon(){
+async function loadActivitiesFromNeon({force=false}={}){
+  if(!force && activitiesBackendReady && Date.now()-activitiesLastLoadedAt<ACTIVITIES_CACHE_TTL_MS) return;
   if(activitiesLoading){
     await new Promise(resolve=>{
       const waitForCurrentLoad=()=>activitiesLoading?window.setTimeout(waitForCurrentLoad,40):resolve();
@@ -579,7 +579,7 @@ async function loadActivitiesFromNeon(){
     else activityPermissions=effectiveActivityPermissions(await window.MIRA_DATA.listMyModulePermissions());
     if(!activityPermissions.has("view"))throw new Error("No tienes permiso de Consulta en Actividades.");
     const loadAllPages=async fetchPage=>{
-      const pageSize=1000,all=[];
+      const pageSize=100,all=[];
       for(let offset=0;offset<100000;offset+=pageSize){
         const page=await fetchPage({limit:pageSize,offset});
         if(!Array.isArray(page))throw new Error("Neon devolvió una respuesta de paginación inválida.");
@@ -588,18 +588,36 @@ async function loadActivitiesFromNeon(){
       throw new Error("Se alcanzó el límite de seguridad de paginación. Solicita revisión.");
     };
     // El archivo y sus carpetas no dependen de que las consultas auxiliares respondan.
-    const [activityResult,attendanceResult,peopleResult]=await Promise.allSettled([
+    const [activityResult,attendanceResult]=await Promise.allSettled([
       loadAllPages(({limit,offset})=>window.MIRA_DATA.listActivities({limit,offset})),
-      loadAllPages(({limit,offset})=>window.MIRA_DATA.listAttendances({limit,offset})),
-      loadAllPages(({limit,offset})=>window.MIRA_DATA.listPeople({limit,offset}))
+      loadAllPages(({limit,offset})=>window.MIRA_DATA.listAttendances({limit,offset}))
     ]);
     if(activityResult.status==='rejected')throw activityResult.reason;
     const activityRows=activityResult.value||[];
     const attendanceRows=attendanceResult.status==='fulfilled'?(attendanceResult.value||[]):[];
-    const peopleRows=peopleResult.status==='fulfilled'?(peopleResult.value||[]):[];
     const warnings=[];
     if(attendanceResult.status==='rejected')warnings.push('No se pudieron consultar las asistencias: '+(attendanceResult.reason?.message||'error de consulta'));
-    if(peopleResult.status==='rejected')warnings.push('No se pudieron consultar las fichas personales: '+(peopleResult.reason?.message||'error de consulta'));
+    let peopleRows=[];
+    if(attendanceResult.status==='fulfilled'){
+      const personIds=[...new Set(attendanceRows.map(row=>row.persona_id).filter(Boolean))];
+      try{
+        if(!personIds.length) peopleRows=[];
+        else if(typeof window.MIRA_DATA.listPeopleByIds==='function'){
+          peopleRows=await window.MIRA_DATA.listPeopleByIds(personIds);
+        }else if(typeof window.MIRA_DATA.listPeople==='function'){
+          // Compatibilidad con clientes MIRA_DATA anteriores que aún no exponen listPeopleByIds.
+          const allPeople=await loadAllPages(({limit,offset})=>window.MIRA_DATA.listPeople({limit,offset}));
+          const linkedPeople=new Set(personIds);
+          peopleRows=allPeople.filter(person=>linkedPeople.has(person.id));
+        }else{
+          throw new Error('El cliente de Neon no expone listPeople ni listPeopleByIds. Actualiza mira-data.js.');
+        }
+      }catch(error){warnings.push('No se pudieron consultar las fichas vinculadas a las asistencias: '+(error?.message||'error de consulta'));}
+    }
+    const expectedPersonIds=new Set(attendanceRows.map(row=>row.persona_id).filter(Boolean));
+    const returnedPersonIds=new Set(peopleRows.map(person=>person.id));
+    const missingPeopleCount=[...expectedPersonIds].filter(id=>!returnedPersonIds.has(id)).length;
+    if(missingPeopleCount)warnings.push('No se recuperaron '+missingPeopleCount+' fichas personales de '+expectedPersonIds.size+' asistencias. Revisa permisos o paginación.');
     activitiesLoadWarning=warnings.join(' · ');
     activitiesState.people=peopleRows.map(p=>{
       const parsed=splitLegacyPersonName(p.nombres,p.apellidos);
@@ -618,7 +636,7 @@ async function loadActivitiesFromNeon(){
     }));
     const active=activitiesState.activities.find(a=>a.status==='active');
     activitiesState.currentActivityId=active?.id||activitiesState.activities[0]?.id||null;
-    activitiesBackendReady=true;renderActivities();
+    activitiesBackendReady=true;activitiesLastLoadedAt=Date.now();renderActivities();
     console.info('[MIRA] Archivo de Actividades sincronizado:',{
       personas:activitiesState.people.length,actividades:activitiesState.activities.length,
       asistencias:activitiesState.attendances.length,advertencias:warnings
@@ -629,20 +647,20 @@ async function loadActivitiesFromNeon(){
     const folders=document.getElementById('activitiesFolders');
     if(folders){
       folders.innerHTML='<div class="activity-empty-drive"><h3>No fue posible consultar las actividades</h3><p>'+escapeActivityHtml(error.message||'Verifica tu sesión, conexión y permisos.')+'</p><button type="button" class="territory-retry-button" id="retryActivitiesLoad">Reintentar consulta</button></div>';
-      document.getElementById('retryActivitiesLoad')?.addEventListener('click',()=>loadActivitiesFromNeon());
+      document.getElementById('retryActivitiesLoad')?.addEventListener('click',()=>loadActivitiesFromNeon({force:true}));
     }
   }finally{activitiesLoading=false;}
 }
-// No cargar cientos de personas/asistencias al iniciar sesión: se consultan al abrir Actividades.
-// Así el Centro de Operaciones aparece sin esperar consultas de un módulo que aún no se abrió.
+window.addEventListener('mira:authenticated',loadActivitiesFromNeon);
 function normActivityText(v){return (v||'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');}
 function normalizeCedula(v){return (v||'').replace(/\D/g,'');}
 function splitLegacyPersonName(nombres,apellidos){
   const full=String(nombres||'').trim();
   const surnames=String(apellidos||'').trim();
-  if(surnames || !full.includes(' ')) return {names:full,surnames};
-  const parts=full.split(/\s+/).filter(Boolean);
-  if(parts.length>=3) return {names:parts.slice(0,-2).join(' '),surnames:parts.slice(-2).join(' ')};
+  if(surnames) return {names:full,surnames};
+  // Los registros históricos pueden guardar el nombre completo en `nombres`.
+  // No inferir apellidos por posición: conservar el texto original evita inventar
+  // una división incorrecta en nombres compuestos o apellidos múltiples.
   return {names:full,surnames:''};
 }
 function escapeActivityHtml(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
@@ -957,7 +975,7 @@ async function syncMiraQuickModules(){
     Boolean(document.getElementById('app-container') && getComputedStyle(document.getElementById('app-container')).display!=='none');
   // El acceso rápido pertenece a la portada pública. No debe flotar encima
   // del Centro de Operaciones, PQRS, Concejal ni otros módulos.
-  if(root)root.classList.toggle('hidden',!landingVisible || pmuVisible);
+  if(root)root.classList.toggle('hidden',!landingVisible || pmuVisible || Boolean(user));
   if(testigos){
     testigos.disabled=true;
     testigos.setAttribute('aria-disabled','true');
@@ -1111,16 +1129,16 @@ function renderActivityTable(){
  const canEdit=canManageActivities("edit"),canDelete=canManageActivities("annul");
  const body=document.getElementById("activityParticipantsBody");
  const q=normActivityText(document.getElementById("activitySearch").value);
- const allRows=activityRows(null,q),rows=allRows.slice(0,10);
+ const rows=activityRows(null,q);
  document.getElementById("liveActivityCount").textContent="Mostrando "+rows.length+" de "+activitiesState.attendances.length+" registros";
  body.innerHTML=rows.length?rows.map(({a,p,act})=>{
   const actions=[canEdit?'<button class="activity-row-btn" data-edit="'+escapeActivityHtml(a.id)+'" type="button">Editar</button>':"",canDelete?'<button class="activity-row-btn activity-manage-delete" data-delete-attendance="'+escapeActivityHtml(a.id)+'" type="button">Eliminar</button>':""].filter(Boolean).join(" ");
-  return '<tr><td>'+escapeActivityHtml((p.names||"")+" "+(p.surnames||""))+'</td><td>'+escapeActivityHtml(p.cedula||"")+'</td><td>'+escapeActivityHtml(act.name||"—")+'</td><td>'+(p.infoMira==="si"?"Sí":"No")+'</td><td>'+(p.hasApp==="si"?"Sí":p.hasApp==="no"?"No":"—")+'</td><td>'+(p.type==="externo"?"Externo":p.type==="interno"?"Interno":"—")+'</td><td>'+(a.createdAt?new Date(a.createdAt).toLocaleString("es-CO"):"")+'</td><td>'+(actions||"—")+'</td></tr>';
+  return '<tr><td>'+escapeActivityHtml((p.names||"")+" "+(p.surnames||""))+'</td><td>'+escapeActivityHtml(p.cedula||"")+'</td><td>'+escapeActivityHtml(act.name||"—")+'</td><td>'+(p.infoMira==="si"?"Sí":p.infoMira==="no"?"No":"—")+'</td><td>'+(p.hasApp==="si"?"Sí":p.hasApp==="no"?"No":"—")+'</td><td>'+(p.type==="externo"?"Externo":p.type==="interno"?"Interno":"—")+'</td><td>'+(a.createdAt?new Date(a.createdAt).toLocaleString("es-CO"):"")+'</td><td>'+(actions||"—")+'</td></tr>';
  }).join(""):'<tr><td colspan="8">No hay registros recientes para mostrar.</td></tr>';
  body.querySelectorAll("[data-edit]").forEach(b=>b.addEventListener("click",()=>editAttendance(b.dataset.edit)));
  body.querySelectorAll("[data-delete-attendance]").forEach(b=>b.addEventListener("click",()=>deleteActivityAttendance(b.dataset.deleteAttendance)));
 }
-function exportActivityExcel(activityId){if(!canManageActivities("view")||!canManageActivities("export")){alert('No tienes autorización para exportar registros. Solicita el permiso Exportar Excel al administrador.');return;}if(!window.XLSX){alert('No se pudo cargar la herramienta de Excel.');return;}const rows=activityRows(activityId).map(({a,p,act})=>({'Actividad':act.name||'','Fecha actividad':act.date||'','Lugar':act.place||'','Cédula':p.cedula||'','Nombres':p.names||'','Apellidos':p.surnames||'','Teléfono':p.phone||'','Inscrito a InfoMIRA':p.infoMira==='si'?'Sí':'No','Tiene la App InfoMIRA':p.hasApp==='si'?'Sí':p.hasApp==='no'?'No':'','Fecha registro':a.createdAt||''}));const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),'Registros');const act=activitiesState.activities.find(a=>a.id===activityId);XLSX.writeFile(wb,(act?act.name:'Mira_Tu_Territorio').replace(/[^a-z0-9_-]/gi,'_')+'.xlsx');}
+function exportActivityExcel(activityId){if(!canManageActivities("view")||!canManageActivities("export")){alert('No tienes autorización para exportar registros. Solicita el permiso Exportar Excel al administrador.');return;}if(!window.XLSX){alert('No se pudo cargar la herramienta de Excel.');return;}const sourceRows=activityRows(activityId);const missingRows=sourceRows.filter(({a,p})=>!a.personId||!p?.id);if(missingRows.length){const message="No se generó el Excel porque faltan "+missingRows.length+" fichas personales de "+sourceRows.length+" asistencias. Actualiza la consulta y revisa los permisos antes de exportar.";console.error("[MIRA] Exportación bloqueada por fichas incompletas:",{activityId,total:sourceRows.length,missing:missingRows.map(({a})=>({attendanceId:a.id,personId:a.personId||null}))});alert(message);return;}const rows=sourceRows.map(({a,p,act})=>({'Actividad':act.name||'','Fecha actividad':act.date||'','Lugar':act.place||'','Cédula':p.cedula||'','Nombres':p.names||'','Apellidos':p.surnames||'','Teléfono':p.phone||'','Inscrito a InfoMIRA':p.infoMira==='si'?'Sí':p.infoMira==='no'?'No':'','Tiene la App InfoMIRA':p.hasApp==='si'?'Sí':p.hasApp==='no'?'No':'','Tipo de participante':p.type==='interno'?'Interno':p.type==='externo'?'Externo':'','Fecha registro':a.createdAt||''}));const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),'Registros');const act=activitiesState.activities.find(a=>a.id===activityId);XLSX.writeFile(wb,(act?act.name:'Mira_Tu_Territorio').replace(/[^a-z0-9_-]/gi,'_')+'.xlsx');}
 document.getElementById('exportSingleActivityBtn').addEventListener('click',()=>exportActivityExcel(detailActivityId));
 document.getElementById('exportSingleActivityBtn').hidden=true;
 function openActivityFolder(id){
@@ -1132,8 +1150,9 @@ function openActivityFolder(id){
  const body=document.getElementById("activityDetailBody");
  body.innerHTML=rows.length?rows.map(({a,p})=>{
   const actions=[canEdit?'<button class="activity-row-btn" data-edit="'+escapeActivityHtml(a.id)+'" type="button">Editar</button>':"",canDelete?'<button class="activity-row-btn activity-manage-delete" data-delete-attendance="'+escapeActivityHtml(a.id)+'" type="button">Eliminar</button>':""].filter(Boolean).join(" ");
-  return '<tr><td>'+escapeActivityHtml((p.names||"")+" "+(p.surnames||""))+'</td><td>'+escapeActivityHtml(p.cedula||"")+'</td><td>'+escapeActivityHtml(p.phone||"—")+'</td><td>'+(p.infoMira==="si"?"Sí":"No")+'</td><td>'+(p.hasApp==="si"?"Sí":p.hasApp==="no"?"No":"—")+'</td><td>'+(a.createdAt?new Date(a.createdAt).toLocaleString("es-CO"):"")+'</td><td>'+(actions||"—")+'</td></tr>';
- }).join(""):'<tr><td colspan="7">Esta actividad aún no tiene registros.</td></tr>';
+  const personName=((p.names||"")+" "+(p.surnames||"")).trim()||"Ficha no recuperada";
+  return '<tr><td>'+escapeActivityHtml(personName)+'</td><td>'+escapeActivityHtml(p.cedula||"—")+'</td><td>'+escapeActivityHtml(p.phone||"—")+'</td><td>'+(p.infoMira==="si"?"Sí":p.infoMira==="no"?"No":"—")+'</td><td>'+(p.hasApp==="si"?"Sí":p.hasApp==="no"?"No":"—")+'</td><td>'+escapeActivityHtml(p.type==="interno"?"Interno":p.type==="externo"?"Externo":"—")+'</td><td>'+(a.createdAt?new Date(a.createdAt).toLocaleString("es-CO"):"—")+'</td><td>'+(actions||"—")+'</td></tr>';
+ }).join(""):'<tr><td colspan="8">Esta actividad aún no tiene registros.</td></tr>';
  body.querySelectorAll("[data-edit]").forEach(b=>b.addEventListener("click",()=>editAttendance(b.dataset.edit)));
  body.querySelectorAll("[data-delete-attendance]").forEach(b=>b.addEventListener("click",()=>deleteActivityAttendance(b.dataset.deleteAttendance)));
  showActivityView("detail");
@@ -1157,17 +1176,37 @@ function renderActivities(){
   else if(currentActivity())select.value=currentActivity().id;
   const folders=document.getElementById('activitiesFolders');
   const archiveQuery=normActivityText(document.getElementById('activitiesArchiveSearch')?.value||'');
-  const archiveActivities=activitiesState.activities.slice().sort((a,b)=>b.date.localeCompare(a.date)).filter(a=>!archiveQuery||normActivityText([a.name,a.date,a.place,a.status].join(' ')).includes(archiveQuery));
+  const archiveActivities=activitiesState.activities.slice().sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))).filter(a=>!archiveQuery||normActivityText([a.name,a.date,a.place,a.status].join(' ')).includes(archiveQuery));
   folders.innerHTML=(activitiesLoadWarning?'<div class="activity-load-warning" role="status">'+escapeActivityHtml(activitiesLoadWarning)+'</div>':'')+(archiveActivities.length?archiveActivities.map(a=>{
     const count=activitiesState.attendances.filter(x=>x.activityId===a.id).length;
     const statusLabel=a.status==='active'?'En curso':a.status==='finished'?'Finalizada':a.status==='cancelada'?'Cancelada':a.status||'Sin estado';
     const statusClass=a.status==='active'?'active':a.status==='cancelada'?'cancelled':'closed';
+    const renameButton=editAllowed?`<button class="activity-row-btn" data-activity-rename="${escapeActivityHtml(a.id)}" type="button">Renombrar</button>`:'';
     const cancelButton=a.status==='active'&&editAllowed?`<button class="activity-row-btn activity-manage-cancel" data-activity-cancel="${escapeActivityHtml(a.id)}" type="button">Cancelar</button>`:'';
     const deleteButton=canManageActivities('delete')?(count===0?`<button class="activity-row-btn activity-manage-delete" data-activity-delete="${escapeActivityHtml(a.id)}" type="button">Eliminar</button>`:'<span class="activity-delete-locked" title="Tiene asistencias asociadas">No eliminable · '+count+' registros</span>'):'';
-    return `<article class="activity-folder"><div class="folder-icon">📁</div><h3>${escapeActivityHtml(a.name)}</h3><p>${escapeActivityHtml(a.date||'Sin fecha')} · ${count} registros</p><span class="activity-state-pill ${statusClass}">${escapeActivityHtml(statusLabel)}</span><div class="activity-folder-actions"><button class="activity-row-btn" data-folder-open="${escapeActivityHtml(a.id)}" type="button">📂 Abrir</button>${cancelButton}${deleteButton}</div></article>${exportAllowed?'<button class="activity-file-card" data-folder-export="'+escapeActivityHtml(a.id)+'" type="button" aria-label="Descargar Excel de '+escapeActivityHtml(a.name)+'"><span class="file-icon">📊</span><strong>'+escapeActivityHtml(a.name)+'.xlsx</strong><small>Archivo de registros · '+count+' filas</small><span class="file-type">EXCEL · DESCARGAR</span></button>':''}`;
+    return `<article class="activity-folder"><div class="folder-icon">📁</div><h3>${escapeActivityHtml(a.name)}</h3><p>${escapeActivityHtml(a.date||'Sin fecha')} · ${count} registros</p><span class="activity-state-pill ${statusClass}">${escapeActivityHtml(statusLabel)}</span><div class="activity-folder-actions"><button class="activity-row-btn" data-folder-open="${escapeActivityHtml(a.id)}" type="button">📂 Abrir</button>${renameButton}${cancelButton}${deleteButton}</div></article>${exportAllowed?'<button class="activity-file-card" data-folder-export="'+escapeActivityHtml(a.id)+'" type="button" aria-label="Descargar Excel de '+escapeActivityHtml(a.name)+'"><span class="file-icon">📊</span><strong>'+escapeActivityHtml(a.name)+'.xlsx</strong><small>Archivo de registros · '+count+' filas</small><span class="file-type">EXCEL · DESCARGAR</span></button>':''}`;
   }).join(''):activitiesState.activities.length?'<div class="activity-empty-drive"><div>🔎</div><h3>No encontramos actividades</h3><p>Prueba con otro nombre, fecha o lugar.</p></div>':'<div class="activity-empty-drive"><div>📂</div><h3>Aún no hay actividades</h3><p>Crea una actividad para que aparezca aquí su carpeta y su archivo Excel.</p></div>');
   folders.querySelectorAll('[data-folder-open]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();openActivityFolder(b.dataset.folderOpen);}));
   folders.querySelectorAll('[data-folder-export]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();exportActivityExcel(b.dataset.folderExport);}));
+  folders.querySelectorAll('[data-activity-rename]').forEach(b=>b.addEventListener('click',async e=>{
+    e.stopPropagation();
+    const item=activitiesState.activities.find(x=>x.id===b.dataset.activityRename);
+    if(!item)return;
+    const nextName=window.prompt('Nuevo nombre para la actividad:',item.name);
+    if(nextName===null)return;
+    const cleanName=nextName.trim();
+    if(!cleanName){alert('El nombre de la actividad no puede quedar vacío.');return;}
+    if(cleanName===item.name)return;
+    b.disabled=true;
+    try{
+      const result=await window.MIRA_DATA.updateActivity(item.id,{nombre:cleanName,actualizado_por:window.MIRA_CURRENT_USER?.email||null});
+      if(!Array.isArray(result)||result.length!==1)throw new Error('Neon no confirmó el cambio de nombre.');
+      await loadActivitiesFromNeon({force:true});
+      if(detailActivityId===item.id)openActivityFolder(item.id);
+      alert('Nombre de la actividad actualizado correctamente.');
+    }catch(error){alert('No fue posible renombrar la actividad: '+(error.message||'Error desconocido.'));}
+    finally{b.disabled=false;}
+  }));
   folders.querySelectorAll('[data-activity-cancel]').forEach(b=>b.addEventListener('click',async e=>{
     e.stopPropagation();const item=activitiesState.activities.find(a=>a.id===b.dataset.activityCancel);if(!item)return;
     if(!confirm('¿Cancelar la actividad "'+item.name+'"? Se conservarán todos sus registros y ya no se podrán agregar nuevas asistencias.'))return;
@@ -1188,7 +1227,7 @@ function renderActivities(){
   }));
   document.getElementById('sideActivityPeople').textContent=activitiesState.people.length;
   document.getElementById('sideActivityAttendances').textContent=activitiesState.attendances.length;
-  document.getElementById('sideActivityCount').textContent=activitiesState.activities.length+' actividades guardadas';
+  document.getElementById('sideActivityCount').textContent=activitiesState.activities.filter(x=>x.status==='active').length+' actividades activas';
   renderActivityTable();
 }
 renderActivities();
@@ -1251,34 +1290,19 @@ function activarPMUAutenticado() {
     if (controls) controls.style.display = 'none';
     const card = document.getElementById('adminCardContainer');
     if (card) { card.classList.remove('is-open'); card.classList.add('hidden'); }
-    // Mostrar primero la interfaz del Centro de Operaciones. La creación del
-    // mapa se difiere para que una inicialización cartográfica lenta no deje
-    // al usuario mirando una pantalla vacía después de autenticarse.
+    try {
+        if (typeof inicializarSistemaMapa === 'function') inicializarSistemaMapa();
+        // Recalcular Leaflet después de que el contenedor pase de oculto a visible.
+        [120, 350, 700].forEach(delay => setTimeout(() => {
+            const mapElement = document.getElementById('map');
+            if (map && mapElement && mapElement.clientWidth > 0 && mapElement.clientHeight > 0) {
+                map.invalidateSize({ pan: false, animate: false });
+            }
+        }, delay));
+    } catch (err) {
+        console.error('[MIRA TU TERRITORIO] Error al inicializar el mapa tras autenticar:', err);
+    }
     window.dispatchEvent(new Event('mira:pmu-ready'));
-    const initializeMapAfterEntry = () => {
-        try {
-            if (typeof inicializarSistemaMapa === 'function') inicializarSistemaMapa();
-            [120, 350, 700].forEach(delay => setTimeout(() => {
-                const mapElement = document.getElementById('map');
-                if (map && mapElement && mapElement.clientWidth > 0 && mapElement.clientHeight > 0) {
-                    map.invalidateSize({ pan: false, animate: false });
-                }
-            }, delay));
-        } catch (err) {
-            console.error('[MIRA TU TERRITORIO] Error al inicializar el mapa tras autenticar:', err);
-            window.dispatchEvent(new CustomEvent('mira:map-init-error', {detail:{message:err?.message||'No fue posible inicializar el mapa.'}}));
-        }
-    };
-    // Priorizar que el Centro de Operaciones quede interactivo. La cartografía
-    // se inicializa cuando el navegador tenga un espacio libre, sin bloquear la entrada.
-    const scheduleMapInitialization = () => {
-        if ('requestIdleCallback' in window) {
-            window.requestIdleCallback(initializeMapAfterEntry, { timeout: 1800 });
-        } else {
-            window.setTimeout(initializeMapAfterEntry, 450);
-        }
-    };
-    window.requestAnimationFrame(scheduleMapInitialization);
 }
 
 // La autenticación y autorización se gestionan exclusivamente mediante Neon Auth.
@@ -3240,8 +3264,8 @@ function inicializarSistemaMapa() {
             ? 'Sin registrar' : escInfo(value);
         const personaDe = row => Array.isArray(row.personas) ? (row.personas[0] || null) : (row.personas || null);
         const normalizarPuestoInfoMira = value => String(value || '').normalize('NFD')
-            .replace(/[\\u0300-\\u036f]/g,'').toUpperCase()
-            .replace(/[^A-Z0-9]+/g,' ').trim().replace(/\\s+/g,' ');
+            .replace(/[\u0300-\u036f]/g,'').toUpperCase()
+            .replace(/[^A-Z0-9]+/g,' ').trim().replace(/\s+/g,' ');
 
         function actualizarMapaInfoMira(rows) {
             miraMarkersGroup.clearLayers();
@@ -3256,6 +3280,7 @@ function inicializarSistemaMapa() {
                 if (clave) agrupados.set(clave, (agrupados.get(clave) || 0) + 1);
             });
             const bounds = [];
+            const infoMiraMarkers = [];
             listaPuestosVotacion.forEach(puesto => {
                 const cantidad = agrupados.get(normalizarPuestoInfoMira(puesto.matchName)) || agrupados.get(normalizarPuestoInfoMira(puesto.nombre)) || 0;
                 if (!cantidad) return;
@@ -3267,14 +3292,20 @@ function inicializarSistemaMapa() {
                 });
                 const marker = L.marker([puesto.lat,puesto.lon],{icon});
                 marker.bindTooltip('InfoMIRA · '+cantidad+' registro(s) · '+escInfo(puesto.nombre),{direction:'top',className:'leaflet-tooltip-barrio'});
+                marker.bindPopup('<strong>'+escInfo(puesto.nombre)+'</strong><br>Zona '+puesto.zona+' · Puesto '+puesto.numero+'<br>'+cantidad+' registro(s) InfoMIRA');
                 marker.on('click',()=>map.setView([puesto.lat,puesto.lon],16));
+                infoMiraMarkers.push(marker);
                 miraMarkersGroup.addLayer(marker);
             });
             if (bounds.length) {
                 if (map.hasLayer(puestosLayerGroup)) puestosLayerGroup.remove();
                 if (!map.hasLayer(miraMarkersGroup)) miraMarkersGroup.addTo(map);
-                if (bounds.length === 1) map.setView(bounds[0],16);
-                else map.fitBounds(bounds,{padding:[45,45],maxZoom:15});
+                if (bounds.length === 1) {
+                    map.setView(bounds[0],16);
+                    infoMiraMarkers[0]?.openPopup();
+                } else {
+                    map.fitBounds(bounds,{padding:[45,45],maxZoom:15});
+                }
             } else if (!map.hasLayer(puestosLayerGroup)) {
                 puestosLayerGroup.addTo(map);
             }
@@ -3707,7 +3738,7 @@ if(homeReturnButton){
     const mainLayer=poligonosPorNombre&&poligonosPorNombre[selectedConcejalBarrio];
     if(mainLayer&&map){try{map.fitBounds(mainLayer.getBounds(),{padding:[50,50],maxZoom:16});}catch(error){}}
     if(miniMap&&miniLayer){
-      const normalize=value=>String(value||'').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLocaleLowerCase('es').replace(/[^a-z0-9]+/g,' ').trim();
+      const normalize=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('es').replace(/[^a-z0-9]+/g,' ').trim();
       const wanted=normalize(selectedConcejalBarrio);
       let matched=null;
       miniLayer.eachLayer(layer=>{
