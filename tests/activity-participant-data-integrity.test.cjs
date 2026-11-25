@@ -53,7 +53,7 @@ test("el menú y el portal comparten la misma instancia versionada de MIRA_DATA"
   const index = read("index.html");
   const quick = read("mira-quick-modules.js");
   const portal = read("activity-portal.js");
-  const expected = "mira-data.js?v=20261125-activity-join-fix-1";
+  const expected = "mira-data.js?v=20261125-connected-1";
   assert.ok(index.includes(expected));
   assert.ok(quick.includes(expected));
   assert.ok(portal.includes(expected));
