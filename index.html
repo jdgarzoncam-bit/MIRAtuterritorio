@@ -750,8 +750,22 @@
 
 
     <!-- Motor 3D experimental (solo se activa con ?mapa3d=1) -->
-    <script src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
 
+    <!-- MapLibre y motor 3D se descargan únicamente al solicitar ?mapa3d=1. -->
+    <script>
+    (() => {
+      if (new URLSearchParams(window.location.search).get("mapa3d") !== "1") return;
+      const dependency = document.createElement("script");
+      dependency.src = "https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js";
+      dependency.onload = () => {
+        const engine = document.createElement("script");
+        engine.src = "mapa-3d.js?v=20261125-lazy-maplibre-1";
+        document.body.appendChild(engine);
+      };
+      dependency.onerror = () => console.error("[MIRA 3D] No fue posible cargar MapLibre. El mapa Leaflet permanece disponible.");
+      document.head.appendChild(dependency);
+    })();
+    </script>
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script src="electoral_2019.js"></script>
@@ -798,7 +812,6 @@
     <script type="module" src="mira-data.js?v=20261125-rpc-separated-1"></script>
     <script type="module" src="mira-auth.js?v=20261124-central-pin-single-4"></script>
     <script src="app.js?v=20261124-central-pin-single-4"></script>
-    <script src="mapa-3d.js?v=20261114-terrain-engine-1"></script>
     <script type="module" src="mira-admin.js?v=20261124-mobile-fixes-2"></script>
     <script type="module" src="mira-quick-modules.js?v=20261125-rpc-separated-1"></script>
     <script type="module" src="reportes.js?v=20261114-role-aware-3"></script>
