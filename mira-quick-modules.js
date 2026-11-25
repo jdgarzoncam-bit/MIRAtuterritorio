@@ -1,4 +1,4 @@
-import { MIRA_DATA } from "./mira-data.js?v=20261124-activity-retry-8";
+import { MIRA_DATA } from "./mira-data.js?v=20261125-prod-endpoint-1";
 
 const TOKEN_KEY = "miraParticipantAccessToken";
 const TOKEN_EXPIRY_KEY = "miraParticipantAccessTokenExpiresAt";
@@ -194,7 +194,7 @@ if (!menu || !toggle || !panel || !pinGate || !pinInput || !pinSubmit || !regist
     menu.classList.add("hidden");
     panel.classList.add("hidden");
     updateMobileMenuLabel(false);
-    window.location.assign("actividad.html?v=20261124-activity-retry-8");
+    window.location.assign("actividad.html?v=20261125-prod-endpoint-1");
   });
 
   lockButton.addEventListener("click", () => {
