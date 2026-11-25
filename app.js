@@ -542,6 +542,8 @@ let detailActivityId = null;
 let returnToRecentAfterEdit = false;
 let activitiesBackendReady = false;
 let activitiesLoading = false;
+let activitiesLastLoadedAt = 0;
+const ACTIVITIES_CACHE_TTL_MS = 30000;
 let activitiesLoadWarning = '';
 let activityPermissions = new Set();
 function isPrimaryMiraAdmin(){
@@ -561,7 +563,8 @@ function canManageActivities(action){
   if(isPrimaryMiraAdmin()) return ["view","create","edit","delete","export","manage","annul"].includes(action);
   return activityPermissions.has(action);
 }
-async function loadActivitiesFromNeon(){
+async function loadActivitiesFromNeon({force=false}={}){
+  if(!force && activitiesBackendReady && Date.now()-activitiesLastLoadedAt<ACTIVITIES_CACHE_TTL_MS) return;
   if(activitiesLoading){
     await new Promise(resolve=>{
       const waitForCurrentLoad=()=>activitiesLoading?window.setTimeout(waitForCurrentLoad,40):resolve();
@@ -615,7 +618,7 @@ async function loadActivitiesFromNeon(){
     }));
     const active=activitiesState.activities.find(a=>a.status==='active');
     activitiesState.currentActivityId=active?.id||activitiesState.activities[0]?.id||null;
-    activitiesBackendReady=true;renderActivities();
+    activitiesBackendReady=true;activitiesLastLoadedAt=Date.now();renderActivities();
     console.info('[MIRA] Archivo de Actividades sincronizado:',{
       personas:activitiesState.people.length,actividades:activitiesState.activities.length,
       asistencias:activitiesState.attendances.length,advertencias:warnings
@@ -626,7 +629,7 @@ async function loadActivitiesFromNeon(){
     const folders=document.getElementById('activitiesFolders');
     if(folders){
       folders.innerHTML='<div class="activity-empty-drive"><h3>No fue posible consultar las actividades</h3><p>'+escapeActivityHtml(error.message||'Verifica tu sesión, conexión y permisos.')+'</p><button type="button" class="territory-retry-button" id="retryActivitiesLoad">Reintentar consulta</button></div>';
-      document.getElementById('retryActivitiesLoad')?.addEventListener('click',()=>loadActivitiesFromNeon());
+      document.getElementById('retryActivitiesLoad')?.addEventListener('click',()=>loadActivitiesFromNeon({force:true}));
     }
   }finally{activitiesLoading=false;}
 }
