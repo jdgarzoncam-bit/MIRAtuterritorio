@@ -11,18 +11,18 @@ const home = read("index.html");
 const portalHtml = read("actividad.html");
 
 test("solo el menú Módulos solicita y verifica el PIN", () => {
-  assert.match(quick, /verifyParticipantAccessPin/);
-  assert.match(quick, /derivePinVerifier/);
+  assert.ok(quick.includes("verifyParticipantAccessPin"));
+  assert.ok(quick.includes("derivePinVerifier"));
   assert.doesNotMatch(portal, /createInternalNeonAuth|PUBLIC_AUTH_URL|derivePinVerifier|verifyParticipantAccessPin|PIN_SALT_HEX|PIN_ITERATIONS/);
   assert.doesNotMatch(portalHtml, /pubPinSubmit|pubGate|type="password"/);
 });
 
-test("el portal usa el mismo JWT de Neon que autorizó el PIN central", () => {
-  assert.match(data, /sessionStorage\\.setItem\\("miraParticipantAuthJwt",authToken\\)/);
-  assert.match(data, /authToken=null/);
-  assert.match(portal, /getJWTToken: \\(\\) => sessionStorage\\.getItem\\("miraParticipantAuthJwt"\\)/);
-  assert.match(portal, /sessionStorage\\.getItem\\(MODULE_ACCESS_TOKEN_KEY\\)/);
-  assert.match(quick, /sessionStorage\\.removeItem\\("miraParticipantAuthJwt"\\)/);
+test("el portal reutiliza el JWT de Neon y el token temporal autorizados desde Módulos", () => {
+  assert.ok(data.includes('sessionStorage.setItem("miraParticipantAuthJwt",authToken)'));
+  assert.ok(data.includes("authToken=null"));
+  assert.ok(portal.includes('getJWTToken: () => sessionStorage.getItem("miraParticipantAuthJwt")'));
+  assert.ok(portal.includes("sessionStorage.getItem(MODULE_ACCESS_TOKEN_KEY)"));
+  assert.ok(quick.includes('sessionStorage.removeItem("miraParticipantAuthJwt")'));
 });
 
 test("las páginas cargan las versiones coordinadas del flujo de PIN único", () => {
