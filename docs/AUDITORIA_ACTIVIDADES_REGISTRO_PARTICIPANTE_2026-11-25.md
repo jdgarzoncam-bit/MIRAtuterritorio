@@ -180,6 +180,6 @@ La suite se debe considerar pendiente hasta obtener el resultado de GitHub Actio
 - QA: 3 actividades, 594 personas, 21 asistencias, cero relaciones huérfanas.
 - Producción: 1 actividad, 594 personas, 36 asistencias, cero relaciones huérfanas.
 - En ambos entornos, el PIN central está habilitado y la configuración conserva 310.000 iteraciones PBKDF2.
-- GitHub Actions en el commit `f2adb7216b55adaa498cb5aed6d195e2d8b268e0`: sintaxis JavaScript aprobada, 141 pruebas aprobadas, 0 fallidas y verificación de ruta del portal aprobada.
+- GitHub Actions en el commit `cc620fd2e7f925704538a69b39f9ac1d14cb357c`: sintaxis JavaScript aprobada, 141 pruebas aprobadas, 0 fallidas y verificación de ruta del portal aprobada.
 - No se realizó recorrido manual de navegador en escritorio, iPhone o Android; esa validación no se declara completada.
 - No se modificó `main`, no se fusionó PR #53 y no se publicó ningún cambio de código en GitHub Pages.
