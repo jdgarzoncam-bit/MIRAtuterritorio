@@ -24,8 +24,10 @@ test("InfoMIRA enlaza resultados con el catálogo de puestos y sustituye marcado
   assert.ok(app.includes("const nombrePuesto = row.puesto_votacion || row.puesto_original || personaDe(row)?.puesto_votacion"));
   assert.ok(app.includes("puestosLayerGroup.remove()"));
   assert.ok(app.includes("map.setView(bounds[0],16)"));
+  assert.ok(app.includes("marker.bindPopup("));
+  assert.ok(app.includes("infoMiraMarkers[0]?.openPopup()"));
 });
 
 test("GitHub Pages carga la nueva versión de app.js y evita reutilizar el archivo anterior en caché", () => {
-  assert.ok(index.includes('app.js?v=20261125-infomira-polling-place-2'));
+  assert.ok(index.includes('app.js?v=20261125-infomira-polling-place-3'));
 });
