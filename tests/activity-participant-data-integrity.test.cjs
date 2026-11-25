@@ -70,3 +70,22 @@ test("el alta usa el RPC protegido por token central y la migración retira el o
   assert.match(sql, /apellidos = trim\(p_apellidos\)/);
   assert.match(sql, /tiene_app_infomira = v_tiene_app_infomira/);
 });
+
+test("el archivo de actividades conserva todos los estados y no oculta carpetas finalizadas o canceladas", () => {
+  const app = read("app.js");
+  assert.match(app, /const archiveActivities=activitiesState\.activities\.slice\(\)\.sort/);
+  assert.doesNotMatch(app, /const archiveActivities=activitiesState\.activities\.slice\(\)\.filter\(a=>a\.status==='active'\)/);
+  assert.match(app, /const activeActivities=activitiesState\.activities\.filter\(a=>a\.status==='active'\)/);
+});
+
+test("el registro en vivo no recorta silenciosamente la tabla a diez filas", () => {
+  const app = read("app.js");
+  assert.match(app, /const rows=activityRows\(null,q\)/);
+  assert.doesNotMatch(app, /activityRows\(null,q\),rows=allRows\.slice\(0,10\)/);
+});
+
+test("los nombres históricos sin columna de apellidos se conservan sin dividirlos por inferencia", () => {
+  const app = read("app.js");
+  assert.match(app, /if\(surnames\) return \{names:full,surnames\}/);
+  assert.match(app, /No inferir apellidos por posición/);
+});
