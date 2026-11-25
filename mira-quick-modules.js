@@ -194,7 +194,7 @@ if (!menu || !toggle || !panel || !pinGate || !pinInput || !pinSubmit || !regist
     menu.classList.add("hidden");
     panel.classList.add("hidden");
     updateMobileMenuLabel(false);
-    window.location.assign("actividad.html?v=20261124-single-pin-7");
+    window.location.assign("actividad.html?v=20261124-activity-retry-8");
   });
 
   lockButton.addEventListener("click", () => {
