@@ -88,9 +88,13 @@ async function establishAuthenticatedUser(authUser,expectedRevision=null) {
   // después, en la interfaz y en PostgreSQL/RLS; no se exige un permiso de módulo
   // para autenticar ni para consultar la cartografía base.
   window.MIRA_CURRENT_USER={role:profile.role,authUserId:profile.auth_user_id,displayName:profile.display_name||authUser.name||profile.email,email:profile.email||authUser.email};
-  window.dispatchEvent(new Event("mira:authenticated"));
+  // Primero se abre el contenedor PMU; luego se notifican eventos a los módulos móviles.
   if(typeof window.activarPMUAutenticado!=="function") throw new Error("No se pudo iniciar la interfaz principal.");
   window.activarPMUAutenticado();
+  if(window.matchMedia("(max-width: 600px)").matches && window.MIRA_MOBILE_LOGIN_REQUESTED===true && typeof window.MIRA_SHOW_MOBILE_MODULES==="function") {
+    window.MIRA_SHOW_MOBILE_MODULES();
+  }
+  window.dispatchEvent(new Event("mira:authenticated"));
   return true;
 }
 async function restoreExistingSession() {
@@ -281,6 +285,8 @@ document.addEventListener("DOMContentLoaded",()=>{
     }
     loginWithNeon();
   },true);
+  window.MIRA_AUTH_LOGIN_READY=true;
+  window.dispatchEvent(new Event("mira:auth-login-ready"));
   const reset=document.getElementById("forgotPasswordBtn");
   if(reset) reset.addEventListener("click",async event=>{
     event.preventDefault();
