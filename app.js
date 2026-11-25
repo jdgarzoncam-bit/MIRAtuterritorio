@@ -600,8 +600,19 @@ async function loadActivitiesFromNeon({force=false}={}){
     let peopleRows=[];
     if(attendanceResult.status==='fulfilled'){
       const personIds=[...new Set(attendanceRows.map(row=>row.persona_id).filter(Boolean))];
-      try{peopleRows=await window.MIRA_DATA.listPeopleByIds(personIds);}
-      catch(error){warnings.push('No se pudieron consultar las fichas vinculadas a las asistencias: '+(error?.message||'error de consulta'));}
+      try{
+        if(!personIds.length) peopleRows=[];
+        else if(typeof window.MIRA_DATA.listPeopleByIds==='function'){
+          peopleRows=await window.MIRA_DATA.listPeopleByIds(personIds);
+        }else if(typeof window.MIRA_DATA.listPeople==='function'){
+          // Compatibilidad con clientes MIRA_DATA anteriores que aún no exponen listPeopleByIds.
+          const allPeople=await loadAllPages(({limit,offset})=>window.MIRA_DATA.listPeople({limit,offset}));
+          const linkedPeople=new Set(personIds);
+          peopleRows=allPeople.filter(person=>linkedPeople.has(person.id));
+        }else{
+          throw new Error('El cliente de Neon no expone listPeople ni listPeopleByIds. Actualiza mira-data.js.');
+        }
+      }catch(error){warnings.push('No se pudieron consultar las fichas vinculadas a las asistencias: '+(error?.message||'error de consulta'));}
     }
     activitiesLoadWarning=warnings.join(' · ');
     activitiesState.people=peopleRows.map(p=>{
