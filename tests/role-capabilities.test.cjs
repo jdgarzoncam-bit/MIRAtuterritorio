@@ -39,7 +39,7 @@ test("el menú rápido conserva Testigos bloqueado y centraliza el PIN de Regist
   const indexSource = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
   const quickSource = fs.readFileSync(path.join(__dirname, "..", "mira-quick-modules.js"), "utf8");
   assert.ok(appSource.includes("landingVisible=Boolean(landing&&getComputedStyle(landing).display!=='none')"));
-  assert.ok(appSource.includes("root.classList.toggle('hidden',!landingVisible)"));
+  assert.ok(appSource.includes("root.classList.toggle('hidden',!landingVisible || pmuVisible || Boolean(user))"));
   assert.match(indexSource, /id="miraQuickTestigosBtn"[^>]*disabled/);
   assert.match(indexSource, /id="miraQuickRegisterParticipantBtn"/);
   assert.match(quickSource, /MIRA_DATA\.verifyParticipantAccessPin\(verifier\)/);
@@ -262,8 +262,8 @@ test("Reportes ciudadanos utiliza el cliente central y no una segunda instancia 
 });
 
 test("el portal independiente de Actividades usa el wrapper oficial de Neon Auth y la autorización PIN", () => {
-  assert.match(activityPortalSource, /createInternalNeonAuth\(PUBLIC_AUTH_URL/);
-  assert.match(activityPortalSource, /publicNeonAuth\.getJWTToken\(\)/);
+  assert.match(activityPortalSource, /getJWTToken: \(\) => sessionStorage\.getItem\("miraParticipantAuthJwt"\)/);
+  assert.match(activityPortalSource, /sessionStorage\.getItem\("miraParticipantAuthJwt"\)/);
   assert.match(activityPortalSource, /MIRA_DATA\.verifyParticipantAccessPin\(verifier\)/);
   assert.doesNotMatch(activityPortalSource, /createAuthClient|auth\.token\(\)|"witness"/);
 });
@@ -273,7 +273,7 @@ test("la interfaz interna de Actividades respeta los límites efectivos de cada 
   assert.match(appSource, /role==="operator"[\s\S]*?\["view","create","edit","export","annul"\]/);
   assert.match(appSource, /role==="viewer"\?\["view"\]/);
   assert.match(activityPortalSource, /if \(!accessToken\) return lockModule/);
-  assert.match(activityPortalSource, /lookupPublicPerson\(cedula,accessToken\)/);
+  assert.match(activityPortalSource, /checkPublicActivityParticipant\(cedula, actividadId, accessToken\)/);
 });
 
 test("la bandeja de reportes solo habilita edición para Operador o administrador principal", () => {
@@ -431,6 +431,6 @@ test("the landing routes participant registration through the central PIN-protec
   assert.doesNotMatch(indexSource, /id="btnSelectActividadesPublic"/);
   assert.match(indexSource, /id="miraQuickRegisterParticipantBtn"/);
   assert.match(indexSource, /id="miraModulePinGate"/);
-  assert.match(activityPage, /id="pubPin"/);
+  assert.match(activityPage, /activity-portal\.js\?v=20261125-participant-guard-3/);
   assert.match(signupPage, /id="signupForm"/);
 });
