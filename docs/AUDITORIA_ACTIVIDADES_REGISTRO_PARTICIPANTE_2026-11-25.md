@@ -134,3 +134,19 @@ Esta sección prevalece sobre las notas anteriores que indicaban que la migraci�
 - La comprobación SQL confirma integridad de relaciones y privilegios; no sustituye el recorrido de navegador.
 - Sigue pendiente una prueba funcional real en `http://localhost:8000` y en GitHub Pages para login, PIN correcto/incorrecto, alta nueva, actualización, duplicado, persona inactiva, renombrar, edición y descarga del Excel.
 - El código de esta rama continúa sin fusionar. GitHub Pages continúa consumiendo el código de la rama publicada, no estas correcciones de QA.
+
+
+## Intervención de estabilización — continuidad QA
+
+Se realizaron cambios pequeños sobre la rama QA existente, sin alterar main, producción ni datos:
+
+- mira-data.js: las consultas paginadas de actividades y asistencias ahora ordenan también por id.asc después de la fecha. Esto hace determinista el orden entre páginas cuando varios registros comparten la misma fecha/hora y reduce el riesgo de filas repetidas u omitidas durante la paginación por offset.
+- app.js: la exportación Excel comprueba que cada asistencia tenga una ficha personal recuperada. Si faltan fichas, detiene la descarga, informa el número de registros incompletos y deja evidencia en consola; evita generar un Excel aparentemente correcto con datos personales vacíos.
+- tests/activity-participant-data-integrity.test.cjs: se agregaron dos pruebas estructurales para el orden estable y el bloqueo de exportaciones incompletas.
+
+Commits de esta intervención:
+- cec262a2b2a0a6e130d42b3854ae7a1b43b1c60e — orden estable de paginación.
+- a69444079ae72251208ce9054b4ff8233d5227ef — protección de exportación Excel.
+- 4a5845b9e31aa8a445491e9e4fa3dff0fdc5487d — pruebas de regresión.
+
+La suite se debe considerar pendiente hasta obtener el resultado de GitHub Actions asociado a los nuevos commits. Estas comprobaciones no sustituyen la prueba de navegador ni confirman por sí solas el funcionamiento de Neon.
