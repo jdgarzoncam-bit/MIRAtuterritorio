@@ -13,7 +13,6 @@ let busy = false;
 let activities = [];
 let accessToken = null;
 let currentPersonAlreadyRegistered = false;
-  currentPersonBlocked = false;
 let currentPersonBlocked = false;
 let personLookupCompleted = false;
 
@@ -64,7 +63,7 @@ function lockModule(message = "") {
   sessionStorage.removeItem(MODULE_ACCESS_TOKEN_EXPIRY_KEY);
   sessionStorage.removeItem("miraParticipantAuthJwt");
     currentPersonAlreadyRegistered = false;
-  currentPersonBlocked = false;
+    currentPersonBlocked = false;
   personLookupCompleted = false;
   window.location.replace("index.html?openModules=1&authorization=expired");
 }
@@ -90,7 +89,7 @@ $("pubActivity").addEventListener("change", () => {
   currentPersonAlreadyRegistered = false;
   currentPersonBlocked = false;
   personLookupCompleted = false;
-    clearEnrollmentStatus();
+  clearEnrollmentStatus();
   clearPersonDetails();
   setAvailable(activities.length > 0);
   if ($("pubCedula").value.trim()) $("pubLookup").click();
@@ -206,7 +205,7 @@ $("publicActivityForm").addEventListener("submit", async event => {
     $("publicActivityForm").reset();
     clearPersonDetails();
         currentPersonAlreadyRegistered = false;
-  currentPersonBlocked = false;
+        currentPersonBlocked = false;
     personLookupCompleted = false;
     clearEnrollmentStatus();
     status("¡Asistencia registrada correctamente! La participación quedó guardada.");
