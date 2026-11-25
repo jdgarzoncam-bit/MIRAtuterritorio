@@ -52,7 +52,7 @@ test("revocar o vencer la autorización limpia ambos tokens y Testigos sigue blo
 test("el registro comprueba duplicados y guarda usando la autorización central", () => {
   assert.match(portal, /checkPublicActivityParticipant\(cedula, actividadId, accessToken\)/);
   assert.match(portal, /currentPersonAlreadyRegistered/);
-  assert.match(portal, /currentPersonAlreadyRegistered \|\| !personLookupCompleted/);
+  assert.match(portal, /currentPersonAlreadyRegistered \\|\\| currentPersonBlocked \\|\\| !personLookupCompleted/);
   assert.match(data, /rpc\/public_check_activity_participant/);
   assert.match(data, /registerPublicActivityParticipant/);
   assert.match(data, /rpc\/public_register_activity_participant_v2/);
