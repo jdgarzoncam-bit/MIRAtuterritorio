@@ -59,9 +59,9 @@ test("el registro comprueba duplicados y guarda usando la autorización central"
 });
 
 test("las páginas QA cargan la misma versión del cliente de datos y no hay PIN secundario en el HTML", () => {
-  assert.match(html, /mira-data\.js\?v=20261125-activity-join-fix-1/);
-  assert.match(html, /mira-quick-modules\.js\?v=20261125-participant-guard-3/);
-  assert.match(activityHtml, /activity-portal\.js\?v=20261125-participant-guard-3/);
-  assert.match(portal, /mira-data\.js\?v=20261125-activity-join-fix-1/);
+  assert.match(html, /mira-data\.js\?v=20261125-connected-1/);
+  assert.match(html, /mira-quick-modules\.js\?v=20261125-connected-1/);
+  assert.match(activityHtml, /activity-portal\.js\?v=20261125-connected-1/);
+  assert.match(portal, /mira-data\.js\?v=20261125-connected-1/);
   assert.doesNotMatch(activityHtml, /miraModulePin|miraModulePinGate|pubPinSubmit/);
 });
