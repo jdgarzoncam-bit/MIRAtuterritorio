@@ -69,3 +69,5 @@ test("el alta usa el RPC protegido por token central y la migración retira el o
   assert.match(sql, /apellidos = trim\(p_apellidos\)/);
   assert.match(sql, /tiene_app_infomira = v_tiene_app_infomira/);
 });
+  assert.match(app, /p\.hasApp==="no"\?"No":"—"/);
+  assert.match(app, /p\.hasApp==='no'\?'No':''/);
