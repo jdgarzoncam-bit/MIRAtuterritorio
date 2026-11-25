@@ -59,3 +59,13 @@ test("la entrada al Centro de Operaciones no espera la carga de personas y asist
   assert.ok(app.includes("window.requestIdleCallback(initializeMapAfterEntry"));
   assert.ok(app.includes("window.requestAnimationFrame(scheduleMapInitialization)"));
 });
+
+test("el botón de reintento no ejecuta recursión y sirve también para lista vacía", () => {
+  const helper = portal.match(/const addRetry = \(\) => \{([\s\S]*?)\n  \};/);
+  assert.ok(helper, "debe existir el helper addRetry");
+  assert.doesNotMatch(helper[1], /\baddRetry\s*\(/, "el helper no debe llamarse a sí mismo");
+  assert.ok(helper[1].includes('document.createElement("button")'));
+  assert.ok(helper[1].includes('retry.addEventListener("click", () => refreshActivities())'));
+  assert.ok(portal.includes("if (!activities.length)"));
+  assert.ok(portal.includes("addRetry();"));
+});
