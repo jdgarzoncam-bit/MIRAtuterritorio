@@ -1156,7 +1156,7 @@ function renderActivities(){
   else if(currentActivity())select.value=currentActivity().id;
   const folders=document.getElementById('activitiesFolders');
   const archiveQuery=normActivityText(document.getElementById('activitiesArchiveSearch')?.value||'');
-  const archiveActivities=activitiesState.activities.slice().sort((a,b)=>b.date.localeCompare(a.date)).filter(a=>!archiveQuery||normActivityText([a.name,a.date,a.place,a.status].join(' ')).includes(archiveQuery));
+  const archiveActivities=activitiesState.activities.slice().filter(a=>a.status==='active').sort((a,b)=>b.date.localeCompare(a.date)).filter(a=>!archiveQuery||normActivityText([a.name,a.date,a.place,a.status].join(' ')).includes(archiveQuery));
   folders.innerHTML=(activitiesLoadWarning?'<div class="activity-load-warning" role="status">'+escapeActivityHtml(activitiesLoadWarning)+'</div>':'')+(archiveActivities.length?archiveActivities.map(a=>{
     const count=activitiesState.attendances.filter(x=>x.activityId===a.id).length;
     const statusLabel=a.status==='active'?'En curso':a.status==='finished'?'Finalizada':a.status==='cancelada'?'Cancelada':a.status||'Sin estado';
