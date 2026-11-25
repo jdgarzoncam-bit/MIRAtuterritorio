@@ -1,6 +1,6 @@
 // Reutiliza el JWT anónimo exacto con el que se validó el PIN en Módulos.
 // No crear una segunda identidad de Neon Auth en esta página.
-import { MIRA_DATA } from "./mira-data.js?v=20261124-single-pin-6";
+import { MIRA_DATA } from "./mira-data.js?v=20261125-rpc-separated-1";
 window.MIRA_AUTH = {
   getJWTToken: () => sessionStorage.getItem("miraParticipantAuthJwt")
 };
