@@ -1,0 +1,32 @@
+name: Validación QA — Actividades y Registro participante
+
+on:
+  push:
+    branches:
+      - qa/fix-activities-participant-data-20261125
+
+permissions:
+  contents: read
+
+jobs:
+  validar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar código QA
+        uses: actions/checkout@v4
+      - name: Configurar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Validar sintaxis JavaScript
+        run: |
+          node --check app.js
+          node --check mira-data.js
+          node --check mira-auth.js
+          node --check mira-quick-modules.js
+          node --check activity-portal.js
+      - name: Verificar ruta del registro participante
+        run: |
+          grep -q 'actividad.html' mira-quick-modules.js
+          grep -q 'activity-portal.js?v=20261125-participant-guard-2' actividad.html
+          grep -q 'listPeopleByIds' mira-data.js
