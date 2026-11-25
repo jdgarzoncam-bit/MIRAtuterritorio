@@ -112,3 +112,25 @@ Se preparó `migrations/20261125_fix_public_participant_registration_integrity.s
 - Neon producción permanece sin cambios: `Adulto mayor noviembre`, 36 asistencias y 36 personas relacionadas.
 - La migración SQL descrita arriba sigue pendiente de ejecución en QA; por ello el bloqueo de persona inactiva está protegido en la interfaz, pero la defensa final del servidor quedará efectiva solo después de aplicar y probar esa migración.
 - La validación automatizada es estática/estructural. Aún falta la prueba manual de navegador en localhost:8000 (PIN, alta nueva, actualización existente, duplicado, inactiva, renombrar, edición y Excel) antes de promoción.
+
+
+## Rectificación de estado y segunda verificación de Neon — 2026-11-25, tercera pasada
+
+Esta sección prevalece sobre las notas anteriores que indicaban que la migración SQL estaba pendiente. Se consultó directamente Neon QA después de la actualización del PR:
+
+- La migración `20261125_fix_public_participant_registration_integrity.sql` **sí está aplicada en Neon QA**. La función interna `public_register_activity_participant` y el overload heredado de ocho argumentos de `public_register_activity_participant_v2` no tienen EXECUTE para `anonymous` ni `authenticated`. El wrapper de siete argumentos que recibe `p_access_token` tiene EXECUTE para `anonymous`.
+- La función de PIN está habilitada en QA y producción. La definición verificada conserva 45 minutos de autorización y bloqueo de 15 minutos después de cinco intentos incorrectos. No se realizó un intento real de PIN en navegador.
+- QA tiene 3 actividades, 21 asistencias y 594 personas. La actividad `Inscripción Adulto maayor evento 28 nov` tiene 19 asistencias y 19 relaciones persona-asistencia válidas; no hay personas huérfanas.
+- En esas 19 fichas, 15 guardan el nombre completo en la columna `nombres` y dejan `apellidos` vacío; cuatro tienen nombres y apellidos separados. No son 15 fichas ausentes. Los datos de cédula y teléfono están presentes en las 19. Algunos valores InfoMIRA/App son NULL y deben mostrarse como desconocidos, no como “No”.
+- Producción tiene 594 personas y la actividad `Adulto mayor noviembre` conserva 36 asistencias y 36 relaciones válidas. No se copiaron registros de QA a producción.
+
+### Hallazgos adicionales del archivo de Actividades
+- El archivo de QA filtraba la vista “Todas las actividades” a estado activo, ocultando carpetas canceladas y finalizadas. Se corrige para mostrar todos los estados en el archivo; el selector de inscripción sigue ofreciendo solo actividades activas.
+- La tabla “Registro en vivo” recortaba la visualización a las primeras 10 filas. Se corrige para mostrar todas las filas cargadas, conservando el contador y el buscador.
+- La separación automática de apellidos a partir de palabras del campo `nombres` no es fiable para nombres compuestos. Se corrige para conservar literalmente el nombre histórico completo cuando la columna `apellidos` está vacía, sin inventar una división.
+
+### Límites de validación
+- GitHub Actions: 136/136 pruebas aprobadas en el commit anterior a esta tercera pasada. Se deben volver a ejecutar después de estos cambios.
+- La comprobación SQL confirma integridad de relaciones y privilegios; no sustituye el recorrido de navegador.
+- Sigue pendiente una prueba funcional real en `http://localhost:8000` y en GitHub Pages para login, PIN correcto/incorrecto, alta nueva, actualización, duplicado, persona inactiva, renombrar, edición y descarga del Excel.
+- El código de esta rama continúa sin fusionar. GitHub Pages continúa consumiendo el código de la rama publicada, no estas correcciones de QA.
