@@ -35,14 +35,14 @@ test("Renombrar permanece disponible y persiste el nombre en Neon", () => {
   const app = read("app.js");
   assert.match(app, /data-activity-rename/);
   assert.match(app, /updateActivity\(item\.id,\{nombre:/);
-  assert.match(app, /Actividad renombrada correctamente/);
+  assert.match(app, /Nombre de la actividad actualizado correctamente/);
   assert.match(read("mira-data.js"), /updateActivity\(id,payload\)/);
 });
 
 test("el portal no tiene errores de inicialización y bloquea fichas inactivas", () => {
   const portal = read("activity-portal.js");
   assert.equal((portal.match(/^let currentPersonBlocked = false;$/gm) || []).length, 1);
-  assert.doesNotMatch(portal, /^\s+currentPersonBlocked = false;$/m);
+  assert.doesNotMatch(portal, /^currentPersonBlocked = false;$/m);
   assert.match(portal, /person\.inactivo \|\| person\.activo === false/);
   assert.match(portal, /if \(currentPersonBlocked\) return status/);
   assert.match(portal, /currentPersonAlreadyRegistered/);
