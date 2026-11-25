@@ -3224,8 +3224,8 @@ function inicializarSistemaMapa() {
             ? 'Sin registrar' : escInfo(value);
         const personaDe = row => Array.isArray(row.personas) ? (row.personas[0] || null) : (row.personas || null);
         const normalizarPuestoInfoMira = value => String(value || '').normalize('NFD')
-            .replace(/[\\u0300-\\u036f]/g,'').toUpperCase()
-            .replace(/[^A-Z0-9]+/g,' ').trim().replace(/\\s+/g,' ');
+            .replace(/[\u0300-\u036f]/g,'').toUpperCase()
+            .replace(/[^A-Z0-9]+/g,' ').trim().replace(/\s+/g,' ');
 
         function actualizarMapaInfoMira(rows) {
             miraMarkersGroup.clearLayers();
@@ -3691,7 +3691,7 @@ if(homeReturnButton){
     const mainLayer=poligonosPorNombre&&poligonosPorNombre[selectedConcejalBarrio];
     if(mainLayer&&map){try{map.fitBounds(mainLayer.getBounds(),{padding:[50,50],maxZoom:16});}catch(error){}}
     if(miniMap&&miniLayer){
-      const normalize=value=>String(value||'').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLocaleLowerCase('es').replace(/[^a-z0-9]+/g,' ').trim();
+      const normalize=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('es').replace(/[^a-z0-9]+/g,' ').trim();
       const wanted=normalize(selectedConcejalBarrio);
       let matched=null;
       miniLayer.eachLayer(layer=>{
