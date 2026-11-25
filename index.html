@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <script>document.documentElement.classList.add("mira-auth-restoring"); window.__miraAuthBootstrapFallback = window.setTimeout(() => document.documentElement.classList.remove("mira-auth-restoring"), 8000);</script>
+    <script>window.MIRA_AUTH_LOGIN_READY=false;document.addEventListener("submit",function(event){if(event.target&&event.target.id==="adminLoginFormInline"&&!window.MIRA_AUTH_LOGIN_READY){event.preventDefault();var notice=document.getElementById("loginError");if(notice){notice.textContent="El acceso seguro está terminando de cargar. Espera un momento y vuelve a pulsar Ingresar.";notice.style.display="block";}}},true);</script>
     <title>MIRA TU TERRITORIO — Inteligencia Electoral & Operativa</title>
     
     <!-- Tipografías Inter & Outfit -->
@@ -14,7 +15,7 @@
     <!-- SheetJS -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
-    <link rel="stylesheet" href="style.css?v=20261125-pmu-smooth-1">
+    <link rel="stylesheet" href="style.css?v=20261125-connected-1">
     <link rel="stylesheet" href="mira-mobile-performance.css?v=20261124-motion-1">
     <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css">
 </head>
@@ -27,6 +28,7 @@
 
     <!-- BOTONES GLOBALES DE HEADER LANDING (TEMA + IDIOMA) -->
     <div class="top-header-controls" id="landingHeaderControls">
+        <button id="landingModulesBtn" class="landing-modules-btn" type="button" aria-label="Abrir módulos del Centro de Operaciones">☰ <span>Módulos</span></button>
         <button id="landingLoginBtn" class="landing-login-btn" type="button">Ingresar <span aria-hidden="true">↗</span></button>
     </div>
 
@@ -809,15 +811,15 @@
             <footer class="admin-permissions-footer"><span>La cuenta administradora principal conserva todos sus privilegios.</span><span>Registro abierto · correo verificado · aprobación administrativa obligatoria.</span></footer>
         </div>
     </section>
-    <script type="module" src="mira-data.js?v=20261125-activity-join-fix-1"></script>
-    <script type="module" src="mira-auth.js?v=20261124-central-pin-single-4"></script>
-    <script src="app.js?v=20261125-activity-join-fix-1"></script>
+    <script type="module" src="mira-data.js?v=20261125-connected-1"></script>
+    <script type="module" src="mira-auth.js?v=20261125-connected-1"></script>
+    <script src="app.js?v=20261125-connected-1"></script>
     <script type="module" src="mira-admin.js?v=20261124-mobile-fixes-2"></script>
-    <script type="module" src="mira-quick-modules.js?v=20261125-participant-guard-3"></script>
+    <script type="module" src="mira-quick-modules.js?v=20261125-connected-1"></script>
     <script type="module" src="reportes.js?v=20261114-role-aware-3"></script>
     <script type="module" src="pqrs.js?v=20261110-pqrs-centralized-1"></script>
     <script src="pmu-navigation.js?v=20261031-vertical-glass"></script>
     <script src="electoral-dashboard.js"></script>
-    <script src="mobile-operations.js?v=20261124-central-pin-single-4"></script>
+    <script src="mobile-operations.js?v=20261125-connected-1"></script>
 </body>
 </html>
