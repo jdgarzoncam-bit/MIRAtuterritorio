@@ -34,7 +34,7 @@ test("la tabla y el Excel incluyen todos los campos de inscripción sin converti
 test("Renombrar permanece disponible y persiste el nombre en Neon", () => {
   const app = read("app.js");
   assert.match(app, /data-activity-rename/);
-  assert.match(app, /updateActivity\(item\.id,\{nombre:/);
+  assert.match(app, /updateActivity\(item\.id,\{nombre:cleanName/);
   assert.match(app, /Nombre de la actividad actualizado correctamente/);
   assert.match(read("mira-data.js"), /updateActivity\(id,payload\)/);
 });
