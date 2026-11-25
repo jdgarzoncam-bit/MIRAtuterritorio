@@ -176,6 +176,17 @@
    home.hidden=false;sidebar.hidden=true;back.classList.remove('is-visible');
    resizeMap();
   };
+  window.MIRA_SHOW_MOBILE_MODULES=showOperationsHome;
+  document.getElementById('landingModulesBtn')?.addEventListener('click',()=>{
+   const modulesMenu=document.getElementById('miraQuickModules');
+   const modulesToggle=document.getElementById('miraQuickModulesToggle');
+   if(!modulesMenu||!modulesToggle){
+    console.error('[MIRA módulos] No se encontró el menú centralizado.');
+    return;
+   }
+   modulesMenu.classList.remove('hidden');
+   modulesToggle.click();
+  });
   const restorePublicLanding=()=>{
    // La restauración inicial de Neon puede emitir mira:signed-out antes de
    // que el usuario envíe el formulario. No cancelar la intención de login.
