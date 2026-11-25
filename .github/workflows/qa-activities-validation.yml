@@ -25,6 +25,8 @@ jobs:
           node --check mira-auth.js
           node --check mira-quick-modules.js
           node --check activity-portal.js
+      - name: Ejecutar pruebas automatizadas del repositorio
+        run: node --test tests/*.test.cjs
       - name: Verificar ruta del registro participante
         run: |
           grep -q 'actividad.html' mira-quick-modules.js
