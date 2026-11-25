@@ -86,8 +86,8 @@ test("el menú rápido solo se muestra en la portada pública", () => {
 test("el portal de actividades fuerza una nueva versión del cliente de Neon", () => {
   const html = read("actividad.html");
   const portal = read("activity-portal.js");
-  assert.match(html, /activity-portal\.js\?v=20261125-participant-guard-3/);
-  assert.match(portal, /mira-data\.js\?v=20261125-activity-join-fix-1/);
+  assert.match(html, /activity-portal\.js\?v=20261125-connected-1/);
+  assert.match(portal, /mira-data\.js\?v=20261125-connected-1/);
   assert.doesNotMatch(portal, /public_check_activity_participant/);
 });
 
