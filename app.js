@@ -957,7 +957,7 @@ async function syncMiraQuickModules(){
     Boolean(document.getElementById('app-container') && getComputedStyle(document.getElementById('app-container')).display!=='none');
   // El acceso rápido pertenece a la portada pública. No debe flotar encima
   // del Centro de Operaciones, PQRS, Concejal ni otros módulos.
-  if(root)root.classList.toggle('hidden',!landingVisible || pmuVisible || Boolean(user));
+  if(root)root.classList.toggle('hidden',!landingVisible || pmuVisible);
   if(testigos){
     testigos.disabled=true;
     testigos.setAttribute('aria-disabled','true');
