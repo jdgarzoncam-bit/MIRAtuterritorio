@@ -22,7 +22,7 @@ test("Módulos es el único punto que solicita y valida el PIN", () => {
 
 test("el portal reutiliza el mismo JWT que validó el PIN central; no crea otra identidad", () => {
   assert.match(data, /sessionStorage\.setItem\("miraParticipantAuthJwt",authToken\)/);
-  assert.match(data, /miraRequest\([^\n]+authToken,body:/);
+  assert.match(data, /return miraRequest\("rpc\/public_verify_participant_pin",\{\s*method:"POST",anonymous:true,authToken,body:/);
   assert.match(data, /authToken=null/);
   assert.match(portal, /getJWTToken: \(\) => sessionStorage\.getItem\("miraParticipantAuthJwt"\)/);
   assert.doesNotMatch(portal, /createInternalNeonAuth|PUBLIC_AUTH_URL|PIN_SALT_HEX|PIN_ITERATIONS/);
@@ -53,15 +53,15 @@ test("el registro comprueba duplicados y guarda usando la autorización central"
   assert.match(portal, /checkPublicActivityParticipant\(cedula, actividadId, accessToken\)/);
   assert.match(portal, /currentPersonAlreadyRegistered/);
   assert.match(portal, /currentPersonAlreadyRegistered \|\| !personLookupCompleted/);
-  assert.match(data, /p_cedula:"__MIRA_ACTIVITY_CHECK__"/);
+  assert.match(data, /rpc\/public_check_activity_participant/);
   assert.match(data, /registerPublicActivityParticipant/);
-  assert.match(data, /rpc\/public_register_activity_participant/);
+  assert.match(data, /rpc\/public_register_activity_participant_v2/);
 });
 
 test("las páginas QA cargan la misma versión del cliente de datos y no hay PIN secundario en el HTML", () => {
-  assert.match(html, /mira-data\.js\?v=20261124-single-pin-6/);
-  assert.match(html, /mira-quick-modules\.js\?v=20261124-single-pin-6/);
-  assert.match(activityHtml, /activity-portal\.js\?v=20261124-single-pin-6/);
-  assert.match(portal, /mira-data\.js\?v=20261124-single-pin-6/);
+  assert.match(html, /mira-data\.js\?v=20261125-activity-join-fix-1/);
+  assert.match(html, /mira-quick-modules\.js\?v=20261125-participant-guard-3/);
+  assert.match(activityHtml, /activity-portal\.js\?v=20261125-participant-guard-3/);
+  assert.match(portal, /mira-data\.js\?v=20261125-activity-join-fix-1/);
   assert.doesNotMatch(activityHtml, /miraModulePin|miraModulePinGate|pubPinSubmit/);
 });
