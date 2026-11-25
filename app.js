@@ -657,9 +657,10 @@ function normalizeCedula(v){return (v||'').replace(/\D/g,'');}
 function splitLegacyPersonName(nombres,apellidos){
   const full=String(nombres||'').trim();
   const surnames=String(apellidos||'').trim();
-  if(surnames || !full.includes(' ')) return {names:full,surnames};
-  const parts=full.split(/\s+/).filter(Boolean);
-  if(parts.length>=3) return {names:parts.slice(0,-2).join(' '),surnames:parts.slice(-2).join(' ')};
+  if(surnames) return {names:full,surnames};
+  // Los registros históricos pueden guardar el nombre completo en `nombres`.
+  // No inferir apellidos por posición: conservar el texto original evita inventar
+  // una división incorrecta en nombres compuestos o apellidos múltiples.
   return {names:full,surnames:''};
 }
 function escapeActivityHtml(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
@@ -1128,7 +1129,7 @@ function renderActivityTable(){
  const canEdit=canManageActivities("edit"),canDelete=canManageActivities("annul");
  const body=document.getElementById("activityParticipantsBody");
  const q=normActivityText(document.getElementById("activitySearch").value);
- const allRows=activityRows(null,q),rows=allRows.slice(0,10);
+ const rows=activityRows(null,q);
  document.getElementById("liveActivityCount").textContent="Mostrando "+rows.length+" de "+activitiesState.attendances.length+" registros";
  body.innerHTML=rows.length?rows.map(({a,p,act})=>{
   const actions=[canEdit?'<button class="activity-row-btn" data-edit="'+escapeActivityHtml(a.id)+'" type="button">Editar</button>':"",canDelete?'<button class="activity-row-btn activity-manage-delete" data-delete-attendance="'+escapeActivityHtml(a.id)+'" type="button">Eliminar</button>':""].filter(Boolean).join(" ");
@@ -1175,7 +1176,7 @@ function renderActivities(){
   else if(currentActivity())select.value=currentActivity().id;
   const folders=document.getElementById('activitiesFolders');
   const archiveQuery=normActivityText(document.getElementById('activitiesArchiveSearch')?.value||'');
-  const archiveActivities=activitiesState.activities.slice().filter(a=>a.status==='active').sort((a,b)=>b.date.localeCompare(a.date)).filter(a=>!archiveQuery||normActivityText([a.name,a.date,a.place,a.status].join(' ')).includes(archiveQuery));
+  const archiveActivities=activitiesState.activities.slice().sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))).filter(a=>!archiveQuery||normActivityText([a.name,a.date,a.place,a.status].join(' ')).includes(archiveQuery));
   folders.innerHTML=(activitiesLoadWarning?'<div class="activity-load-warning" role="status">'+escapeActivityHtml(activitiesLoadWarning)+'</div>':'')+(archiveActivities.length?archiveActivities.map(a=>{
     const count=activitiesState.attendances.filter(x=>x.activityId===a.id).length;
     const statusLabel=a.status==='active'?'En curso':a.status==='finished'?'Finalizada':a.status==='cancelada'?'Cancelada':a.status||'Sin estado';
