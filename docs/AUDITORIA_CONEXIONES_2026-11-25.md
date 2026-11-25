@@ -5,8 +5,9 @@
 ### GitHub / GitHub Pages
 - Repositorio y rama principal verificados: `jdgarzoncam-bit/MIRAtuterritorio`, `main`.
 - El sitio configurado en Pages es `https://jdgarzoncam-bit.github.io/MIRAtuterritorio/`.
-- El commit `5c4ecad6adf4b4b71d398347dca44a5f3c493603` está en main.
-- El workflow validó sintaxis JS y subió el artefacto, pero el servicio de Pages terminó con `Deployment failed, try again later`. La publicación queda pendiente de confirmación.
+- El commit `5c4ecad6adf4b4b71d398347dca44a5f3c493603` renovó la caché de `app.js`.
+- El primer intento de Pages falló al crear/consultar el deployment. Después, el commit documental `3e919962fd364aa5c18870347a9c13b36db0544b` se publicó correctamente: GitHub Actions run 215 terminó `success` el 2026-11-25.
+- El despliegue de `main` está confirmado por Actions; queda pendiente la comprobación visual de los flujos desde navegador real.
 
 ### Neon
 - Auth y Data API usan el mismo endpoint de proyecto `ep-round-dawn-b7l3ya3h`; no se detectó diferencia entre los dos clientes activos.
