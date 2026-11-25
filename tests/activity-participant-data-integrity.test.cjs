@@ -89,3 +89,17 @@ test("los nombres históricos sin columna de apellidos se conservan sin dividirl
   assert.match(app, /if\(surnames\) return \{names:full,surnames\}/);
   assert.match(app, /No inferir apellidos por posición/);
 });
+
+
+test("la paginación de actividades y asistencias mantiene un orden estable entre páginas", () => {
+  const data = read("mira-data.js");
+  assert.match(data, /order:"fecha\\.desc,id\\.asc"/);
+  assert.match(data, /order:"fecha_registro\\.desc,id\\.asc"/);
+});
+
+test("la exportación Excel se detiene si una asistencia no tiene su ficha personal", () => {
+  const app = read("app.js");
+  assert.match(app, /const sourceRows=activityRows\\(activityId\\)/);
+  assert.match(app, /const missingRows=sourceRows\\.filter\\(\\(\\{a,p\\}\\)=>!a\\.personId\\|\\|!p\\?\\.id\\)/);
+  assert.match(app, /No se generó el Excel porque faltan/);
+});
