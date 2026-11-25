@@ -75,7 +75,12 @@ async function refreshActivities() {
   $("pubStatus").style.display = "none";
   const addRetry = () => {
     if (availability.querySelector(".activity-public-retry")) return;
-    addRetry();
+    const retry = document.createElement("button");
+    retry.type = "button";
+    retry.textContent = "Reintentar consulta";
+    retry.className = "activity-public-retry";
+    retry.addEventListener("click", () => refreshActivities());
+    availability.append(" ", retry);
   };
   select.disabled = true;
   syncLookupButton();
