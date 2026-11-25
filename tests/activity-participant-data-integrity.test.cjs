@@ -25,7 +25,8 @@ test("la tabla y el Excel incluyen todos los campos de inscripción sin converti
   const app = read("app.js");
   const index = read("index.html");
   assert.match(index, /<th>Tiene la App InfoMIRA<\/th><th>Tipo de participante<\/th>/);
-  assert.match(app, /p\.hasApp===\"no\"\?\"No\":\"\"/);
+  assert.match(app, /p\.hasApp==="no"\?"No":"—"/);
+  assert.match(app, /p\.hasApp==='no'\?'No':''/);
   assert.match(app, /'Tipo de participante':p\.type==='interno'\?'Interno':p\.type==='externo'\?'Externo':''/);
   assert.match(app, /Ficha no recuperada/);
   assert.match(app, /No se recuperaron '\+missingPeopleCount/);
@@ -69,5 +70,3 @@ test("el alta usa el RPC protegido por token central y la migración retira el o
   assert.match(sql, /apellidos = trim\(p_apellidos\)/);
   assert.match(sql, /tiene_app_infomira = v_tiene_app_infomira/);
 });
-  assert.match(app, /p\.hasApp==="no"\?"No":"—"/);
-  assert.match(app, /p\.hasApp==='no'\?'No':''/);
