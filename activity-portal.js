@@ -1,6 +1,6 @@
 // Reutiliza el JWT anónimo exacto con el que se validó el PIN en Módulos.
 // No crear una segunda identidad de Neon Auth en esta página.
-import { MIRA_DATA } from "./mira-data.js?v=20261125-rpc-separated-1";
+import { MIRA_DATA } from "./mira-data.js?v=20261125-activity-join-fix-1";
 window.MIRA_AUTH = {
   getJWTToken: () => sessionStorage.getItem("miraParticipantAuthJwt")
 };
@@ -13,6 +13,8 @@ let busy = false;
 let activities = [];
 let accessToken = null;
 let currentPersonAlreadyRegistered = false;
+  currentPersonBlocked = false;
+let currentPersonBlocked = false;
 let personLookupCompleted = false;
 
 function status(message, kind = "success") {
@@ -32,7 +34,7 @@ function syncLookupButton() {
   $("pubLookup").disabled = !accessToken || !$("pubActivity").value || busy;
 }
 function setAvailable(enabled) {
-  $("pubSubmit").disabled = !enabled || busy || currentPersonAlreadyRegistered || !personLookupCompleted || !accessToken;
+  $("pubSubmit").disabled = !enabled || busy || currentPersonAlreadyRegistered || currentPersonBlocked || !personLookupCompleted || !accessToken;
   $("pubActivity").disabled = !enabled || !accessToken;
   syncLookupButton();
 }
@@ -47,7 +49,7 @@ function showPersonDetails(person) {
     pubPollingTableValue: person.mesa_votacion || "No registrada",
     pubAgeValue: person.edad == null ? "No registrada" : String(person.edad),
     pubTransportValue: person.requiere_transporte == null ? "No registrado" : (person.requiere_transporte ? "Sí" : "No"),
-    pubStateValue: person.info_mira === true ? "Inscrita a InfoMIRA" : person.info_mira === false ? "No inscrita a InfoMIRA" : "Sin clasificación InfoMIRA"
+    pubStateValue: person.inactivo || person.activo === false ? "Inactiva · requiere revisión" : "Activa"
   };
   for (const [id,value] of Object.entries(fields)) $(id).textContent = value;
   $("pubPersonDetails").hidden = false;
@@ -62,6 +64,7 @@ function lockModule(message = "") {
   sessionStorage.removeItem(MODULE_ACCESS_TOKEN_EXPIRY_KEY);
   sessionStorage.removeItem("miraParticipantAuthJwt");
     currentPersonAlreadyRegistered = false;
+  currentPersonBlocked = false;
   personLookupCompleted = false;
   window.location.replace("index.html?openModules=1&authorization=expired");
 }
@@ -85,6 +88,7 @@ async function refreshActivities() {
 
 $("pubActivity").addEventListener("change", () => {
   currentPersonAlreadyRegistered = false;
+  currentPersonBlocked = false;
   personLookupCompleted = false;
     clearEnrollmentStatus();
   clearPersonDetails();
@@ -93,6 +97,7 @@ $("pubActivity").addEventListener("change", () => {
 });
 $("pubCedula").addEventListener("input", () => {
   currentPersonAlreadyRegistered = false;
+  currentPersonBlocked = false;
   personLookupCompleted = false;
     clearEnrollmentStatus();
   clearPersonDetails();
@@ -108,6 +113,7 @@ $("pubLookup").addEventListener("click", async () => {
   const button = $("pubLookup");
   button.disabled = true;
     currentPersonAlreadyRegistered = false;
+  currentPersonBlocked = false;
   personLookupCompleted = false;
   clearPersonDetails();
   clearEnrollmentStatus();
@@ -144,6 +150,12 @@ $("pubLookup").addEventListener("click", async () => {
     $("pubType").value = ["interno","externo"].includes(String(person.tipo_participacion||"").toLowerCase())
       ? String(person.tipo_participacion).toLowerCase() : "";
     showPersonDetails(person);
+    if (person.inactivo || person.activo === false) {
+      currentPersonBlocked = true;
+      setAvailable(false);
+      status("La ficha existe, pero está inactiva. No se puede registrar asistencia hasta que sea revisada por un administrador.", "error");
+      return;
+    }
     setAvailable(activities.length > 0);
     status(currentPersonAlreadyRegistered
       ? "Ficha recuperada. La asistencia de esta persona ya existe para esta actividad."
@@ -193,6 +205,7 @@ $("publicActivityForm").addEventListener("submit", async event => {
     $("publicActivityForm").reset();
     clearPersonDetails();
         currentPersonAlreadyRegistered = false;
+  currentPersonBlocked = false;
     personLookupCompleted = false;
     clearEnrollmentStatus();
     status("¡Asistencia registrada correctamente! La participación quedó guardada.");
@@ -210,6 +223,7 @@ $("publicActivityForm").addEventListener("reset", () => {
     if ($("pubStatus")) { $("pubStatus").style.display = "none"; $("pubStatus").textContent = ""; }
     clearPersonDetails();
         currentPersonAlreadyRegistered = false;
+  currentPersonBlocked = false;
     personLookupCompleted = false;
     clearEnrollmentStatus();
     setAvailable(activities.length > 0);
