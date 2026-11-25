@@ -152,3 +152,34 @@ Commits de esta intervención:
 La suite se debe considerar pendiente hasta obtener el resultado de GitHub Actions asociado a los nuevos commits. Estas comprobaciones no sustituyen la prueba de navegador ni confirman por sí solas el funcionamiento de Neon.
 
 - 6e13db06cc190539eba9fd0398f5a76affb066ac — ajuste de los patrones de las dos pruebas nuevas para que validen la sintaxis real del código.
+
+
+## Sincronización integral de conexiones y permisos — 2026-11-25
+
+### Aplicado en QA y producción
+- Se confirmó que ambos entornos usan endpoints propios de Neon Auth y Neon Data API, con los mismos orígenes autorizados: GitHub Pages, localhost:8000 y 127.0.0.1:8000.
+- Se compararon todas las tablas, columnas, restricciones, disparadores y políticas RLS del esquema `mira`. Las estructuras de personas, actividades y asistencias coinciden.
+- `mira.infomira_red` quedó con permiso SQL de `SELECT` únicamente para `authenticated`; se retiraron privilegios de escritura y truncado. La política RLS conserva la validación de permiso `infomira.view`.
+- Se retiró EXECUTE público/cliente de `sync_persona_status_flags()` (función de disparador) y de `public_person_exists_v2(text)` (ruta auxiliar no usada por el cliente actual).
+- Se alineó `enforce_profile_activation_requirements()` con el flujo de autenticación actual: la cuenta debe estar verificada, mientras que los permisos de módulos se comprueban al acceder a cada módulo y no bloquean la autenticación general.
+- La función de registro de producción mantiene temporalmente la firma RPC de seis argumentos que utiliza el código actualmente publicado en `main`; sus tres comprobaciones de token ahora vinculan el token con el mismo `actor_uid`. La actualización de una ficha existente guarda los campos confirmados del formulario (nombres, apellidos, teléfono, InfoMIRA, App InfoMIRA y tipo), sin tocar otros datos.
+
+### Ajustes de interfaz en la rama QA
+- Se reincorporó el botón superior **Módulos** en `index.html`, con su estilo móvil y conexión al menú centralizado de autorización.
+- Se expone `MIRA_SHOW_MOBILE_MODULES` y se enlaza el botón al menú centralizado.
+- La autenticación abre primero el contenedor PMU y después emite `mira:authenticated`, evitando la carrera de inicialización móvil.
+- Se añadió la señal `MIRA_AUTH_LOGIN_READY` para impedir envíos del formulario antes de que el listener seguro esté conectado.
+- Se renovaron los identificadores de caché de los archivos relacionados con Actividades, autenticación, menú y portal de participantes.
+
+### Diferencias deliberadas entre entornos
+- Producción conserva `mira.reportes_operativos` y el módulo `reportes`; QA no los tiene. No se encontró una referencia de código a la tabla `reportes_operativos`; no se copió ni eliminó porque su dependencia funcional debe confirmarse antes de sincronizarla.
+- La función `public_register_activity_participant(text,text,text,text,uuid,boolean)` permanece como compatibilidad en producción porque el cliente de `main` todavía usa el protocolo RPC heredado para PIN, consulta y registro. En QA esa función interna no es ejecutable por clientes; QA utiliza el wrapper `public_register_activity_participant_v2` con token central.
+- Las bases y sus datos siguen independientes; no se copiaron personas, actividades ni asistencias.
+
+### Verificación posterior
+- QA: 3 actividades, 594 personas, 21 asistencias, cero relaciones huérfanas.
+- Producción: 1 actividad, 594 personas, 36 asistencias, cero relaciones huérfanas.
+- En ambos entornos, el PIN central está habilitado y la configuración conserva 310.000 iteraciones PBKDF2.
+- GitHub Actions en el commit `f2adb7216b55adaa498cb5aed6d195e2d8b268e0`: sintaxis JavaScript aprobada, 141 pruebas aprobadas, 0 fallidas y verificación de ruta del portal aprobada.
+- No se realizó recorrido manual de navegador en escritorio, iPhone o Android; esa validación no se declara completada.
+- No se modificó `main`, no se fusionó PR #53 y no se publicó ningún cambio de código en GitHub Pages.
