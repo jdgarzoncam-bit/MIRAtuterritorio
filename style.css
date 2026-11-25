@@ -8624,3 +8624,13 @@ input,select,textarea,button { max-width:100%; }
   #mainSidebar .sidebar-content *, #mainSidebar .sidebar-content *::before,
   #mainSidebar .sidebar-content *::after { animation:none !important; transition:none !important; }
 }
+
+
+/* MIRA · acceso superior al menú centralizado de módulos */
+.landing-modules-btn{display:none;}
+@media (max-width:600px){
+ .top-header-controls{position:absolute;top:max(22px,env(safe-area-inset-top));left:0!important;right:18px;width:auto!important;justify-content:flex-end!important;z-index:3010;}
+ .landing-modules-btn{position:absolute!important;left:18px!important;right:auto!important;top:0!important;min-height:42px!important;padding:0 14px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:8px!important;border:1px solid rgba(66,190,255,.75)!important;border-radius:15px!important;background:rgba(5,20,49,.82)!important;color:#dff4ff!important;font:800 .78rem/1 system-ui,-apple-system,sans-serif!important;box-shadow:0 0 14px rgba(0,145,255,.22),inset 0 1px 0 rgba(255,255,255,.12)!important;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);touch-action:manipulation!important;z-index:2!important;}
+ .landing-modules-btn:active{transform:scale(.97)!important;background:rgba(12,48,93,.96)!important;}
+ .landing-modules-btn span{display:inline!important;white-space:nowrap!important;}
+}
