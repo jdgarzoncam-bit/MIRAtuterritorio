@@ -3240,6 +3240,7 @@ function inicializarSistemaMapa() {
                 if (clave) agrupados.set(clave, (agrupados.get(clave) || 0) + 1);
             });
             const bounds = [];
+            const infoMiraMarkers = [];
             listaPuestosVotacion.forEach(puesto => {
                 const cantidad = agrupados.get(normalizarPuestoInfoMira(puesto.matchName)) || agrupados.get(normalizarPuestoInfoMira(puesto.nombre)) || 0;
                 if (!cantidad) return;
@@ -3251,14 +3252,20 @@ function inicializarSistemaMapa() {
                 });
                 const marker = L.marker([puesto.lat,puesto.lon],{icon});
                 marker.bindTooltip('InfoMIRA · '+cantidad+' registro(s) · '+escInfo(puesto.nombre),{direction:'top',className:'leaflet-tooltip-barrio'});
+                marker.bindPopup('<strong>'+escInfo(puesto.nombre)+'</strong><br>Zona '+puesto.zona+' · Puesto '+puesto.numero+'<br>'+cantidad+' registro(s) InfoMIRA');
                 marker.on('click',()=>map.setView([puesto.lat,puesto.lon],16));
+                infoMiraMarkers.push(marker);
                 miraMarkersGroup.addLayer(marker);
             });
             if (bounds.length) {
                 if (map.hasLayer(puestosLayerGroup)) puestosLayerGroup.remove();
                 if (!map.hasLayer(miraMarkersGroup)) miraMarkersGroup.addTo(map);
-                if (bounds.length === 1) map.setView(bounds[0],16);
-                else map.fitBounds(bounds,{padding:[45,45],maxZoom:15});
+                if (bounds.length === 1) {
+                    map.setView(bounds[0],16);
+                    infoMiraMarkers[0]?.openPopup();
+                } else {
+                    map.fitBounds(bounds,{padding:[45,45],maxZoom:15});
+                }
             } else if (!map.hasLayer(puestosLayerGroup)) {
                 puestosLayerGroup.addTo(map);
             }
