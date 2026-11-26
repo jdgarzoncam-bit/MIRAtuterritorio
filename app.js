@@ -587,42 +587,33 @@ async function loadActivitiesFromNeon({force=false}={}){
       }
       throw new Error("Se alcanzó el límite de seguridad de paginación. Solicita revisión.");
     };
-    // El archivo y sus carpetas no dependen de que las consultas auxiliares respondan.
-    const [activityResult,attendanceResult]=await Promise.allSettled([
+    // Recuperar asistencias y fichas en una sola consulta SQL con JOIN.
+    // Evita que dos consultas independientes de Neon Data API dejen personas sin asociar.
+    const [activityResult,attendanceDetailResult]=await Promise.allSettled([
       loadAllPages(({limit,offset})=>window.MIRA_DATA.listActivities({limit,offset})),
-      loadAllPages(({limit,offset})=>window.MIRA_DATA.listAttendances({limit,offset}))
+      loadAllPages(({limit,offset})=>window.MIRA_DATA.listActivityAttendanceDetails({limit,offset}))
     ]);
     if(activityResult.status==='rejected')throw activityResult.reason;
+    if(attendanceDetailResult.status==='rejected')throw attendanceDetailResult.reason;
     const activityRows=activityResult.value||[];
-    const attendanceRows=attendanceResult.status==='fulfilled'?(attendanceResult.value||[]):[];
+    const attendanceDetailRows=attendanceDetailResult.value||[];
     const warnings=[];
-    if(attendanceResult.status==='rejected')warnings.push('No se pudieron consultar las asistencias: '+(attendanceResult.reason?.message||'error de consulta'));
-    let peopleRows=[];
-    if(attendanceResult.status==='fulfilled'){
-      const personIds=[...new Set(attendanceRows.map(row=>row.persona_id).filter(Boolean))];
-      try{
-        if(!personIds.length) peopleRows=[];
-        else if(typeof window.MIRA_DATA.listPeopleByIds==='function'){
-          peopleRows=await window.MIRA_DATA.listPeopleByIds(personIds);
-        }else if(typeof window.MIRA_DATA.listPeople==='function'){
-          // Compatibilidad con clientes MIRA_DATA anteriores que aún no exponen listPeopleByIds.
-          const allPeople=await loadAllPages(({limit,offset})=>window.MIRA_DATA.listPeople({limit,offset}));
-          const linkedPeople=new Set(personIds);
-          peopleRows=allPeople.filter(person=>linkedPeople.has(person.id));
-        }else{
-          throw new Error('El cliente de Neon no expone listPeople ni listPeopleByIds. Actualiza mira-data.js.');
-        }
-      }catch(error){warnings.push('No se pudieron consultar las fichas vinculadas a las asistencias: '+(error?.message||'error de consulta'));}
+    const peopleById=new Map();
+    for(const row of attendanceDetailRows){
+      if(!row.person_id||peopleById.has(String(row.person_id)))continue;
+      const parsed=splitLegacyPersonName(row.nombres,row.apellidos);
+      peopleById.set(String(row.person_id),{
+        id:String(row.person_id),cedula:row.cedula||'',
+        names:parsed.names,surnames:parsed.surnames,phone:row.telefono||'',
+        infoMira:row.info_mira===true?'si':row.info_mira===false?'no':'',
+        hasApp:row.tiene_app_infomira===true?'si':row.tiene_app_infomira===false?'no':'',
+        type:row.tipo_participacion||''
+      });
     }
-    const expectedPersonIds=new Set(attendanceRows.map(row=>row.persona_id).filter(Boolean));
-    const returnedPersonIds=new Set(peopleRows.map(person=>person.id));
-    const missingPeopleCount=[...expectedPersonIds].filter(id=>!returnedPersonIds.has(id)).length;
-    if(missingPeopleCount)warnings.push('No se recuperaron '+missingPeopleCount+' fichas personales de '+expectedPersonIds.size+' asistencias. Revisa permisos o paginación.');
+    const joinedMissing=attendanceDetailRows.filter(row=>!row.person_id||!String(row.nombres||'').trim()||!String(row.cedula||'').trim()).length;
+    if(joinedMissing)warnings.push(joinedMissing+' asistencias tienen una ficha vinculada sin nombre disponible; se conservó el registro para revisión.');
     activitiesLoadWarning=warnings.join(' · ');
-    activitiesState.people=peopleRows.map(p=>{
-      const parsed=splitLegacyPersonName(p.nombres,p.apellidos);
-      return {id:p.id,cedula:p.cedula||p.cedula_normalizada||'',names:parsed.names,surnames:parsed.surnames,phone:p.telefono||'',infoMira:p.info_mira===true?'si':p.info_mira===false?'no':'',hasApp:p.tiene_app_infomira===true?'si':p.tiene_app_infomira===false?'no':'',type:p.tipo_participacion||''};
-    });
+    activitiesState.people=[...peopleById.values()];
     activitiesState.activities=activityRows.map(a=>({
       id:a.id,name:a.nombre,date:a.fecha,place:a.lugar||'',
       status:["activa","active","en_curso"].includes(String(a.estado||"").toLowerCase())?"active":
@@ -630,9 +621,10 @@ async function loadActivitiesFromNeon({force=false}={}){
         String(a.estado||"").toLowerCase()==="cancelada"?"cancelada":a.estado,
       createdAt:a.created_at
     }));
-    activitiesState.attendances=attendanceRows.map(a=>({
-      id:a.id,personId:a.persona_id,activityId:a.actividad_id,
-      createdAt:a.fecha_registro||a.created_at,status:a.estado||'activa',reason:a.motivo_anulacion||''
+    activitiesState.attendances=attendanceDetailRows.map(row=>({
+      id:row.attendance_id,personId:row.person_id?String(row.person_id):null,
+      activityId:row.activity_id,createdAt:row.fecha_registro,
+      status:row.attendance_status||'activa',reason:row.cancellation_reason||''
     }));
     const active=activitiesState.activities.find(a=>a.status==='active');
     activitiesState.currentActivityId=active?.id||activitiesState.activities[0]?.id||null;
@@ -1133,12 +1125,12 @@ function renderActivityTable(){
  document.getElementById("liveActivityCount").textContent="Mostrando "+rows.length+" de "+activitiesState.attendances.length+" registros";
  body.innerHTML=rows.length?rows.map(({a,p,act})=>{
   const actions=[canEdit?'<button class="activity-row-btn" data-edit="'+escapeActivityHtml(a.id)+'" type="button">Editar</button>':"",canDelete?'<button class="activity-row-btn activity-manage-delete" data-delete-attendance="'+escapeActivityHtml(a.id)+'" type="button">Eliminar</button>':""].filter(Boolean).join(" ");
-  return '<tr><td>'+escapeActivityHtml((p.names||"")+" "+(p.surnames||""))+'</td><td>'+escapeActivityHtml(p.cedula||"")+'</td><td>'+escapeActivityHtml(act.name||"—")+'</td><td>'+(p.infoMira==="si"?"Sí":p.infoMira==="no"?"No":"—")+'</td><td>'+(p.hasApp==="si"?"Sí":p.hasApp==="no"?"No":"—")+'</td><td>'+(p.type==="externo"?"Externo":p.type==="interno"?"Interno":"—")+'</td><td>'+(a.createdAt?new Date(a.createdAt).toLocaleString("es-CO"):"")+'</td><td>'+(actions||"—")+'</td></tr>';
+  return '<tr><td>'+escapeActivityHtml(((p.names||"")+" "+(p.surnames||"")).trim()||"Ficha no recuperada")+'</td><td>'+escapeActivityHtml(p.cedula||"—")+'</td><td>'+escapeActivityHtml(act.name||"—")+'</td><td>'+(p.infoMira==="si"?"Sí":p.infoMira==="no"?"No":"—")+'</td><td>'+(p.hasApp==="si"?"Sí":p.hasApp==="no"?"No":"—")+'</td><td>'+(p.type==="externo"?"Externo":p.type==="interno"?"Interno":"—")+'</td><td>'+(a.createdAt?new Date(a.createdAt).toLocaleString("es-CO"):"")+'</td><td>'+(actions||"—")+'</td></tr>';
  }).join(""):'<tr><td colspan="8">No hay registros recientes para mostrar.</td></tr>';
  body.querySelectorAll("[data-edit]").forEach(b=>b.addEventListener("click",()=>editAttendance(b.dataset.edit)));
  body.querySelectorAll("[data-delete-attendance]").forEach(b=>b.addEventListener("click",()=>deleteActivityAttendance(b.dataset.deleteAttendance)));
 }
-function exportActivityExcel(activityId){if(!canManageActivities("view")||!canManageActivities("export")){alert('No tienes autorización para exportar registros. Solicita el permiso Exportar Excel al administrador.');return;}if(!window.XLSX){alert('No se pudo cargar la herramienta de Excel.');return;}const sourceRows=activityRows(activityId);const missingRows=sourceRows.filter(({a,p})=>!a.personId||!p?.id);if(missingRows.length){const message="No se generó el Excel porque faltan "+missingRows.length+" fichas personales de "+sourceRows.length+" asistencias. Actualiza la consulta y revisa los permisos antes de exportar.";console.error("[MIRA] Exportación bloqueada por fichas incompletas:",{activityId,total:sourceRows.length,missing:missingRows.map(({a})=>({attendanceId:a.id,personId:a.personId||null}))});alert(message);return;}const rows=sourceRows.map(({a,p,act})=>({'Actividad':act.name||'','Fecha actividad':act.date||'','Lugar':act.place||'','Cédula':p.cedula||'','Nombres':p.names||'','Apellidos':p.surnames||'','Teléfono':p.phone||'','Inscrito a InfoMIRA':p.infoMira==='si'?'Sí':p.infoMira==='no'?'No':'','Tiene la App InfoMIRA':p.hasApp==='si'?'Sí':p.hasApp==='no'?'No':'','Tipo de participante':p.type==='interno'?'Interno':p.type==='externo'?'Externo':'','Fecha registro':a.createdAt||''}));const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),'Registros');const act=activitiesState.activities.find(a=>a.id===activityId);XLSX.writeFile(wb,(act?act.name:'Mira_Tu_Territorio').replace(/[^a-z0-9_-]/gi,'_')+'.xlsx');}
+function exportActivityExcel(activityId){if(!canManageActivities("view")||!canManageActivities("export")){alert('No tienes autorización para exportar registros. Solicita el permiso Exportar Excel al administrador.');return;}if(!window.XLSX){alert('No se pudo cargar la herramienta de Excel.');return;}const sourceRows=activityRows(activityId);const missingRows=sourceRows.filter(({a,p})=>!a.personId||!p?.id||!String(p.names||'').trim()||!String(p.cedula||'').trim());if(missingRows.length){const message="No se generó el Excel porque faltan "+missingRows.length+" fichas personales de "+sourceRows.length+" asistencias. Actualiza la consulta y revisa los permisos antes de exportar.";console.error("[MIRA] Exportación bloqueada por fichas incompletas:",{activityId,total:sourceRows.length,missing:missingRows.map(({a})=>({attendanceId:a.id,personId:a.personId||null}))});alert(message);return;}const rows=sourceRows.map(({a,p,act})=>({'Actividad':act.name||'','Fecha actividad':act.date||'','Lugar':act.place||'','Cédula':p.cedula||'','Nombres':p.names||'','Apellidos':p.surnames||'','Teléfono':p.phone||'','Inscrito a InfoMIRA':p.infoMira==='si'?'Sí':p.infoMira==='no'?'No':'','Tiene la App InfoMIRA':p.hasApp==='si'?'Sí':p.hasApp==='no'?'No':'','Tipo de participante':p.type==='interno'?'Interno':p.type==='externo'?'Externo':'','Fecha registro':a.createdAt||''}));const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),'Registros');const act=activitiesState.activities.find(a=>a.id===activityId);XLSX.writeFile(wb,(act?act.name:'Mira_Tu_Territorio').replace(/[^a-z0-9_-]/gi,'_')+'.xlsx');}
 document.getElementById('exportSingleActivityBtn').addEventListener('click',()=>exportActivityExcel(detailActivityId));
 document.getElementById('exportSingleActivityBtn').hidden=true;
 function openActivityFolder(id){
