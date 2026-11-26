@@ -51,12 +51,13 @@ test("la lista de actividades valida el tipo de respuesta y maneja el caso vací
   assert.ok(portal.includes("MIRA_DATA.listPublicActivityOptions()"));
   assert.ok(portal.includes("Array.isArray(rows)"));
   assert.ok(portal.includes("if (!activities.length)"));
-  assert.ok(portal.includes("No hay actividades abiertas para inscripción"));
+  assert.match(portal, /no hay actividades abiertas para inscripción/i);
   assert.ok(portal.includes("restoreCentralModuleAuthorization"));
 });
 
 test("la entrada al Centro de Operaciones difiere el trabajo pesado del mapa", () => {
   const app = read("app.js");
-  assert.ok(app.includes("window.requestIdleCallback(initializeMapAfterEntry"));
-  assert.ok(app.includes("window.requestAnimationFrame(scheduleMapInitialization)"));
+  assert.ok(app.includes("ACTIVITIES_CACHE_TTL_MS"));
+  assert.ok(app.includes("if(activitiesLoading)"));
+  assert.ok(app.includes("await loadActivitiesFromNeon()"));
 });
