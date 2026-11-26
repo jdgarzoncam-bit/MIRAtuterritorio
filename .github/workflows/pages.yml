@@ -38,6 +38,7 @@ jobs:
       - name: Validar sintaxis antes de publicar
         run: |
           find . -type f -name '*.js' -not -path './node_modules/*' -print0 | xargs -0 -r -n1 node --check
+          node --test tests/production-endpoints.test.cjs
 
       - name: Preparar archivos del sitio
         uses: actions/upload-pages-artifact@v3
