@@ -20,7 +20,7 @@ test("el backend devuelve InfoMIRA falso y permite el registro de inactivos", ()
   assert.match(migration, /v_info_mira := false/);
   assert.match(migration, /CASE WHEN p\.inactivo OR NOT p\.activo THEN false ELSE p\.info_mira END/);
   assert.match(migration, /SET info_mira=false/);
-  assert.doesNotMatch(migration, /activo\s*=\s*true|inactivo\s*=\s*false/);
+  assert.doesNotMatch(migration, /\bactivo\s*=\s*true|\binactivo\s*=\s*false/);
 });
 
 test("el estado histórico de la persona no se borra ni se transforma", () => {
