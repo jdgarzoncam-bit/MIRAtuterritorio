@@ -53,3 +53,21 @@ test("los clientes principales apuntan al proyecto Neon de producción", () => {
   assert.match(data, /ep-round-dawn-b7l3ya3h/);
   assert.match(data, /br-winter-night-b758ke2j/);
 });
+
+test("el formulario y cliente de Reportes Operativos no forman parte del sitio", () => {
+  for (const obsoletePath of ["reporte-publico.html", "reporte-publico.js"]) {
+    assert.equal(fs.existsSync(path.join(root, obsoletePath)), false, obsoletePath + " debe estar retirado");
+  }
+  const landing = fs.readFileSync(path.join(root, "index.html"), "utf8");
+  assert.doesNotMatch(landing, /reporte-publico\\.(?:html|js)/i);
+});
+
+test("la migración de retiro elimina solo Reportes Operativos y la sobrecarga heredada", () => {
+  const migrationPath = path.join(root, "migrations", "20261126_remove_operational_reports_and_legacy_registration.sql");
+  assert.equal(fs.existsSync(migrationPath), true);
+  const migration = fs.readFileSync(migrationPath, "utf8");
+  assert.match(migration, /DELETE FROM mira\\.module_catalog WHERE module_key = 'reportes'/);
+  assert.match(migration, /DROP TABLE IF EXISTS mira\\.reportes_operativos/);
+  assert.match(migration, /DROP FUNCTION IF EXISTS mira\\.public_register_activity_participant_v2/);
+  assert.doesNotMatch(migration, /CASCADE/i);
+});
