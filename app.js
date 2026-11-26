@@ -618,11 +618,14 @@ async function loadActivitiesFromNeon({force=false}={}){
           }
           // Recuperación complementaria: reintentar únicamente las fichas que no
           // llegaron en la consulta por lote. No modifica personas ni asistencias.
-          const missingIds=personIds.filter(id=>!peopleById.has(id));
-          if(missingIds.length&&typeof window.MIRA_DATA.listPeople==='function'){
+          const incompleteIds=personIds.filter(id=>{
+            const person=peopleById.get(id);
+            return !person||!String(person.cedula||person.cedula_normalizada||"").trim()||!String(person.nombres||"").trim();
+          });
+          if(incompleteIds.length&&typeof window.MIRA_DATA.listPeople==='function'){
             try{
               const allPeople=await loadAllPages(({limit,offset})=>window.MIRA_DATA.listPeople({limit,offset}));
-              const expectedIds=new Set(missingIds);
+              const expectedIds=new Set(incompleteIds);
               allPeople.filter(person=>expectedIds.has(String(person.id))).forEach(person=>peopleById.set(String(person.id),person));
             }catch(recoveryError){
               warnings.push('La recuperación complementaria de fichas no terminó: '+(recoveryError?.message||'error de consulta'));
@@ -634,8 +637,11 @@ async function loadActivitiesFromNeon({force=false}={}){
     }
     const expectedPersonIds=new Set(attendanceRows.map(row=>row.persona_id).filter(Boolean).map(String));
     const returnedPersonIds=new Set(peopleRows.map(person=>String(person.id)));
-    const missingPeopleCount=[...expectedPersonIds].filter(id=>!returnedPersonIds.has(id)).length;
-    if(missingPeopleCount)warnings.push('No se recuperaron '+missingPeopleCount+' fichas personales de '+expectedPersonIds.size+' asistencias. Revisa permisos o paginación.');
+    const incompletePeopleCount=[...expectedPersonIds].filter(id=>{
+      const person=peopleRows.find(row=>String(row.id)===id);
+      return !person||!String(person.cedula||person.cedula_normalizada||"").trim()||!String(person.nombres||"").trim();
+    }).length;
+    if(incompletePeopleCount)warnings.push('Hay '+incompletePeopleCount+' fichas personales sin recuperar completamente de '+expectedPersonIds.size+' asistencias. Revisa permisos o paginación.');
     activitiesLoadWarning=warnings.join(' · ');
     activitiesState.people=peopleRows.map(p=>{
       const parsed=splitLegacyPersonName(p.nombres,p.apellidos);
