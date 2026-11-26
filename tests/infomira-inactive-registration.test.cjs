@@ -26,6 +26,6 @@ test("el backend devuelve InfoMIRA falso y permite el registro de inactivos", ()
 });
 
 test("el estado histórico de la persona no se borra ni se transforma", () => {
-  assert.match(migration, /Keep activo\/inactivo, attendance history and all other person fields unchanged/);
+  assert.match(migration, /Do not change activo\/inactivo, tiene_app_infomira, personal data or attendance history/);
   assert.match(migration, /WHERE \(inactivo=true OR activo=false\)/);
 });
