@@ -148,14 +148,15 @@ $("pubLookup").addEventListener("click", async () => {
     $("pubType").value = ["interno","externo"].includes(String(person.tipo_participacion||"").toLowerCase())
       ? String(person.tipo_participacion).toLowerCase() : "";
     showPersonDetails(person);
-    if (person.inactivo || person.activo === false) {
+    const inactiveWithoutInfoMira = person.inactivo || person.activo === false;
+    setAvailable(activities.length > 0);
+    if (currentPersonAlreadyRegistered) {
+      status("Ficha recuperada. La asistencia de esta persona ya existe para esta actividad.", "error");
+    } else if (inactiveWithoutInfoMira) {
       status("Ficha recuperada. No está inscrita a InfoMIRA; puede registrarse en esta actividad.", "success");
+    } else {
+      status("Ficha recuperada. Verifica los datos y confirma el consentimiento para registrar la asistencia.", "success");
     }
-setAvailable(activities.length > 0);
-    status(currentPersonAlreadyRegistered
-      ? "Ficha recuperada. La asistencia de esta persona ya existe para esta actividad."
-      : "Ficha recuperada. Verifica los datos y confirma el consentimiento para registrar la asistencia.",
-      currentPersonAlreadyRegistered ? "error" : "success");
   } catch (error) {
     const message = error.message || "No fue posible consultar la inscripción.";
     if (/autorización venció|PIN de acceso|no es válida/i.test(message)) lockModule(message);
