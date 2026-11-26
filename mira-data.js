@@ -307,6 +307,13 @@ export const MIRA_DATA = {
     if(activityId) params.actividad_id=`eq.${activityId}`;
     return miraRequest("asistencias",{query:qs(params)});
   },
+  async listActivityAttendanceDetails({activityId=null,limit=100,offset=0}={}) {
+    return miraRequest("rpc/list_activity_attendance_details",{method:"POST",body:{
+      p_activity_id:activityId||null,
+      p_limit:Math.min(Math.max(Number(limit)||100,1),100),
+      p_offset:Math.max(Number(offset)||0,0)
+    }});
+  },
   createAttendance(payload) {
     if (!payload.persona_id || !payload.actividad_id) throw new Error("Selecciona una persona y una actividad.");
     return miraRequest("asistencias",{method:"POST",body:payload});
