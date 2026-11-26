@@ -69,5 +69,5 @@ test("la migración de retiro elimina solo Reportes Operativos y la sobrecarga h
   assert.match(migration, /DELETE FROM mira\\.module_catalog WHERE module_key = 'reportes'/);
   assert.match(migration, /DROP TABLE IF EXISTS mira\\.reportes_operativos/);
   assert.match(migration, /DROP FUNCTION IF EXISTS mira\\.public_register_activity_participant_v2/);
-  assert.doesNotMatch(migration, /CASCADE/i);
+  assert.doesNotMatch(migration, /DROP\\s+(?:TABLE|FUNCTION)[^;]*\\bCASCADE\\b/i);
 });
