@@ -610,7 +610,7 @@ async function loadActivitiesFromNeon({force=false}={}){
         type:row.tipo_participacion||''
       });
     }
-    const joinedMissing=attendanceDetailRows.filter(row=>!row.person_id||!String(row.nombres||'').trim()).length;
+    const joinedMissing=attendanceDetailRows.filter(row=>!row.person_id||!String(row.nombres||'').trim()||!String(row.cedula||'').trim()).length;
     if(joinedMissing)warnings.push(joinedMissing+' asistencias tienen una ficha vinculada sin nombre disponible; se conservó el registro para revisión.');
     activitiesLoadWarning=warnings.join(' · ');
     activitiesState.people=[...peopleById.values()];
