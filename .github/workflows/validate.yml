@@ -17,6 +17,8 @@ jobs:
       - name: Comprobar sintaxis JavaScript
         run: |
           find . -type f -name '*.js' -not -path './node_modules/*' -print0 | xargs -0 -r -n1 node --check
+      - name: Bloquear endpoints de Neon QA en producción
+        run: node --test tests/production-endpoints.test.cjs
       - name: Probar regresión de PIN único y navegación
         run: node --test tests/single-pin.test.cjs
       - name: Probar registro de personas sin InfoMIRA
