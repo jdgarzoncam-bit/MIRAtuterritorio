@@ -1,6 +1,6 @@
 // MIRA TU TERRITORIO — cliente REST de Neon Data API
 // No contiene contraseñas ni cadenas de conexión. Los permisos se aplican en PostgreSQL RLS.
-const MIRA_DATA_API_URL = "https://ep-mute-grass-b7qan4n6.apirest.c-13.us-east-1.aws.neon.tech/neondb/rest/v1";
+const MIRA_DATA_API_URL = "https://ep-round-dawn-b7l3ya3h.apirest.c-13.us-east-1.aws.neon.tech/neondb/rest/v1";
 
 async function miraToken({anonymous=false,authToken=null}={}) {
   // En el portal de participantes se reutiliza el mismo JWT anónimo que validó
