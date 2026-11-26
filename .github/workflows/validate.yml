@@ -2,6 +2,7 @@ name: Validar JavaScript de MIRA
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     branches:
       - main
 
@@ -16,5 +17,9 @@ jobs:
       - name: Comprobar sintaxis JavaScript
         run: |
           find . -type f -name '*.js' -not -path './node_modules/*' -print0 | xargs -0 -r -n1 node --check
-      - name: Probar regresión de PIN único
+      - name: Probar regresión de PIN único y navegación
         run: node --test tests/single-pin.test.cjs
+      - name: Probar registro de personas sin InfoMIRA
+        run: node --test tests/infomira-inactive-registration.test.cjs
+      - name: Probar seguridad de Reportes Operativos
+        run: node --test tests/public-operational-reports.test.cjs
