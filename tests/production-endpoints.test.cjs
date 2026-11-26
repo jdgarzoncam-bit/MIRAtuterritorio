@@ -59,15 +59,22 @@ test("el formulario y cliente de Reportes Operativos no forman parte del sitio",
     assert.equal(fs.existsSync(path.join(root, obsoletePath)), false, obsoletePath + " debe estar retirado");
   }
   const landing = fs.readFileSync(path.join(root, "index.html"), "utf8");
-  assert.doesNotMatch(landing, /reporte-publico\\.(?:html|js)/i);
+  assert.doesNotMatch(landing, /reporte-publico\.(?:html|js)/i);
 });
 
 test("la migración de retiro elimina solo Reportes Operativos y la sobrecarga heredada", () => {
   const migrationPath = path.join(root, "migrations", "20261126_remove_operational_reports_and_legacy_registration.sql");
   assert.equal(fs.existsSync(migrationPath), true);
   const migration = fs.readFileSync(migrationPath, "utf8");
-  assert.match(migration, /DELETE FROM mira\\.module_catalog WHERE module_key = 'reportes'/);
-  assert.match(migration, /DROP TABLE IF EXISTS mira\\.reportes_operativos/);
-  assert.match(migration, /DROP FUNCTION IF EXISTS mira\\.public_register_activity_participant_v2/);
-  assert.doesNotMatch(migration, /DROP\\s+(?:TABLE|FUNCTION)[^;]*\\bCASCADE\\b/i);
+  assert.match(migration, /DELETE FROM mira\.module_catalog WHERE module_key = 'reportes'/);
+  assert.match(migration, /DROP TABLE IF EXISTS mira\.reportes_operativos/);
+  assert.match(migration, /DROP FUNCTION IF EXISTS mira\.public_register_activity_participant_v2/);
+
+  // Ignore SQL line comments: the word CASCADE in explanatory text is not executable SQL.
+  const executableSql = migration.replace(/--.*$/gm, "");
+  assert.doesNotMatch(
+    executableSql,
+    /\bDROP\s+(?:TABLE|FUNCTION)\b[^;]*\bCASCADE\b/i,
+    "La migración no debe usar DROP ... CASCADE"
+  );
 });
