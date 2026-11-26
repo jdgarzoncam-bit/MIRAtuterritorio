@@ -18,6 +18,8 @@ test("una ficha inactiva se muestra como no inscrita a InfoMIRA", () => {
 
 test("el backend devuelve InfoMIRA falso y permite el registro de inactivos", () => {
   assert.match(migration, /v_info_mira := false/);
+  assert.match(migration, /v_old_guard_prod/);
+  assert.match(migration, /v_new_guard_prod/);
   assert.match(migration, /CASE WHEN p\.inactivo OR NOT p\.activo THEN false ELSE p\.info_mira END/);
   assert.match(migration, /SET info_mira=false/);
   assert.doesNotMatch(migration, /\bactivo\s*=\s*true|\binactivo\s*=\s*false/);
