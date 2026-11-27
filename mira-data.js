@@ -360,11 +360,16 @@ export const MIRA_DATA = {
     return miraRequest("user_profiles",{query:qs({select:"id,auth_user_id,email,display_name,role,active,email_verified,created_at",order:"created_at.asc",limit:"500"})});
   },
   updateUserProfile(profileId, changes) {
-    const allowed = {};
-    if (typeof changes.active === "boolean") allowed.active = changes.active;
-    if (["operator","viewer"].includes(changes.role)) allowed.role = changes.role;
-    if (!Object.keys(allowed).length) throw new Error("No hay cambios de perfil válidos.");
-    return miraRequest("user_profiles",{method:"PATCH",query:qs({id:"eq."+profileId}),body:allowed,prefer:"return=representation",requireRows:true});
+    if(!profileId) throw new Error("No se identificó la cuenta que deseas actualizar.");
+    if(typeof changes?.active!=="boolean"||!["operator","viewer"].includes(changes?.role)) {
+      throw new Error("Selecciona un estado y un rol válidos para la cuenta.");
+    }
+    return miraRequest("rpc/admin_update_user_profile",{
+      method:"POST",
+      body:{p_profile_id:profileId,p_active:changes.active,p_role:changes.role},
+      prefer:"return=representation",
+      requireRows:true
+    });
   },
   async listModuleCatalog() {
     return miraRequest("module_catalog",{query:qs({select:"module_key,module_name,description,sort_order,active",active:"eq.true",order:"sort_order.asc"})});
@@ -406,7 +411,13 @@ export const MIRA_DATA = {
     }});
   },
   setModulePermission(profileId,moduleKey,actionKey,allowed) {
-    return miraRequest("module_permissions",{method:"POST",query:qs({on_conflict:"user_profile_id,module_key,action_key"}),prefer:"resolution=merge-duplicates,return=representation",requireRows:true,body:{user_profile_id:profileId,module_key:moduleKey,action_key:actionKey,allowed:Boolean(allowed)}});
+    if(!profileId||!moduleKey||!actionKey||typeof allowed!=="boolean") throw new Error("Los datos del permiso están incompletos.");
+    return miraRequest("rpc/admin_set_module_permission",{
+      method:"POST",
+      body:{p_profile_id:profileId,p_module_key:moduleKey,p_action_key:actionKey,p_allowed:allowed},
+      prefer:"return=representation",
+      requireRows:true
+    });
   },
 
   async listPQRS({tipo="",limit=500}={}) {
