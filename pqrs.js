@@ -2,7 +2,7 @@ import { MIRA_DATA } from "./mira-data.js";
 (() => {
  const $=id=>document.getElementById(id),ADMIN_ID="beef5bf3-82a8-4c35-a12c-17771be59da1";
  const types={peticion:"Petición",queja:"Queja",reclamo:"Reclamo",sugerencia:"Sugerencia"};
- const modules={infomira:"InfoMIRA",logistica:"Logística & Transporte",testigos:"Auditoría Testigos",info_electoral:"Info Electoral",barrios_puestos:"Barrios y puestos",actividades:"Actividades",concejal:"Concejal · Gestión territorial",centro_operaciones:"Centro de Operaciones",pqrs:"PQRS",otro:"Otro / General"};
+ const modules={infomira:"InfoMIRA",testigos:"Auditoría Testigos",info_electoral:"Info Electoral",barrios_puestos:"Barrios y puestos",actividades:"Actividades",concejal:"Concejal · Gestión territorial",centro_operaciones:"Centro de Operaciones",pqrs:"PQRS",otro:"Otro / General"};
  let returnContext="landing",records=[],filter="todas",loading=false,accessCheckVersion=0,inboxAllowed=false;
  const currentUser=()=>window.MIRA_CURRENT_USER||null;
  const isAdmin=()=>currentUser()?.role==="admin"&&currentUser()?.authUserId===ADMIN_ID;
