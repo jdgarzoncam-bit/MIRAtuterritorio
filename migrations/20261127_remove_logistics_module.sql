@@ -30,6 +30,12 @@ WITH CHECK (
 );
 
 DELETE FROM mira.module_permissions WHERE module_key = 'logistica';
+
+-- Retire the unused legacy six-argument registration entry point. Runtime uses
+-- the seven-argument overload with a temporary PIN-derived access token.
+DROP FUNCTION IF EXISTS mira.public_register_activity_participant(
+  text, text, text, text, uuid, boolean
+);
 DELETE FROM mira.module_catalog WHERE module_key = 'logistica';
 
 COMMIT;
