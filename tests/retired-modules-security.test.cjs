@@ -39,3 +39,17 @@ test("las tablas de personas y asistencias no permiten borrado directo por roles
   assert.match(hardening, /REVOKE DELETE ON TABLE mira\.asistencias FROM PUBLIC, anonymous, authenticated/);
   assert.match(hardening, /REVOKE DELETE ON TABLE mira\.personas FROM PUBLIC, anonymous, authenticated/);
 });
+
+test("la política autenticada de PQRS también bloquea claves de módulos retirados", () => {
+  const start = migration.indexOf("CREATE POLICY pqrs_submit_authenticated");
+  const end = migration.indexOf("DELETE FROM mira.module_permissions", start);
+  const policy = migration.slice(start, end);
+  assert.ok(start >= 0, "Debe existir la política autenticada");
+  assert.doesNotMatch(policy, /'logistica'/i);
+  assert.match(policy, /email_verified = true/);
+});
+
+test("PQRS no conserva etiquetas de Logística en la interfaz", () => {
+  const pqrs = fs.readFileSync(path.join(root, "pqrs.js"), "utf8");
+  assert.doesNotMatch(pqrs, /logistica|Logística & Transporte/i);
+});
