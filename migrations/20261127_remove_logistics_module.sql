@@ -29,6 +29,32 @@ WITH CHECK (
   AND estado = 'recibida'::text
 );
 
+DROP POLICY IF EXISTS pqrs_submit_authenticated ON mira.pqrs;
+CREATE POLICY pqrs_submit_authenticated
+ON mira.pqrs
+FOR INSERT
+TO authenticated
+WITH CHECK (
+  created_by = auth.user_id()
+  AND modulo_key = ANY (ARRAY[
+    'infomira'::text,
+    'testigos'::text,
+    'info_electoral'::text,
+    'barrios_puestos'::text,
+    'actividades'::text,
+    'concejal'::text,
+    'centro_operaciones'::text,
+    'pqrs'::text,
+    'otro'::text
+  ])
+  AND EXISTS (
+    SELECT 1 FROM mira.user_profiles u
+    WHERE u.auth_user_id = auth.user_id()
+      AND u.active = true
+      AND u.email_verified = true
+  )
+);
+
 DELETE FROM mira.module_permissions WHERE module_key = 'logistica';
 
 -- Retire the unused legacy six-argument registration entry point. Runtime uses
