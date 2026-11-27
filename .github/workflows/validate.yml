@@ -25,5 +25,7 @@ jobs:
         run: node --test tests/infomira-inactive-registration.test.cjs
       - name: Probar integridad del archivo de Actividades
         run: node --test tests/activity-data-integrity-current.test.cjs
+      - name: Probar versión de Control Administrativo
+        run: node --test tests/control-admin-cache.test.cjs
       - name: Probar retiro de módulos y accesos heredados
         run: node --test tests/retired-modules-security.test.cjs
