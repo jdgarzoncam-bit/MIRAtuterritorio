@@ -35,15 +35,27 @@ jobs:
         with:
           node-version: 20
 
-      - name: Validar sintaxis antes de publicar
-        run: |
-          find . -type f -name '*.js' -not -path './node_modules/*' -print0 | xargs -0 -r -n1 node --check
-          node --test tests/production-endpoints.test.cjs
+      - name: Validar sintaxis y pruebas antes de publicar
+        run: npm run validate
 
       - name: Preparar archivos del sitio
+        # Solo se publica lo que el navegador necesita. Quedan fuera documentación
+        # interna, migraciones SQL, pruebas, workflows y copias de respaldo (.zip).
+        run: |
+          mkdir _site
+          tar -cf - \
+            --exclude='./_site' --exclude='./.git' --exclude='./.github' \
+            --exclude='./docs' --exclude='./migrations' --exclude='./tests' \
+            --exclude='./scripts' --exclude='./node_modules' \
+            --exclude='./MIRAtuterritorio-preview-*' \
+            --exclude='./package.json' --exclude='*.md' --exclude='./.gitignore' \
+            . | tar -xf - -C _site
+          test -f _site/index.html
+
+      - name: Subir artefacto del sitio
         uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: _site
           name: github-pages-${{ github.run_attempt }}
 
       - name: Publicar sitio

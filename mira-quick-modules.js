@@ -1,4 +1,4 @@
-import { MIRA_DATA } from "./mira-data.js?v=20261125-connected-1";
+import { MIRA_DATA } from "./mira-data.js?v=20261127-data-unified-1";
 
 const TOKEN_KEY = "miraParticipantAccessToken";
 const TOKEN_EXPIRY_KEY = "miraParticipantAccessTokenExpiresAt";

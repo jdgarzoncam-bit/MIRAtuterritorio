@@ -1,4 +1,4 @@
-import { MIRA_DATA } from "./mira-data.js";
+import { MIRA_DATA } from "./mira-data.js?v=20261127-data-unified-1";
 (() => {
  const $=id=>document.getElementById(id),ADMIN_ID="beef5bf3-82a8-4c35-a12c-17771be59da1";
  const types={peticion:"Petición",queja:"Queja",reclamo:"Reclamo",sugerencia:"Sugerencia"};

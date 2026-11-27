@@ -1,0 +1,14 @@
+{
+  "name": "miratuterritorio",
+  "version": "1.0.0",
+  "private": true,
+  "description": "MIRA TU TERRITORIO — sitio estático (GitHub Pages) con Neon Auth y Neon Data API.",
+  "scripts": {
+    "check": "node scripts/check-syntax.cjs",
+    "test": "node --test tests/*.test.cjs",
+    "validate": "npm run check && npm test"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
