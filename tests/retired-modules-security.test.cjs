@@ -17,9 +17,10 @@ test("PQRS conserva su canal público pero no admite la clave Logística", () =>
   assert.doesNotMatch(policy, /'logistica'/i);
 });
 
-test("se elimina la función heredada de registro de seis argumentos", () => {
-  assert.match(migration, /DROP FUNCTION IF EXISTS mira\.public_register_activity_participant\(/);
-  assert.match(migration, /uuid, boolean/);
+test("el helper interno de seis argumentos exige token y no admite ejecución directa de roles de aplicación", () => {
+  assert.match(migration, /CREATE OR REPLACE FUNCTION mira\.public_register_activity_participant\(/);
+  assert.match(migration, /s\.token=v_access_token AND s\.actor_uid=v_actor AND s\.expires_at>now\(\)/);
+  assert.match(migration, /REVOKE ALL ON FUNCTION mira\.public_register_activity_participant\(text,text,text,text,uuid,boolean\) FROM PUBLIC, anonymous, authenticated/);
 });
 
 test("la migración histórica que restauraba Reportes Operativos ya no existe", () => {
