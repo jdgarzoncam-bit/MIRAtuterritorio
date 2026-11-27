@@ -3,6 +3,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 
+// Guardas de regresión para evitar que módulos y permisos retirados reaparezcan.
 const root = path.join(__dirname, "..");
 const migration = fs.readFileSync(path.join(root, "migrations", "20261127_remove_logistics_module.sql"), "utf8");
 
