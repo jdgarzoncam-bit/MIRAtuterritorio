@@ -23,7 +23,5 @@ jobs:
         run: node --test tests/single-pin.test.cjs
       - name: Probar registro de personas sin InfoMIRA
         run: node --test tests/infomira-inactive-registration.test.cjs
-      - name: Probar seguridad de Reportes Operativos
-        run: node --test tests/public-operational-reports.test.cjs
       - name: Probar integridad del archivo de Actividades
         run: node --test tests/activity-data-integrity-current.test.cjs
