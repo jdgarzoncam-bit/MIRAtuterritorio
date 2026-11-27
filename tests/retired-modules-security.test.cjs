@@ -30,3 +30,12 @@ test("la migración histórica que restauraba Reportes Operativos ya no existe",
   assert.equal(fs.existsSync(path.join(root, "reporte-publico.html")), false);
   assert.equal(fs.existsSync(path.join(root, "reporte-publico.js")), false);
 });
+
+test("las tablas de personas y asistencias no permiten borrado directo por roles de aplicación", () => {
+  const hardening = fs.readFileSync(
+    path.join(root, "migrations", "20261127_harden_personal_data_delete_grants.sql"),
+    "utf8"
+  );
+  assert.match(hardening, /REVOKE DELETE ON TABLE mira\.asistencias FROM PUBLIC, anonymous, authenticated/);
+  assert.match(hardening, /REVOKE DELETE ON TABLE mira\.personas FROM PUBLIC, anonymous, authenticated/);
+});
