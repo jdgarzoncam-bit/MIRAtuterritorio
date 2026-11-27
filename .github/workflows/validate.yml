@@ -34,3 +34,5 @@ jobs:
         run: node --test tests/retired-modules-security.test.cjs
       - name: Probar versión única de mira-data.js
         run: node --test tests/module-version-consistency.test.cjs
+      - name: Probar higiene del sitio (referencias locales y HTML seguro)
+        run: node --test tests/site-hygiene.test.cjs

@@ -6,3 +6,7 @@
 # Artefactos locales
 node_modules/
 _site/
+
+# Copias de respaldo/previsualización empaquetadas (el historial de Git ya es el respaldo)
+/MIRAtuterritorio-preview-*
+*.zip

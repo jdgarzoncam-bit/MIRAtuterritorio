@@ -70,9 +70,13 @@ async function refreshActivities() {
   const rows = await MIRA_DATA.listPublicActivityOptions();
   activities = Array.isArray(rows) ? rows : [];
   const select = $("pubActivity");
-  select.innerHTML = '<option value="">Selecciona una actividad</option>' + activities.map(a =>
-    `<option value="${String(a.activity_id)}">${String(a.activity_name)} · ${String(a.activity_date).slice(0,10)}${a.activity_place ? " · " + String(a.activity_place) : ""}</option>`
-  ).join("");
+  // Se construyen con la API del DOM (textContent) para que un nombre o lugar de actividad
+  // con caracteres especiales nunca se interprete como HTML en el portal público.
+  select.replaceChildren(new Option("Selecciona una actividad", ""));
+  activities.forEach(a => {
+    const label = `${String(a.activity_name)} · ${String(a.activity_date).slice(0, 10)}${a.activity_place ? " · " + String(a.activity_place) : ""}`;
+    select.append(new Option(label, String(a.activity_id)));
+  });
   if (!activities.length) {
     $("activityAvailability").textContent = "En este momento no hay actividades abiertas para inscripción. Vuelve a consultar más tarde.";
     setAvailable(false);

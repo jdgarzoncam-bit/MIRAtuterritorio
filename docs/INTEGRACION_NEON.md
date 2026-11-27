@@ -1,4 +1,4 @@
-# Integración Neon — MIRA TU TERRITORIO (estado verificado 2026-11-25)
+# Integración Neon — MIRA TU TERRITORIO (estado verificado 2026-11-27)
 
 ## Fuente de verdad de producción
 
@@ -23,20 +23,22 @@ Archivos que los declaran:
 
 No guardar contraseñas, DATABASE_URL, API keys, JWT ni PIN en el repositorio.
 
-## Datos verificados en producción (2026-11-25)
+## Datos verificados en producción (2026-11-27)
 
-Después de eliminar las dos actividades de prueba:
-- `mira.actividades`: 1 fila, Adulto mayor noviembre.
-- `mira.asistencias`: 36 filas, todas asociadas a Adulto mayor noviembre.
-- `mira.personas`: 594 filas. Se conservaron; no se borraron fichas personales.
+- `mira.actividades`: 1 fila (activa).
+- `mira.asistencias`: 43 filas, sin huérfanas ni duplicadas.
+- `mira.personas`: 596 filas, sin cédulas normalizadas duplicadas ni nulas.
+- `mira.user_profiles`: 8 filas.
+- Historial: el 2026-11-25 se eliminaron las actividades de prueba Jornada y Jornada embellecimiento; se conservaron todas las fichas personales.
 
-Las actividades de prueba eliminadas fueron Jornada y Jornada embellecimiento, junto con sus tres asistencias.
+El detalle completo y la lista de pendientes está en `docs/AUDITORIA_VIABILIDAD_2026-11-27.md`.
 
 ## Ramas Neon y sincronización
 
 La rama `qa-role-capabilities-2026-11-10` no es una copia idéntica de producción:
-- QA no contiene `mira.reportes_operativos`, que sí existe en producción.
-- QA conserva 21 asistencias mientras producción tiene 36 después de la limpieza.
+- QA conserva 3 actividades y 21 asistencias; producción tiene 1 actividad y 43 asistencias.
+- Las ramas `qa-control-admin-2026-11-17`, `qa-audit-export-reportes-cleanup` y `qa-personas-integrity-2026-11-18` carecen de las tablas de acceso PIN y de gran parte de las funciones; están obsoletas.
+- `sync-test-production-2026-11-24` conserva la tabla retirada `mira.reportes_operativos`.
 - Por tanto, no copiar datos QA sobre producción ni promover QA a producción sin comparar esquema, funciones, permisos, triggers y datos. Los ambientes deben sincronizarse mediante migraciones revisadas, no mediante sustitución indiscriminada de datos.
 
 ## Seguridad y permisos observados
