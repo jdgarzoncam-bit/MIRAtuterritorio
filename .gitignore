@@ -2,3 +2,7 @@
 /datos_locales_privados/
 /electores*.json
 *.env
+
+# Artefactos locales
+node_modules/
+_site/

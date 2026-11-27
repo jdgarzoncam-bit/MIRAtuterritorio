@@ -15,8 +15,7 @@ jobs:
         with:
           node-version: 20
       - name: Comprobar sintaxis JavaScript
-        run: |
-          find . -type f -name '*.js' -not -path './node_modules/*' -print0 | xargs -0 -r -n1 node --check
+        run: npm run check
       - name: Bloquear endpoints de Neon QA en producción
         run: node --test tests/production-endpoints.test.cjs
       - name: Probar regresión de PIN único y navegación
@@ -33,3 +32,5 @@ jobs:
         run: node --test tests/control-admin-profile-update.test.cjs
       - name: Probar retiro de módulos y accesos heredados
         run: node --test tests/retired-modules-security.test.cjs
+      - name: Probar versión única de mira-data.js
+        run: node --test tests/module-version-consistency.test.cjs
